@@ -143,6 +143,65 @@ function getItemFontSize(item) {
   return Number(Math.max(scaleX, scaleY).toFixed(2))
 }
 
+function getItemY(item) {
+  const matrix = Array.isArray(item.transform) ? item.transform : []
+  return Number.isFinite(matrix[5]) ? matrix[5] : 0
+}
+
+const Y_LINE_BREAK_DELTA = 2
+const Y_SAME_LINE_TOLERANCE = 2
+
+async function extractLinesByPosition(buffer) {
+  const loadingTask = getDocument({ data: new Uint8Array(buffer) })
+  const pdf = await loadingTask.promise
+  const pageSections = []
+
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber)
+    const textContent = await page.getTextContent()
+
+    const pageLines = []
+    let currentLine = ""
+    let previousY = null
+
+    for (const item of textContent.items) {
+      const fragment = item.str ?? ""
+      if (!fragment) {
+        continue
+      }
+
+      const y = getItemY(item)
+
+      if (previousY !== null) {
+        const yDelta = y - previousY
+
+        if (yDelta < -Y_LINE_BREAK_DELTA) {
+          if (currentLine.trim()) {
+            pageLines.push(currentLine.trim())
+          }
+          currentLine = fragment
+        } else if (Math.abs(yDelta) <= Y_SAME_LINE_TOLERANCE) {
+          currentLine = currentLine ? `${currentLine} ${fragment}` : fragment
+        } else {
+          currentLine = currentLine ? `${currentLine} ${fragment}` : fragment
+        }
+      } else {
+        currentLine = fragment
+      }
+
+      previousY = y
+    }
+
+    if (currentLine.trim()) {
+      pageLines.push(currentLine.trim())
+    }
+
+    pageSections.push(pageLines.join("\n"))
+  }
+
+  return pageSections.join("\n\n")
+}
+
 async function extractHeadingLines(buffer) {
   const headingStrings = new Set()
   const loadingTask = getDocument({ data: new Uint8Array(buffer) })
@@ -341,12 +400,13 @@ app.post("/upload", (req, res) => {
         return
       }
 
-      const [parsedText, headingStrings] = await Promise.all([
+      const [parsedText, headingStrings, positionedText] = await Promise.all([
         pdfParse(uploadedFile.buffer),
         extractHeadingLines(uploadedFile.buffer),
+        extractLinesByPosition(uploadedFile.buffer),
       ])
 
-      const lines = linesFromPdfText(parsedText.text)
+      const lines = linesFromPdfText(positionedText)
       const blocks = buildBlocksFromLines(lines, headingStrings)
       const content = blocksToContent(blocks)
 
