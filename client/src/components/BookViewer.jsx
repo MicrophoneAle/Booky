@@ -2,14 +2,33 @@ import { useCallback, useEffect, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import "./BookViewer.css"
 
-function BookPageContent({ page }) {
+function shouldShowChapterLabel(page, otherPage, isLeftPage) {
+  if (!page?.chapterTitle) return false
+  if (!otherPage) return true
+
+  if (!isLeftPage && page.isChapterStart && !otherPage.isChapterStart) {
+    return true
+  }
+
+  if (isLeftPage && otherPage.isChapterStart && !page.isChapterStart) {
+    return false
+  }
+
+  if (page.chapterTitle !== otherPage.chapterTitle) {
+    return true
+  }
+
+  return isLeftPage
+}
+
+function BookPageContent({ page, showChapterLabel }) {
   if (!page) {
     return <div className="book-page book-page--empty" />
   }
 
   return (
     <div className="book-page">
-      {page.isChapterStart && page.chapterTitle && (
+      {showChapterLabel && (
         <p className="book-page__chapter-label">{page.chapterTitle}</p>
       )}
 
@@ -66,7 +85,14 @@ export default function BookViewer({ pages = [], initialPage = 1, onPageChange }
 
   const leftPage = pages[currentPage - 1] ?? null
   const rightPage = isMobile ? null : pages[currentPage] ?? null
-  const navChapterTitle = leftPage?.chapterTitle ?? pages[0]?.chapterTitle ?? ""
+  const navChapterTitle =
+    leftPage?.chapterTitle ?? rightPage?.chapterTitle ?? pages[0]?.chapterTitle ?? ""
+
+  const currentSpread = Math.ceil(currentPage / 2)
+  const totalSpreads = Math.ceil(totalPages / 2) || 1
+
+  const showLeftChapterLabel = shouldShowChapterLabel(leftPage, rightPage, true)
+  const showRightChapterLabel = shouldShowChapterLabel(rightPage, leftPage, false)
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)")
@@ -169,7 +195,7 @@ export default function BookViewer({ pages = [], initialPage = 1, onPageChange }
         <p className="book-viewer__chapter">{navChapterTitle}</p>
         <div className="book-viewer__nav-right">
           <p className="book-viewer__counter">
-            Page {currentPage} of {totalPages}
+            Page {currentSpread} of {totalSpreads}
           </p>
           <button
             type="button"
@@ -219,7 +245,10 @@ export default function BookViewer({ pages = [], initialPage = 1, onPageChange }
             }
           >
             <div className="book-viewer__page-face">
-              <BookPageContent page={leftPage} />
+              <BookPageContent
+                page={leftPage}
+                showChapterLabel={showLeftChapterLabel}
+              />
             </div>
           </motion.div>
 
@@ -237,7 +266,10 @@ export default function BookViewer({ pages = [], initialPage = 1, onPageChange }
                 }
               >
                 <div className="book-viewer__page-face">
-                  <BookPageContent page={rightPage} />
+                  <BookPageContent
+                    page={rightPage}
+                    showChapterLabel={showRightChapterLabel}
+                  />
                 </div>
               </motion.div>
             </>
