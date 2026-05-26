@@ -3,7 +3,8 @@ import express from "express"
 import cors from "cors"
 import multer from "multer"
 import { createClient } from "@supabase/supabase-js"
-import { getDocument, OPS } from "pdfjs-dist/legacy/build/pdf.mjs"
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
+import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -147,104 +148,36 @@ function getItemX(item) {
   return Number.isFinite(matrix[4]) ? matrix[4] : 0
 }
 
-function joinLineItemStrings(items) {
-  let joinedText = ""
+async function extractHeadingLines(buffer) {
+  const headingStrings = new Set()
+  const loadingTask = getDocument({ data: new Uint8Array(buffer) })
+  const pdf = await loadingTask.promise
 
-  for (const item of items) {
-    const piece = item.str ?? ""
-    if (!piece) continue
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber)
+    const textContent = await page.getTextContent()
 
-    if (joinedText.length === 0) {
-      joinedText = piece
-      continue
-    }
+    for (const item of textContent.items) {
+      const fontSize = getItemFontSize(item)
 
-    const prevEndsWithSpace = /\s$/.test(joinedText)
-    const nextStartsWithSpace = /^\s/.test(piece)
-
-    if (prevEndsWithSpace || nextStartsWithSpace) {
-      joinedText += piece
-    } else {
-      joinedText += ` ${piece}`
-    }
-  }
-
-  return joinedText.replace(/\s+/g, " ").trim()
-}
-
-function isOrphanLine(text) {
-  const trimmed = text.trim()
-  if (!trimmed) return false
-  if (trimmed.length === 1) return true
-  if (/^[\p{P}\p{S}]+$/u.test(trimmed)) return true
-  if (/^[a-zA-Z0-9]\.?$/u.test(trimmed)) return true
-
-  return false
-}
-
-function mergeOrphanLinesWithNext(lines) {
-  const merged = []
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const current = lines[index]
-
-    if (isOrphanLine(current.text) && index + 1 < lines.length) {
-      const next = lines[index + 1]
-      merged.push({
-        text: `${current.text.trim()} ${next.text}`.replace(/\s+/g, " ").trim(),
-        fontSize: next.fontSize,
-      })
-      index += 1
-      continue
-    }
-
-    merged.push(current)
-  }
-
-  return merged
-}
-
-function groupTextItemsIntoLines(items) {
-  const lineGroups = []
-
-  for (const item of items) {
-    const text = item.str ?? ""
-    if (!text.trim()) continue
-
-    const y = getItemY(item)
-    let lineGroup = lineGroups.find((group) => Math.abs(group.y - y) <= 5)
-
-    if (!lineGroup) {
-      lineGroup = { y, items: [] }
-      lineGroups.push(lineGroup)
-    }
-
-    lineGroup.items.push(item)
-  }
-
-  lineGroups.sort((a, b) => b.y - a.y)
-
-  const lines = lineGroups
-    .map((lineGroup) => {
-      const sortedItems = [...lineGroup.items].sort((a, b) => getItemX(a) - getItemX(b))
-      const joinedText = joinLineItemStrings(sortedItems)
-
-      return {
-        text: joinedText,
-        fontSize: getItemFontSize(sortedItems[0]),
+      if (fontSize > 14) {
+        const trimmed = (item.str ?? "").trim()
+        if (trimmed) {
+          headingStrings.add(trimmed)
+        }
       }
-    })
-    .filter((block) => block.text.length > 0)
+    }
+  }
 
-  return mergeOrphanLinesWithNext(lines)
+  return headingStrings
 }
 
 function isChapterHeading(block) {
   const text = block.text.trim()
 
-  if (block.fontSize > 16) return true
+  if (block.fontSize > 14) return true
   if (CHAPTER_PATTERN.test(text)) return true
-  if (text.length < 60 && block.fontSize > 14) return true
+  if (text.length < 60 && block.fontSize > 13) return true
 
   return false
 }
@@ -312,32 +245,39 @@ app.post("/upload", (req, res) => {
         return
       }
 
-      const loadingTask = getDocument({ data: new Uint8Array(uploadedFile.buffer) })
-      const pdf = await loadingTask.promise
+      const [parsedText, headingStrings] = await Promise.all([
+        pdfParse(uploadedFile.buffer),
+        extractHeadingLines(uploadedFile.buffer),
+      ])
+
+      const lines = parsedText.text
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
+
+      const blocks = lines.map((line) => {
+        const trimmed = line.trim()
+        const isHeading = headingStrings.has(trimmed)
+
+        return {
+          text: trimmed,
+          isHeading,
+          fontSize: isHeading ? 16 : 12,
+          chapterId: null,
+        }
+      })
 
       const content = []
-      let hasImages = false
+      const linesPerPage = 40
 
-      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-        const page = await pdf.getPage(pageNumber)
-        const textContent = await page.getTextContent()
-        const blocks = groupTextItemsIntoLines(textContent.items).map((block) => ({
-          text: block.text,
-          isHeading: block.fontSize > 14,
-          fontSize: block.fontSize,
-        }))
-
-        const operatorList = await page.getOperatorList()
-        if (operatorList.fnArray.includes(OPS.paintImageXObject)) {
-          hasImages = true
-        }
-
+      for (let index = 0; index < blocks.length; index += linesPerPage) {
         content.push({
-          pageIndex: pageNumber - 1,
-          blocks,
+          pageIndex: content.length,
+          blocks: blocks.slice(index, index + linesPerPage),
         })
       }
 
+      const hasImages = false
       const title = uploadedFile.originalname.replace(/\.pdf$/i, "")
       const { chapters, content: contentWithChapters } = detectChapters(content)
 
@@ -358,7 +298,7 @@ app.post("/upload", (req, res) => {
         .insert({
           name: title,
           storage_path: storageData.path,
-          total_pages: pdf.numPages,
+          total_pages: parsedText.numpages,
           chapters,
           content: contentWithChapters,
         })
@@ -375,7 +315,7 @@ app.post("/upload", (req, res) => {
         document: {
           id: insertedDocument.id,
           title,
-          totalPages: pdf.numPages,
+          totalPages: parsedText.numpages,
           chapters,
           content: contentWithChapters,
           hasImages,
