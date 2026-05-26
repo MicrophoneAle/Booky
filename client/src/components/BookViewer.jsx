@@ -777,14 +777,12 @@ function placeablesToVisualItems(placeables) {
 
     if (placeable.type === "list-item") {
       const listGroupId = placeable.listGroupId
-      const listKind = placeable.listKind
       const group = []
 
       while (
         index < placeables.length &&
         placeables[index].type === "list-item" &&
-        placeables[index].listGroupId === listGroupId &&
-        placeables[index].listKind === listKind
+        placeables[index].listGroupId === listGroupId
       ) {
         group.push(placeables[index])
         index += 1

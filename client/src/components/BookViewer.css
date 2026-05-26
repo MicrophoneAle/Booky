@@ -302,12 +302,13 @@ ol.book-page__list {
 .book-page__list-item > .book-page__list,
 .book-page__list-item > ol.book-page__list,
 .book-page__list-item > ul.book-page__list {
-  padding-left: 1.5rem;
+  padding-left: 1.8rem;
+  margin-top: 0.1rem;
 }
 
 .book-page__list-item--numbered > ol.book-page__list {
-  padding-left: 1.5rem;
-  margin-top: 0;
+  padding-left: 1.8rem;
+  margin-top: 0.1rem;
 }
 
 .book-page__list-item--no-bullet {
