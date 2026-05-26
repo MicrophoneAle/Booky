@@ -9,7 +9,7 @@ const NAVBAR_HEIGHT_PX = 48
 const PAGE_NUMBER_RESERVED_PX = 32
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 8
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
-const UNUSED_PAGE_SPACE_THRESHOLD_PX = 100
+const UNUSED_PAGE_SPACE_THRESHOLD_PX = 40
 
 const IMPLIED_LIST_LINE_REGEX = /^(Add|Test|Explore|Verify|Ensure|Click)\b/i
 const TRIVIAL_LIST_PAGE_CHAR_LIMIT = 30
@@ -21,6 +21,7 @@ const LEVEL_1_MARKER_REGEX = /^([o*]|[a-z][\.\)])\s*(.*)$/i
 const LEVEL_2_MARKER_REGEX = /^((?:[ivxlcdm]+|\([a-z]\))[\.\)])\s*(.*)$/i
 const LONE_MARKER_REGEX = /^(\d+[\.\)]|[•·\-—]|[o*]|[a-z][\.\)]|(?:[ivxlcdm]+|\([a-z]\))[\.\)])$/i
 const EMBEDDED_LIST_MARKER_REGEX = /\s+(\d+[\.\)]|[a-z][\.\)])\s+/gi
+let listSplitGroupCounter = 0
 
 function isStandaloneUrl(text) {
   return STANDALONE_URL_REGEX.test(text.trim())
@@ -718,7 +719,12 @@ function splitListAcrossPages(listItem, bodyEl, contentMaxHeight, showChapterLab
     segments.push({ type: "list", items: buildNestedListTree(chunk) })
   }
 
-  return segments.length > 0 ? segments : [listItem]
+  if (segments.length <= 1) {
+    return [listItem]
+  }
+
+  const splitGroupId = `split-${(listSplitGroupCounter += 1)}`
+  return segments.map((segment) => ({ ...segment, splitGroupId }))
 }
 
 function cleanupPages(pages, bodyEl, contentMaxHeight) {
@@ -943,6 +949,62 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   }
 
   const compactPagesForward = () => {
+    const hasSplitGroupInFollowingPages = (startPageIndex, splitGroupId) => {
+      for (let index = startPageIndex; index < pages.length; index += 1) {
+        const page = pages[index]
+        if (
+          page.visualItems.some(
+            (item) => item.type === "list" && item.splitGroupId === splitGroupId
+          )
+        ) {
+          return true
+        }
+      }
+      return false
+    }
+
+    const getTopLevelListKind = (listItem) => {
+      const firstNode = listItem.items?.[0]
+      if (!firstNode) {
+        return null
+      }
+      return getListItemKind(firstNode)
+    }
+
+    const shouldBlockListMove = (candidate, currentPage, nextPage, pageIndex) => {
+      if (candidate.type !== "list") {
+        return false
+      }
+
+      const candidateKind = getTopLevelListKind(candidate)
+      const currentHasSameKindList = currentPage.visualItems.some(
+        (item) =>
+          item.type === "list" &&
+          candidateKind !== null &&
+          getTopLevelListKind(item) === candidateKind
+      )
+
+      if (currentHasSameKindList) {
+        return true
+      }
+
+      if (!candidate.splitGroupId) {
+        return false
+      }
+
+      const hasSameSplitGroupAfterMove = nextPage.visualItems
+        .slice(1)
+        .some(
+          (item) => item.type === "list" && item.splitGroupId === candidate.splitGroupId
+        )
+
+      if (hasSameSplitGroupAfterMove) {
+        return true
+      }
+
+      return hasSplitGroupInFollowingPages(pageIndex + 2, candidate.splitGroupId)
+    }
+
     let movedAny = true
 
     while (movedAny) {
@@ -955,18 +1017,24 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
 
         while (next.visualItems.length > 0) {
           const firstNextItem = next.visualItems[0]
+          if (shouldBlockListMove(firstNextItem, current, next, pageIndex)) {
+            break
+          }
+
           if (!canFitOnPage(current, [firstNextItem])) {
             break
           }
 
           current.visualItems.push(firstNextItem)
           next.visualItems.shift()
+          recomputePageChapterMetadata(pages)
           movedAny = true
           movedFromNext = true
         }
 
         if (next.visualItems.length === 0) {
           pages.splice(pageIndex + 1, 1)
+          recomputePageChapterMetadata(pages)
           movedAny = true
         } else if (movedFromNext) {
           continue
