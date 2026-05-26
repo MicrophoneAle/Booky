@@ -277,24 +277,6 @@ function linesFromPdfText(text) {
   return (text ?? "").split("\n").map((line) => line.trim())
 }
 
-const numberedOrLetteredMarkerRegex = /^(\d+[\.\)]|[a-zA-Z][\.\)])\s/
-const bulletStartRegex = /^[•·o\-—*]\s/
-const urlAtEndRegex = /https?:\/\/\S+$/i
-
-function shouldNotMergeCurrentLineIntoPrevious(currentLine, previousText) {
-  const trimmed = currentLine.trim()
-  const prev = previousText.trim()
-
-  if (trimmed.endsWith(":")) return true
-  if (bulletStartRegex.test(trimmed)) return true
-  if (numberedOrLetteredMarkerRegex.test(trimmed)) return true
-  if (urlAtEndRegex.test(prev)) return true
-  if (/https?:\/\//i.test(prev)) return true
-  if (/^[A-Z]/.test(trimmed) && /[:)\/.]$/.test(prev)) return true
-
-  return false
-}
-
 function buildBlocksFromLines(lines, headingStrings) {
   const blocks = []
   const bulletCharsRegex = /^([•·o\-—*])\s*$/
@@ -352,25 +334,35 @@ function buildBlocksFromLines(lines, headingStrings) {
       continue
     }
 
-    if (blocks.length > 0 && !currentLine.startsWith("http")) {
-      const previousBlock = blocks[blocks.length - 1]
+    const trimmedLine = currentLine.trim()
 
-      if (
+    if (blocks.length > 0) {
+      const previousBlock = blocks[blocks.length - 1]
+      const prevText = previousBlock?.text ?? ""
+
+      const shouldMerge =
+        previousBlock &&
         !previousBlock.isHeading &&
-        previousBlock.text &&
-        !bulletCharsRegex.test(currentLine) &&
-        !inlineBulletRegex.test(currentLine) &&
-        previousBlock.text.length < 140 &&
-        !previousBlock.text.endsWith(".") &&
-        !shouldNotMergeCurrentLineIntoPrevious(currentLine, previousBlock.text)
-      ) {
-        previousBlock.text += ` ${currentLine}`
+        !prevText.includes("http://") &&
+        !prevText.includes("https://") &&
+        !/[:.\)\/"']$/.test(prevText.trim()) &&
+        !/^[•·\-—o*]\s/.test(trimmedLine) &&
+        !/^\d+[\.\)]/.test(trimmedLine) &&
+        !/^[a-z][\.\)]/i.test(trimmedLine) &&
+        !trimmedLine.endsWith(":") &&
+        trimmedLine.length > 0 &&
+        /[a-z]$/.test(prevText.trim())
+
+      if (shouldMerge) {
+        previousBlock.text = (prevText + " " + trimmedLine)
+          .replace(/\s+/g, " ")
+          .trim()
         continue
       }
     }
 
     blocks.push({
-      text: currentLine,
+      text: trimmedLine,
       isHeading: false,
       fontSize: 12,
       chapterId: null,
