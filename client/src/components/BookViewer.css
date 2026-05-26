@@ -274,6 +274,10 @@
   text-indent: 0;
 }
 
+.book-page__text--continuation {
+  text-indent: 0;
+}
+
 .book-page__list,
 ol.book-page__list {
   margin: 0;

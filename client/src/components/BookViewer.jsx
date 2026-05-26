@@ -28,7 +28,11 @@ function isHeadingVisualItem(item) {
   return item?.type === "title" || item?.type === "heading"
 }
 
-function proseParagraphClassName(previousItem) {
+function proseParagraphClassName(previousItem, proseItem = null) {
+  if (proseItem?.isContinuation) {
+    return "book-page__text book-page__text--continuation"
+  }
+
   return isHeadingVisualItem(previousItem)
     ? "book-page__text book-page__text--first"
     : "book-page__text"
@@ -621,7 +625,7 @@ function appendVisualItem(body, item, previousItem = null) {
 
   if (item.type === "prose") {
     const paragraph = document.createElement("p")
-    paragraph.className = proseParagraphClassName(previousItem)
+    paragraph.className = proseParagraphClassName(previousItem, item)
     paragraph.textContent = item.text
     body.appendChild(paragraph)
   }
@@ -828,6 +832,86 @@ function getChapterItemFromPlaceable(placeable) {
   return null
 }
 
+function prosePlaceableFromItem(proseItem) {
+  return { type: "prose", item: proseItem }
+}
+
+function pagePlaceablesFit(bodyEl, pagePlaceables, contentMaxHeight, showLabel, labelTitle) {
+  const trialVisualItems = placeablesToVisualItems(pagePlaceables)
+  renderMeasureBody(bodyEl, trialVisualItems, showLabel, labelTitle)
+  return bodyEl.scrollHeight + GREEDY_PAGE_SAFETY_MARGIN_PX < contentMaxHeight
+}
+
+function splitProseAcrossPages(
+  proseItem,
+  bodyEl,
+  contentMaxHeight,
+  alreadyOnPage,
+  showLabel,
+  labelTitle
+) {
+  const words = (proseItem.text ?? "").trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) {
+    return null
+  }
+
+  const singleWordItem = {
+    type: "prose",
+    text: words[0],
+    ...(proseItem.isContinuation ? { isContinuation: true } : {}),
+  }
+
+  if (
+    !pagePlaceablesFit(
+      bodyEl,
+      [prosePlaceableFromItem(singleWordItem)],
+      contentMaxHeight,
+      showLabel,
+      labelTitle
+    )
+  ) {
+    return null
+  }
+
+  let low = 1
+  let high = words.length
+  let best = 0
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2)
+    const fittingItem = {
+      type: "prose",
+      text: words.slice(0, mid).join(" "),
+      ...(proseItem.isContinuation ? { isContinuation: true } : {}),
+    }
+    const trialPlaceables = [...alreadyOnPage, prosePlaceableFromItem(fittingItem)]
+
+    if (pagePlaceablesFit(bodyEl, trialPlaceables, contentMaxHeight, showLabel, labelTitle)) {
+      best = mid
+      low = mid + 1
+    } else {
+      high = mid - 1
+    }
+  }
+
+  if (best === 0 || best >= words.length) {
+    return null
+  }
+
+  return {
+    fitting: {
+      type: "prose",
+      text: words.slice(0, best).join(" "),
+      ...(proseItem.isContinuation ? { isContinuation: true } : {}),
+    },
+    overflow: {
+      type: "prose",
+      text: words.slice(best).join(" "),
+      isContinuation: true,
+    },
+  }
+}
+
 function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   const visualItems = groupBlocksForDisplay(flatBlocks)
   const placeables = flattenVisualItemsToPlaceables(visualItems)
@@ -952,6 +1036,28 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
 
     if (tryAddPlaceables([placeable])) {
       return
+    }
+
+    if (currentPagePlaceables.length > 0 && placeable.type === "prose" && placeable.item) {
+      const split = splitProseAcrossPages(
+        placeable.item,
+        bodyEl,
+        contentMaxHeight,
+        currentPagePlaceables,
+        showChapterLabel(),
+        chapterState.pageChapterTitle
+      )
+
+      if (split) {
+        const fittingPlaceable = prosePlaceableFromItem(split.fitting)
+
+        if (tryAddPlaceables([fittingPlaceable])) {
+          flushPage()
+          markPageStartIfEmpty()
+          placePlaceable(prosePlaceableFromItem(split.overflow))
+          return
+        }
+      }
     }
 
     if (currentPagePlaceables.length > 0) {
@@ -1132,7 +1238,7 @@ function BookPageContent({ page }) {
           const previousItem = index > 0 ? visualItems[index - 1] : null
 
           return (
-            <p key={index} className={proseParagraphClassName(previousItem)}>
+            <p key={index} className={proseParagraphClassName(previousItem, item)}>
               {item.text}
             </p>
           )
