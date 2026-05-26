@@ -174,7 +174,7 @@
   background: #ffffff;
   padding-top: 2rem;
   padding-right: 1.5rem;
-  padding-bottom: 1.5rem;
+  padding-bottom: 2.5rem;
   padding-left: 1.5rem;
   color: #1c1917;
   display: flex;
@@ -188,7 +188,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: 60px;
+  height: 40px;
   background: linear-gradient(transparent, #ffffff);
   pointer-events: none;
 }
@@ -212,7 +212,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  padding-bottom: 2rem;
+  padding-bottom: 0;
 }
 
 .book-page__heading {
@@ -235,7 +235,7 @@
 .book-page__number {
   position: relative;
   z-index: 1;
-  margin: 1.5rem 0 0;
+  margin: 0.75rem 0 0;
   text-align: center;
   font-family: system-ui, sans-serif;
   font-size: 9px;
