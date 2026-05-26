@@ -398,9 +398,26 @@ function groupBlocksForDisplay(blocks) {
   const visualItems = []
   let pendingListItems = []
 
+  const shouldMergeWithPreviousProse = (newText) => {
+    const last = visualItems[visualItems.length - 1]
+    if (!last || last.type !== "prose") return false
+
+    const prev = last.text
+    const startsLowercase = /^[a-z]/.test(newText)
+    const prevEndsWithContinuation = /[,;—–-]$/.test(prev.trim())
+    const prevLacksTerminator = !/[.!?"'\)»]$/.test(prev.trim())
+
+    return startsLowercase || prevEndsWithContinuation || prevLacksTerminator
+  }
+
   const pushProse = (proseText) => {
     const trimmed = proseText.trim()
-    if (trimmed) {
+    if (!trimmed) return
+
+    if (shouldMergeWithPreviousProse(trimmed)) {
+      const last = visualItems[visualItems.length - 1]
+      last.text = (last.text + " " + trimmed).replace(/\s+/g, " ").trim()
+    } else {
       visualItems.push({ type: "prose", text: trimmed })
     }
   }
