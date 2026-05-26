@@ -238,11 +238,11 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0;
 }
 
 .book-page__title {
-  margin: 0.2rem 0;
+  margin: 0;
   font-family: "EB Garamond", Georgia, serif;
   font-size: 17px;
   font-weight: 700;
@@ -251,7 +251,7 @@
 }
 
 .book-page__heading {
-  margin: 0.2rem 0;
+  margin: 0;
   font-family: "EB Garamond", Georgia, serif;
   font-size: 15px;
   font-weight: 700;
