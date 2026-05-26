@@ -1,0 +1,47 @@
+@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;700&display=swap");
+
+.reader-screen {
+  width: 100vw;
+  height: 100vh;
+  background: #12100e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reader-screen__content {
+  text-align: center;
+}
+
+.reader-screen__logo {
+  margin: 0;
+  color: #d4af37;
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 2rem;
+  letter-spacing: 0.3em;
+  font-weight: 700;
+}
+
+.reader-screen__subtext,
+.reader-screen__message {
+  margin: 0.85rem 0 0;
+  color: #8b7355;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+}
+
+.reader-screen__link {
+  margin-top: 1rem;
+  border: none;
+  background: transparent;
+  color: #d4af37;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 0;
+}
+
+.reader-screen__link:hover {
+  text-decoration: underline;
+}

@@ -2,6 +2,8 @@ import { useCallback, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import "./Home.css"
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
+
 const UploadStatus = {
   IDLE: "idle",
   UPLOADING: "uploading",
@@ -30,53 +32,77 @@ function isPdfFile(file) {
   return hasPdfMime || hasPdfExtension
 }
 
+function uploadPdf(selectedFile, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    const formData = new FormData()
+    formData.append("file", selectedFile)
+
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        onProgress(Math.round((event.loaded / event.total) * 100))
+      }
+    })
+
+    xhr.addEventListener("load", () => {
+      try {
+        const data = JSON.parse(xhr.responseText)
+        if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+          resolve(data)
+          return
+        }
+        reject(new Error(data.error || "Upload failed."))
+      } catch {
+        reject(new Error("Upload failed."))
+      }
+    })
+
+    xhr.addEventListener("error", () => {
+      reject(new Error("Upload failed."))
+    })
+
+    xhr.open("POST", `${API_URL}/upload`)
+    xhr.send(formData)
+  })
+}
+
 export default function Home() {
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
-  const uploadIntervalRef = useRef(null)
 
   const [file, setFile] = useState(null)
+  const [documentId, setDocumentId] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
   const [uploadStatus, setUploadStatus] = useState(UploadStatus.IDLE)
   const [progress, setProgress] = useState(0)
+  const [uploadError, setUploadError] = useState(null)
 
-  const resetUploadTimer = useCallback(() => {
-    if (uploadIntervalRef.current) {
-      window.clearInterval(uploadIntervalRef.current)
-      uploadIntervalRef.current = null
+  const startUpload = useCallback(async (selectedFile) => {
+    setFile(selectedFile)
+    setDocumentId(null)
+    setUploadError(null)
+    setUploadStatus(UploadStatus.UPLOADING)
+    setProgress(0)
+
+    try {
+      const data = await uploadPdf(selectedFile, setProgress)
+      setProgress(100)
+      setDocumentId(data.document.id)
+      setUploadStatus(UploadStatus.SUCCESS)
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Upload failed.")
+      setUploadStatus(UploadStatus.ERROR)
+      setProgress(0)
     }
   }, [])
 
-  const startFakeUpload = useCallback(
-    (selectedFile) => {
-      resetUploadTimer()
-      setFile(selectedFile)
-      setUploadStatus(UploadStatus.UPLOADING)
-      setProgress(0)
-
-      const startTime = Date.now()
-      const durationMs = 2000
-
-      uploadIntervalRef.current = window.setInterval(() => {
-        const elapsed = Date.now() - startTime
-        const nextProgress = Math.min(100, Math.round((elapsed / durationMs) * 100))
-        setProgress(nextProgress)
-
-        if (nextProgress >= 100) {
-          resetUploadTimer()
-          setUploadStatus(UploadStatus.SUCCESS)
-        }
-      }, 40)
-    },
-    [resetUploadTimer]
-  )
-
   const handleInvalidFile = useCallback(() => {
-    resetUploadTimer()
     setFile(null)
+    setDocumentId(null)
     setProgress(0)
+    setUploadError(null)
     setUploadStatus(UploadStatus.ERROR)
-  }, [resetUploadTimer])
+  }, [])
 
   const handleFileSelection = useCallback(
     (selectedFile) => {
@@ -85,9 +111,9 @@ export default function Home() {
         handleInvalidFile()
         return
       }
-      startFakeUpload(selectedFile)
+      startUpload(selectedFile)
     },
-    [handleInvalidFile, startFakeUpload]
+    [handleInvalidFile, startUpload]
   )
 
   const onDragOver = useCallback((event) => {
@@ -124,8 +150,10 @@ export default function Home() {
   )
 
   const onOpenBook = useCallback(() => {
-    navigate("/read/preview")
-  }, [navigate])
+    if (documentId) {
+      navigate(`/read/${documentId}`)
+    }
+  }, [documentId, navigate])
 
   return (
     <div className="home-page">
@@ -191,7 +219,9 @@ export default function Home() {
           </div>
 
           {uploadStatus === UploadStatus.ERROR && (
-            <p className="upload-error">Only PDF files are supported.</p>
+            <p className="upload-error">
+              {uploadError ?? "Only PDF files are supported."}
+            </p>
           )}
 
           {file && uploadStatus !== UploadStatus.ERROR && (
@@ -213,7 +243,12 @@ export default function Home() {
                   <p className="success-message">
                     <span aria-hidden="true">✓</span> Ready to read
                   </p>
-                  <button type="button" className="open-book-btn" onClick={onOpenBook}>
+                  <button
+                    type="button"
+                    className="open-book-btn"
+                    onClick={onOpenBook}
+                    disabled={!documentId}
+                  >
                     Open Book →
                   </button>
                 </div>

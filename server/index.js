@@ -23,6 +23,39 @@ app.use(express.json())
 
 app.get("/", (req, res) => res.json({ message: "Booky API running" }))
 
+app.get("/documents/:id", async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const { data, error } = await supabase
+      .from("documents")
+      .select("id, name, total_pages, chapters, content")
+      .eq("id", id)
+      .single()
+
+    if (error || !data) {
+      res.status(404).json({ success: false, error: "Document not found" })
+      return
+    }
+
+    res.json({
+      success: true,
+      document: {
+        id: data.id,
+        name: data.name,
+        total_pages: data.total_pages,
+        chapters: data.chapters,
+        content: data.content,
+      },
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to load document.",
+    })
+  }
+})
+
 const CHAPTER_PATTERN =
   /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|one|two|three)|prologue|epilogue|introduction|conclusion)\.?$/i
 
