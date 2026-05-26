@@ -8,7 +8,9 @@ import "./BookViewer.css"
 const NAVBAR_HEIGHT_PX = 48
 const PAGE_NUMBER_RESERVED_PX = 32
 const TERMINAL_PUNCTUATION_PATTERN = /[.?!:;"'»)\]]\s*$/
-const PROSE_WORD_CHUNK_LENGTH = 90
+
+const LIST_ITEM_REGEX = /^([•o·\-—]|\d+[\.\)]|[a-zA-Z][\.\)])\s*(.*)$/
+const LONE_LIST_MARKER_REGEX = /^([•o·\-—]|\d+[\.\)]|[a-zA-Z][\.\)])$/
 
 function getLayoutHeights() {
   const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
@@ -42,215 +44,130 @@ function createMeasureElements() {
   return { root, page, body }
 }
 
-function aggregateBrokenHeadings(flatBlocks) {
-  const aggregated = []
-  let index = 0
-
-  while (index < flatBlocks.length) {
-    const block = flatBlocks[index]
-
-    if (!block.isHeading) {
-      aggregated.push(block)
-      index += 1
-      continue
-    }
-
-    let combinedText = (block.text ?? "").trim()
-    let mergedBlock = { ...block }
-    index += 1
-
-    while (
-      index < flatBlocks.length &&
-      flatBlocks[index].isHeading &&
-      !TERMINAL_PUNCTUATION_PATTERN.test(combinedText)
-    ) {
-      combinedText = `${combinedText} ${(flatBlocks[index].text ?? "").trim()}`.replace(
-        /\s+/g,
-        " "
-      )
-      mergedBlock = {
-        ...mergedBlock,
-        text: combinedText,
-        fontSize: Math.max(mergedBlock.fontSize ?? 12, flatBlocks[index].fontSize ?? 12),
-        chapterId: mergedBlock.chapterId ?? flatBlocks[index].chapterId,
-        chapterTitle: mergedBlock.chapterTitle ?? flatBlocks[index].chapterTitle,
-        isChapterStart: mergedBlock.isChapterStart || flatBlocks[index].isChapterStart,
-      }
-      index += 1
-    }
-
-    aggregated.push({
-      ...mergedBlock,
-      text: combinedText,
-      isHeading: true,
-    })
-  }
-
-  return aggregated
+function resolveHeadingType(fontSize) {
+  if (fontSize > 18) return "title"
+  if (fontSize >= 14) return "heading"
+  return "heading"
 }
 
+/**
+ * Stage 1 (client): turn flat API blocks into grouped visual layout items.
+ */
 function groupBlocksForDisplay(blocks) {
   const visualItems = []
   let currentProse = []
-  let currentListItems = []
 
   const flushProse = () => {
     if (currentProse.length === 0) return
+
     const combinedText = currentProse.join(" ").replace(/\s+/g, " ").trim()
     currentProse = []
-    if (combinedText) visualItems.push({ type: "prose", text: combinedText })
+
+    if (combinedText) {
+      visualItems.push({ type: "prose", text: combinedText })
+    }
   }
 
-  const flushList = () => {
-    if (currentListItems.length === 0) return
-    visualItems.push({ type: "list", items: [...currentListItems] })
-    currentListItems = []
+  let pendingListItems = []
+
+  const flushPendingList = () => {
+    if (pendingListItems.length === 0) return
+    visualItems.push({ type: "list", items: [...pendingListItems] })
+    pendingListItems = []
   }
 
-  const listItemRegex = /^([•o·\-—]|\d+[\.\)]|[a-zA-Z][\.\)])\s*(.*)$/
-  const loneMarkerRegex = /^([•o·\-—]|\d+[\.\)]|[a-zA-Z][\.\)])$/
-
-  for (let i = 0; i < blocks.length; i++) {
-    const block = blocks[i]
-    const text = (block.text ?? "").trim()
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    const rawText = block.text ?? ""
+    const text = rawText.trim()
 
     if (!text) {
       flushProse()
-      flushList()
+      flushPendingList()
       continue
     }
 
     if (block.isHeading) {
       flushProse()
-      flushList()
+      flushPendingList()
 
-      const type = block.fontSize > 18 ? "title" : "heading"
+      let combinedText = text
+      let combinedFontSize = block.fontSize ?? 16
+      let chapterId = block.chapterId ?? null
+      let chapterTitle = block.chapterTitle ?? null
+      let isChapterStart = Boolean(block.isChapterStart)
+
+      while (
+        index + 1 < blocks.length &&
+        blocks[index + 1].isHeading &&
+        !TERMINAL_PUNCTUATION_PATTERN.test(combinedText)
+      ) {
+        index += 1
+        const nextBlock = blocks[index]
+        const nextText = (nextBlock.text ?? "").trim()
+
+        if (!nextText) {
+          break
+        }
+
+        combinedText = `${combinedText} ${nextText}`.replace(/\s+/g, " ").trim()
+        combinedFontSize = Math.max(combinedFontSize, nextBlock.fontSize ?? 16)
+        chapterId = chapterId ?? nextBlock.chapterId ?? null
+        chapterTitle = chapterTitle ?? nextBlock.chapterTitle ?? null
+        isChapterStart = isChapterStart || Boolean(nextBlock.isChapterStart)
+      }
+
       visualItems.push({
-        type,
-        text,
-        fontSize: block.fontSize,
-        chapterId: block.chapterId ?? null,
-        chapterTitle: block.chapterTitle ?? null,
-        isChapterStart: Boolean(block.isChapterStart),
+        type: resolveHeadingType(combinedFontSize),
+        text: combinedText,
+        fontSize: combinedFontSize,
+        chapterId,
+        chapterTitle,
+        isChapterStart,
       })
       continue
     }
 
-    if (loneMarkerRegex.test(text)) {
+    if (LONE_LIST_MARKER_REGEX.test(text)) {
       flushProse()
-      if (i + 1 < blocks.length && !blocks[i + 1].isHeading) {
-        let contentText = (blocks[i + 1].text ?? "").trim()
-        if (listItemRegex.test(contentText)) {
-          contentText = contentText.replace(listItemRegex, "$2").trim()
+
+      if (index + 1 < blocks.length && !blocks[index + 1].isHeading) {
+        let contentText = (blocks[index + 1].text ?? "").trim()
+
+        if (LIST_ITEM_REGEX.test(contentText)) {
+          contentText = contentText.replace(LIST_ITEM_REGEX, "$2").trim()
         }
+
         if (contentText) {
-          currentListItems.push({ text: contentText })
+          pendingListItems.push({ text: contentText })
         }
-        i += 1
+
+        index += 1
       }
+
       continue
     }
 
-    if (listItemRegex.test(text)) {
+    if (LIST_ITEM_REGEX.test(text)) {
       flushProse()
-      const cleanListContent = text.replace(listItemRegex, "$2").trim()
+      const cleanListContent = text.replace(LIST_ITEM_REGEX, "$2").trim()
+
       if (cleanListContent) {
-        currentListItems.push({ text: cleanListContent })
+        pendingListItems.push({ text: cleanListContent })
       }
+
       continue
     }
 
-    if (currentListItems.length > 0) {
-      flushList()
-    }
-
+    flushPendingList()
     flushProse()
     currentProse.push(text)
   }
 
   flushProse()
-  flushList()
+  flushPendingList()
+
   return visualItems
-}
-
-function buildLayoutStream(flatBlocks) {
-  return groupBlocksForDisplay(aggregateBrokenHeadings(flatBlocks))
-}
-
-function splitProseIntoSegments(text) {
-  const trimmed = (text ?? "").trim()
-  if (!trimmed) return []
-
-  const sentenceMatches = trimmed.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g)
-  if (sentenceMatches?.length) {
-    return sentenceMatches.map((segment) => segment.trim()).filter(Boolean)
-  }
-
-  const clauseMatches = trimmed.match(/[^;]+;+|[^;]+$/g)
-  if (clauseMatches?.length > 1) {
-    return clauseMatches.map((segment) => segment.trim()).filter(Boolean)
-  }
-
-  return [trimmed]
-}
-
-function splitProseIntoWordChunks(text, maxChunkLength = PROSE_WORD_CHUNK_LENGTH) {
-  const words = (text ?? "").trim().split(/\s+/).filter(Boolean)
-  if (words.length === 0) return []
-
-  const chunks = []
-  let currentWords = []
-
-  for (const word of words) {
-    const candidate = [...currentWords, word].join(" ")
-    if (candidate.length > maxChunkLength && currentWords.length > 0) {
-      chunks.push(currentWords.join(" "))
-      currentWords = [word]
-    } else {
-      currentWords.push(word)
-    }
-  }
-
-  if (currentWords.length > 0) {
-    chunks.push(currentWords.join(" "))
-  }
-
-  return chunks
-}
-
-function expandVisualItemToUnits(item) {
-  if (item.type === "prose") {
-    const segments = splitProseIntoSegments(item.text)
-    if (segments.length === 0) {
-      return [{ type: "prose", text: item.text }]
-    }
-    return segments.map((segment) => ({ type: "prose", text: segment }))
-  }
-
-  if (item.type === "list") {
-    return item.items.map((listItem) => ({
-      type: "list",
-      items: [listItem],
-    }))
-  }
-
-  return [item]
-}
-
-function expandOversizedProseUnit(unit) {
-  if (unit.type !== "prose") return [unit]
-
-  const segments = splitProseIntoSegments(unit.text)
-  if (segments.length > 1) {
-    return segments.map((segment) => ({ type: "prose", text: segment }))
-  }
-
-  const wordChunks = splitProseIntoWordChunks(unit.text)
-  if (wordChunks.length > 1) {
-    return wordChunks.map((chunk) => ({ type: "prose", text: chunk }))
-  }
-
-  return [unit]
 }
 
 function appendChapterLabel(body, title) {
@@ -312,27 +229,27 @@ function renderMeasureBody(body, visualItems, showChapterLabel, chapterTitle) {
   }
 }
 
-function measurePageFits(bodyEl, visualItems, contentMaxHeight, showChapterLabel, chapterTitle) {
-  renderMeasureBody(bodyEl, visualItems, showChapterLabel, chapterTitle)
-  return bodyEl.scrollHeight <= contentMaxHeight
-}
-
 function applyChapterContextFromItem(item, chapterState) {
-  if (item.type !== "title" && item.type !== "heading") return
+  if (item.type !== "title" && item.type !== "heading") {
+    return
+  }
 
   if (item.isChapterStart || item.type === "title") {
     chapterState.pageChapterTitle = item.chapterTitle ?? item.text
     chapterState.pageIsChapterStart = true
-  } else if (!chapterState.pageChapterTitle) {
+    return
+  }
+
+  if (!chapterState.pageChapterTitle) {
     chapterState.pageChapterTitle = item.chapterTitle ?? item.text
   }
 }
 
 /**
- * Stage 3 streaming layout: paginates visual units with overflow-aware flushing.
+ * Stage 3: paginate pre-grouped visual items so measurement matches rendered DOM.
  */
 function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
-  const layoutStream = buildLayoutStream(flatBlocks)
+  const visualItems = groupBlocksForDisplay(flatBlocks)
   const pages = []
   let currentPageItems = []
   const chapterState = {
@@ -346,7 +263,9 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     currentPageItems.length === 0
 
   const flushPage = () => {
-    if (currentPageItems.length === 0) return
+    if (currentPageItems.length === 0) {
+      return
+    }
 
     pages.push({
       pageNumber: pages.length + 1,
@@ -360,65 +279,30 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     chapterState.pageIsChapterStart = false
   }
 
-  const tryAppendToCurrentPage = (unit) => {
-    const trialItems = [...currentPageItems, unit]
-    return measurePageFits(
+  for (const item of visualItems) {
+    applyChapterContextFromItem(item, chapterState)
+
+    const trialItems = [...currentPageItems, item]
+
+    renderMeasureBody(
       bodyEl,
       trialItems,
-      contentMaxHeight,
       showChapterLabel(),
       chapterState.pageChapterTitle
     )
-  }
 
-  const appendUnit = (unit) => {
-    const placeUnit = (candidate) => {
-      if (tryAppendToCurrentPage(candidate)) {
-        currentPageItems.push(candidate)
-        return true
-      }
+    if (bodyEl.scrollHeight > contentMaxHeight && currentPageItems.length > 0) {
+      flushPage()
+      currentPageItems = [item]
 
-      if (currentPageItems.length > 0) {
-        flushPage()
-      }
-
-      if (tryAppendToCurrentPage(candidate)) {
-        currentPageItems.push(candidate)
-        return true
-      }
-
-      return false
-    }
-
-    if (placeUnit(unit)) return
-
-    const subdivisions = unit.type === "prose" ? expandOversizedProseUnit(unit) : [unit]
-
-    for (const subdivision of subdivisions) {
-      if (placeUnit(subdivision)) continue
-
-      if (subdivision.type !== "prose") {
-        currentPageItems.push(subdivision)
-        continue
-      }
-
-      for (const chunk of splitProseIntoWordChunks(subdivision.text, 60)) {
-        const chunkUnit = { type: "prose", text: chunk }
-
-        if (!placeUnit(chunkUnit)) {
-          currentPageItems.push(chunkUnit)
-          flushPage()
-        }
-      }
-    }
-  }
-
-  for (const item of layoutStream) {
-    applyChapterContextFromItem(item, chapterState)
-
-    const units = expandVisualItemToUnits(item)
-    for (const unit of units) {
-      appendUnit(unit)
+      renderMeasureBody(
+        bodyEl,
+        currentPageItems,
+        chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
+        chapterState.pageChapterTitle
+      )
+    } else {
+      currentPageItems = trialItems
     }
   }
 
