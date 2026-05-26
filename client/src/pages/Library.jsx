@@ -16,17 +16,9 @@ function formatUploadDate(dateString) {
     .replace(",", "")
 }
 
-function formatPageCounts(totalPages, bookyPages) {
-  const pdfCount = totalPages ?? 0
-  const pdfLabel = `${pdfCount} ${pdfCount === 1 ? "PDF page" : "PDF pages"}`
-
-  if (bookyPages == null) {
-    return pdfLabel
-  }
-
-  const bookyCount = bookyPages
-  const bookyLabel = `${bookyCount} ${bookyCount === 1 ? "Booky page" : "Booky pages"}`
-  return `${pdfLabel} · ${bookyLabel}`
+function formatPageCount(totalPages) {
+  const count = totalPages ?? 0
+  return `${count} ${count === 1 ? "PDF page" : "PDF pages"}`
 }
 
 function EditTitleIcon() {
@@ -215,9 +207,7 @@ function LibraryBookCard({ document, onDelete, onRename }) {
         {renameError && (
           <p className="library-card__rename-error">Rename failed. Try again.</p>
         )}
-        <p className="library-card__pages">
-          {formatPageCounts(document.total_pages, document.booky_pages)}
-        </p>
+        <p className="library-card__pages">{formatPageCount(document.total_pages)}</p>
         <p className="library-card__date">{formatUploadDate(document.created_at)}</p>
 
         {confirming ? (

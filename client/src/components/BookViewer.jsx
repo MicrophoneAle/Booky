@@ -1,4 +1,4 @@
-﻿import { Fragment, useCallback, useEffect, useRef, useState } from "react"
+﻿import { Fragment, useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, useReducedMotion } from "framer-motion"
 import { flattenDocument } from "../utils/paginator"
@@ -1354,11 +1354,6 @@ export default function BookViewer({
   const [flipDirection, setFlipDirection] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
   const [layoutMode, setLayoutMode] = useState("spread")
-  const bookyPagesSavedRef = useRef(false)
-
-  useEffect(() => {
-    bookyPagesSavedRef.current = false
-  }, [bookDocument?.id])
 
   useEffect(() => {
     if (!bookDocument) {
@@ -1441,41 +1436,6 @@ export default function BookViewer({
       setCurrentPage(maxPageIndex)
     }
   }, [currentPage, maxPageIndex])
-
-  useEffect(() => {
-    if (isPaginating) return
-    if (!bookDocument?.id) return
-    if (bookDocument.booky_pages != null) return
-    if (pages.length < 1) return
-    if (bookyPagesSavedRef.current) return
-
-    bookyPagesSavedRef.current = true
-
-    const saveBookyPageCount = async () => {
-      try {
-        const response = await fetch(
-          `${API_URL}/documents/${encodeURIComponent(bookDocument.id)}`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-            body: JSON.stringify({ booky_pages: pages.length }),
-          }
-        )
-        const data = await response.json()
-
-        if (!response.ok || !data.success) {
-          throw new Error("Failed to save Booky page count")
-        }
-      } catch {
-        bookyPagesSavedRef.current = false
-      }
-    }
-
-    saveBookyPageCount()
-  }, [isPaginating, bookDocument?.id, bookDocument?.booky_pages, pages.length])
 
   const toggleLayoutMode = useCallback(() => {
     setLayoutMode((mode) => (mode === "spread" ? "single" : "spread"))
