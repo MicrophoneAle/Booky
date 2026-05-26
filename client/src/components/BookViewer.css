@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;700&family=Lora:wght@400;600&display=swap");
 
 .book-viewer {
+  --book-viewer-nav-height: 36px;
   width: 100vw;
   height: 100vh;
   background: #12100e;
@@ -15,8 +16,8 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   flex-shrink: 0;
-  min-height: 48px;
-  height: 48px;
+  min-height: var(--book-viewer-nav-height);
+  height: var(--book-viewer-nav-height);
   padding: 0 1.25rem;
   background: #1c1917;
   border-bottom: 1px solid #2a2420;
@@ -25,7 +26,7 @@
 .book-viewer__logo {
   color: #d4af37;
   font-family: "EB Garamond", Georgia, serif;
-  font-size: 1.25rem;
+  font-size: 0.9375rem;
   letter-spacing: 0.2em;
   font-weight: 700;
 }
@@ -33,7 +34,7 @@
 .book-viewer__chapter {
   margin: 0;
   color: #8b7355;
-  font-size: 12px;
+  font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   text-align: center;
@@ -53,7 +54,7 @@
 .book-viewer__counter {
   margin: 0;
   color: #8b7355;
-  font-size: 12px;
+  font-size: 9px;
 }
 
 .book-viewer__fullscreen {
@@ -136,7 +137,7 @@
 .book-viewer__spread {
   display: flex;
   align-items: stretch;
-  height: calc(100vh - 80px);
+  height: calc(100vh - var(--book-viewer-nav-height));
   max-height: 100%;
   border: 1px solid #2a2420;
   border-radius: 4px;
@@ -146,7 +147,7 @@
 
 .book-viewer__page-slot {
   width: 400px;
-  height: calc(100vh - 80px);
+  height: calc(100vh - var(--book-viewer-nav-height));
   max-height: 100%;
   transform-style: preserve-3d;
   backface-visibility: hidden;
@@ -168,7 +169,7 @@
 .book-page {
   position: relative;
   width: 100%;
-  height: calc(100vh - 80px);
+  height: calc(100vh - var(--book-viewer-nav-height));
   max-height: 100%;
   background: #ffffff;
   padding: 1.5rem;
@@ -245,7 +246,7 @@
 
   .book-viewer__page-slot--single {
     width: min(400px, calc(100vw - 2rem));
-    height: calc(100vh - 80px);
+    height: calc(100vh - var(--book-viewer-nav-height));
     max-height: 100%;
   }
 }
