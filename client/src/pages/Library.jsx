@@ -94,9 +94,9 @@ function LibraryBookCard({ document, onDelete, onRename }) {
   }
 
   const saveTitleEdit = async () => {
-    const trimmed = editValue.trim()
+    const name = String(editValue ?? "").trim()
 
-    if (!trimmed || trimmed === document.name) {
+    if (!name || name === document.name) {
       cancelTitleEdit()
       return
     }
@@ -105,18 +105,25 @@ function LibraryBookCard({ document, onDelete, onRename }) {
     setRenameError(false)
 
     try {
-      const response = await fetch(`${API_URL}/documents/${document.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: trimmed }),
-      })
+      const payload = { name }
+      const response = await fetch(
+        `${API_URL}/documents/${encodeURIComponent(document.id)}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      )
       const data = await response.json()
 
       if (!response.ok || !data.success) {
         throw new Error("Rename failed")
       }
 
-      onRename(document.id, trimmed)
+      onRename(document.id, name)
       setIsEditingTitle(false)
     } catch {
       setEditValue(document.name)
