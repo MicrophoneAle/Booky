@@ -7,25 +7,121 @@ import "./BookViewer.css"
 
 const NAVBAR_HEIGHT_PX = 48
 const PAGE_NUMBER_RESERVED_PX = 32
-const TERMINAL_PUNCTUATION_PATTERN = /[.?!:;"'»)\]]\s*$/
+const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 20
+const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 
-const LIST_ITEM_REGEX = /^([•o·\-—]|\d+[\.\)]|[a-zA-Z][\.\)])\s*(.*)$/
-const LONE_LIST_MARKER_REGEX = /^([•o·\-—]|\d+[\.\)]|[a-zA-Z][\.\)])$/
 const IMPLIED_LIST_LINE_REGEX =
   /^(Add|Test|Explore|Run:|Verify|Ensure|Click)\b/i
 const STANDALONE_URL_REGEX = /^https?:\/\/\S+$/i
+
+const LEVEL_0_NUMBER_REGEX = /^(\d+[\.\)])\s*(.*)$/
+const LEVEL_0_BULLET_REGEX = /^([•·\-—])\s*(.*)$/
+const LEVEL_1_MARKER_REGEX = /^([o*]|[a-z][\.\)])\s*(.*)$/i
+const LEVEL_2_MARKER_REGEX = /^((?:[ivxlcdm]+|\([a-z]\))[\.\)])\s*(.*)$/i
+const LONE_MARKER_REGEX = /^(\d+[\.\)]|[•·\-—]|[o*]|[a-z][\.\)]|(?:[ivxlcdm]+|\([a-z]\))[\.\)])$/i
 
 function isStandaloneUrl(text) {
   return STANDALONE_URL_REGEX.test(text.trim())
 }
 
-function isListMarkerLine(text) {
-  const trimmed = text.trim()
-  return LONE_LIST_MARKER_REGEX.test(trimmed) || LIST_ITEM_REGEX.test(trimmed)
-}
-
 function isImpliedListLine(text) {
   return IMPLIED_LIST_LINE_REGEX.test(text.trim())
+}
+
+function isListMarkerLine(text) {
+  return parseListLine(text) !== null || LONE_MARKER_REGEX.test(text.trim())
+}
+
+function parseListLine(text) {
+  const trimmed = text.trim()
+  if (!trimmed) return null
+
+  let match = trimmed.match(LEVEL_0_NUMBER_REGEX)
+  if (match) {
+    return { level: 0, text: match[2].trim(), markerOnly: !match[2].trim() }
+  }
+
+  match = trimmed.match(LEVEL_0_BULLET_REGEX)
+  if (match) {
+    return { level: 0, text: match[2].trim(), markerOnly: !match[2].trim() }
+  }
+
+  match = trimmed.match(LEVEL_2_MARKER_REGEX)
+  if (match) {
+    return { level: 2, text: match[2].trim(), markerOnly: !match[2].trim() }
+  }
+
+  match = trimmed.match(LEVEL_1_MARKER_REGEX)
+  if (match) {
+    return { level: 1, text: match[2].trim(), markerOnly: !match[2].trim() }
+  }
+
+  return null
+}
+
+function parseLoneMarker(text) {
+  const trimmed = text.trim()
+  if (!trimmed || !LONE_MARKER_REGEX.test(trimmed)) return null
+
+  if (/^\d+[\.\)]$/.test(trimmed)) {
+    return { level: 0, markerOnly: true, text: "" }
+  }
+
+  if (/^[•·\-—]$/.test(trimmed)) {
+    return { level: 0, markerOnly: true, text: "" }
+  }
+
+  if (/^[o*]$/i.test(trimmed)) {
+    return { level: 1, markerOnly: true, text: "" }
+  }
+
+  if (/^[a-z][\.\)]$/i.test(trimmed)) {
+    return { level: 1, markerOnly: true, text: "" }
+  }
+
+  if (/^(?:[ivxlcdm]+|\([a-z]\))[\.\)]$/i.test(trimmed)) {
+    return { level: 2, markerOnly: true, text: "" }
+  }
+
+  return null
+}
+
+function createListNode(text, level) {
+  return { text, level, children: [] }
+}
+
+function buildNestedListTree(flatItems) {
+  const root = []
+  const stack = [{ level: -1, children: root }]
+
+  for (const item of flatItems) {
+    const node = createListNode(item.text, item.level)
+
+    while (stack.length > 1 && stack[stack.length - 1].level >= item.level) {
+      stack.pop()
+    }
+
+    stack[stack.length - 1].children.push(node)
+    stack.push({ level: item.level, children: node.children })
+  }
+
+  return root
+}
+
+function flattenListTree(nodes, result = []) {
+  for (const node of nodes) {
+    result.push({ text: node.text, level: node.level })
+    if (node.children.length > 0) {
+      flattenListTree(node.children, result)
+    }
+  }
+  return result
+}
+
+function listItemLevelClass(level) {
+  if (level === 1) return "book-page__list-item book-page__list-item--level-1"
+  if (level === 2) return "book-page__list-item book-page__list-item--level-2"
+  return "book-page__list-item"
 }
 
 function getLayoutHeights() {
@@ -33,7 +129,11 @@ function getLayoutHeights() {
   const stagePaddingY = 1.5 * remPx * 2
   const pagePaddingY = 1.5 * remPx * 2
   const pageOuterHeight = window.innerHeight - NAVBAR_HEIGHT_PX - stagePaddingY
-  const contentMaxHeight = pageOuterHeight - pagePaddingY - PAGE_NUMBER_RESERVED_PX
+  const contentMaxHeight =
+    pageOuterHeight -
+    pagePaddingY -
+    PAGE_NUMBER_RESERVED_PX -
+    CONTENT_HEIGHT_SAFETY_BUFFER_PX
 
   return { pageOuterHeight, contentMaxHeight }
 }
@@ -72,6 +172,7 @@ function resolveHeadingType(fontSize) {
 function groupBlocksForDisplay(blocks) {
   const visualItems = []
   let currentProse = []
+  let pendingListItems = []
 
   const flushProse = () => {
     if (currentProse.length === 0) return
@@ -84,18 +185,26 @@ function groupBlocksForDisplay(blocks) {
     }
   }
 
-  let pendingListItems = []
-
   const flushPendingList = () => {
     if (pendingListItems.length === 0) return
-    visualItems.push({ type: "list", items: [...pendingListItems] })
+
+    visualItems.push({
+      type: "list",
+      items: buildNestedListTree(pendingListItems),
+    })
     pendingListItems = []
+  }
+
+  const pushListItem = (text, level) => {
+    const trimmed = text.trim()
+    if (trimmed) {
+      pendingListItems.push({ text: trimmed, level })
+    }
   }
 
   for (let index = 0; index < blocks.length; index += 1) {
     const block = blocks[index]
-    const rawText = block.text ?? ""
-    const text = rawText.trim()
+    const text = (block.text ?? "").trim()
 
     if (!text) {
       flushProse()
@@ -119,13 +228,20 @@ function groupBlocksForDisplay(blocks) {
       continue
     }
 
-    if (isStandaloneUrl(text) && pendingListItems.length > 0) {
-      const lastListItem = pendingListItems[pendingListItems.length - 1]
-      lastListItem.text = `${lastListItem.text} ${text}`.replace(/\s+/g, " ").trim()
+    if (isStandaloneUrl(text)) {
+      if (pendingListItems.length > 0) {
+        const lastListItem = pendingListItems[pendingListItems.length - 1]
+        lastListItem.text = `${lastListItem.text} ${text}`.replace(/\s+/g, " ").trim()
+        continue
+      }
+
+      flushPendingList()
+      currentProse.push(text)
       continue
     }
 
-    if (LONE_LIST_MARKER_REGEX.test(text)) {
+    const loneMarker = parseLoneMarker(text)
+    if (loneMarker) {
       flushProse()
 
       const nextBlock = blocks[index + 1]
@@ -137,34 +253,28 @@ function groupBlocksForDisplay(blocks) {
         !isListMarkerLine(nextText)
 
       if (canConsumeNextLine) {
-        let contentText = nextText
-
-        if (LIST_ITEM_REGEX.test(contentText)) {
-          contentText = contentText.replace(LIST_ITEM_REGEX, "$2").trim()
+        const parsedNext = parseListLine(nextText)
+        if (parsedNext && !parsedNext.markerOnly) {
+          pushListItem(parsedNext.text, parsedNext.level)
+        } else if (!parsedNext) {
+          pushListItem(nextText, loneMarker.level)
         }
-
-        if (contentText) {
-          pendingListItems.push({ text: contentText })
-        }
-
         index += 1
       }
 
       continue
     }
 
-    if (LIST_ITEM_REGEX.test(text)) {
+    const parsedList = parseListLine(text)
+    if (parsedList && !parsedList.markerOnly) {
       flushProse()
-      pendingListItems.push({ text })
+      pushListItem(parsedList.text, parsedList.level)
       continue
     }
 
-    if (
-      isImpliedListLine(text) &&
-      (pendingListItems.length > 0 || currentProse.length === 0)
-    ) {
+    if (isImpliedListLine(text) && pendingListItems.length > 0) {
       flushProse()
-      pendingListItems.push({ text })
+      pushListItem(text, pendingListItems[pendingListItems.length - 1].level)
       continue
     }
 
@@ -183,6 +293,23 @@ function appendChapterLabel(body, title) {
   label.className = "book-page__chapter-label"
   label.textContent = title
   body.appendChild(label)
+}
+
+function appendListNodes(parentList, nodes) {
+  for (const node of nodes) {
+    const listEntry = document.createElement("li")
+    listEntry.className = listItemLevelClass(node.level)
+    listEntry.textContent = node.text
+
+    if (node.children.length > 0) {
+      const nestedList = document.createElement("ul")
+      nestedList.className = "book-page__list"
+      appendListNodes(nestedList, node.children)
+      listEntry.appendChild(nestedList)
+    }
+
+    parentList.appendChild(listEntry)
+  }
 }
 
 function appendVisualItem(body, item) {
@@ -205,14 +332,7 @@ function appendVisualItem(body, item) {
   if (item.type === "list") {
     const list = document.createElement("ul")
     list.className = "book-page__list"
-
-    for (const listItem of item.items) {
-      const listEntry = document.createElement("li")
-      listEntry.className = "book-page__list-item"
-      listEntry.textContent = listItem.text
-      list.appendChild(listEntry)
-    }
-
+    appendListNodes(list, item.items)
     body.appendChild(list)
     return
   }
@@ -253,11 +373,72 @@ function applyChapterContextFromItem(item, chapterState) {
   }
 }
 
+function pageContentOverflows(bodyEl, contentMaxHeight) {
+  if (bodyEl.scrollHeight > contentMaxHeight) {
+    return true
+  }
+
+  const lastChild = bodyEl.lastElementChild
+  if (!lastChild) {
+    return false
+  }
+
+  const bottom = lastChild.offsetTop + lastChild.offsetHeight
+  return bottom > contentMaxHeight
+}
+
+function expandItemToPaginationUnits(item) {
+  if (item.type !== "list") {
+    return [item]
+  }
+
+  const flatItems = flattenListTree(item.items)
+  return flatItems.map((listItem) => ({
+    type: "list",
+    items: buildNestedListTree([listItem]),
+  }))
+}
+
+function cleanupPages(pages, bodyEl, contentMaxHeight) {
+  let cleaned = pages.filter((page) => page.visualItems.length > 0)
+
+  if (cleaned.length >= 2) {
+    const lastPage = cleaned[cleaned.length - 1]
+    const previousPage = cleaned[cleaned.length - 2]
+
+    if (lastPage.visualItems.length === 1) {
+      const onlyItem = lastPage.visualItems[0]
+
+      if (onlyItem.type === "prose" && onlyItem.text.length < TRIVIAL_LAST_PAGE_CHAR_LIMIT) {
+        const mergedItems = [...previousPage.visualItems, ...lastPage.visualItems]
+
+        renderMeasureBody(
+          bodyEl,
+          mergedItems,
+          Boolean(previousPage.isChapterStart && previousPage.chapterTitle),
+          previousPage.chapterTitle
+        )
+
+        if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
+          previousPage.visualItems = mergedItems
+          cleaned = cleaned.slice(0, -1)
+        }
+      }
+    }
+  }
+
+  return cleaned.map((page, index) => ({
+    ...page,
+    pageNumber: index + 1,
+  }))
+}
+
 /**
  * Stage 3: paginate pre-grouped visual items so measurement matches rendered DOM.
  */
 function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   const visualItems = groupBlocksForDisplay(flatBlocks)
+  const paginationUnits = visualItems.flatMap((item) => expandItemToPaginationUnits(item))
   const pages = []
   let currentPageItems = []
   const chapterState = {
@@ -287,10 +468,8 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     chapterState.pageIsChapterStart = false
   }
 
-  for (const item of visualItems) {
-    applyChapterContextFromItem(item, chapterState)
-
-    const trialItems = [...currentPageItems, item]
+  const tryPlaceUnit = (unit) => {
+    const trialItems = [...currentPageItems, unit]
 
     renderMeasureBody(
       bodyEl,
@@ -299,26 +478,50 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       chapterState.pageChapterTitle
     )
 
-    if (bodyEl.scrollHeight > contentMaxHeight && currentPageItems.length > 0) {
+    if (pageContentOverflows(bodyEl, contentMaxHeight) && currentPageItems.length > 0) {
       flushPage()
-      currentPageItems = [item]
 
       renderMeasureBody(
         bodyEl,
-        currentPageItems,
+        [unit],
         chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
         chapterState.pageChapterTitle
       )
-    } else {
-      currentPageItems = trialItems
+
+      currentPageItems = [unit]
+      return
     }
+
+    currentPageItems = trialItems
+  }
+
+  for (const unit of paginationUnits) {
+    applyChapterContextFromItem(unit, chapterState)
+    tryPlaceUnit(unit)
   }
 
   if (currentPageItems.length > 0) {
     flushPage()
   }
 
-  return pages
+  return cleanupPages(pages, bodyEl, contentMaxHeight)
+}
+
+function renderListNodesReact(nodes, keyPrefix) {
+  return nodes.map((node, index) => {
+    const itemKey = `${keyPrefix}-${index}`
+
+    return (
+      <li key={itemKey} className={listItemLevelClass(node.level)}>
+        {node.text}
+        {node.children.length > 0 && (
+          <ul className="book-page__list">
+            {renderListNodesReact(node.children, itemKey)}
+          </ul>
+        )}
+      </li>
+    )
+  })
 }
 
 function BookPageContent({ page }) {
@@ -355,11 +558,7 @@ function BookPageContent({ page }) {
           if (item.type === "list") {
             return (
               <ul key={index} className="book-page__list">
-                {item.items.map((listItem, listIndex) => (
-                  <li key={listIndex} className="book-page__list-item">
-                    {listItem.text}
-                  </li>
-                ))}
+                {renderListNodesReact(item.items, `list-${index}`)}
               </ul>
             )
           }
@@ -394,7 +593,7 @@ function formatPageCounter(leftPage, rightPage, totalPages, isSpreadView) {
 
   const leftNumber = leftPage.pageNumber
 
-  if (isSpreadView && rightPage) {
+  if (isSpreadView && rightPage?.pageNumber) {
     return `Pages ${leftNumber}–${rightPage.pageNumber} of ${totalPages}`
   }
 
@@ -746,7 +945,11 @@ export default function BookViewer({
                 }
               >
                 <div className="book-viewer__page-face">
-                  <BookPageContent page={rightPage} />
+                  {rightPage ? (
+                    <BookPageContent page={rightPage} />
+                  ) : (
+                    <div className="book-page book-page--empty" />
+                  )}
                 </div>
               </motion.div>
             </>
