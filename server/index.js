@@ -33,7 +33,7 @@ app.get("/documents", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("documents")
-      .select("id, name, total_pages, created_at")
+      .select("id, name, total_pages, booky_pages, created_at")
       .order("created_at", { ascending: false })
 
     if (error) {
@@ -95,18 +95,36 @@ app.delete("/documents/:id", async (req, res) => {
 app.patch("/documents/:id", async (req, res) => {
   try {
     const { id } = req.params
-    const name = typeof req.body?.name === "string" ? req.body.name.trim() : ""
+    const updates = {}
 
-    if (!name) {
-      res.status(400).json({ success: false, error: "Name is required" })
+    if (typeof req.body?.name === "string") {
+      const name = req.body.name.trim()
+      if (!name) {
+        res.status(400).json({ success: false, error: "Name is required" })
+        return
+      }
+      updates.name = name
+    }
+
+    if (req.body?.booky_pages !== undefined && req.body?.booky_pages !== null) {
+      const bookyPages = Number(req.body.booky_pages)
+      if (!Number.isInteger(bookyPages) || bookyPages < 1) {
+        res.status(400).json({ success: false, error: "Invalid booky_pages" })
+        return
+      }
+      updates.booky_pages = bookyPages
+    }
+
+    if (Object.keys(updates).length === 0) {
+      res.status(400).json({ success: false, error: "No valid fields to update" })
       return
     }
 
     const { data, error } = await supabase
       .from("documents")
-      .update({ name })
+      .update(updates)
       .eq("id", id)
-      .select("id, name, total_pages, created_at")
+      .select("id, name, total_pages, booky_pages, created_at")
       .single()
 
     if (error || !data) {
@@ -129,7 +147,7 @@ app.get("/documents/:id", async (req, res) => {
 
     const { data, error } = await supabase
       .from("documents")
-      .select("id, name, total_pages, chapters, content")
+      .select("id, name, total_pages, booky_pages, chapters, content")
       .eq("id", id)
       .single()
 
@@ -144,6 +162,7 @@ app.get("/documents/:id", async (req, res) => {
         id: data.id,
         name: data.name,
         total_pages: data.total_pages,
+        booky_pages: data.booky_pages,
         chapters: data.chapters,
         content: data.content,
       },

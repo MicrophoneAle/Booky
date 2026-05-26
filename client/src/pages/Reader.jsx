@@ -30,6 +30,8 @@ export default function Reader() {
         if (cancelled) return
 
         setBookDocument({
+          id: data.document.id,
+          booky_pages: data.document.booky_pages ?? null,
           title: data.document.name,
           chapters: data.document.chapters ?? [],
           content: data.document.content ?? [],
