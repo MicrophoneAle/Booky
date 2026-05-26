@@ -1,0 +1,213 @@
+@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;700&family=Lora:wght@400;600&display=swap");
+
+.book-viewer {
+  width: 100vw;
+  height: 100vh;
+  background: #12100e;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: system-ui, sans-serif;
+}
+
+.book-viewer__nav {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 1.25rem;
+  background: #1c1917;
+  border-bottom: 1px solid #2a2420;
+}
+
+.book-viewer__logo {
+  color: #d4af37;
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+}
+
+.book-viewer__chapter {
+  margin: 0;
+  color: #8b7355;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40vw;
+}
+
+.book-viewer__counter {
+  margin: 0;
+  justify-self: end;
+  color: #8b7355;
+  font-size: 12px;
+}
+
+.book-viewer__stage {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1200px;
+}
+
+.book-viewer__zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  z-index: 4;
+  padding: 0;
+}
+
+.book-viewer__zone--left {
+  left: 0;
+}
+
+.book-viewer__zone--right {
+  right: 0;
+}
+
+.book-viewer__zone:disabled {
+  cursor: default;
+}
+
+.book-viewer__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #8b7355;
+  font-size: 2rem;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 3;
+  user-select: none;
+}
+
+.book-viewer__arrow--left {
+  left: 1rem;
+}
+
+.book-viewer__arrow--right {
+  right: 1rem;
+}
+
+.book-viewer__stage:hover .book-viewer__arrow {
+  opacity: 0.85;
+}
+
+.book-viewer__spread {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #2a2420;
+  border-radius: 4px;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.book-viewer__page-slot {
+  width: 400px;
+  height: 600px;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.book-viewer__page-face {
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.book-viewer__spine {
+  width: 1px;
+  background: #2a2420;
+  flex-shrink: 0;
+}
+
+.book-page {
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  padding: 3rem;
+  color: #1c1917;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.book-page--empty {
+  background: #ffffff;
+}
+
+.book-page__chapter-label {
+  margin: 0 0 1rem;
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #8b7355;
+}
+
+.book-page__body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.book-page__heading {
+  margin: 0 0 1.5rem;
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1c1917;
+}
+
+.book-page__text {
+  margin: 0 0 1rem;
+  font-family: "Lora", Georgia, serif;
+  font-size: 17px;
+  line-height: 1.85;
+  color: #1c1917;
+}
+
+.book-page__text:last-child {
+  margin-bottom: 0;
+}
+
+.book-page__number {
+  margin: 1.5rem 0 0;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+  color: #8b7355;
+  letter-spacing: 0.15em;
+}
+
+@media (max-width: 767px) {
+  .book-viewer__spread {
+    border-radius: 4px;
+  }
+
+  .book-viewer__page-slot--single {
+    width: min(400px, calc(100vw - 2rem));
+    height: min(600px, calc(100vh - 7rem));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-viewer__page-slot {
+    transition: none !important;
+  }
+}
