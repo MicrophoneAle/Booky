@@ -283,13 +283,15 @@
 }
 
 .book-page__list-item--level-1 {
-  padding-left: 1rem;
   list-style-type: circle;
 }
 
 .book-page__list-item--level-2 {
-  padding-left: 2rem;
   list-style-type: square;
+}
+
+.book-page__list-item > .book-page__list {
+  padding-left: 1.25rem;
 }
 
 .book-page__list-item--no-bullet {
@@ -303,12 +305,10 @@
 }
 
 .book-page__list-item--level-1.book-page__list-item--no-bullet {
-  padding-left: 1rem;
   list-style: none;
 }
 
 .book-page__list-item--level-2.book-page__list-item--no-bullet {
-  padding-left: 2rem;
   list-style: none;
 }
 

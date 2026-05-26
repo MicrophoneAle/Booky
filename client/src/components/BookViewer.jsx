@@ -374,6 +374,13 @@ function groupBlocksForDisplay(blocks) {
       continue
     }
 
+    if (pendingListItems.length > 0) {
+      flushProse()
+      const lastListItem = pendingListItems[pendingListItems.length - 1]
+      lastListItem.text = `${lastListItem.text} ${text}`.replace(/\s+/g, " ").trim()
+      continue
+    }
+
     flushPendingList()
     currentProse.push(text)
   }
@@ -655,12 +662,40 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       chapterState.pageChapterTitle
     )
 
-    for (const segment of listSegments) {
-      if (currentPageItems.length > 0) {
+    for (let segmentIndex = 0; segmentIndex < listSegments.length; segmentIndex += 1) {
+      const segment = listSegments[segmentIndex]
+
+      if (segmentIndex > 0) {
         flushPage()
       }
 
-      currentPageItems = [segment]
+      let trialItems =
+        segmentIndex === 0 ? [...currentPageItems, segment] : [segment]
+
+      renderMeasureBody(
+        bodyEl,
+        trialItems,
+        showChapterLabel(),
+        chapterState.pageChapterTitle
+      )
+
+      if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
+        currentPageItems = trialItems
+        continue
+      }
+
+      if (segmentIndex === 0 && currentPageItems.length > 0) {
+        flushPage()
+        trialItems = [segment]
+        renderMeasureBody(
+          bodyEl,
+          trialItems,
+          chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
+          chapterState.pageChapterTitle
+        )
+      }
+
+      currentPageItems = trialItems
     }
   }
 
