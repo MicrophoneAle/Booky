@@ -1,0 +1,209 @@
+@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;700&family=Lora:wght@400;600&display=swap");
+
+.home-page {
+  min-height: 100vh;
+  background: #12100e;
+  color: #8b7355;
+  font-family: system-ui, sans-serif;
+}
+
+.home-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  padding: 1.5rem 1rem;
+}
+
+.home-logo {
+  color: #d4af37;
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 1.7rem;
+  letter-spacing: 0.3em;
+  font-weight: 700;
+}
+
+.home-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.home-nav-link {
+  color: #8b7355;
+  font-size: 0.75rem;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-variant: small-caps;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.home-nav-link:hover {
+  color: #d4af37;
+}
+
+.home-main {
+  min-height: calc(100vh - 84px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1rem 3rem;
+}
+
+.home-hero {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.home-hero h1 {
+  margin: 0;
+  color: #d7c9a2;
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: clamp(2.1rem, 5vw, 3rem);
+  font-weight: 700;
+}
+
+.home-hero p {
+  margin: 0.7rem 0 0;
+  color: #8b7355;
+  font-size: 1rem;
+  font-family: "Lora", Georgia, serif;
+}
+
+.upload-section {
+  width: 100%;
+  max-width: 420px;
+}
+
+.upload-zone {
+  width: 100%;
+  height: 260px;
+  border-radius: 12px;
+  border: 2px dashed #2a2420;
+  background: #1c1917;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.upload-zone.dragging {
+  border-color: #d4af37;
+  background: #221e1a;
+  transform: translateY(-1px);
+}
+
+.upload-icon {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.upload-text {
+  margin: 0;
+  color: #8b7355;
+  font-size: 1rem;
+}
+
+.browse-link {
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: #d4af37;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-size: 0.92rem;
+  cursor: pointer;
+  padding: 0.2rem;
+}
+
+.browse-link:hover {
+  opacity: 0.9;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.upload-error {
+  color: #b86a5a;
+  margin: 0.85rem 0 0;
+  font-size: 0.9rem;
+}
+
+.upload-meta {
+  margin-top: 1rem;
+}
+
+.file-name {
+  margin: 0;
+  color: #d4af37;
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+.file-size {
+  margin: 0.25rem 0 0;
+  color: #8b7355;
+  font-size: 0.85rem;
+}
+
+.progress-track {
+  margin-top: 0.85rem;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: #2a2420;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #d4af37;
+  transition: width 0.08s linear;
+}
+
+.upload-note {
+  margin: 0.55rem 0 0;
+  color: #8b7355;
+  font-size: 0.9rem;
+}
+
+.upload-success {
+  margin-top: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.success-message {
+  margin: 0;
+  color: #d4af37;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.open-book-btn {
+  background: #d4af37;
+  color: #12100e;
+  border: 1px solid #d4af37;
+  border-radius: 10px;
+  padding: 0.55rem 0.85rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.open-book-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}

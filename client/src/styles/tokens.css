@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700&family=Lora:wght@400;500;600&display=swap');
+
+:root {
+  /* Colours */
+  --color-shell:   #12100E;
+  --color-surface: #1C1917;
+  --color-border:  #2A2420;
+  --color-gold:    #D4AF37;
+  --color-muted:   #8B7355;
+  --color-page:    #FFFFFF;
+  --color-ink:     #1C1917;
+
+  /* Typography */
+  --font-heading:      'EB Garamond', Georgia, serif;
+  --font-body:         'Lora', Georgia, serif;
+  --font-ui:           system-ui, sans-serif;
+
+  /* Book reading */
+  --font-size-body:    17px;
+  --line-height-book:  1.85;
+
+  /* Spacing */
+  --page-padding:      3rem;
+  --radius-sm:         4px;
+  --radius-md:         8px;
+  --radius-lg:         12px;
+}
