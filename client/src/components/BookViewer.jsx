@@ -32,6 +32,30 @@ function BookPageContent({ page }) {
   )
 }
 
+function formatNavChapterTitle(leftPage, rightPage) {
+  const leftTitle = leftPage?.chapterTitle
+  const rightTitle = rightPage?.chapterTitle
+
+  if (leftTitle && rightTitle) {
+    if (leftTitle === rightTitle) return leftTitle
+    return `${leftTitle}  ·  ${rightTitle}`
+  }
+
+  return leftTitle ?? rightTitle ?? ""
+}
+
+function formatPageCounter(leftPage, rightPage, totalPages) {
+  if (!leftPage || totalPages === 0) return ""
+
+  const leftNumber = leftPage.pageNumber
+
+  if (rightPage) {
+    return `Pages ${leftNumber}–${rightPage.pageNumber} of ${totalPages}`
+  }
+
+  return `Page ${leftNumber} of ${totalPages}`
+}
+
 function FullscreenIcon() {
   return (
     <svg
@@ -66,11 +90,8 @@ export default function BookViewer({ pages = [], initialPage = 1, onPageChange }
 
   const leftPage = pages[currentPage - 1] ?? null
   const rightPage = isMobile ? null : pages[currentPage] ?? null
-  const navChapterTitle =
-    leftPage?.chapterTitle ?? rightPage?.chapterTitle ?? pages[0]?.chapterTitle ?? ""
-
-  const currentSpread = Math.ceil(currentPage / 2)
-  const totalSpreads = Math.ceil(totalPages / 2) || 1
+  const navChapterTitle = formatNavChapterTitle(leftPage, rightPage)
+  const pageCounterText = formatPageCounter(leftPage, rightPage, totalPages)
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)")
@@ -172,9 +193,7 @@ export default function BookViewer({ pages = [], initialPage = 1, onPageChange }
         <div className="book-viewer__logo">BOOKY</div>
         <p className="book-viewer__chapter">{navChapterTitle}</p>
         <div className="book-viewer__nav-right">
-          <p className="book-viewer__counter">
-            Page {currentSpread} of {totalSpreads}
-          </p>
+          <p className="book-viewer__counter">{pageCounterText}</p>
           <button
             type="button"
             className="book-viewer__fullscreen"

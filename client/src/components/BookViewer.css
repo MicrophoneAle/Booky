@@ -171,7 +171,7 @@
   height: calc(100vh - 80px);
   max-height: 100%;
   background: #ffffff;
-  padding: 2rem;
+  padding: 1.5rem;
   color: #1c1917;
   display: flex;
   flex-direction: column;
@@ -196,7 +196,7 @@
 .book-page__chapter-label {
   margin: 0 0 1rem;
   font-family: "EB Garamond", Georgia, serif;
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: #8b7355;
@@ -207,13 +207,13 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.3rem;
 }
 
 .book-page__heading {
   margin: 0;
   font-family: "EB Garamond", Georgia, serif;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.2;
   color: #1c1917;
@@ -222,8 +222,8 @@
 .book-page__text {
   margin: 0;
   font-family: "Lora", Georgia, serif;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 11px;
+  line-height: 1.45;
   color: #1c1917;
 }
 
@@ -233,7 +233,7 @@
   margin: 1.5rem 0 0;
   text-align: center;
   font-family: system-ui, sans-serif;
-  font-size: 11px;
+  font-size: 9px;
   color: #8b7355;
   letter-spacing: 0.15em;
 }
