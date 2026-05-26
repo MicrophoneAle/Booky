@@ -92,6 +92,37 @@ app.delete("/documents/:id", async (req, res) => {
   }
 })
 
+app.patch("/documents/:id", async (req, res) => {
+  try {
+    const { id } = req.params
+    const name = typeof req.body?.name === "string" ? req.body.name.trim() : ""
+
+    if (!name) {
+      res.status(400).json({ success: false, error: "Name is required" })
+      return
+    }
+
+    const { data, error } = await supabase
+      .from("documents")
+      .update({ name })
+      .eq("id", id)
+      .select("id, name, total_pages, created_at")
+      .single()
+
+    if (error || !data) {
+      res.status(500).json({ success: false, error: "Update failed" })
+      return
+    }
+
+    res.json({
+      success: true,
+      document: data,
+    })
+  } catch {
+    res.status(500).json({ success: false, error: "Update failed" })
+  }
+})
+
 app.get("/documents/:id", async (req, res) => {
   try {
     const { id } = req.params

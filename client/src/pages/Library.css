@@ -122,8 +122,16 @@
   min-height: 160px;
 }
 
+.library-card__title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
 .library-card__title {
   margin: 0;
+  flex: 1;
+  min-width: 0;
   font-family: "EB Garamond", Georgia, serif;
   font-size: 20px;
   font-weight: 600;
@@ -135,6 +143,51 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.library-card__edit {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.15rem;
+  padding: 0.15rem;
+  border: none;
+  background: transparent;
+  color: #8b7355;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.library-card__edit:hover {
+  color: #d4af37;
+}
+
+.library-card__title-input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 0.15rem;
+  border: none;
+  border-bottom: 1px solid #8b7355;
+  border-radius: 0;
+  background: transparent;
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #d4af37;
+  outline: none;
+}
+
+.library-card__title-input:focus {
+  border-bottom-color: #d4af37;
+}
+
+.library-card__rename-error {
+  margin: 0.35rem 0 0;
+  font-size: 11px;
+  color: #b86a5a;
 }
 
 .library-card__pages {
