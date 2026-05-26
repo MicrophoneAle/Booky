@@ -23,6 +23,27 @@ app.use(express.json())
 
 app.get("/", (req, res) => res.json({ message: "Booky API running" }))
 
+app.get("/documents", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("documents")
+      .select("id, name, total_pages, created_at")
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      res.status(500).json({ success: false, error: "Failed to fetch documents" })
+      return
+    }
+
+    res.json({
+      success: true,
+      documents: data ?? [],
+    })
+  } catch {
+    res.status(500).json({ success: false, error: "Failed to fetch documents" })
+  }
+})
+
 app.get("/documents/:id", async (req, res) => {
   try {
     const { id } = req.params

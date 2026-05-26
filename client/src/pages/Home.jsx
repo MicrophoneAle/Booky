@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import "./Home.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
@@ -160,15 +160,15 @@ export default function Home() {
       <nav className="home-nav" aria-label="Primary">
         <div className="home-logo">BOOKY</div>
         <div className="home-nav-links">
-          <a href="#" className="home-nav-link">
+          <Link to="/library" className="home-nav-link">
             Library
-          </a>
-          <a href="#" className="home-nav-link">
+          </Link>
+          <Link to="/" className="home-nav-link">
             Upload
-          </a>
-          <a href="#" className="home-nav-link">
+          </Link>
+          <Link to="/" className="home-nav-link">
             Settings
-          </a>
+          </Link>
         </div>
       </nav>
 
