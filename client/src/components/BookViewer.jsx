@@ -709,15 +709,6 @@ function splitListAcrossPages(listItem, bodyEl, contentMaxHeight, showChapterLab
 
     if (pageContentOverflows(bodyEl, contentMaxHeight) && chunk.length > 0) {
       segments.push({ type: "list", items: buildNestedListTree(chunk) })
-      const segment = segments[segments.length - 1]
-      console.log(
-        "SEGMENT",
-        segments.length,
-        "first:",
-        segment.items[0]?.marker,
-        "last:",
-        segment.items[segment.items.length - 1]?.marker
-      )
       chunk = [flatItem]
     } else {
       chunk = nextChunk
@@ -726,15 +717,6 @@ function splitListAcrossPages(listItem, bodyEl, contentMaxHeight, showChapterLab
 
   if (chunk.length > 0) {
     segments.push({ type: "list", items: buildNestedListTree(chunk) })
-    const segment = segments[segments.length - 1]
-    console.log(
-      "SEGMENT",
-      segments.length,
-      "first:",
-      segment.items[0]?.marker,
-      "last:",
-      segment.items[segment.items.length - 1]?.marker
-    )
   }
 
   if (segments.length <= 1) {
@@ -967,95 +949,37 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   }
 
   const compactPagesForward = () => {
-    const hasSplitGroupInFollowingPages = (startPageIndex, splitGroupId) => {
-      for (let index = startPageIndex; index < pages.length; index += 1) {
-        const page = pages[index]
-        if (
-          page.visualItems.some(
-            (item) => item.type === "list" && item.splitGroupId === splitGroupId
-          )
-        ) {
-          return true
-        }
-      }
-      return false
-    }
+    let movedSomething = true
+    let safetyCounter = 0
 
-    const getTopLevelListKind = (listItem) => {
-      const firstNode = listItem.items?.[0]
-      if (!firstNode) {
-        return null
-      }
-      return getListItemKind(firstNode)
-    }
-
-    const shouldBlockListMove = (candidate, currentPage, nextPage, pageIndex) => {
-      if (candidate.type !== "list") {
-        return false
-      }
-
-      const candidateKind = getTopLevelListKind(candidate)
-      const currentHasSameKindList = currentPage.visualItems.some(
-        (item) =>
-          item.type === "list" &&
-          candidateKind !== null &&
-          getTopLevelListKind(item) === candidateKind
-      )
-
-      if (currentHasSameKindList) {
-        return true
-      }
-
-      if (!candidate.splitGroupId) {
-        return false
-      }
-
-      const hasSameSplitGroupAfterMove = nextPage.visualItems
-        .slice(1)
-        .some(
-          (item) => item.type === "list" && item.splitGroupId === candidate.splitGroupId
-        )
-
-      if (hasSameSplitGroupAfterMove) {
-        return true
-      }
-
-      return hasSplitGroupInFollowingPages(pageIndex + 2, candidate.splitGroupId)
-    }
-
-    let movedAny = true
-
-    while (movedAny) {
-      movedAny = false
+    while (movedSomething && safetyCounter < 50) {
+      movedSomething = false
+      safetyCounter += 1
 
       for (let pageIndex = 0; pageIndex < pages.length - 1; pageIndex += 1) {
         const current = pages[pageIndex]
         const next = pages[pageIndex + 1]
-        let movedFromNext = false
 
         while (next.visualItems.length > 0) {
-          const firstNextItem = next.visualItems[0]
-          if (shouldBlockListMove(firstNextItem, current, next, pageIndex)) {
+          const candidate = next.visualItems[0]
+          const trialItems = [...current.visualItems, candidate]
+
+          const showLabel = Boolean(current.isChapterStart && current.chapterTitle)
+          renderMeasureBody(bodyEl, trialItems, showLabel, current.chapterTitle)
+
+          if (pageContentOverflows(bodyEl, contentMaxHeight)) {
             break
           }
 
-          if (!canFitOnPage(current, [firstNextItem])) {
-            break
-          }
-
-          current.visualItems.push(firstNextItem)
+          current.visualItems.push(candidate)
           next.visualItems.shift()
-          recomputePageChapterMetadata(pages)
-          movedAny = true
-          movedFromNext = true
+          movedSomething = true
         }
+      }
 
-        if (next.visualItems.length === 0) {
-          pages.splice(pageIndex + 1, 1)
-          recomputePageChapterMetadata(pages)
-          movedAny = true
-        } else if (movedFromNext) {
-          continue
+      for (let i = pages.length - 1; i >= 0; i -= 1) {
+        if (pages[i].visualItems.length === 0) {
+          pages.splice(i, 1)
         }
       }
     }
@@ -1257,27 +1181,6 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
 
   if (currentPageItems.length > 0) {
     flushPage()
-  }
-
-  for (const page of pages) {
-    renderMeasureBody(
-      bodyEl,
-      page.visualItems,
-      Boolean(page.isChapterStart && page.chapterTitle),
-      page.chapterTitle
-    )
-    console.log(
-      "PAGE",
-      page.pageNumber,
-      "scrollHeight:",
-      bodyEl.scrollHeight,
-      "maxHeight:",
-      contentMaxHeight,
-      "unused:",
-      contentMaxHeight - bodyEl.scrollHeight,
-      "items:",
-      page.visualItems.length
-    )
   }
 
   compactPagesForward()
