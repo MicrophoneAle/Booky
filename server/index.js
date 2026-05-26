@@ -148,13 +148,14 @@ function getItemY(item) {
   return Number.isFinite(matrix[5]) ? matrix[5] : 0
 }
 
-const Y_LINE_BREAK_DELTA = 2
-const Y_SAME_LINE_TOLERANCE = 2
+const Y_LINE_BREAK_DELTA = 0.5
+const Y_SAME_LINE_TOLERANCE = 0.5
 
 async function extractLinesByPosition(buffer) {
   const loadingTask = getDocument({ data: new Uint8Array(buffer) })
   const pdf = await loadingTask.promise
   const pageSections = []
+  const lines = []
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber)
@@ -171,11 +172,27 @@ async function extractLinesByPosition(buffer) {
       }
 
       const y = getItemY(item)
+      console.log(
+        "ITEM y=",
+        item.transform[5].toFixed(1),
+        "text=",
+        JSON.stringify(item.str)
+      )
 
       if (previousY !== null) {
         const yDelta = y - previousY
 
         if (yDelta < -Y_LINE_BREAK_DELTA) {
+          const prevY = previousY
+          const currentY = y
+          console.log(
+            "NEW LINE - prev y:",
+            prevY.toFixed(1),
+            "current y:",
+            currentY.toFixed(1),
+            "diff:",
+            (prevY - currentY).toFixed(1)
+          )
           if (currentLine.trim()) {
             pageLines.push(currentLine.trim())
           }
@@ -196,8 +213,11 @@ async function extractLinesByPosition(buffer) {
       pageLines.push(currentLine.trim())
     }
 
+    lines.push(...pageLines)
     pageSections.push(pageLines.join("\n"))
   }
+
+  console.log("FINAL LINES:", lines)
 
   return pageSections.join("\n\n")
 }
