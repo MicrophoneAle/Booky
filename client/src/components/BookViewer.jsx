@@ -2,33 +2,14 @@ import { useCallback, useEffect, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import "./BookViewer.css"
 
-function shouldShowChapterLabel(page, otherPage, isLeftPage) {
-  if (!page?.chapterTitle) return false
-  if (!otherPage) return true
-
-  if (!isLeftPage && page.isChapterStart && !otherPage.isChapterStart) {
-    return true
-  }
-
-  if (isLeftPage && otherPage.isChapterStart && !page.isChapterStart) {
-    return false
-  }
-
-  if (page.chapterTitle !== otherPage.chapterTitle) {
-    return true
-  }
-
-  return isLeftPage
-}
-
-function BookPageContent({ page, showChapterLabel }) {
+function BookPageContent({ page }) {
   if (!page) {
     return <div className="book-page book-page--empty" />
   }
 
   return (
     <div className="book-page">
-      {showChapterLabel && (
+      {page.chapterTitle && (
         <p className="book-page__chapter-label">{page.chapterTitle}</p>
       )}
 
@@ -90,9 +71,6 @@ export default function BookViewer({ pages = [], initialPage = 1, onPageChange }
 
   const currentSpread = Math.ceil(currentPage / 2)
   const totalSpreads = Math.ceil(totalPages / 2) || 1
-
-  const showLeftChapterLabel = shouldShowChapterLabel(leftPage, rightPage, true)
-  const showRightChapterLabel = shouldShowChapterLabel(rightPage, leftPage, false)
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)")
@@ -245,10 +223,7 @@ export default function BookViewer({ pages = [], initialPage = 1, onPageChange }
             }
           >
             <div className="book-viewer__page-face">
-              <BookPageContent
-                page={leftPage}
-                showChapterLabel={showLeftChapterLabel}
-              />
+              <BookPageContent page={leftPage} />
             </div>
           </motion.div>
 
@@ -266,10 +241,7 @@ export default function BookViewer({ pages = [], initialPage = 1, onPageChange }
                 }
               >
                 <div className="book-viewer__page-face">
-                  <BookPageContent
-                    page={rightPage}
-                    showChapterLabel={showRightChapterLabel}
-                  />
+                  <BookPageContent page={rightPage} />
                 </div>
               </motion.div>
             </>
