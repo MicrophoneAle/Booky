@@ -16,6 +16,61 @@ app.use(express.json())
 
 app.get("/", (req, res) => res.json({ message: "Booky API running" }))
 
+const CHAPTER_PATTERN =
+  /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|one|two|three)|prologue|epilogue|introduction|conclusion)\.?$/i
+
+function slugify(text) {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+}
+
+function isChapterHeading(block) {
+  const text = block.text.trim()
+
+  if (block.fontSize > 16) return true
+  if (CHAPTER_PATTERN.test(text)) return true
+  if (text.length < 60 && block.fontSize > 14) return true
+
+  return false
+}
+
+function detectChapters(content) {
+  const chapters = []
+  let currentChapterId = null
+
+  const updatedContent = content.map((page) => ({
+    ...page,
+    blocks: page.blocks.map((block, blockIndex) => {
+      let chapterId = currentChapterId
+
+      if (isChapterHeading(block)) {
+        const title = block.text.trim()
+        const id = slugify(title)
+
+        chapters.push({
+          id,
+          title,
+          pageIndex: page.pageIndex,
+          blockIndex,
+        })
+
+        currentChapterId = id
+        chapterId = id
+      }
+
+      return {
+        ...block,
+        chapterId,
+      }
+    }),
+  }))
+
+  return { chapters, content: updatedContent }
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -80,13 +135,15 @@ app.post("/upload", (req, res) => {
       }
 
       const title = uploadedFile.originalname.replace(/\.pdf$/i, "")
+      const { chapters, content: contentWithChapters } = detectChapters(content)
 
       res.json({
         success: true,
         document: {
           title,
           totalPages: pdf.numPages,
-          content,
+          chapters,
+          content: contentWithChapters,
           hasImages,
         },
       })
