@@ -250,6 +250,7 @@ function resolveHeadingType(fontSize) {
  * Stage 1 (client): turn flat API blocks into grouped visual layout items.
  */
 function groupBlocksForDisplay(blocks) {
+  console.log("INCOMING BLOCKS:", JSON.stringify(blocks.slice(0, 20), null, 2))
   const visualItems = []
   let currentProse = []
   let pendingListItems = []
@@ -388,6 +389,7 @@ function groupBlocksForDisplay(blocks) {
   flushProse()
   flushPendingList()
 
+  console.log("VISUAL ITEMS:", JSON.stringify(visualItems.slice(0, 20), null, 2))
   return visualItems
 }
 
@@ -707,6 +709,9 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   if (currentPageItems.length > 0) {
     flushPage()
   }
+
+  console.log("RAW PAGES COUNT:", pages.length)
+  console.log("FIRST 3 PAGES:", JSON.stringify(pages.slice(0, 3), null, 2))
 
   return cleanupPages(pages, bodyEl, contentMaxHeight)
 }
