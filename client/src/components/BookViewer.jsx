@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from "react"
+﻿import { Fragment, useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, useReducedMotion } from "framer-motion"
 import { flattenDocument } from "../utils/paginator"
@@ -9,6 +9,7 @@ const NAVBAR_HEIGHT_PX = 48
 const PAGE_NUMBER_RESERVED_PX = 32
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 20
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
+const UNUSED_PAGE_SPACE_THRESHOLD_PX = 100
 
 const IMPLIED_LIST_LINE_REGEX = /^(Add|Test|Explore|Verify|Ensure|Click)\b/i
 const TRIVIAL_LIST_PAGE_CHAR_LIMIT = 30
@@ -188,20 +189,82 @@ function flattenListTree(nodes, result = []) {
   return result
 }
 
-function listItemClassName(node) {
-  const classes = ["book-page__list-item"]
+function getListItemKind(node) {
+  const marker = (node.marker ?? "").trim()
 
-  if (node.level === 1) {
-    classes.push("book-page__list-item--level-1")
-  } else if (node.level === 2) {
-    classes.push("book-page__list-item--level-2")
+  if (!node.hasBullet && /^\d+[\.\)]$/.test(marker) && node.level === 0) {
+    return "numbered"
   }
 
-  if (!node.hasBullet) {
-    classes.push("book-page__list-item--no-bullet")
+  if (!node.hasBullet && /^[a-z][\.\)]$/i.test(marker) && node.level === 1) {
+    return "lettered"
+  }
+
+  return "bullet"
+}
+
+function stripMarkerPrefix(text, marker) {
+  const trimmedMarker = marker.trim()
+  const markerPrefix = `${trimmedMarker} `
+
+  if (text.startsWith(markerPrefix)) {
+    return text.slice(markerPrefix.length).trim()
+  }
+
+  if (text === trimmedMarker) {
+    return ""
+  }
+
+  return text
+}
+
+function getListItemDisplayText(node) {
+  const kind = getListItemKind(node)
+  const marker = (node.marker ?? "").trim()
+
+  if (kind === "numbered" || kind === "lettered") {
+    return stripMarkerPrefix(node.text, marker)
+  }
+
+  return node.text
+}
+
+function listItemClassName(node) {
+  const classes = ["book-page__list-item"]
+  const kind = getListItemKind(node)
+
+  if (kind === "numbered") {
+    classes.push("book-page__list-item--numbered")
+  } else if (kind === "lettered") {
+    classes.push("book-page__list-item--lettered")
+  } else {
+    if (node.level === 1) {
+      classes.push("book-page__list-item--level-1")
+    } else if (node.level === 2) {
+      classes.push("book-page__list-item--level-2")
+    }
+
+    if (!node.hasBullet) {
+      classes.push("book-page__list-item--no-bullet")
+    }
   }
 
   return classes.join(" ")
+}
+
+function createListElement(kind) {
+  if (kind === "numbered" || kind === "lettered") {
+    const orderedList = document.createElement("ol")
+    orderedList.className = "book-page__list"
+    if (kind === "lettered") {
+      orderedList.setAttribute("type", "a")
+    }
+    return orderedList
+  }
+
+  const unorderedList = document.createElement("ul")
+  unorderedList.className = "book-page__list"
+  return unorderedList
 }
 
 function getLayoutHeights() {
@@ -404,20 +467,31 @@ function appendChapterLabel(body, title) {
   body.appendChild(label)
 }
 
-function appendListNodes(parentList, nodes) {
-  for (const node of nodes) {
-    const listEntry = document.createElement("li")
-    listEntry.className = listItemClassName(node)
-    listEntry.textContent = node.text
+function appendSingleListNode(listEl, node) {
+  const listEntry = document.createElement("li")
+  listEntry.className = listItemClassName(node)
+  listEntry.textContent = getListItemDisplayText(node)
 
-    if (node.children.length > 0) {
-      const nestedList = document.createElement("ul")
-      nestedList.className = "book-page__list"
-      appendListNodes(nestedList, node.children)
-      listEntry.appendChild(nestedList)
+  if (node.children.length > 0) {
+    appendGroupedListNodes(listEntry, node.children)
+  }
+
+  listEl.appendChild(listEntry)
+}
+
+function appendGroupedListNodes(parentEl, nodes) {
+  let index = 0
+
+  while (index < nodes.length) {
+    const kind = getListItemKind(nodes[index])
+    const listEl = createListElement(kind)
+
+    while (index < nodes.length && getListItemKind(nodes[index]) === kind) {
+      appendSingleListNode(listEl, nodes[index])
+      index += 1
     }
 
-    parentList.appendChild(listEntry)
+    parentEl.appendChild(listEl)
   }
 }
 
@@ -439,10 +513,7 @@ function appendVisualItem(body, item) {
   }
 
   if (item.type === "list") {
-    const list = document.createElement("ul")
-    list.className = "book-page__list"
-    appendListNodes(list, item.items)
-    body.appendChild(list)
+    appendGroupedListNodes(body, item.items)
     return
   }
 
@@ -598,10 +669,16 @@ function cleanupPages(pages, bodyEl, contentMaxHeight) {
 /**
  * Stage 3: paginate pre-grouped visual items so measurement matches rendered DOM.
  */
+function isHeadingVisualItem(item) {
+  return item?.type === "title" || item?.type === "heading"
+}
+
 function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   const visualItems = groupBlocksForDisplay(flatBlocks)
   const pages = []
   let currentPageItems = []
+  let activeChapterTitle = null
+  let activeChapterAtPageStart = null
   const chapterState = {
     pageChapterTitle: null,
     pageIsChapterStart: false,
@@ -612,6 +689,65 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     Boolean(chapterState.pageChapterTitle) &&
     currentPageItems.length === 0
 
+  const syncActiveChapterFromItem = (item) => {
+    if (item.type !== "title" && item.type !== "heading") {
+      return
+    }
+
+    if (item.isChapterStart || item.type === "title") {
+      activeChapterTitle = item.chapterTitle ?? item.text
+      return
+    }
+
+    if (!activeChapterTitle) {
+      activeChapterTitle = item.chapterTitle ?? item.text
+    }
+  }
+
+  const markPageStartIfEmpty = () => {
+    if (currentPageItems.length === 0) {
+      activeChapterAtPageStart = activeChapterTitle
+    }
+  }
+
+  const measurePageUnusedSpace = (pageItems, showLabel, labelTitle) => {
+    renderMeasureBody(bodyEl, pageItems, showLabel, labelTitle)
+    return contentMaxHeight - bodyEl.scrollHeight
+  }
+
+  const tryPlaceOnPreviousPage = (units) => {
+    if (pages.length === 0) {
+      return false
+    }
+
+    const unitsToPlace = Array.isArray(units) ? units : [units]
+    const lastPage = pages[pages.length - 1]
+    const unusedSpace = measurePageUnusedSpace(
+      lastPage.visualItems,
+      Boolean(lastPage.isChapterStart && lastPage.chapterTitle),
+      lastPage.chapterTitle
+    )
+
+    if (unusedSpace <= UNUSED_PAGE_SPACE_THRESHOLD_PX) {
+      return false
+    }
+
+    const trialItems = [...lastPage.visualItems, ...unitsToPlace]
+    renderMeasureBody(
+      bodyEl,
+      trialItems,
+      Boolean(lastPage.isChapterStart && lastPage.chapterTitle),
+      lastPage.chapterTitle
+    )
+
+    if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
+      lastPage.visualItems = trialItems
+      return true
+    }
+
+    return false
+  }
+
   const flushPage = () => {
     if (currentPageItems.length === 0) {
       return
@@ -621,15 +757,72 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       pageNumber: pages.length + 1,
       visualItems: [...currentPageItems],
       chapterTitle: chapterState.pageChapterTitle,
+      activeChapterTitle: activeChapterAtPageStart,
       isChapterStart: chapterState.pageIsChapterStart,
     })
 
     currentPageItems = []
+    activeChapterAtPageStart = null
     chapterState.pageChapterTitle = null
     chapterState.pageIsChapterStart = false
   }
 
+  const tryPlaceUnits = (units) => {
+    markPageStartIfEmpty()
+
+    if (tryPlaceOnPreviousPage(units)) {
+      return
+    }
+
+    const trialItems = [...currentPageItems, ...units]
+
+    renderMeasureBody(
+      bodyEl,
+      trialItems,
+      showChapterLabel(),
+      chapterState.pageChapterTitle
+    )
+
+    if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
+      currentPageItems = trialItems
+      return
+    }
+
+    if (currentPageItems.length > 0) {
+      flushPage()
+    }
+
+    markPageStartIfEmpty()
+
+    if (units.length === 1) {
+      tryPlaceUnit(units[0])
+      return
+    }
+
+    renderMeasureBody(
+      bodyEl,
+      units,
+      chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
+      chapterState.pageChapterTitle
+    )
+
+    if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
+      currentPageItems = units
+      return
+    }
+
+    for (const unit of units) {
+      tryPlaceUnit(unit)
+    }
+  }
+
   const tryPlaceUnit = (unit) => {
+    markPageStartIfEmpty()
+
+    if (tryPlaceOnPreviousPage(unit)) {
+      return
+    }
+
     const trialItems = [...currentPageItems, unit]
 
     renderMeasureBody(
@@ -647,6 +840,8 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     if (currentPageItems.length > 0) {
       flushPage()
     }
+
+    markPageStartIfEmpty()
 
     renderMeasureBody(
       bodyEl,
@@ -675,6 +870,8 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
         flushPage()
       }
 
+      markPageStartIfEmpty()
+
       let trialItems =
         segmentIndex === 0 ? [...currentPageItems, segment] : [segment]
 
@@ -692,6 +889,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
 
       if (segmentIndex === 0 && currentPageItems.length > 0) {
         flushPage()
+        markPageStartIfEmpty()
         trialItems = [segment]
         renderMeasureBody(
           bodyEl,
@@ -705,8 +903,23 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     }
   }
 
-  for (const item of visualItems) {
+  const tryPlaceHeadingWithFollowing = (heading, following) => {
+    tryPlaceUnits([heading, following])
+  }
+
+  for (let itemIndex = 0; itemIndex < visualItems.length; itemIndex += 1) {
+    const item = visualItems[itemIndex]
     applyChapterContextFromItem(item, chapterState)
+    syncActiveChapterFromItem(item)
+
+    const followingItem = visualItems[itemIndex + 1]
+
+    if (isHeadingVisualItem(item) && followingItem && !isHeadingVisualItem(followingItem)) {
+      tryPlaceHeadingWithFollowing(item, followingItem)
+      itemIndex += 1
+      continue
+    }
+
     tryPlaceUnit(item)
   }
 
@@ -717,21 +930,56 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   return cleanupPages(pages, bodyEl, contentMaxHeight)
 }
 
-function renderListNodesReact(nodes, keyPrefix) {
-  return nodes.map((node, index) => {
-    const itemKey = `${keyPrefix}-${index}`
+function renderListNodeReact(node, itemKey) {
+  return (
+    <li key={itemKey} className={listItemClassName(node)}>
+      {getListItemDisplayText(node)}
+      {node.children.length > 0 && renderGroupedListItemsReact(node.children, itemKey)}
+    </li>
+  )
+}
 
-    return (
-      <li key={itemKey} className={listItemClassName(node)}>
-        {node.text}
-        {node.children.length > 0 && (
-          <ul className="book-page__list">
-            {renderListNodesReact(node.children, itemKey)}
-          </ul>
-        )}
-      </li>
-    )
-  })
+function renderGroupedListItemsReact(nodes, keyPrefix) {
+  const elements = []
+  let index = 0
+  let groupIndex = 0
+
+  while (index < nodes.length) {
+    const kind = getListItemKind(nodes[index])
+    const groupNodes = []
+
+    while (index < nodes.length && getListItemKind(nodes[index]) === kind) {
+      groupNodes.push(nodes[index])
+      index += 1
+    }
+
+    const listKey = `${keyPrefix}-g${groupIndex}`
+    groupIndex += 1
+
+    if (kind === "numbered" || kind === "lettered") {
+      elements.push(
+        <ol
+          key={listKey}
+          className="book-page__list"
+          {...(kind === "lettered" ? { type: "a" } : {})}
+        >
+          {groupNodes.map((node, nodeIndex) =>
+            renderListNodeReact(node, `${listKey}-${nodeIndex}`)
+          )}
+        </ol>
+      )
+    } else {
+      elements.push(
+        <ul key={listKey} className="book-page__list">
+          {groupNodes.map((node, nodeIndex) =>
+            renderListNodeReact(node, `${listKey}-${nodeIndex}`)
+          )}
+        </ul>
+      )
+    }
+  }
+
+  return elements
 }
 
 function BookPageContent({ page }) {
@@ -767,9 +1015,9 @@ function BookPageContent({ page }) {
 
           if (item.type === "list") {
             return (
-              <ul key={index} className="book-page__list">
-                {renderListNodesReact(item.items, `list-${index}`)}
-              </ul>
+              <Fragment key={index}>
+                {renderGroupedListItemsReact(item.items, `list-${index}`)}
+              </Fragment>
             )
           }
 
@@ -786,16 +1034,39 @@ function BookPageContent({ page }) {
   )
 }
 
-function formatNavChapterTitle(leftPage, rightPage) {
-  const leftTitle = leftPage?.chapterTitle
-  const rightTitle = rightPage?.chapterTitle
-
-  if (leftTitle && rightTitle) {
-    if (leftTitle === rightTitle) return leftTitle
-    return `${leftTitle}  ·  ${rightTitle}`
+function getPageActiveChapterTitle(pages, pageIndex) {
+  if (pageIndex < 0 || pageIndex >= pages.length) {
+    return null
   }
 
-  return leftTitle ?? rightTitle ?? ""
+  for (let index = pageIndex; index >= 0; index -= 1) {
+    const page = pages[index]
+    const title = page.activeChapterTitle ?? page.chapterTitle
+    if (title) {
+      return title
+    }
+  }
+
+  return null
+}
+
+function formatNavChapterTitle(pages, currentPage, isSpreadView) {
+  const pageIndices = [currentPage - 1]
+
+  if (isSpreadView && currentPage < pages.length) {
+    pageIndices.push(currentPage)
+  }
+
+  const titles = []
+
+  for (const pageIndex of pageIndices) {
+    const title = getPageActiveChapterTitle(pages, pageIndex)
+    if (title && !titles.includes(title)) {
+      titles.push(title)
+    }
+  }
+
+  return titles.join(" · ")
 }
 
 function formatPageCounter(leftPage, rightPage, totalPages, isSpreadView) {
@@ -938,7 +1209,7 @@ export default function BookViewer({
 
   const leftPage = pages[currentPage - 1] ?? null
   const rightPage = isSpreadView ? pages[currentPage] ?? null : null
-  const navChapterTitle = formatNavChapterTitle(leftPage, rightPage)
+  const navChapterTitle = formatNavChapterTitle(pages, currentPage, isSpreadView)
   const pageCounterText = formatPageCounter(leftPage, rightPage, totalPages, isSpreadView)
 
   useEffect(() => {

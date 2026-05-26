@@ -267,7 +267,8 @@
   color: #1c1917;
 }
 
-.book-page__list {
+.book-page__list,
+ol.book-page__list {
   margin: 0;
   padding-left: 1rem;
   list-style-position: outside;
@@ -290,7 +291,16 @@
   list-style-type: square;
 }
 
-.book-page__list-item > .book-page__list {
+.book-page__list-item--numbered {
+  list-style-type: decimal;
+}
+
+.book-page__list-item--lettered {
+  list-style-type: lower-alpha;
+}
+
+.book-page__list-item > .book-page__list,
+.book-page__list-item > ol.book-page__list {
   padding-left: 1.25rem;
 }
 
