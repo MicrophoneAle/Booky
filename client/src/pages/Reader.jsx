@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import BookViewer from "../components/BookViewer"
-import { paginateDocument } from "../utils/paginator"
 import "./Reader.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
@@ -9,7 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 export default function Reader() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [pages, setPages] = useState([])
+  const [bookDocument, setBookDocument] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -30,13 +29,11 @@ export default function Reader() {
 
         if (cancelled) return
 
-        const paginatedPages = paginateDocument({
+        setBookDocument({
           title: data.document.name,
           chapters: data.document.chapters ?? [],
           content: data.document.content ?? [],
         })
-
-        setPages(paginatedPages)
       } catch (fetchError) {
         if (!cancelled) {
           setError(
@@ -87,7 +84,7 @@ export default function Reader() {
 
   return (
     <BookViewer
-      pages={pages}
+      document={bookDocument}
       initialPage={1}
       onPageChange={(pageNumber) => {
         console.log(pageNumber)

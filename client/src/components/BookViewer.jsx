@@ -1,7 +1,138 @@
 ﻿import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, useReducedMotion } from "framer-motion"
+import { flattenDocument } from "../utils/paginator"
+import "../pages/Reader.css"
 import "./BookViewer.css"
+
+const NAVBAR_HEIGHT_PX = 48
+const PAGE_NUMBER_RESERVED_PX = 32
+
+function getLayoutHeights() {
+  const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+  const stagePaddingY = 1.5 * remPx * 2
+  const pagePaddingY = 1.5 * remPx * 2
+  const pageOuterHeight = window.innerHeight - NAVBAR_HEIGHT_PX - stagePaddingY
+  const contentMaxHeight = pageOuterHeight - pagePaddingY - PAGE_NUMBER_RESERVED_PX
+
+  return { pageOuterHeight, contentMaxHeight }
+}
+
+function createMeasureElements() {
+  const root = document.createElement("div")
+  root.className = "book-viewer__measure"
+
+  const page = document.createElement("div")
+  page.className = "book-page"
+
+  const body = document.createElement("div")
+  body.className = "book-page__body"
+
+  const footer = document.createElement("div")
+  footer.className = "book-viewer__measure-footer"
+  footer.setAttribute("aria-hidden", "true")
+
+  page.appendChild(body)
+  page.appendChild(footer)
+  root.appendChild(page)
+  document.body.appendChild(root)
+
+  return { root, page, body }
+}
+
+function appendChapterLabel(body, title) {
+  const label = document.createElement("p")
+  label.className = "book-page__chapter-label"
+  label.textContent = title
+  body.appendChild(label)
+}
+
+function appendBlock(body, block) {
+  if (block.isHeading) {
+    const heading = document.createElement("h2")
+    heading.className = "book-page__heading"
+    heading.textContent = block.text
+    body.appendChild(heading)
+    return
+  }
+
+  const paragraph = document.createElement("p")
+  paragraph.className = "book-page__text"
+  paragraph.textContent = block.text
+  body.appendChild(paragraph)
+}
+
+function renderMeasureBody(body, blocks, showChapterLabel, chapterTitle) {
+  body.replaceChildren()
+
+  if (showChapterLabel && chapterTitle) {
+    appendChapterLabel(body, chapterTitle)
+  }
+
+  for (const block of blocks) {
+    appendBlock(body, block)
+  }
+}
+
+function paginateBlocksByDom(flatBlocks, pageEl, bodyEl, contentMaxHeight) {
+  const pages = []
+  let currentBlocks = []
+  let pageChapterTitle = null
+  let pageIsChapterStart = false
+
+  const flushPage = () => {
+    if (currentBlocks.length === 0) return
+
+    pages.push({
+      pageNumber: pages.length + 1,
+      blocks: currentBlocks.map((block) => ({
+        text: block.text,
+        isHeading: block.isHeading,
+        fontSize: block.fontSize,
+        chapterId: block.chapterId,
+      })),
+      chapterTitle: pageChapterTitle,
+      isChapterStart: pageIsChapterStart,
+    })
+
+    pageChapterTitle = null
+    pageIsChapterStart = false
+  }
+
+  for (const block of flatBlocks) {
+    if (block.isHeading) {
+      flushPage()
+      currentBlocks = []
+      pageChapterTitle = block.chapterTitle ?? block.text.trim()
+      pageIsChapterStart = block.isChapterStart
+    }
+
+    const trialBlocks = [...currentBlocks, block]
+    const showChapterLabel =
+      pageIsChapterStart && Boolean(pageChapterTitle) && currentBlocks.length === 0
+
+    renderMeasureBody(bodyEl, trialBlocks, showChapterLabel, pageChapterTitle)
+
+    if (bodyEl.scrollHeight > contentMaxHeight && currentBlocks.length > 0) {
+      flushPage()
+      currentBlocks = [block]
+      pageChapterTitle = block.chapterTitle ?? block.text.trim()
+      pageIsChapterStart = block.isChapterStart
+
+      renderMeasureBody(
+        bodyEl,
+        currentBlocks,
+        pageIsChapterStart && Boolean(pageChapterTitle),
+        pageChapterTitle
+      )
+    } else {
+      currentBlocks = trialBlocks
+    }
+  }
+
+  flushPage()
+  return pages
+}
 
 function BookPageContent({ page }) {
   if (!page) {
@@ -78,13 +209,65 @@ function FullscreenIcon() {
   )
 }
 
-export default function BookViewer({ pages = [], initialPage = 1, onPageChange }) {
+export default function BookViewer({
+  document: bookDocument,
+  initialPage = 1,
+  onPageChange,
+}) {
   const navigate = useNavigate()
   const prefersReducedMotion = useReducedMotion()
+  const [pages, setPages] = useState([])
+  const [isPaginating, setIsPaginating] = useState(true)
   const [currentPage, setCurrentPage] = useState(initialPage)
   const [flipDirection, setFlipDirection] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    if (!bookDocument) {
+      setPages([])
+      setIsPaginating(false)
+      return
+    }
+
+    let measureRoot = null
+    let cancelled = false
+
+    setIsPaginating(true)
+    setPages([])
+
+    const runMeasurement = () => {
+      const flatBlocks = flattenDocument(bookDocument)
+      const { pageOuterHeight, contentMaxHeight } = getLayoutHeights()
+      const measureElements = createMeasureElements()
+
+      measureRoot = measureElements.root
+      measureElements.page.style.height = `${pageOuterHeight}px`
+
+      const measuredPages = paginateBlocksByDom(
+        flatBlocks,
+        measureElements.page,
+        measureElements.body,
+        contentMaxHeight
+      )
+
+      measureRoot.remove()
+      measureRoot = null
+
+      if (!cancelled) {
+        setPages(measuredPages)
+        setCurrentPage(initialPage)
+        setIsPaginating(false)
+      }
+    }
+
+    requestAnimationFrame(runMeasurement)
+
+    return () => {
+      cancelled = true
+      measureRoot?.remove()
+    }
+  }, [bookDocument, initialPage])
 
   const totalPages = pages.length
   const pageStep = isMobile ? 1 : 2
@@ -187,6 +370,17 @@ export default function BookViewer({ pages = [], initialPage = 1, onPageChange }
 
   const leftPageMotion = {
     rotateY: flipDirection === "backward" ? 180 : 0,
+  }
+
+  if (isPaginating) {
+    return (
+      <div className="reader-screen">
+        <div className="reader-screen__content">
+          <p className="reader-screen__logo">BOOKY</p>
+          <p className="reader-screen__subtext">Opening your book...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

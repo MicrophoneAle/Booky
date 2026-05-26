@@ -275,6 +275,22 @@
   }
 }
 
+.book-viewer__measure {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  width: 400px;
+  z-index: -1;
+}
+
+.book-viewer__measure-footer {
+  flex-shrink: 0;
+  height: 32px;
+  margin: 0.5rem 0 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .book-viewer__page-slot {
     transition: none !important;

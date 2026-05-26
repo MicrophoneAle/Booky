@@ -1,76 +1,38 @@
 /**
- * Splits parsed API document content into fixed-size reader pages.
+ * Flattens parsed API document content into a single block stream for layout measurement.
  */
-
-function flushPage(pages, currentBlocks, chapterTitle, isChapterStart) {
-  if (currentBlocks.length === 0) return
-
-  pages.push({
-    pageNumber: pages.length + 1,
-    blocks: [...currentBlocks],
-    chapterTitle,
-    isChapterStart,
-  })
-}
 
 /**
- * @param {object} document - API document with content, chapters, and title
- * @param {object} [options]
- * @param {number} [options.charsPerPage=1200]
- * @param {number} [options.pageWidth=400]
- * @param {number} [options.pageHeight=600]
- * @returns {Array<{ pageNumber: number, blocks: object[], chapterTitle: string|null, isChapterStart: boolean }>}
+ * @param {object} document - API document with content and chapters
+ * @returns {Array<{ text: string, isHeading: boolean, fontSize: number, chapterId: string|null, chapterTitle: string|null, isChapterStart: boolean }>}
  */
-export function paginateDocument(document, options = {}) {
-  const {
-    charsPerPage = 1200,
-    pageWidth: _pageWidth = 400,
-    pageHeight: _pageHeight = 600,
-  } = options
+export function flattenDocument(document) {
+  const chapters = document?.chapters ?? []
+  const chapterTitleById = Object.fromEntries(
+    chapters.map((chapter) => [chapter.id, chapter.title])
+  )
 
-  const pages = []
-  let currentBlocks = []
-  let currentCharCount = 0
-  let currentChapterTitle = null
-  let currentPageIsChapterStart = false
+  const flatBlocks = []
 
-  const sourcePages = document?.content ?? []
-
-  for (const sourcePage of sourcePages) {
-    const sourceBlocks = sourcePage?.blocks ?? []
-
-    for (const block of sourceBlocks) {
+  for (const page of document?.content ?? []) {
+    for (const block of page?.blocks ?? []) {
       const text = block?.text ?? ""
       if (!text.trim()) continue
 
-      if (block.isHeading) {
-        flushPage(pages, currentBlocks, currentChapterTitle, currentPageIsChapterStart)
-        currentBlocks = []
-        currentCharCount = 0
-        currentPageIsChapterStart = false
+      const chapterId = block.chapterId ?? null
 
-        currentChapterTitle = text.trim()
-        currentBlocks.push(block)
-        currentCharCount = text.length
-        currentPageIsChapterStart = true
-        continue
-      }
-
-      if (currentBlocks.length > 0 && currentCharCount + text.length > charsPerPage) {
-        flushPage(pages, currentBlocks, currentChapterTitle, currentPageIsChapterStart)
-        currentBlocks = []
-        currentCharCount = 0
-        currentPageIsChapterStart = false
-      }
-
-      currentBlocks.push(block)
-      currentCharCount += text.length
+      flatBlocks.push({
+        text,
+        isHeading: Boolean(block.isHeading),
+        fontSize: block.fontSize,
+        chapterId,
+        chapterTitle: chapterId ? chapterTitleById[chapterId] ?? null : null,
+        isChapterStart: Boolean(block.isHeading),
+      })
     }
   }
 
-  flushPage(pages, currentBlocks, currentChapterTitle, currentPageIsChapterStart)
-
-  return pages
+  return flatBlocks
 }
 
 /**
