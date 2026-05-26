@@ -20,6 +20,7 @@ const LEVEL_0_BULLET_REGEX = /^([•·\-—])\s*(.*)$/
 const LEVEL_1_MARKER_REGEX = /^([o*]|[a-z][\.\)])\s*(.*)$/i
 const LEVEL_2_MARKER_REGEX = /^((?:[ivxlcdm]+|\([a-z]\))[\.\)])\s*(.*)$/i
 const LONE_MARKER_REGEX = /^(\d+[\.\)]|[•·\-—]|[o*]|[a-z][\.\)]|(?:[ivxlcdm]+|\([a-z]\))[\.\)])$/i
+const EMBEDDED_LIST_MARKER_REGEX = /\s+(\d+[\.\)]|[a-z][\.\)])\s+/gi
 
 function isStandaloneUrl(text) {
   return STANDALONE_URL_REGEX.test(text.trim())
@@ -315,10 +316,67 @@ function resolveHeadingType(fontSize) {
   return "heading"
 }
 
+function splitTextAtEmbeddedListMarkers(text) {
+  const trimmed = text.trim()
+  if (!trimmed) {
+    return []
+  }
+
+  const regex = new RegExp(EMBEDDED_LIST_MARKER_REGEX.source, "gi")
+  let match = null
+  let firstSplitIndex = -1
+
+  while ((match = regex.exec(trimmed)) !== null) {
+    if (match.index > 0) {
+      firstSplitIndex = match.index
+      break
+    }
+  }
+
+  if (firstSplitIndex < 0) {
+    return [trimmed]
+  }
+
+  const left = trimmed.slice(0, firstSplitIndex).trim()
+  const right = trimmed.slice(firstSplitIndex).trim()
+
+  return [
+    ...splitTextAtEmbeddedListMarkers(left),
+    ...splitTextAtEmbeddedListMarkers(right),
+  ].filter(Boolean)
+}
+
+function expandBlocksForEmbeddedListMarkers(blocks) {
+  const expanded = []
+
+  for (const block of blocks) {
+    const text = (block.text ?? "").trim()
+
+    if (block.isHeading || !text) {
+      expanded.push(block)
+      continue
+    }
+
+    const segments = splitTextAtEmbeddedListMarkers(text)
+
+    if (segments.length <= 1) {
+      expanded.push(block)
+      continue
+    }
+
+    for (const segment of segments) {
+      expanded.push({ ...block, text: segment })
+    }
+  }
+
+  return expanded
+}
+
 /**
  * Stage 1 (client): turn flat API blocks into grouped visual layout items.
  */
 function groupBlocksForDisplay(blocks) {
+  const expandedBlocks = expandBlocksForEmbeddedListMarkers(blocks)
   const visualItems = []
   let currentProse = []
   let pendingListItems = []
@@ -356,8 +414,8 @@ function groupBlocksForDisplay(blocks) {
     }
   }
 
-  for (let index = 0; index < blocks.length; index += 1) {
-    const block = blocks[index]
+  for (let index = 0; index < expandedBlocks.length; index += 1) {
+    const block = expandedBlocks[index]
     const text = (block.text ?? "").trim()
 
     if (!text) {
@@ -398,7 +456,7 @@ function groupBlocksForDisplay(blocks) {
     if (loneMarker) {
       flushProse()
 
-      const nextBlock = blocks[index + 1]
+      const nextBlock = expandedBlocks[index + 1]
       const nextText = (nextBlock?.text ?? "").trim()
       const canConsumeNextLine =
         nextBlock &&
@@ -677,8 +735,8 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   const visualItems = groupBlocksForDisplay(flatBlocks)
   const pages = []
   let currentPageItems = []
-  let activeChapterTitle = null
-  let activeChapterAtPageStart = null
+  let currentActiveChapter = null
+  let chapterAtPageStart = null
   const chapterState = {
     pageChapterTitle: null,
     pageIsChapterStart: false,
@@ -689,24 +747,50 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     Boolean(chapterState.pageChapterTitle) &&
     currentPageItems.length === 0
 
-  const syncActiveChapterFromItem = (item) => {
-    if (item.type !== "title" && item.type !== "heading") {
+  const updateCurrentActiveChapter = (item) => {
+    if (!isHeadingVisualItem(item)) {
       return
     }
 
     if (item.isChapterStart || item.type === "title") {
-      activeChapterTitle = item.chapterTitle ?? item.text
+      currentActiveChapter = item.chapterTitle ?? item.text
       return
     }
 
-    if (!activeChapterTitle) {
-      activeChapterTitle = item.chapterTitle ?? item.text
+    if (!currentActiveChapter) {
+      currentActiveChapter = item.chapterTitle ?? item.text
     }
+  }
+
+  const buildChaptersOnPage = (pageItems) => {
+    const chaptersOnPage = []
+
+    if (chapterAtPageStart) {
+      chaptersOnPage.push(chapterAtPageStart)
+    }
+
+    for (const pageItem of pageItems) {
+      if (
+        isHeadingVisualItem(pageItem) &&
+        (pageItem.isChapterStart || pageItem.type === "title")
+      ) {
+        const title = pageItem.chapterTitle ?? pageItem.text
+        if (title && !chaptersOnPage.includes(title)) {
+          chaptersOnPage.push(title)
+        }
+      }
+    }
+
+    if (chaptersOnPage.length === 0 && currentActiveChapter) {
+      chaptersOnPage.push(currentActiveChapter)
+    }
+
+    return chaptersOnPage
   }
 
   const markPageStartIfEmpty = () => {
     if (currentPageItems.length === 0) {
-      activeChapterAtPageStart = activeChapterTitle
+      chapterAtPageStart = currentActiveChapter
     }
   }
 
@@ -757,14 +841,60 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       pageNumber: pages.length + 1,
       visualItems: [...currentPageItems],
       chapterTitle: chapterState.pageChapterTitle,
-      activeChapterTitle: activeChapterAtPageStart,
+      activeChapterTitle: currentActiveChapter,
+      chaptersOnPage: buildChaptersOnPage(currentPageItems),
       isChapterStart: chapterState.pageIsChapterStart,
     })
 
     currentPageItems = []
-    activeChapterAtPageStart = null
+    chapterAtPageStart = null
     chapterState.pageChapterTitle = null
     chapterState.pageIsChapterStart = false
+  }
+
+  const measureItemsOnPage = (pageItems, showLabel, labelTitle) => {
+    renderMeasureBody(bodyEl, pageItems, showLabel, labelTitle)
+    return !pageContentOverflows(bodyEl, contentMaxHeight)
+  }
+
+  const placeHeadingWithNextContent = (heading, following) => {
+    updateCurrentActiveChapter(heading)
+    const pair = [heading, following]
+
+    markPageStartIfEmpty()
+
+    const withCurrentPage = [...currentPageItems, ...pair]
+    if (
+      measureItemsOnPage(
+        withCurrentPage,
+        showChapterLabel(),
+        chapterState.pageChapterTitle
+      )
+    ) {
+      currentPageItems = withCurrentPage
+      return
+    }
+
+    if (currentPageItems.length > 0) {
+      flushPage()
+    }
+
+    markPageStartIfEmpty()
+
+    const pairOnFreshPage = [...pair]
+    if (
+      measureItemsOnPage(
+        pairOnFreshPage,
+        chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
+        chapterState.pageChapterTitle
+      )
+    ) {
+      currentPageItems = pairOnFreshPage
+      return
+    }
+
+    tryPlaceUnit(heading)
+    tryPlaceUnit(following)
   }
 
   const tryPlaceUnits = (units) => {
@@ -903,21 +1033,19 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     }
   }
 
-  const tryPlaceHeadingWithFollowing = (heading, following) => {
-    tryPlaceUnits([heading, following])
-  }
-
   for (let itemIndex = 0; itemIndex < visualItems.length; itemIndex += 1) {
     const item = visualItems[itemIndex]
     applyChapterContextFromItem(item, chapterState)
-    syncActiveChapterFromItem(item)
+    updateCurrentActiveChapter(item)
 
-    const followingItem = visualItems[itemIndex + 1]
+    if (isHeadingVisualItem(item)) {
+      const followingItem = visualItems[itemIndex + 1]
 
-    if (isHeadingVisualItem(item) && followingItem && !isHeadingVisualItem(followingItem)) {
-      tryPlaceHeadingWithFollowing(item, followingItem)
-      itemIndex += 1
-      continue
+      if (followingItem && !isHeadingVisualItem(followingItem)) {
+        placeHeadingWithNextContent(item, followingItem)
+        itemIndex += 1
+        continue
+      }
     }
 
     tryPlaceUnit(item)
@@ -1034,20 +1162,24 @@ function BookPageContent({ page }) {
   )
 }
 
-function getPageActiveChapterTitle(pages, pageIndex) {
-  if (pageIndex < 0 || pageIndex >= pages.length) {
-    return null
+function collectChapterTitlesForPage(page) {
+  if (!page) {
+    return []
   }
 
-  for (let index = pageIndex; index >= 0; index -= 1) {
-    const page = pages[index]
-    const title = page.activeChapterTitle ?? page.chapterTitle
-    if (title) {
-      return title
-    }
+  if (page.chaptersOnPage?.length > 0) {
+    return page.chaptersOnPage
   }
 
-  return null
+  if (page.activeChapterTitle) {
+    return [page.activeChapterTitle]
+  }
+
+  if (page.chapterTitle) {
+    return [page.chapterTitle]
+  }
+
+  return []
 }
 
 function formatNavChapterTitle(pages, currentPage, isSpreadView) {
@@ -1060,9 +1192,13 @@ function formatNavChapterTitle(pages, currentPage, isSpreadView) {
   const titles = []
 
   for (const pageIndex of pageIndices) {
-    const title = getPageActiveChapterTitle(pages, pageIndex)
-    if (title && !titles.includes(title)) {
-      titles.push(title)
+    const page = pages[pageIndex]
+    const pageTitles = collectChapterTitlesForPage(page)
+
+    for (const title of pageTitles) {
+      if (title && !titles.includes(title)) {
+        titles.push(title)
+      }
     }
   }
 
