@@ -16,14 +16,14 @@ function flushPage(pages, currentBlocks, chapterTitle, isChapterStart) {
 /**
  * @param {object} document - API document with content, chapters, and title
  * @param {object} [options]
- * @param {number} [options.charsPerPage=1800]
+ * @param {number} [options.charsPerPage=1200]
  * @param {number} [options.pageWidth=400]
  * @param {number} [options.pageHeight=600]
  * @returns {Array<{ pageNumber: number, blocks: object[], chapterTitle: string|null, isChapterStart: boolean }>}
  */
 export function paginateDocument(document, options = {}) {
   const {
-    charsPerPage = 1800,
+    charsPerPage = 1200,
     pageWidth: _pageWidth = 400,
     pageHeight: _pageHeight = 600,
   } = options
