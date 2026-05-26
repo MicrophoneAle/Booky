@@ -215,17 +215,6 @@ function getLayoutHeights() {
     PAGE_NUMBER_RESERVED_PX -
     CONTENT_HEIGHT_SAFETY_BUFFER_PX
 
-  console.log(
-    "LAYOUT HEIGHTS - windowHeight:",
-    window.innerHeight,
-    "navbarHeight:",
-    NAVBAR_HEIGHT_PX,
-    "pageOuterHeight:",
-    pageOuterHeight,
-    "contentMaxHeight:",
-    contentMaxHeight
-  )
-
   return { pageOuterHeight, contentMaxHeight }
 }
 
@@ -235,9 +224,15 @@ function createMeasureElements() {
 
   const page = document.createElement("div")
   page.className = "book-page"
+  page.style.overflow = "visible"
+  page.style.height = "auto"
 
   const body = document.createElement("div")
   body.className = "book-page__body"
+  body.style.flex = "none"
+  body.style.height = "auto"
+  body.style.maxHeight = "none"
+  body.style.overflow = "visible"
 
   const footer = document.createElement("div")
   footer.className = "book-viewer__measure-footer"
@@ -261,7 +256,6 @@ function resolveHeadingType(fontSize) {
  * Stage 1 (client): turn flat API blocks into grouped visual layout items.
  */
 function groupBlocksForDisplay(blocks) {
-  console.log("INCOMING BLOCKS:", JSON.stringify(blocks.slice(0, 20), null, 2))
   const visualItems = []
   let currentProse = []
   let pendingListItems = []
@@ -400,7 +394,6 @@ function groupBlocksForDisplay(blocks) {
   flushProse()
   flushPendingList()
 
-  console.log("VISUAL ITEMS:", JSON.stringify(visualItems.slice(0, 20), null, 2))
   return visualItems
 }
 
@@ -537,12 +530,6 @@ function isTrivialListPage(page) {
 }
 
 function splitListAcrossPages(listItem, bodyEl, contentMaxHeight, showChapterLabel, chapterTitle) {
-  console.log(
-    "SPLITTING LIST - items:",
-    listItem.items.length,
-    "contentMaxHeight:",
-    contentMaxHeight
-  )
   const flatItems = flattenListTree(listItem.items)
   if (flatItems.length <= 1) {
     return [listItem]
@@ -556,15 +543,6 @@ function splitListAcrossPages(listItem, bodyEl, contentMaxHeight, showChapterLab
     const trialList = { type: "list", items: buildNestedListTree(nextChunk) }
 
     renderMeasureBody(bodyEl, [trialList], showChapterLabel, chapterTitle)
-
-    console.log(
-      "LIST CHUNK - chunkSize:",
-      nextChunk.length,
-      "scrollHeight:",
-      bodyEl.scrollHeight,
-      "contentMaxHeight:",
-      contentMaxHeight
-    )
 
     if (pageContentOverflows(bodyEl, contentMaxHeight) && chunk.length > 0) {
       segments.push({ type: "list", items: buildNestedListTree(chunk) })
@@ -661,17 +639,6 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       chapterState.pageChapterTitle
     )
 
-    console.log(
-      "PLACE UNIT - type:",
-      unit.type,
-      "scrollHeight:",
-      bodyEl.scrollHeight,
-      "contentMaxHeight:",
-      contentMaxHeight,
-      "overflows:",
-      pageContentOverflows(bodyEl, contentMaxHeight)
-    )
-
     if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
       currentPageItems = trialItems
       return
@@ -746,9 +713,6 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   if (currentPageItems.length > 0) {
     flushPage()
   }
-
-  console.log("RAW PAGES COUNT:", pages.length)
-  console.log("FIRST 3 PAGES:", JSON.stringify(pages.slice(0, 3), null, 2))
 
   return cleanupPages(pages, bodyEl, contentMaxHeight)
 }
