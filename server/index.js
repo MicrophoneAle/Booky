@@ -44,6 +44,48 @@ app.get("/documents", async (req, res) => {
   }
 })
 
+app.delete("/documents/:id", async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const { data: document, error: fetchError } = await supabase
+      .from("documents")
+      .select("storage_path")
+      .eq("id", id)
+      .single()
+
+    if (fetchError || !document) {
+      res.status(500).json({ success: false, error: "Delete failed" })
+      return
+    }
+
+    if (document.storage_path) {
+      const { error: storageError } = await supabase.storage
+        .from("pdfs")
+        .remove([document.storage_path])
+
+      if (storageError) {
+        res.status(500).json({ success: false, error: "Delete failed" })
+        return
+      }
+    }
+
+    const { error: deleteError } = await supabase
+      .from("documents")
+      .delete()
+      .eq("id", id)
+
+    if (deleteError) {
+      res.status(500).json({ success: false, error: "Delete failed" })
+      return
+    }
+
+    res.json({ success: true })
+  } catch {
+    res.status(500).json({ success: false, error: "Delete failed" })
+  }
+})
+
 app.get("/documents/:id", async (req, res) => {
   try {
     const { id } = req.params

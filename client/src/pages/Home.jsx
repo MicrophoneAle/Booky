@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, NavLink, useNavigate } from "react-router-dom"
 import "./Home.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
@@ -160,22 +160,30 @@ export default function Home() {
       <nav className="home-nav" aria-label="Primary">
         <div className="home-logo">BOOKY</div>
         <div className="home-nav-links">
-          <Link to="/library" className="home-nav-link">
+          <NavLink
+            to="/library"
+            className={({ isActive }) =>
+              `home-nav-link${isActive ? " home-nav-link--active" : ""}`
+            }
+          >
             Library
-          </Link>
-          <Link to="/" className="home-nav-link">
+          </NavLink>
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              `home-nav-link${isActive ? " home-nav-link--active" : ""}`
+            }
+          >
             Upload
-          </Link>
-          <Link to="/" className="home-nav-link">
-            Settings
-          </Link>
+          </NavLink>
         </div>
       </nav>
 
       <main className="home-main">
         <header className="home-hero">
-          <h1>Your Library Awaits</h1>
-          <p>Upload any PDF and read it like a real book.</p>
+          <h1>Read Smarter.</h1>
+          <p>Transform any PDF into a beautiful reading experience.</p>
         </header>
 
         <section className="upload-section">

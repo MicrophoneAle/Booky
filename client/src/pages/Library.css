@@ -10,9 +10,9 @@
 .library-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 3rem;
-  padding: 1.5rem 1rem;
+  justify-content: flex-start;
+  gap: 2.5rem;
+  padding: 1.5rem 2rem;
 }
 
 .library-logo {
@@ -37,11 +37,18 @@
   font-variant: small-caps;
   letter-spacing: 0.14em;
   font-weight: 600;
-  transition: color 0.2s ease;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
 }
 
 .library-nav-link:hover {
   color: #d4af37;
+}
+
+.library-nav-link--active {
+  color: #d4af37;
+  border-bottom-color: #d4af37;
 }
 
 .library-main {
@@ -77,6 +84,7 @@
 
 .library-card {
   position: relative;
+  overflow: hidden;
   background: #1c1917;
   border: 1px solid #2a2420;
   border-radius: 8px;
@@ -113,6 +121,12 @@
   font-weight: 600;
   color: #d4af37;
   line-height: 1.3;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .library-card__pages {
@@ -127,9 +141,16 @@
   color: #8b7355;
 }
 
-.library-card__button {
+.library-card__footer {
   margin-top: auto;
-  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.library-card__button {
   border: none;
   background: transparent;
   color: #d4af37;
@@ -137,12 +158,80 @@
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  padding: 0.5rem 0 0;
+  padding: 0;
   transition: opacity 0.2s ease;
 }
 
 .library-card__button:hover {
   opacity: 0.85;
+}
+
+.library-card__delete {
+  border: none;
+  background: transparent;
+  color: #8b7355;
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.library-card__delete:hover {
+  color: #d4af37;
+}
+
+.library-card__confirm {
+  margin-top: auto;
+  padding-top: 0.75rem;
+}
+
+.library-card__confirm-text,
+.library-card__deleting {
+  margin: 0 0 0.5rem;
+  font-size: 12px;
+  color: #8b7355;
+}
+
+.library-card__delete-error {
+  margin: 0 0 0.5rem;
+  font-size: 11px;
+  color: #c0392b;
+}
+
+.library-card__confirm-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.library-card__confirm-delete {
+  border: none;
+  background: transparent;
+  color: #c0392b;
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.library-card__confirm-delete:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.library-card__confirm-cancel {
+  border: none;
+  background: transparent;
+  color: #8b7355;
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.library-card__confirm-cancel:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .library-card--skeleton {
@@ -257,7 +346,7 @@
 
 @media (max-width: 600px) {
   .library-nav {
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 1rem;
   }
 

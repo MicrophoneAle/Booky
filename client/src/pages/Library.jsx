@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 import "./Library.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
@@ -18,6 +18,107 @@ function formatUploadDate(dateString) {
 function formatPageCount(totalPages) {
   const count = totalPages ?? 0
   return `${count} ${count === 1 ? "page" : "pages"}`
+}
+
+function LibraryBookCard({ document, onDelete }) {
+  const navigate = useNavigate()
+  const [confirming, setConfirming] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(false)
+
+  const handleDeleteClick = () => {
+    setDeleteError(false)
+    setConfirming(true)
+  }
+
+  const handleCancel = () => {
+    if (deleting) return
+    setConfirming(false)
+    setDeleteError(false)
+  }
+
+  const handleConfirmDelete = async () => {
+    setDeleting(true)
+    setDeleteError(false)
+
+    try {
+      const response = await fetch(`${API_URL}/documents/${document.id}`, {
+        method: "DELETE",
+      })
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error("Delete failed")
+      }
+
+      onDelete(document.id)
+    } catch {
+      setDeleteError(true)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  return (
+    <article className="library-card">
+      <div className="library-card__spine" aria-hidden="true" />
+      <div className="library-card__content">
+        <h2 className="library-card__title">{document.name}</h2>
+        <p className="library-card__pages">{formatPageCount(document.total_pages)}</p>
+        <p className="library-card__date">{formatUploadDate(document.created_at)}</p>
+
+        {confirming ? (
+          <div className="library-card__confirm">
+            {deleting ? (
+              <p className="library-card__deleting">Deleting...</p>
+            ) : (
+              <>
+                <p className="library-card__confirm-text">Are you sure?</p>
+                {deleteError && (
+                  <p className="library-card__delete-error">Delete failed. Try again.</p>
+                )}
+                <div className="library-card__confirm-actions">
+                  <button
+                    type="button"
+                    className="library-card__confirm-delete"
+                    onClick={handleConfirmDelete}
+                    disabled={deleting}
+                  >
+                    Yes, delete
+                  </button>
+                  <button
+                    type="button"
+                    className="library-card__confirm-cancel"
+                    onClick={handleCancel}
+                    disabled={deleting}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="library-card__footer">
+            <button
+              type="button"
+              className="library-card__button"
+              onClick={() => navigate(`/read/${document.id}`)}
+            >
+              Open Book →
+            </button>
+            <button
+              type="button"
+              className="library-card__delete"
+              onClick={handleDeleteClick}
+            >
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
+    </article>
+  )
 }
 
 export default function Library() {
@@ -54,20 +155,32 @@ export default function Library() {
     fetchDocuments()
   }, [fetchDocuments, reloadKey])
 
+  const handleDocumentDeleted = useCallback((documentId) => {
+    setDocuments((current) => current.filter((doc) => doc.id !== documentId))
+  }, [])
+
   return (
     <div className="library-page">
       <nav className="library-nav" aria-label="Primary">
         <div className="library-logo">BOOKY</div>
         <div className="library-nav-links">
-          <Link to="/library" className="library-nav-link">
+          <NavLink
+            to="/library"
+            className={({ isActive }) =>
+              `library-nav-link${isActive ? " library-nav-link--active" : ""}`
+            }
+          >
             Library
-          </Link>
-          <Link to="/" className="library-nav-link">
+          </NavLink>
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              `library-nav-link${isActive ? " library-nav-link--active" : ""}`
+            }
+          >
             Upload
-          </Link>
-          <Link to="/" className="library-nav-link">
-            Settings
-          </Link>
+          </NavLink>
         </div>
       </nav>
 
@@ -119,25 +232,11 @@ export default function Library() {
         {!loading && !error && documents.length > 0 && (
           <div className="library-grid">
             {documents.map((document) => (
-              <article key={document.id} className="library-card">
-                <div className="library-card__spine" aria-hidden="true" />
-                <div className="library-card__content">
-                  <h2 className="library-card__title">{document.name}</h2>
-                  <p className="library-card__pages">
-                    {formatPageCount(document.total_pages)}
-                  </p>
-                  <p className="library-card__date">
-                    {formatUploadDate(document.created_at)}
-                  </p>
-                  <button
-                    type="button"
-                    className="library-card__button"
-                    onClick={() => navigate(`/read/${document.id}`)}
-                  >
-                    Open Book →
-                  </button>
-                </div>
-              </article>
+              <LibraryBookCard
+                key={document.id}
+                document={document}
+                onDelete={handleDocumentDeleted}
+              />
             ))}
           </div>
         )}
