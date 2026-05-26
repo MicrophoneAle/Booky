@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import "dotenv/config"
 import express from "express"
 import cors from "cors"
 import multer from "multer"
@@ -13,12 +13,11 @@ const supabase = createClient(
 
 const app = express()
 
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://booky-lemon.vercel.app"
-  ]
-}))
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://booky-lemon.vercel.app"],
+  })
+)
 
 app.use(express.json())
 
@@ -138,16 +137,6 @@ function getItemFontSize(item) {
   return Number(Math.max(scaleX, scaleY).toFixed(2))
 }
 
-function getItemY(item) {
-  const matrix = Array.isArray(item.transform) ? item.transform : []
-  return Number.isFinite(matrix[5]) ? matrix[5] : 0
-}
-
-function getItemX(item) {
-  const matrix = Array.isArray(item.transform) ? item.transform : []
-  return Number.isFinite(matrix[4]) ? matrix[4] : 0
-}
-
 async function extractHeadingLines(buffer) {
   const headingStrings = new Set()
   const loadingTask = getDocument({ data: new Uint8Array(buffer) })
@@ -216,6 +205,107 @@ function detectChapters(content) {
   return { chapters, content: updatedContent }
 }
 
+function linesFromPdfText(text) {
+  return (text ?? "").split("\n").map((line) => line.trim())
+}
+
+function buildBlocksFromLines(lines, headingStrings) {
+  const blocks = []
+  const bulletCharsRegex = /^([•o\-—])\s*$/
+  const inlineBulletRegex = /^([•o\-—])\s*(.*)$/
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const currentLine = lines[index]
+
+    if (!currentLine) {
+      blocks.push({
+        text: "",
+        isHeading: false,
+        fontSize: 12,
+        chapterId: null,
+      })
+      continue
+    }
+
+    if (headingStrings.has(currentLine)) {
+      blocks.push({
+        text: currentLine,
+        isHeading: true,
+        fontSize: 16,
+        chapterId: null,
+      })
+      continue
+    }
+
+    if (bulletCharsRegex.test(currentLine) && index + 1 < lines.length) {
+      let nextLine = lines[index + 1]
+
+      if (inlineBulletRegex.test(nextLine)) {
+        nextLine = nextLine.replace(inlineBulletRegex, "$2").trim()
+      }
+
+      blocks.push({
+        text: `${currentLine} ${nextLine}`.replace(/\s+/g, " ").trim(),
+        isHeading: false,
+        fontSize: 12,
+        chapterId: null,
+      })
+      index += 1
+      continue
+    }
+
+    if (inlineBulletRegex.test(currentLine)) {
+      const marker = currentLine.match(inlineBulletRegex)[1]
+      const restOfText = currentLine.match(inlineBulletRegex)[2].trim()
+      blocks.push({
+        text: `${marker} ${restOfText}`,
+        isHeading: false,
+        fontSize: 12,
+        chapterId: null,
+      })
+      continue
+    }
+
+    if (blocks.length > 0 && !currentLine.startsWith("http")) {
+      const previousBlock = blocks[blocks.length - 1]
+
+      if (
+        !previousBlock.isHeading &&
+        previousBlock.text &&
+        !bulletCharsRegex.test(currentLine) &&
+        !inlineBulletRegex.test(currentLine) &&
+        previousBlock.text.length < 140 &&
+        !previousBlock.text.endsWith(".")
+      ) {
+        previousBlock.text += ` ${currentLine}`
+        continue
+      }
+    }
+
+    blocks.push({
+      text: currentLine,
+      isHeading: false,
+      fontSize: 12,
+      chapterId: null,
+    })
+  }
+
+  return blocks
+}
+
+function blocksToContent(blocks, blocksPerPage = 40) {
+  const content = []
+
+  for (let index = 0; index < blocks.length; index += blocksPerPage) {
+    content.push({
+      pageIndex: content.length,
+      blocks: blocks.slice(index, index + blocksPerPage),
+    })
+  }
+
+  return content
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -250,98 +340,9 @@ app.post("/upload", (req, res) => {
         extractHeadingLines(uploadedFile.buffer),
       ])
 
-      const rawLines = parsedText.text
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0)
-      const blocks = []
-
-      for (let i = 0; i < rawLines.length; i++) {
-        let currentLine = rawLines[i]
-
-        // 1. Identify headings early
-        if (headingStrings.has(currentLine)) {
-          blocks.push({
-            text: currentLine,
-            isHeading: true,
-            fontSize: 16,
-            chapterId: null,
-          })
-          continue
-        }
-
-        // Define regex matches for clean list extraction
-        const bulletCharsRegex = /^([•o\-—])\s*$/
-        const inlineBulletRegex = /^([•o\-—])\s*(.*)$/
-
-        // 2. Look-Ahead Fix: Handle lone standalone bullet characters
-        if (bulletCharsRegex.test(currentLine) && i + 1 < rawLines.length) {
-          let nextLine = rawLines[i + 1].trim()
-
-          // Clean up any duplicated bullet character at the start of the next line
-          if (inlineBulletRegex.test(nextLine)) {
-            nextLine = nextLine.replace(inlineBulletRegex, "$2").trim()
-          }
-
-          blocks.push({
-            text: `${currentLine} ${nextLine}`,
-            isHeading: false,
-            fontSize: 12,
-            chapterId: null,
-          })
-          i++ // Advance past the merged line
-          continue
-        }
-
-        // 3. Clean up inline bullets for lines that already have them
-        if (inlineBulletRegex.test(currentLine)) {
-          const marker = currentLine.match(inlineBulletRegex)[1]
-          const restOfText = currentLine.match(inlineBulletRegex)[2].trim()
-          blocks.push({
-            text: `${marker} ${restOfText}`,
-            isHeading: false,
-            fontSize: 12,
-            chapterId: null,
-          })
-          continue
-        }
-
-        // 4. Look-Behind Fix: Append trailing broken text lines ONLY if it's not a link or new list item
-        if (blocks.length > 0 && !currentLine.startsWith("http")) {
-          const prevBlock = blocks[blocks.length - 1]
-
-          // Only append if the previous item wasn't a heading and the current line isn't a new list start
-          if (
-            !prevBlock.isHeading &&
-            !bulletCharsRegex.test(currentLine) &&
-            !inlineBulletRegex.test(currentLine)
-          ) {
-            // Check if it's a short floating text chunk that was broken mid-sentence
-            if (prevBlock.text.length < 140 && !prevBlock.text.endsWith(".")) {
-              prevBlock.text += ` ${currentLine}`
-              continue
-            }
-          }
-        }
-
-        // 5. Default catch-all fallback
-        blocks.push({
-          text: currentLine,
-          isHeading: false,
-          fontSize: 12,
-          chapterId: null,
-        })
-      }
-
-      const content = []
-      const linesPerPage = 40
-
-      for (let index = 0; index < blocks.length; index += linesPerPage) {
-        content.push({
-          pageIndex: content.length,
-          blocks: blocks.slice(index, index + linesPerPage),
-        })
-      }
+      const lines = linesFromPdfText(parsedText.text)
+      const blocks = buildBlocksFromLines(lines, headingStrings)
+      const content = blocksToContent(blocks)
 
       const hasImages = false
       const title = uploadedFile.originalname.replace(/\.pdf$/i, "")
