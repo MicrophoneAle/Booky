@@ -172,18 +172,6 @@ async function extractHeadingLines(buffer) {
   return headingStrings
 }
 
-function createTextBlock(text, headingStrings) {
-  const trimmed = text.trim()
-  const isHeading = headingStrings.has(trimmed)
-
-  return {
-    text: trimmed,
-    isHeading,
-    fontSize: isHeading ? 16 : 12,
-    chapterId: null,
-  }
-}
-
 function isChapterHeading(block) {
   const text = block.text.trim()
 
@@ -262,55 +250,88 @@ app.post("/upload", (req, res) => {
         extractHeadingLines(uploadedFile.buffer),
       ])
 
-      const rawLines = parsedText.text.split("\n")
+      const rawLines = parsedText.text
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
       const blocks = []
-      const currentParagraph = []
 
-      const flushParagraph = () => {
-        if (currentParagraph.length === 0) return
+      for (let i = 0; i < rawLines.length; i++) {
+        let currentLine = rawLines[i]
 
-        const mergedText = currentParagraph.join(" ").replace(/\s+/g, " ").trim()
-        currentParagraph.length = 0
-
-        if (mergedText) {
-          blocks.push(createTextBlock(mergedText, headingStrings))
-        }
-      }
-
-      for (let i = 0; i < rawLines.length; i += 1) {
-        const line = rawLines[i].trim()
-        if (!line) continue
-
-        const isHeading = headingStrings.has(line)
-        const isStandaloneBullet = /^([•o\-—])$/.test(line)
-        const isLineWithBullet = /^([•o\-—])\s+/.test(line)
-        const isUrl = line.startsWith("http://") || line.startsWith("https://")
-
-        if (isHeading || isStandaloneBullet || isLineWithBullet || isUrl) {
-          flushParagraph()
-
-          if (isStandaloneBullet) {
-            const nextRawLine = rawLines[i + 1]
-            if (nextRawLine !== undefined) {
-              const combinedText = `${line} ${nextRawLine.trim()}`
-                .replace(/\s+/g, " ")
-                .trim()
-              blocks.push(createTextBlock(combinedText, headingStrings))
-              i += 1
-            } else {
-              blocks.push(createTextBlock(line, headingStrings))
-            }
-          } else {
-            blocks.push(createTextBlock(line, headingStrings))
-          }
-
+        // 1. Identify headings early
+        if (headingStrings.has(currentLine)) {
+          blocks.push({
+            text: currentLine,
+            isHeading: true,
+            fontSize: 16,
+            chapterId: null,
+          })
           continue
         }
 
-        currentParagraph.push(line)
-      }
+        // Define regex matches for clean list extraction
+        const bulletCharsRegex = /^([•o\-—])\s*$/
+        const inlineBulletRegex = /^([•o\-—])\s*(.*)$/
 
-      flushParagraph()
+        // 2. Look-Ahead Fix: Handle lone standalone bullet characters
+        if (bulletCharsRegex.test(currentLine) && i + 1 < rawLines.length) {
+          let nextLine = rawLines[i + 1].trim()
+
+          // Clean up any duplicated bullet character at the start of the next line
+          if (inlineBulletRegex.test(nextLine)) {
+            nextLine = nextLine.replace(inlineBulletRegex, "$2").trim()
+          }
+
+          blocks.push({
+            text: `${currentLine} ${nextLine}`,
+            isHeading: false,
+            fontSize: 12,
+            chapterId: null,
+          })
+          i++ // Advance past the merged line
+          continue
+        }
+
+        // 3. Clean up inline bullets for lines that already have them
+        if (inlineBulletRegex.test(currentLine)) {
+          const marker = currentLine.match(inlineBulletRegex)[1]
+          const restOfText = currentLine.match(inlineBulletRegex)[2].trim()
+          blocks.push({
+            text: `${marker} ${restOfText}`,
+            isHeading: false,
+            fontSize: 12,
+            chapterId: null,
+          })
+          continue
+        }
+
+        // 4. Look-Behind Fix: Append trailing broken text lines ONLY if it's not a link or new list item
+        if (blocks.length > 0 && !currentLine.startsWith("http")) {
+          const prevBlock = blocks[blocks.length - 1]
+
+          // Only append if the previous item wasn't a heading and the current line isn't a new list start
+          if (
+            !prevBlock.isHeading &&
+            !bulletCharsRegex.test(currentLine) &&
+            !inlineBulletRegex.test(currentLine)
+          ) {
+            // Check if it's a short floating text chunk that was broken mid-sentence
+            if (prevBlock.text.length < 140 && !prevBlock.text.endsWith(".")) {
+              prevBlock.text += ` ${currentLine}`
+              continue
+            }
+          }
+        }
+
+        // 5. Default catch-all fallback
+        blocks.push({
+          text: currentLine,
+          isHeading: false,
+          fontSize: 12,
+          chapterId: null,
+        })
+      }
 
       const content = []
       const linesPerPage = 40
