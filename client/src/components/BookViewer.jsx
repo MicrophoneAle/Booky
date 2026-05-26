@@ -155,12 +155,7 @@ function groupBlocksForDisplay(blocks) {
 
     if (LIST_ITEM_REGEX.test(text)) {
       flushProse()
-      const cleanListContent = text.replace(LIST_ITEM_REGEX, "$2").trim()
-
-      if (cleanListContent) {
-        pendingListItems.push({ text: cleanListContent })
-      }
-
+      pendingListItems.push({ text })
       continue
     }
 
@@ -174,7 +169,6 @@ function groupBlocksForDisplay(blocks) {
     }
 
     flushPendingList()
-    flushProse()
     currentProse.push(text)
   }
 
