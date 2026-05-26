@@ -172,6 +172,79 @@ async function extractHeadingLines(buffer) {
   return headingStrings
 }
 
+function isListItemLine(line) {
+  return (
+    /^[\u2022•]\s/.test(line) ||
+    /^o\s/.test(line) ||
+    /^-\s/.test(line) ||
+    /^\d+[\.\)]\s*/.test(line)
+  )
+}
+
+function isStandaloneUrlLine(line) {
+  return /^https?:\/\/\S+$/i.test(line.trim())
+}
+
+function createTextBlock(text, headingStrings) {
+  const trimmed = text.trim()
+  const isHeading = headingStrings.has(trimmed)
+
+  return {
+    text: trimmed,
+    isHeading,
+    fontSize: isHeading ? 16 : 12,
+    chapterId: null,
+  }
+}
+
+function linesToBlocks(rawLines, headingStrings) {
+  const blocks = []
+  let paragraphParts = []
+
+  const flushParagraph = () => {
+    if (paragraphParts.length === 0) return
+
+    const mergedText = paragraphParts.join(" ").replace(/\s+/g, " ").trim()
+    if (mergedText) {
+      blocks.push(createTextBlock(mergedText, headingStrings))
+    }
+
+    paragraphParts = []
+  }
+
+  for (const rawLine of rawLines) {
+    const trimmed = rawLine.trim()
+
+    if (!trimmed) {
+      flushParagraph()
+      continue
+    }
+
+    if (headingStrings.has(trimmed)) {
+      flushParagraph()
+      blocks.push(createTextBlock(trimmed, headingStrings))
+      continue
+    }
+
+    if (isListItemLine(trimmed)) {
+      flushParagraph()
+      blocks.push(createTextBlock(trimmed, headingStrings))
+      continue
+    }
+
+    if (isStandaloneUrlLine(trimmed)) {
+      flushParagraph()
+      blocks.push(createTextBlock(trimmed, headingStrings))
+      continue
+    }
+
+    paragraphParts.push(trimmed)
+  }
+
+  flushParagraph()
+  return blocks
+}
+
 function isChapterHeading(block) {
   const text = block.text.trim()
 
@@ -250,22 +323,8 @@ app.post("/upload", (req, res) => {
         extractHeadingLines(uploadedFile.buffer),
       ])
 
-      const lines = parsedText.text
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0)
-
-      const blocks = lines.map((line) => {
-        const trimmed = line.trim()
-        const isHeading = headingStrings.has(trimmed)
-
-        return {
-          text: trimmed,
-          isHeading,
-          fontSize: isHeading ? 16 : 12,
-          chapterId: null,
-        }
-      })
+      const rawLines = parsedText.text.split("\n")
+      const blocks = linesToBlocks(rawLines, headingStrings)
 
       const content = []
       const linesPerPage = 40
