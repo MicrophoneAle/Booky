@@ -17,7 +17,7 @@ function formatUploadDate(dateString) {
 
 function formatPageCount(totalPages) {
   const count = totalPages ?? 0
-  return `${count} ${count === 1 ? "page" : "pages"}`
+  return `${count} ${count === 1 ? "PDF page" : "PDF pages"}`
 }
 
 function LibraryBookCard({ document, onDelete }) {

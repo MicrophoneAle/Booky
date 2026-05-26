@@ -1305,8 +1305,11 @@ export default function BookViewer({
 
   const leftPage = pages[currentPage - 1] ?? null
   const rightPage = isSpreadView ? pages[currentPage] ?? null : null
-  const navChapterTitle = formatNavChapterTitle(pages, currentPage, isSpreadView)
-  const pageCounterText = formatPageCounter(leftPage, rightPage, totalPages, isSpreadView)
+  const isFinalOddSpreadSingle =
+    isSpreadView && totalPages % 2 === 1 && Boolean(leftPage) && !rightPage
+  const showSpreadLayout = isSpreadView && !isFinalOddSpreadSingle
+  const navChapterTitle = formatNavChapterTitle(pages, currentPage, showSpreadLayout)
+  const pageCounterText = formatPageCounter(leftPage, rightPage, totalPages, showSpreadLayout)
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)")
@@ -1489,14 +1492,16 @@ export default function BookViewer({
 
         <div
           className={`book-viewer__spread ${
-            !isSpreadView ? "book-viewer__spread--single" : ""
+            !showSpreadLayout ? "book-viewer__spread--single" : ""
           }`}
         >
           <motion.div
             className={`book-viewer__page-slot book-viewer__page-slot--left ${
-              !isSpreadView ? "book-viewer__page-slot--single" : ""
+              !showSpreadLayout ? "book-viewer__page-slot--single" : ""
             }`}
-            style={{ transformOrigin: isSpreadView ? "right center" : "center center" }}
+            style={{
+              transformOrigin: showSpreadLayout ? "right center" : "center center",
+            }}
             animate={leftPageMotion}
             transition={flipTransition}
             onAnimationComplete={
@@ -1508,7 +1513,7 @@ export default function BookViewer({
             </div>
           </motion.div>
 
-          {isSpreadView && (
+          {showSpreadLayout && (
             <>
               <div className="book-viewer__spine" aria-hidden="true" />
 

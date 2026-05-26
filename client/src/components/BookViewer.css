@@ -300,8 +300,14 @@ ol.book-page__list {
 }
 
 .book-page__list-item > .book-page__list,
-.book-page__list-item > ol.book-page__list {
-  padding-left: 1.25rem;
+.book-page__list-item > ol.book-page__list,
+.book-page__list-item > ul.book-page__list {
+  padding-left: 1.5rem;
+}
+
+.book-page__list-item--numbered > ol.book-page__list {
+  padding-left: 1.5rem;
+  margin-top: 0;
 }
 
 .book-page__list-item--no-bullet {
