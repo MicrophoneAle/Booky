@@ -9,7 +9,7 @@ const NAVBAR_HEIGHT_PX = 48
 const PAGE_NUMBER_RESERVED_PX = 32
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 8
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
-const UNUSED_PAGE_SPACE_THRESHOLD_PX = 40
+const GREEDY_PAGE_SAFETY_MARGIN_PX = 10
 
 const IMPLIED_LIST_LINE_REGEX = /^(Add|Test|Explore|Verify|Ensure|Click)\b/i
 const TRIVIAL_LIST_PAGE_CHAR_LIMIT = 30
@@ -709,15 +709,6 @@ function splitListAcrossPages(listItem, bodyEl, contentMaxHeight, showChapterLab
 
     if (pageContentOverflows(bodyEl, contentMaxHeight) && chunk.length > 0) {
       segments.push({ type: "list", items: buildNestedListTree(chunk) })
-      const segment = segments[segments.length - 1]
-      console.log(
-        "SEGMENT",
-        segments.length,
-        "first:",
-        segment.items[0]?.marker,
-        "last:",
-        segment.items[segment.items.length - 1]?.marker
-      )
       chunk = [flatItem]
     } else {
       chunk = nextChunk
@@ -726,15 +717,6 @@ function splitListAcrossPages(listItem, bodyEl, contentMaxHeight, showChapterLab
 
   if (chunk.length > 0) {
     segments.push({ type: "list", items: buildNestedListTree(chunk) })
-    const segment = segments[segments.length - 1]
-    console.log(
-      "SEGMENT",
-      segments.length,
-      "first:",
-      segment.items[0]?.marker,
-      "last:",
-      segment.items[segment.items.length - 1]?.marker
-    )
   }
 
   if (segments.length <= 1) {
@@ -851,42 +833,9 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     }
   }
 
-  const measurePageUnusedSpace = (pageItems, showLabel, labelTitle) => {
+  const pageItemsFit = (pageItems, showLabel, labelTitle) => {
     renderMeasureBody(bodyEl, pageItems, showLabel, labelTitle)
-    return contentMaxHeight - bodyEl.scrollHeight
-  }
-
-  const tryPlaceOnPreviousPage = (units) => {
-    if (pages.length === 0) {
-      return false
-    }
-
-    const unitsToPlace = Array.isArray(units) ? units : [units]
-    const lastPage = pages[pages.length - 1]
-    const unusedSpace = measurePageUnusedSpace(
-      lastPage.visualItems,
-      Boolean(lastPage.isChapterStart && lastPage.chapterTitle),
-      lastPage.chapterTitle
-    )
-
-    if (unusedSpace <= UNUSED_PAGE_SPACE_THRESHOLD_PX) {
-      return false
-    }
-
-    const trialItems = [...lastPage.visualItems, ...unitsToPlace]
-    renderMeasureBody(
-      bodyEl,
-      trialItems,
-      Boolean(lastPage.isChapterStart && lastPage.chapterTitle),
-      lastPage.chapterTitle
-    )
-
-    if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
-      lastPage.visualItems = trialItems
-      return true
-    }
-
-    return false
+    return bodyEl.scrollHeight + GREEDY_PAGE_SAFETY_MARGIN_PX < contentMaxHeight
   }
 
   const flushPage = () => {
@@ -909,282 +858,38 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     chapterState.pageIsChapterStart = false
   }
 
-  const measureItemsOnPage = (pageItems, showLabel, labelTitle) => {
-    renderMeasureBody(bodyEl, pageItems, showLabel, labelTitle)
-    return !pageContentOverflows(bodyEl, contentMaxHeight)
-  }
-
-  const canFitOnPage = (page, candidateItems) => {
-    const trialItems = [...page.visualItems, ...candidateItems]
-    renderMeasureBody(
-      bodyEl,
-      trialItems,
-      Boolean(page.isChapterStart && page.chapterTitle),
-      page.chapterTitle
-    )
-
-    return !pageContentOverflows(bodyEl, contentMaxHeight)
-  }
-
-  const isChapterStartItem = (item) =>
-    isHeadingVisualItem(item) && (item.isChapterStart || item.type === "title")
-
-  const chapterTitleFromItem = (item) => item.chapterTitle ?? item.text
-
-  const recomputePageChapterMetadata = (pageList) => {
-    let runningChapter = null
-
-    for (let pageIndex = 0; pageIndex < pageList.length; pageIndex += 1) {
-      const page = pageList[pageIndex]
-      const chaptersOnPage = []
-      const firstItem = page.visualItems[0]
-      const startsWithChapter = Boolean(firstItem && isChapterStartItem(firstItem))
-
-      if (startsWithChapter) {
-        runningChapter = chapterTitleFromItem(firstItem)
-      }
-
-      if (runningChapter) {
-        chaptersOnPage.push(runningChapter)
-      }
-
-      for (const item of page.visualItems) {
-        if (isChapterStartItem(item)) {
-          const title = chapterTitleFromItem(item)
-          runningChapter = title
-          if (!chaptersOnPage.includes(title)) {
-            chaptersOnPage.push(title)
-          }
-        }
-      }
-
-      page.pageNumber = pageIndex + 1
-      page.isChapterStart = startsWithChapter
-      page.chapterTitle = startsWithChapter ? chapterTitleFromItem(firstItem) : null
-      page.activeChapterTitle = runningChapter
-      page.chaptersOnPage = chaptersOnPage
-    }
-  }
-
-  const compactPagesForward = () => {
-    const hasSplitGroupInFollowingPages = (startPageIndex, splitGroupId) => {
-      for (let index = startPageIndex; index < pages.length; index += 1) {
-        const page = pages[index]
-        if (
-          page.visualItems.some(
-            (item) => item.type === "list" && item.splitGroupId === splitGroupId
-          )
-        ) {
-          return true
-        }
-      }
+  const tryAddToCurrentPage = (units) => {
+    const trialItems = [...currentPageItems, ...units]
+    if (!pageItemsFit(trialItems, showChapterLabel(), chapterState.pageChapterTitle)) {
       return false
     }
 
-    const getTopLevelListKind = (listItem) => {
-      const firstNode = listItem.items?.[0]
-      if (!firstNode) {
-        return null
-      }
-      return getListItemKind(firstNode)
-    }
-
-    const shouldBlockListMove = (candidate, currentPage, nextPage, pageIndex) => {
-      if (candidate.type !== "list") {
-        return false
-      }
-
-      const candidateKind = getTopLevelListKind(candidate)
-      const currentHasSameKindList = currentPage.visualItems.some(
-        (item) =>
-          item.type === "list" &&
-          candidateKind !== null &&
-          getTopLevelListKind(item) === candidateKind
-      )
-
-      if (currentHasSameKindList) {
-        return true
-      }
-
-      if (!candidate.splitGroupId) {
-        return false
-      }
-
-      const hasSameSplitGroupAfterMove = nextPage.visualItems
-        .slice(1)
-        .some(
-          (item) => item.type === "list" && item.splitGroupId === candidate.splitGroupId
-        )
-
-      if (hasSameSplitGroupAfterMove) {
-        return true
-      }
-
-      return hasSplitGroupInFollowingPages(pageIndex + 2, candidate.splitGroupId)
-    }
-
-    let movedAny = true
-
-    while (movedAny) {
-      movedAny = false
-
-      for (let pageIndex = 0; pageIndex < pages.length - 1; pageIndex += 1) {
-        const current = pages[pageIndex]
-        const next = pages[pageIndex + 1]
-        let movedFromNext = false
-
-        while (next.visualItems.length > 0) {
-          const firstNextItem = next.visualItems[0]
-          if (shouldBlockListMove(firstNextItem, current, next, pageIndex)) {
-            break
-          }
-
-          if (!canFitOnPage(current, [firstNextItem])) {
-            break
-          }
-
-          current.visualItems.push(firstNextItem)
-          next.visualItems.shift()
-          recomputePageChapterMetadata(pages)
-          movedAny = true
-          movedFromNext = true
-        }
-
-        if (next.visualItems.length === 0) {
-          pages.splice(pageIndex + 1, 1)
-          recomputePageChapterMetadata(pages)
-          movedAny = true
-        } else if (movedFromNext) {
-          continue
-        }
-      }
-    }
-  }
-
-  const placeHeadingWithNextContent = (heading, following) => {
-    updateCurrentActiveChapter(heading)
-    const pair = [heading, following]
-
-    markPageStartIfEmpty()
-
-    const withCurrentPage = [...currentPageItems, ...pair]
-    if (
-      measureItemsOnPage(
-        withCurrentPage,
-        showChapterLabel(),
-        chapterState.pageChapterTitle
-      )
-    ) {
-      currentPageItems = withCurrentPage
-      return
-    }
-
-    if (currentPageItems.length > 0) {
-      flushPage()
-    }
-
-    markPageStartIfEmpty()
-
-    const pairOnFreshPage = [...pair]
-    if (
-      measureItemsOnPage(
-        pairOnFreshPage,
-        chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
-        chapterState.pageChapterTitle
-      )
-    ) {
-      currentPageItems = pairOnFreshPage
-      return
-    }
-
-    tryPlaceUnit(heading)
-    tryPlaceUnit(following)
-  }
-
-  const tryPlaceUnits = (units) => {
-    markPageStartIfEmpty()
-
-    if (tryPlaceOnPreviousPage(units)) {
-      return
-    }
-
-    const trialItems = [...currentPageItems, ...units]
-
-    renderMeasureBody(
-      bodyEl,
-      trialItems,
-      showChapterLabel(),
-      chapterState.pageChapterTitle
-    )
-
-    if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
-      currentPageItems = trialItems
-      return
-    }
-
-    if (currentPageItems.length > 0) {
-      flushPage()
-    }
-
-    markPageStartIfEmpty()
-
-    if (units.length === 1) {
-      tryPlaceUnit(units[0])
-      return
-    }
-
-    renderMeasureBody(
-      bodyEl,
-      units,
-      chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
-      chapterState.pageChapterTitle
-    )
-
-    if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
-      currentPageItems = units
-      return
-    }
-
     for (const unit of units) {
-      tryPlaceUnit(unit)
+      applyChapterContextFromItem(unit, chapterState)
+      updateCurrentActiveChapter(unit)
     }
+
+    if (currentPageItems.length === 0) {
+      markPageStartIfEmpty()
+    }
+
+    currentPageItems = trialItems
+    return true
   }
 
-  const tryPlaceUnit = (unit) => {
+  const placeOversizedItem = (unit) => {
     markPageStartIfEmpty()
 
-    if (tryPlaceOnPreviousPage(unit)) {
+    const showLabel =
+      chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle)
+    const labelTitle = chapterState.pageChapterTitle
+
+    if (pageItemsFit([unit], showLabel, labelTitle)) {
+      currentPageItems = [unit]
       return
     }
 
-    const trialItems = [...currentPageItems, unit]
-
-    renderMeasureBody(
-      bodyEl,
-      trialItems,
-      showChapterLabel(),
-      chapterState.pageChapterTitle
-    )
-
-    if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
-      currentPageItems = trialItems
-      return
-    }
-
-    if (currentPageItems.length > 0) {
-      flushPage()
-    }
-
-    markPageStartIfEmpty()
-
-    renderMeasureBody(
-      bodyEl,
-      [unit],
-      chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
-      chapterState.pageChapterTitle
-    )
-
-    if (!pageContentOverflows(bodyEl, contentMaxHeight) || unit.type !== "list") {
+    if (unit.type !== "list") {
       currentPageItems = [unit]
       return
     }
@@ -1193,100 +898,98 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       unit,
       bodyEl,
       contentMaxHeight,
-      chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
-      chapterState.pageChapterTitle
+      showLabel,
+      labelTitle
     )
 
     for (let segmentIndex = 0; segmentIndex < listSegments.length; segmentIndex += 1) {
-      const segment = listSegments[segmentIndex]
-
       if (segmentIndex > 0) {
         flushPage()
-      }
-
-      markPageStartIfEmpty()
-
-      let trialItems =
-        segmentIndex === 0 ? [...currentPageItems, segment] : [segment]
-
-      renderMeasureBody(
-        bodyEl,
-        trialItems,
-        showChapterLabel(),
-        chapterState.pageChapterTitle
-      )
-
-      if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
-        currentPageItems = trialItems
-        continue
-      }
-
-      if (segmentIndex === 0 && currentPageItems.length > 0) {
-        flushPage()
         markPageStartIfEmpty()
-        trialItems = [segment]
-        renderMeasureBody(
-          bodyEl,
-          trialItems,
-          chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
-          chapterState.pageChapterTitle
-        )
       }
 
-      currentPageItems = trialItems
+      currentPageItems = [listSegments[segmentIndex]]
+
+      if (segmentIndex < listSegments.length - 1) {
+        flushPage()
+      }
     }
+  }
+
+  const placeItem = (unit) => {
+    applyChapterContextFromItem(unit, chapterState)
+    updateCurrentActiveChapter(unit)
+
+    if (tryAddToCurrentPage([unit])) {
+      return
+    }
+
+    if (currentPageItems.length > 0) {
+      flushPage()
+    }
+
+    markPageStartIfEmpty()
+
+    if (pageItemsFit([unit], showChapterLabel(), chapterState.pageChapterTitle)) {
+      currentPageItems = [unit]
+      return
+    }
+
+    placeOversizedItem(unit)
+  }
+
+  const placeHeadingWithFollowing = (heading, following) => {
+    applyChapterContextFromItem(heading, chapterState)
+    updateCurrentActiveChapter(heading)
+
+    if (tryAddToCurrentPage([heading, following])) {
+      return
+    }
+
+    if (currentPageItems.length > 0) {
+      flushPage()
+    }
+
+    applyChapterContextFromItem(heading, chapterState)
+    updateCurrentActiveChapter(heading)
+    markPageStartIfEmpty()
+
+    const showLabel =
+      chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle)
+    const freshPair = [heading, following]
+
+    if (pageItemsFit(freshPair, showLabel, chapterState.pageChapterTitle)) {
+      applyChapterContextFromItem(following, chapterState)
+      updateCurrentActiveChapter(following)
+      currentPageItems = freshPair
+      return
+    }
+
+    placeItem(heading)
+    placeItem(following)
   }
 
   for (let itemIndex = 0; itemIndex < visualItems.length; itemIndex += 1) {
     const item = visualItems[itemIndex]
-    applyChapterContextFromItem(item, chapterState)
-    updateCurrentActiveChapter(item)
 
     if (isHeadingVisualItem(item)) {
       const followingItem = visualItems[itemIndex + 1]
 
       if (followingItem && !isHeadingVisualItem(followingItem)) {
-        placeHeadingWithNextContent(item, followingItem)
+        placeHeadingWithFollowing(item, followingItem)
         itemIndex += 1
         continue
       }
     }
 
-    tryPlaceUnit(item)
+    placeItem(item)
   }
 
   if (currentPageItems.length > 0) {
     flushPage()
   }
 
-  for (const page of pages) {
-    renderMeasureBody(
-      bodyEl,
-      page.visualItems,
-      Boolean(page.isChapterStart && page.chapterTitle),
-      page.chapterTitle
-    )
-    console.log(
-      "PAGE",
-      page.pageNumber,
-      "scrollHeight:",
-      bodyEl.scrollHeight,
-      "maxHeight:",
-      contentMaxHeight,
-      "unused:",
-      contentMaxHeight - bodyEl.scrollHeight,
-      "items:",
-      page.visualItems.length
-    )
-  }
-
-  compactPagesForward()
-  recomputePageChapterMetadata(pages)
-
-  const cleanedPages = cleanupPages(pages, bodyEl, contentMaxHeight)
-  recomputePageChapterMetadata(cleanedPages)
-
-  return cleanedPages
+  return cleanupPages(pages, bodyEl, contentMaxHeight)
 }
 
 function renderListNodeReact(node, itemKey) {
