@@ -215,6 +215,15 @@ function getLayoutHeights() {
     PAGE_NUMBER_RESERVED_PX -
     CONTENT_HEIGHT_SAFETY_BUFFER_PX
 
+  console.log("LAYOUT HEIGHTS:", {
+    windowHeight: window.innerHeight,
+    navbarHeight: NAVBAR_HEIGHT_PX,
+    stagePaddingY: 1.5 * (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) * 2,
+    pagePaddingY: 1.5 * (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) * 2,
+    pageOuterHeight,
+    contentMaxHeight,
+  })
+
   return { pageOuterHeight, contentMaxHeight }
 }
 
@@ -526,6 +535,10 @@ function isTrivialListPage(page) {
 }
 
 function splitListAcrossPages(listItem, bodyEl, contentMaxHeight, showChapterLabel, chapterTitle) {
+  console.log("SPLITTING LIST:", {
+    itemCount: listItem.items.length,
+    contentMaxHeight,
+  })
   const flatItems = flattenListTree(listItem.items)
   if (flatItems.length <= 1) {
     return [listItem]
@@ -539,6 +552,12 @@ function splitListAcrossPages(listItem, bodyEl, contentMaxHeight, showChapterLab
     const trialList = { type: "list", items: buildNestedListTree(nextChunk) }
 
     renderMeasureBody(bodyEl, [trialList], showChapterLabel, chapterTitle)
+
+    console.log("LIST CHUNK:", {
+      chunkSize: nextChunk.length,
+      scrollHeight: bodyEl.scrollHeight,
+      overflows: pageContentOverflows(bodyEl, contentMaxHeight),
+    })
 
     if (pageContentOverflows(bodyEl, contentMaxHeight) && chunk.length > 0) {
       segments.push({ type: "list", items: buildNestedListTree(chunk) })
@@ -634,6 +653,18 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       showChapterLabel(),
       chapterState.pageChapterTitle
     )
+
+    console.log("PLACE UNIT:", {
+      itemType: unit.type,
+      itemPreview:
+        unit.type === "list"
+          ? `list with ${unit.items.length} items`
+          : (unit.text || "").slice(0, 60),
+      scrollHeight: bodyEl.scrollHeight,
+      contentMaxHeight,
+      overflows: pageContentOverflows(bodyEl, contentMaxHeight),
+      currentPageItemCount: currentPageItems.length,
+    })
 
     if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
       currentPageItems = trialItems
