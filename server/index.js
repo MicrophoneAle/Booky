@@ -172,6 +172,8 @@ async function extractHeadingLines(buffer) {
   return headingStrings
 }
 
+const STANDALONE_BULLET_PATTERN = /^([•o\-—])$/
+
 function isListItemLine(line) {
   return (
     /^[\u2022•]\s/.test(line) ||
@@ -212,11 +214,36 @@ function linesToBlocks(rawLines, headingStrings) {
     paragraphParts = []
   }
 
-  for (const rawLine of rawLines) {
-    const trimmed = rawLine.trim()
+  for (let index = 0; index < rawLines.length; index += 1) {
+    const trimmed = rawLines[index].trim()
 
     if (!trimmed) {
       flushParagraph()
+      continue
+    }
+
+    if (STANDALONE_BULLET_PATTERN.test(trimmed)) {
+      flushParagraph()
+
+      const nextLine = rawLines[index + 1]?.trim() ?? ""
+      if (nextLine) {
+        const combinedText = `${trimmed} ${nextLine}`.replace(/\s+/g, " ").trim()
+        blocks.push({
+          text: combinedText,
+          isHeading: false,
+          fontSize: 12,
+          chapterId: null,
+        })
+        index += 1
+      } else {
+        blocks.push({
+          text: trimmed,
+          isHeading: false,
+          fontSize: 12,
+          chapterId: null,
+        })
+      }
+
       continue
     }
 
