@@ -165,14 +165,6 @@ export default function Library() {
         <div className="library-logo">BOOKY</div>
         <div className="library-nav-links">
           <NavLink
-            to="/library"
-            className={({ isActive }) =>
-              `library-nav-link${isActive ? " library-nav-link--active" : ""}`
-            }
-          >
-            Library
-          </NavLink>
-          <NavLink
             to="/"
             end
             className={({ isActive }) =>
@@ -180,6 +172,14 @@ export default function Library() {
             }
           >
             Upload
+          </NavLink>
+          <NavLink
+            to="/library"
+            className={({ isActive }) =>
+              `library-nav-link${isActive ? " library-nav-link--active" : ""}`
+            }
+          >
+            Library
           </NavLink>
         </div>
       </nav>

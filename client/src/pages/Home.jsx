@@ -161,14 +161,6 @@ export default function Home() {
         <div className="home-logo">BOOKY</div>
         <div className="home-nav-links">
           <NavLink
-            to="/library"
-            className={({ isActive }) =>
-              `home-nav-link${isActive ? " home-nav-link--active" : ""}`
-            }
-          >
-            Library
-          </NavLink>
-          <NavLink
             to="/"
             end
             className={({ isActive }) =>
@@ -176,6 +168,14 @@ export default function Home() {
             }
           >
             Upload
+          </NavLink>
+          <NavLink
+            to="/library"
+            className={({ isActive }) =>
+              `home-nav-link${isActive ? " home-nav-link--active" : ""}`
+            }
+          >
+            Library
           </NavLink>
         </div>
       </nav>
