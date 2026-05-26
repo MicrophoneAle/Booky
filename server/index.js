@@ -172,21 +172,6 @@ async function extractHeadingLines(buffer) {
   return headingStrings
 }
 
-const STANDALONE_BULLET_PATTERN = /^([•o\-—])$/
-
-function isListItemLine(line) {
-  return (
-    /^[\u2022•]\s/.test(line) ||
-    /^o\s/.test(line) ||
-    /^-\s/.test(line) ||
-    /^\d+[\.\)]\s*/.test(line)
-  )
-}
-
-function isStandaloneUrlLine(line) {
-  return /^https?:\/\/\S+$/i.test(line.trim())
-}
-
 function createTextBlock(text, headingStrings) {
   const trimmed = text.trim()
   const isHeading = headingStrings.has(trimmed)
@@ -197,79 +182,6 @@ function createTextBlock(text, headingStrings) {
     fontSize: isHeading ? 16 : 12,
     chapterId: null,
   }
-}
-
-function linesToBlocks(rawLines, headingStrings) {
-  const blocks = []
-  let paragraphParts = []
-
-  const flushParagraph = () => {
-    if (paragraphParts.length === 0) return
-
-    const mergedText = paragraphParts.join(" ").replace(/\s+/g, " ").trim()
-    if (mergedText) {
-      blocks.push(createTextBlock(mergedText, headingStrings))
-    }
-
-    paragraphParts = []
-  }
-
-  for (let index = 0; index < rawLines.length; index += 1) {
-    const trimmed = rawLines[index].trim()
-
-    if (!trimmed) {
-      flushParagraph()
-      continue
-    }
-
-    if (STANDALONE_BULLET_PATTERN.test(trimmed)) {
-      flushParagraph()
-
-      const nextLine = rawLines[index + 1]?.trim() ?? ""
-      if (nextLine) {
-        const combinedText = `${trimmed} ${nextLine}`.replace(/\s+/g, " ").trim()
-        blocks.push({
-          text: combinedText,
-          isHeading: false,
-          fontSize: 12,
-          chapterId: null,
-        })
-        index += 1
-      } else {
-        blocks.push({
-          text: trimmed,
-          isHeading: false,
-          fontSize: 12,
-          chapterId: null,
-        })
-      }
-
-      continue
-    }
-
-    if (headingStrings.has(trimmed)) {
-      flushParagraph()
-      blocks.push(createTextBlock(trimmed, headingStrings))
-      continue
-    }
-
-    if (isListItemLine(trimmed)) {
-      flushParagraph()
-      blocks.push(createTextBlock(trimmed, headingStrings))
-      continue
-    }
-
-    if (isStandaloneUrlLine(trimmed)) {
-      flushParagraph()
-      blocks.push(createTextBlock(trimmed, headingStrings))
-      continue
-    }
-
-    paragraphParts.push(trimmed)
-  }
-
-  flushParagraph()
-  return blocks
 }
 
 function isChapterHeading(block) {
@@ -351,7 +263,54 @@ app.post("/upload", (req, res) => {
       ])
 
       const rawLines = parsedText.text.split("\n")
-      const blocks = linesToBlocks(rawLines, headingStrings)
+      const blocks = []
+      const currentParagraph = []
+
+      const flushParagraph = () => {
+        if (currentParagraph.length === 0) return
+
+        const mergedText = currentParagraph.join(" ").replace(/\s+/g, " ").trim()
+        currentParagraph.length = 0
+
+        if (mergedText) {
+          blocks.push(createTextBlock(mergedText, headingStrings))
+        }
+      }
+
+      for (let i = 0; i < rawLines.length; i += 1) {
+        const line = rawLines[i].trim()
+        if (!line) continue
+
+        const isHeading = headingStrings.has(line)
+        const isStandaloneBullet = /^([•o\-—])$/.test(line)
+        const isLineWithBullet = /^([•o\-—])\s+/.test(line)
+        const isUrl = line.startsWith("http://") || line.startsWith("https://")
+
+        if (isHeading || isStandaloneBullet || isLineWithBullet || isUrl) {
+          flushParagraph()
+
+          if (isStandaloneBullet) {
+            const nextRawLine = rawLines[i + 1]
+            if (nextRawLine !== undefined) {
+              const combinedText = `${line} ${nextRawLine.trim()}`
+                .replace(/\s+/g, " ")
+                .trim()
+              blocks.push(createTextBlock(combinedText, headingStrings))
+              i += 1
+            } else {
+              blocks.push(createTextBlock(line, headingStrings))
+            }
+          } else {
+            blocks.push(createTextBlock(line, headingStrings))
+          }
+
+          continue
+        }
+
+        currentParagraph.push(line)
+      }
+
+      flushParagraph()
 
       const content = []
       const linesPerPage = 40
