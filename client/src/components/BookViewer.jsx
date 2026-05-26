@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react"
+﻿import { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { motion, useReducedMotion } from "framer-motion"
 import "./BookViewer.css"
 
@@ -78,6 +79,7 @@ function FullscreenIcon() {
 }
 
 export default function BookViewer({ pages = [], initialPage = 1, onPageChange }) {
+  const navigate = useNavigate()
   const prefersReducedMotion = useReducedMotion()
   const [currentPage, setCurrentPage] = useState(initialPage)
   const [flipDirection, setFlipDirection] = useState(null)
@@ -190,7 +192,16 @@ export default function BookViewer({ pages = [], initialPage = 1, onPageChange }
   return (
     <div className="book-viewer">
       <header className="book-viewer__nav">
-        <div className="book-viewer__logo">BOOKY</div>
+        <div className="book-viewer__nav-left">
+          <button
+            type="button"
+            className="book-viewer__back"
+            onClick={() => navigate("/library")}
+          >
+            ← Library
+          </button>
+          <div className="book-viewer__logo">BOOKY</div>
+        </div>
         <p className="book-viewer__chapter">{navChapterTitle}</p>
         <div className="book-viewer__nav-right">
           <p className="book-viewer__counter">{pageCounterText}</p>

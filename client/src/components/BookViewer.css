@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;700&family=Lora:wght@400;600&display=swap");
+﻿@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;700&family=Lora:wght@400;600&display=swap");
 
 .book-viewer {
   width: 100vw;
@@ -20,6 +20,28 @@
   padding: 0 1.25rem;
   background: #1c1917;
   border-bottom: 1px solid #2a2420;
+}
+
+.book-viewer__nav-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-self: start;
+}
+
+.book-viewer__back {
+  border: none;
+  background: transparent;
+  color: #8b7355;
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.book-viewer__back:hover {
+  color: #d4af37;
 }
 
 .book-viewer__logo {
