@@ -10,8 +10,8 @@ const PAGE_NUMBER_RESERVED_PX = 32
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 20
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 
-const IMPLIED_LIST_LINE_REGEX =
-  /^(Add|Test|Explore|Run:|Verify|Ensure|Click)\b/i
+const IMPLIED_LIST_LINE_REGEX = /^(Add|Test|Explore|Verify|Ensure|Click)\b/i
+const TRIVIAL_LIST_PAGE_CHAR_LIMIT = 30
 const STANDALONE_URL_REGEX = /^https?:\/\/\S+$/i
 
 const LEVEL_0_NUMBER_REGEX = /^(\d+[\.\)])\s*(.*)$/
@@ -32,28 +32,78 @@ function isListMarkerLine(text) {
   return parseListLine(text) !== null || LONE_MARKER_REGEX.test(text.trim())
 }
 
+function buildNumberedListText(marker, body) {
+  const trimmedBody = body.trim()
+  return trimmedBody ? `${marker} ${trimmedBody}`.replace(/\s+/g, " ").trim() : marker
+}
+
 function parseListLine(text) {
   const trimmed = text.trim()
   if (!trimmed) return null
 
   let match = trimmed.match(LEVEL_0_NUMBER_REGEX)
   if (match) {
-    return { level: 0, text: match[2].trim(), markerOnly: !match[2].trim() }
+    const marker = match[1]
+    const body = match[2].trim()
+    return {
+      level: 0,
+      marker,
+      hasBullet: false,
+      text: buildNumberedListText(marker, body),
+      markerOnly: !body,
+    }
   }
 
   match = trimmed.match(LEVEL_0_BULLET_REGEX)
   if (match) {
-    return { level: 0, text: match[2].trim(), markerOnly: !match[2].trim() }
+    const marker = match[1]
+    const body = match[2].trim()
+    return {
+      level: 0,
+      marker,
+      hasBullet: true,
+      text: body,
+      markerOnly: !body,
+    }
   }
 
   match = trimmed.match(LEVEL_2_MARKER_REGEX)
   if (match) {
-    return { level: 2, text: match[2].trim(), markerOnly: !match[2].trim() }
+    const marker = match[1]
+    const body = match[2].trim()
+    return {
+      level: 2,
+      marker,
+      hasBullet: false,
+      text: buildNumberedListText(marker, body),
+      markerOnly: !body,
+    }
   }
 
-  match = trimmed.match(LEVEL_1_MARKER_REGEX)
+  match = trimmed.match(/^([o*])\s*(.*)$/i)
   if (match) {
-    return { level: 1, text: match[2].trim(), markerOnly: !match[2].trim() }
+    const marker = match[1]
+    const body = match[2].trim()
+    return {
+      level: 1,
+      marker,
+      hasBullet: true,
+      text: body,
+      markerOnly: !body,
+    }
+  }
+
+  match = trimmed.match(/^([a-z][\.\)])\s*(.*)$/i)
+  if (match) {
+    const marker = match[1]
+    const body = match[2].trim()
+    return {
+      level: 1,
+      marker,
+      hasBullet: false,
+      text: buildNumberedListText(marker, body),
+      markerOnly: !body,
+    }
   }
 
   return null
@@ -86,8 +136,23 @@ function parseLoneMarker(text) {
   return null
 }
 
-function createListNode(text, level) {
-  return { text, level, children: [] }
+function createListNode(item) {
+  return {
+    text: item.text,
+    level: item.level,
+    marker: item.marker ?? "",
+    hasBullet: Boolean(item.hasBullet),
+    children: [],
+  }
+}
+
+function toFlatListItem(parsed) {
+  return {
+    text: parsed.text,
+    level: parsed.level,
+    marker: parsed.marker,
+    hasBullet: parsed.hasBullet,
+  }
 }
 
 function buildNestedListTree(flatItems) {
@@ -95,7 +160,7 @@ function buildNestedListTree(flatItems) {
   const stack = [{ level: -1, children: root }]
 
   for (const item of flatItems) {
-    const node = createListNode(item.text, item.level)
+    const node = createListNode(item)
 
     while (stack.length > 1 && stack[stack.length - 1].level >= item.level) {
       stack.pop()
@@ -110,7 +175,12 @@ function buildNestedListTree(flatItems) {
 
 function flattenListTree(nodes, result = []) {
   for (const node of nodes) {
-    result.push({ text: node.text, level: node.level })
+    result.push({
+      text: node.text,
+      level: node.level,
+      marker: node.marker,
+      hasBullet: node.hasBullet,
+    })
     if (node.children.length > 0) {
       flattenListTree(node.children, result)
     }
@@ -118,10 +188,20 @@ function flattenListTree(nodes, result = []) {
   return result
 }
 
-function listItemLevelClass(level) {
-  if (level === 1) return "book-page__list-item book-page__list-item--level-1"
-  if (level === 2) return "book-page__list-item book-page__list-item--level-2"
-  return "book-page__list-item"
+function listItemClassName(node) {
+  const classes = ["book-page__list-item"]
+
+  if (node.level === 1) {
+    classes.push("book-page__list-item--level-1")
+  } else if (node.level === 2) {
+    classes.push("book-page__list-item--level-2")
+  }
+
+  if (!node.hasBullet) {
+    classes.push("book-page__list-item--no-bullet")
+  }
+
+  return classes.join(" ")
 }
 
 function getLayoutHeights() {
@@ -195,10 +275,15 @@ function groupBlocksForDisplay(blocks) {
     pendingListItems = []
   }
 
-  const pushListItem = (text, level) => {
-    const trimmed = text.trim()
+  const pushListItem = (listItem) => {
+    const trimmed = listItem.text?.trim()
     if (trimmed) {
-      pendingListItems.push({ text: trimmed, level })
+      pendingListItems.push({
+        text: trimmed,
+        level: listItem.level ?? 0,
+        marker: listItem.marker ?? "",
+        hasBullet: Boolean(listItem.hasBullet),
+      })
     }
   }
 
@@ -255,9 +340,14 @@ function groupBlocksForDisplay(blocks) {
       if (canConsumeNextLine) {
         const parsedNext = parseListLine(nextText)
         if (parsedNext && !parsedNext.markerOnly) {
-          pushListItem(parsedNext.text, parsedNext.level)
+          pushListItem(toFlatListItem(parsedNext))
         } else if (!parsedNext) {
-          pushListItem(nextText, loneMarker.level)
+          pushListItem({
+            text: nextText,
+            level: loneMarker.level,
+            marker: "",
+            hasBullet: false,
+          })
         }
         index += 1
       }
@@ -268,13 +358,19 @@ function groupBlocksForDisplay(blocks) {
     const parsedList = parseListLine(text)
     if (parsedList && !parsedList.markerOnly) {
       flushProse()
-      pushListItem(parsedList.text, parsedList.level)
+      pushListItem(toFlatListItem(parsedList))
       continue
     }
 
     if (isImpliedListLine(text) && pendingListItems.length > 0) {
       flushProse()
-      pushListItem(text, pendingListItems[pendingListItems.length - 1].level)
+      const previousItem = pendingListItems[pendingListItems.length - 1]
+      pushListItem({
+        text,
+        level: previousItem.level,
+        marker: "",
+        hasBullet: false,
+      })
       continue
     }
 
@@ -298,7 +394,7 @@ function appendChapterLabel(body, title) {
 function appendListNodes(parentList, nodes) {
   for (const node of nodes) {
     const listEntry = document.createElement("li")
-    listEntry.className = listItemLevelClass(node.level)
+    listEntry.className = listItemClassName(node)
     listEntry.textContent = node.text
 
     if (node.children.length > 0) {
@@ -387,20 +483,73 @@ function pageContentOverflows(bodyEl, contentMaxHeight) {
   return bottom > contentMaxHeight
 }
 
-function expandItemToPaginationUnits(item) {
-  if (item.type !== "list") {
-    return [item]
+function countListItemsInTree(nodes) {
+  let count = 0
+
+  for (const node of nodes) {
+    count += 1
+    if (node.children.length > 0) {
+      count += countListItemsInTree(node.children)
+    }
   }
 
-  const flatItems = flattenListTree(item.items)
-  return flatItems.map((listItem) => ({
-    type: "list",
-    items: buildNestedListTree([listItem]),
-  }))
+  return count
+}
+
+function getListTextLength(nodes) {
+  return flattenListTree(nodes).reduce((total, item) => total + item.text.length, 0)
+}
+
+function isTrivialListPage(page) {
+  if (page.visualItems.length !== 1) {
+    return false
+  }
+
+  const onlyItem = page.visualItems[0]
+  if (onlyItem.type !== "list") {
+    return false
+  }
+
+  const itemCount = countListItemsInTree(onlyItem.items)
+  const textLength = getListTextLength(onlyItem.items)
+
+  return itemCount <= 1 && textLength < TRIVIAL_LIST_PAGE_CHAR_LIMIT
+}
+
+function splitListAcrossPages(listItem, bodyEl, contentMaxHeight, showChapterLabel, chapterTitle) {
+  const flatItems = flattenListTree(listItem.items)
+  if (flatItems.length <= 1) {
+    return [listItem]
+  }
+
+  const segments = []
+  let chunk = []
+
+  for (const flatItem of flatItems) {
+    const nextChunk = [...chunk, flatItem]
+    const trialList = { type: "list", items: buildNestedListTree(nextChunk) }
+
+    renderMeasureBody(bodyEl, [trialList], showChapterLabel, chapterTitle)
+
+    if (pageContentOverflows(bodyEl, contentMaxHeight) && chunk.length > 0) {
+      segments.push({ type: "list", items: buildNestedListTree(chunk) })
+      chunk = [flatItem]
+    } else {
+      chunk = nextChunk
+    }
+  }
+
+  if (chunk.length > 0) {
+    segments.push({ type: "list", items: buildNestedListTree(chunk) })
+  }
+
+  return segments.length > 0 ? segments : [listItem]
 }
 
 function cleanupPages(pages, bodyEl, contentMaxHeight) {
-  let cleaned = pages.filter((page) => page.visualItems.length > 0)
+  let cleaned = pages.filter(
+    (page) => page.visualItems.length > 0 && !isTrivialListPage(page)
+  )
 
   if (cleaned.length >= 2) {
     const lastPage = cleaned[cleaned.length - 1]
@@ -438,7 +587,6 @@ function cleanupPages(pages, bodyEl, contentMaxHeight) {
  */
 function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   const visualItems = groupBlocksForDisplay(flatBlocks)
-  const paginationUnits = visualItems.flatMap((item) => expandItemToPaginationUnits(item))
   const pages = []
   let currentPageItems = []
   const chapterState = {
@@ -478,26 +626,47 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       chapterState.pageChapterTitle
     )
 
-    if (pageContentOverflows(bodyEl, contentMaxHeight) && currentPageItems.length > 0) {
+    if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
+      currentPageItems = trialItems
+      return
+    }
+
+    if (currentPageItems.length > 0) {
       flushPage()
+    }
 
-      renderMeasureBody(
-        bodyEl,
-        [unit],
-        chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
-        chapterState.pageChapterTitle
-      )
+    renderMeasureBody(
+      bodyEl,
+      [unit],
+      chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
+      chapterState.pageChapterTitle
+    )
 
+    if (!pageContentOverflows(bodyEl, contentMaxHeight) || unit.type !== "list") {
       currentPageItems = [unit]
       return
     }
 
-    currentPageItems = trialItems
+    const listSegments = splitListAcrossPages(
+      unit,
+      bodyEl,
+      contentMaxHeight,
+      chapterState.pageIsChapterStart && Boolean(chapterState.pageChapterTitle),
+      chapterState.pageChapterTitle
+    )
+
+    for (const segment of listSegments) {
+      if (currentPageItems.length > 0) {
+        flushPage()
+      }
+
+      currentPageItems = [segment]
+    }
   }
 
-  for (const unit of paginationUnits) {
-    applyChapterContextFromItem(unit, chapterState)
-    tryPlaceUnit(unit)
+  for (const item of visualItems) {
+    applyChapterContextFromItem(item, chapterState)
+    tryPlaceUnit(item)
   }
 
   if (currentPageItems.length > 0) {
@@ -512,7 +681,7 @@ function renderListNodesReact(nodes, keyPrefix) {
     const itemKey = `${keyPrefix}-${index}`
 
     return (
-      <li key={itemKey} className={listItemLevelClass(node.level)}>
+      <li key={itemKey} className={listItemClassName(node)}>
         {node.text}
         {node.children.length > 0 && (
           <ul className="book-page__list">
