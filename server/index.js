@@ -277,10 +277,28 @@ function linesFromPdfText(text) {
   return (text ?? "").split("\n").map((line) => line.trim())
 }
 
+const numberedOrLetteredMarkerRegex = /^(\d+[\.\)]|[a-zA-Z][\.\)])\s/
+const bulletStartRegex = /^[•·o\-—*]\s/
+const urlAtEndRegex = /https?:\/\/\S+$/i
+
+function shouldNotMergeCurrentLineIntoPrevious(currentLine, previousText) {
+  const trimmed = currentLine.trim()
+  const prev = previousText.trim()
+
+  if (trimmed.endsWith(":")) return true
+  if (bulletStartRegex.test(trimmed)) return true
+  if (numberedOrLetteredMarkerRegex.test(trimmed)) return true
+  if (urlAtEndRegex.test(prev)) return true
+  if (/https?:\/\//i.test(prev)) return true
+  if (/^[A-Z]/.test(trimmed) && /[:)\/.]$/.test(prev)) return true
+
+  return false
+}
+
 function buildBlocksFromLines(lines, headingStrings) {
   const blocks = []
-  const bulletCharsRegex = /^([•o\-—])\s*$/
-  const inlineBulletRegex = /^([•o\-—])\s*(.*)$/
+  const bulletCharsRegex = /^([•·o\-—*])\s*$/
+  const inlineBulletRegex = /^([•·o\-—*])\s*(.*)$/
 
   for (let index = 0; index < lines.length; index += 1) {
     const currentLine = lines[index]
@@ -343,7 +361,8 @@ function buildBlocksFromLines(lines, headingStrings) {
         !bulletCharsRegex.test(currentLine) &&
         !inlineBulletRegex.test(currentLine) &&
         previousBlock.text.length < 140 &&
-        !previousBlock.text.endsWith(".")
+        !previousBlock.text.endsWith(".") &&
+        !shouldNotMergeCurrentLineIntoPrevious(currentLine, previousBlock.text)
       ) {
         previousBlock.text += ` ${currentLine}`
         continue
@@ -410,26 +429,7 @@ app.post("/upload", (req, res) => {
       ])
 
       const lines = linesFromPdfText(positionedText)
-
-      console.log("LINES AFTER POSITION EXTRACTION:")
-      for (let i = 0; i < lines.length; i += 1) {
-        console.log("  [" + i + "] " + JSON.stringify(lines[i].slice(0, 100)))
-      }
-
       const blocks = buildBlocksFromLines(lines, headingStrings)
-
-      console.log("FINAL BLOCKS:")
-      for (let i = 0; i < blocks.length; i += 1) {
-        console.log(
-          "  [" +
-            i +
-            "] heading=" +
-            blocks[i].isHeading +
-            " text=" +
-            JSON.stringify(blocks[i].text.slice(0, 100))
-        )
-      }
-
       const content = blocksToContent(blocks)
 
       const hasImages = false
