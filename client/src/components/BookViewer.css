@@ -174,7 +174,7 @@
   background: #ffffff;
   padding-top: 2rem;
   padding-right: 1.5rem;
-  padding-bottom: 2.5rem;
+  padding-bottom: 3rem;
   padding-left: 1.5rem;
   color: #1c1917;
   display: flex;
@@ -191,6 +191,7 @@
   height: 40px;
   background: linear-gradient(transparent, #ffffff);
   pointer-events: none;
+  z-index: 0;
 }
 
 .book-page--empty {
@@ -234,7 +235,7 @@
 
 .book-page__number {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   margin: 0.75rem 0 0;
   text-align: center;
   font-family: system-ui, sans-serif;
