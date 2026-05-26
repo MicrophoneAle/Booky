@@ -7,7 +7,7 @@ import "./BookViewer.css"
 
 const NAVBAR_HEIGHT_PX = 48
 const PAGE_NUMBER_RESERVED_PX = 32
-const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 20
+const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 8
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 const UNUSED_PAGE_SPACE_THRESHOLD_PX = 100
 
@@ -202,6 +202,26 @@ function getListItemKind(node) {
   }
 
   return "bullet"
+}
+
+function getMarkerNumber(node) {
+  const marker = (node.marker ?? "").trim()
+  const match = marker.match(/^(\d+)[\.\)]$/)
+  if (!match) {
+    return null
+  }
+
+  return Number.parseInt(match[1], 10)
+}
+
+function getMarkerLetterPosition(node) {
+  const marker = (node.marker ?? "").trim().toLowerCase()
+  const match = marker.match(/^([a-z])[\.\)]$/)
+  if (!match) {
+    return null
+  }
+
+  return match[1].charCodeAt(0) - 96
 }
 
 function stripMarkerPrefix(text, marker) {
@@ -530,6 +550,11 @@ function appendSingleListNode(listEl, node) {
   listEntry.className = listItemClassName(node)
   listEntry.textContent = getListItemDisplayText(node)
 
+  const markerNumber = getMarkerNumber(node)
+  if (markerNumber !== null) {
+    listEntry.value = markerNumber
+  }
+
   if (node.children.length > 0) {
     appendGroupedListNodes(listEntry, node.children)
   }
@@ -543,6 +568,14 @@ function appendGroupedListNodes(parentEl, nodes) {
   while (index < nodes.length) {
     const kind = getListItemKind(nodes[index])
     const listEl = createListElement(kind)
+    const firstNode = nodes[index]
+
+    if (kind === "lettered") {
+      const letterStart = getMarkerLetterPosition(firstNode)
+      if (letterStart !== null) {
+        listEl.setAttribute("start", String(letterStart))
+      }
+    }
 
     while (index < nodes.length && getListItemKind(nodes[index]) === kind) {
       appendSingleListNode(listEl, nodes[index])
@@ -857,6 +890,91 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     return !pageContentOverflows(bodyEl, contentMaxHeight)
   }
 
+  const canFitOnPage = (page, candidateItems) => {
+    const trialItems = [...page.visualItems, ...candidateItems]
+    renderMeasureBody(
+      bodyEl,
+      trialItems,
+      Boolean(page.isChapterStart && page.chapterTitle),
+      page.chapterTitle
+    )
+
+    return !pageContentOverflows(bodyEl, contentMaxHeight)
+  }
+
+  const isChapterStartItem = (item) =>
+    isHeadingVisualItem(item) && (item.isChapterStart || item.type === "title")
+
+  const chapterTitleFromItem = (item) => item.chapterTitle ?? item.text
+
+  const recomputePageChapterMetadata = (pageList) => {
+    let runningChapter = null
+
+    for (let pageIndex = 0; pageIndex < pageList.length; pageIndex += 1) {
+      const page = pageList[pageIndex]
+      const chaptersOnPage = []
+      const firstItem = page.visualItems[0]
+      const startsWithChapter = Boolean(firstItem && isChapterStartItem(firstItem))
+
+      if (startsWithChapter) {
+        runningChapter = chapterTitleFromItem(firstItem)
+      }
+
+      if (runningChapter) {
+        chaptersOnPage.push(runningChapter)
+      }
+
+      for (const item of page.visualItems) {
+        if (isChapterStartItem(item)) {
+          const title = chapterTitleFromItem(item)
+          runningChapter = title
+          if (!chaptersOnPage.includes(title)) {
+            chaptersOnPage.push(title)
+          }
+        }
+      }
+
+      page.pageNumber = pageIndex + 1
+      page.isChapterStart = startsWithChapter
+      page.chapterTitle = startsWithChapter ? chapterTitleFromItem(firstItem) : null
+      page.activeChapterTitle = runningChapter
+      page.chaptersOnPage = chaptersOnPage
+    }
+  }
+
+  const compactPagesForward = () => {
+    let movedAny = true
+
+    while (movedAny) {
+      movedAny = false
+
+      for (let pageIndex = 0; pageIndex < pages.length - 1; pageIndex += 1) {
+        const current = pages[pageIndex]
+        const next = pages[pageIndex + 1]
+        let movedFromNext = false
+
+        while (next.visualItems.length > 0) {
+          const firstNextItem = next.visualItems[0]
+          if (!canFitOnPage(current, [firstNextItem])) {
+            break
+          }
+
+          current.visualItems.push(firstNextItem)
+          next.visualItems.shift()
+          movedAny = true
+          movedFromNext = true
+        }
+
+        if (next.visualItems.length === 0) {
+          pages.splice(pageIndex + 1, 1)
+          movedAny = true
+        } else if (movedFromNext) {
+          continue
+        }
+      }
+    }
+  }
+
   const placeHeadingWithNextContent = (heading, following) => {
     updateCurrentActiveChapter(heading)
     const pair = [heading, following]
@@ -1055,12 +1173,24 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     flushPage()
   }
 
-  return cleanupPages(pages, bodyEl, contentMaxHeight)
+  compactPagesForward()
+  recomputePageChapterMetadata(pages)
+
+  const cleanedPages = cleanupPages(pages, bodyEl, contentMaxHeight)
+  recomputePageChapterMetadata(cleanedPages)
+
+  return cleanedPages
 }
 
 function renderListNodeReact(node, itemKey) {
+  const markerNumber = getMarkerNumber(node)
+
   return (
-    <li key={itemKey} className={listItemClassName(node)}>
+    <li
+      key={itemKey}
+      className={listItemClassName(node)}
+      {...(markerNumber !== null ? { value: markerNumber } : {})}
+    >
       {getListItemDisplayText(node)}
       {node.children.length > 0 && renderGroupedListItemsReact(node.children, itemKey)}
     </li>
@@ -1085,11 +1215,17 @@ function renderGroupedListItemsReact(nodes, keyPrefix) {
     groupIndex += 1
 
     if (kind === "numbered" || kind === "lettered") {
+      const listStart =
+        kind === "lettered"
+          ? getMarkerLetterPosition(groupNodes[0])
+          : getMarkerNumber(groupNodes[0])
+
       elements.push(
         <ol
           key={listKey}
           className="book-page__list"
           {...(kind === "lettered" ? { type: "a" } : {})}
+          {...(listStart !== null ? { start: listStart } : {})}
         >
           {groupNodes.map((node, nodeIndex) =>
             renderListNodeReact(node, `${listKey}-${nodeIndex}`)
