@@ -709,6 +709,15 @@ function splitListAcrossPages(listItem, bodyEl, contentMaxHeight, showChapterLab
 
     if (pageContentOverflows(bodyEl, contentMaxHeight) && chunk.length > 0) {
       segments.push({ type: "list", items: buildNestedListTree(chunk) })
+      const segment = segments[segments.length - 1]
+      console.log(
+        "SEGMENT",
+        segments.length,
+        "first:",
+        segment.items[0]?.marker,
+        "last:",
+        segment.items[segment.items.length - 1]?.marker
+      )
       chunk = [flatItem]
     } else {
       chunk = nextChunk
@@ -717,6 +726,15 @@ function splitListAcrossPages(listItem, bodyEl, contentMaxHeight, showChapterLab
 
   if (chunk.length > 0) {
     segments.push({ type: "list", items: buildNestedListTree(chunk) })
+    const segment = segments[segments.length - 1]
+    console.log(
+      "SEGMENT",
+      segments.length,
+      "first:",
+      segment.items[0]?.marker,
+      "last:",
+      segment.items[segment.items.length - 1]?.marker
+    )
   }
 
   if (segments.length <= 1) {
@@ -1239,6 +1257,27 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
 
   if (currentPageItems.length > 0) {
     flushPage()
+  }
+
+  for (const page of pages) {
+    renderMeasureBody(
+      bodyEl,
+      page.visualItems,
+      Boolean(page.isChapterStart && page.chapterTitle),
+      page.chapterTitle
+    )
+    console.log(
+      "PAGE",
+      page.pageNumber,
+      "scrollHeight:",
+      bodyEl.scrollHeight,
+      "maxHeight:",
+      contentMaxHeight,
+      "unused:",
+      contentMaxHeight - bodyEl.scrollHeight,
+      "items:",
+      page.visualItems.length
+    )
   }
 
   compactPagesForward()
