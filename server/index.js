@@ -147,6 +147,63 @@ function getItemX(item) {
   return Number.isFinite(matrix[4]) ? matrix[4] : 0
 }
 
+function joinLineItemStrings(items) {
+  let joinedText = ""
+
+  for (const item of items) {
+    const piece = item.str ?? ""
+    if (!piece) continue
+
+    if (joinedText.length === 0) {
+      joinedText = piece
+      continue
+    }
+
+    const prevEndsWithSpace = /\s$/.test(joinedText)
+    const nextStartsWithSpace = /^\s/.test(piece)
+
+    if (prevEndsWithSpace || nextStartsWithSpace) {
+      joinedText += piece
+    } else {
+      joinedText += ` ${piece}`
+    }
+  }
+
+  return joinedText.replace(/\s+/g, " ").trim()
+}
+
+function isOrphanLine(text) {
+  const trimmed = text.trim()
+  if (!trimmed) return false
+  if (trimmed.length === 1) return true
+  if (/^[\p{P}\p{S}]+$/u.test(trimmed)) return true
+  if (/^[a-zA-Z0-9]\.?$/u.test(trimmed)) return true
+
+  return false
+}
+
+function mergeOrphanLinesWithNext(lines) {
+  const merged = []
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const current = lines[index]
+
+    if (isOrphanLine(current.text) && index + 1 < lines.length) {
+      const next = lines[index + 1]
+      merged.push({
+        text: `${current.text.trim()} ${next.text}`.replace(/\s+/g, " ").trim(),
+        fontSize: next.fontSize,
+      })
+      index += 1
+      continue
+    }
+
+    merged.push(current)
+  }
+
+  return merged
+}
+
 function groupTextItemsIntoLines(items) {
   const lineGroups = []
 
@@ -155,7 +212,7 @@ function groupTextItemsIntoLines(items) {
     if (!text.trim()) continue
 
     const y = getItemY(item)
-    let lineGroup = lineGroups.find((group) => Math.abs(group.y - y) <= 2)
+    let lineGroup = lineGroups.find((group) => Math.abs(group.y - y) <= 5)
 
     if (!lineGroup) {
       lineGroup = { y, items: [] }
@@ -167,14 +224,10 @@ function groupTextItemsIntoLines(items) {
 
   lineGroups.sort((a, b) => b.y - a.y)
 
-  return lineGroups
+  const lines = lineGroups
     .map((lineGroup) => {
       const sortedItems = [...lineGroup.items].sort((a, b) => getItemX(a) - getItemX(b))
-      const joinedText = sortedItems
-        .map((item) => item.str ?? "")
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .trim()
+      const joinedText = joinLineItemStrings(sortedItems)
 
       return {
         text: joinedText,
@@ -182,6 +235,8 @@ function groupTextItemsIntoLines(items) {
       }
     })
     .filter((block) => block.text.length > 0)
+
+  return mergeOrphanLinesWithNext(lines)
 }
 
 function isChapterHeading(block) {
