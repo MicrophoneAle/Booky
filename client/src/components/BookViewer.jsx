@@ -7,6 +7,8 @@ import "./BookViewer.css"
 
 const NAVBAR_HEIGHT_PX = 48
 const PAGE_NUMBER_RESERVED_PX = 32
+const TERMINAL_PUNCTUATION_PATTERN = /[.?!:;"'»)\]]\s*$/
+const PROSE_WORD_CHUNK_LENGTH = 90
 
 function getLayoutHeights() {
   const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
@@ -40,6 +42,53 @@ function createMeasureElements() {
   return { root, page, body }
 }
 
+function aggregateBrokenHeadings(flatBlocks) {
+  const aggregated = []
+  let index = 0
+
+  while (index < flatBlocks.length) {
+    const block = flatBlocks[index]
+
+    if (!block.isHeading) {
+      aggregated.push(block)
+      index += 1
+      continue
+    }
+
+    let combinedText = (block.text ?? "").trim()
+    let mergedBlock = { ...block }
+    index += 1
+
+    while (
+      index < flatBlocks.length &&
+      flatBlocks[index].isHeading &&
+      !TERMINAL_PUNCTUATION_PATTERN.test(combinedText)
+    ) {
+      combinedText = `${combinedText} ${(flatBlocks[index].text ?? "").trim()}`.replace(
+        /\s+/g,
+        " "
+      )
+      mergedBlock = {
+        ...mergedBlock,
+        text: combinedText,
+        fontSize: Math.max(mergedBlock.fontSize ?? 12, flatBlocks[index].fontSize ?? 12),
+        chapterId: mergedBlock.chapterId ?? flatBlocks[index].chapterId,
+        chapterTitle: mergedBlock.chapterTitle ?? flatBlocks[index].chapterTitle,
+        isChapterStart: mergedBlock.isChapterStart || flatBlocks[index].isChapterStart,
+      }
+      index += 1
+    }
+
+    aggregated.push({
+      ...mergedBlock,
+      text: combinedText,
+      isHeading: true,
+    })
+  }
+
+  return aggregated
+}
+
 function groupBlocksForDisplay(blocks) {
   const visualItems = []
   let currentProse = []
@@ -58,32 +107,35 @@ function groupBlocksForDisplay(blocks) {
     currentListItems = []
   }
 
-  // Regular expression to identify inline bullets, numbers (1., 2.), or letters (a., b.)
   const listItemRegex = /^([•o·\-—]|\d+[\.\)]|[a-zA-Z][\.\)])\s*(.*)$/
   const loneMarkerRegex = /^([•o·\-—]|\d+[\.\)]|[a-zA-Z][\.\)])$/
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i]
-    let text = (block.text ?? "").trim()
+    const text = (block.text ?? "").trim()
 
-    // Natural Enter/Paragraph Break Detection
     if (!text) {
       flushProse()
       flushList()
       continue
     }
 
-    // Dynamic Header Handling based on fontSize metric
     if (block.isHeading) {
       flushProse()
       flushList()
 
       const type = block.fontSize > 18 ? "title" : "heading"
-      visualItems.push({ type, text })
+      visualItems.push({
+        type,
+        text,
+        fontSize: block.fontSize,
+        chapterId: block.chapterId ?? null,
+        chapterTitle: block.chapterTitle ?? null,
+        isChapterStart: Boolean(block.isChapterStart),
+      })
       continue
     }
 
-    // Capture explicit list item structures
     if (loneMarkerRegex.test(text)) {
       flushProse()
       if (i + 1 < blocks.length && !blocks[i + 1].isHeading) {
@@ -91,8 +143,10 @@ function groupBlocksForDisplay(blocks) {
         if (listItemRegex.test(contentText)) {
           contentText = contentText.replace(listItemRegex, "$2").trim()
         }
-        currentListItems.push({ text: contentText })
-        i++
+        if (contentText) {
+          currentListItems.push({ text: contentText })
+        }
+        i += 1
       }
       continue
     }
@@ -100,11 +154,12 @@ function groupBlocksForDisplay(blocks) {
     if (listItemRegex.test(text)) {
       flushProse()
       const cleanListContent = text.replace(listItemRegex, "$2").trim()
-      currentListItems.push({ text: cleanListContent })
+      if (cleanListContent) {
+        currentListItems.push({ text: cleanListContent })
+      }
       continue
     }
 
-    // Standard Prose Path: If a list was active, close it out to ensure a newline break
     if (currentListItems.length > 0) {
       flushList()
     }
@@ -116,6 +171,86 @@ function groupBlocksForDisplay(blocks) {
   flushProse()
   flushList()
   return visualItems
+}
+
+function buildLayoutStream(flatBlocks) {
+  return groupBlocksForDisplay(aggregateBrokenHeadings(flatBlocks))
+}
+
+function splitProseIntoSegments(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) return []
+
+  const sentenceMatches = trimmed.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g)
+  if (sentenceMatches?.length) {
+    return sentenceMatches.map((segment) => segment.trim()).filter(Boolean)
+  }
+
+  const clauseMatches = trimmed.match(/[^;]+;+|[^;]+$/g)
+  if (clauseMatches?.length > 1) {
+    return clauseMatches.map((segment) => segment.trim()).filter(Boolean)
+  }
+
+  return [trimmed]
+}
+
+function splitProseIntoWordChunks(text, maxChunkLength = PROSE_WORD_CHUNK_LENGTH) {
+  const words = (text ?? "").trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return []
+
+  const chunks = []
+  let currentWords = []
+
+  for (const word of words) {
+    const candidate = [...currentWords, word].join(" ")
+    if (candidate.length > maxChunkLength && currentWords.length > 0) {
+      chunks.push(currentWords.join(" "))
+      currentWords = [word]
+    } else {
+      currentWords.push(word)
+    }
+  }
+
+  if (currentWords.length > 0) {
+    chunks.push(currentWords.join(" "))
+  }
+
+  return chunks
+}
+
+function expandVisualItemToUnits(item) {
+  if (item.type === "prose") {
+    const segments = splitProseIntoSegments(item.text)
+    if (segments.length === 0) {
+      return [{ type: "prose", text: item.text }]
+    }
+    return segments.map((segment) => ({ type: "prose", text: segment }))
+  }
+
+  if (item.type === "list") {
+    return item.items.map((listItem) => ({
+      type: "list",
+      items: [listItem],
+    }))
+  }
+
+  return [item]
+}
+
+function expandOversizedProseUnit(unit) {
+  if (unit.type !== "prose") return [unit]
+
+  const segments = splitProseIntoSegments(unit.text)
+  if (segments.length > 1) {
+    return segments.map((segment) => ({ type: "prose", text: segment }))
+  }
+
+  const wordChunks = splitProseIntoWordChunks(unit.text)
+  if (wordChunks.length > 1) {
+    return wordChunks.map((chunk) => ({ type: "prose", text: chunk }))
+  }
+
+  return [unit]
 }
 
 function appendChapterLabel(body, title) {
@@ -165,75 +300,132 @@ function appendVisualItem(body, item) {
   }
 }
 
-function renderMeasureBody(body, blocks, showChapterLabel, chapterTitle) {
+function renderMeasureBody(body, visualItems, showChapterLabel, chapterTitle) {
   body.replaceChildren()
 
   if (showChapterLabel && chapterTitle) {
     appendChapterLabel(body, chapterTitle)
   }
 
-  for (const item of groupBlocksForDisplay(blocks)) {
+  for (const item of visualItems) {
     appendVisualItem(body, item)
   }
 }
 
-function paginateBlocksByDom(flatBlocks, pageEl, bodyEl, contentMaxHeight) {
+function measurePageFits(bodyEl, visualItems, contentMaxHeight, showChapterLabel, chapterTitle) {
+  renderMeasureBody(bodyEl, visualItems, showChapterLabel, chapterTitle)
+  return bodyEl.scrollHeight <= contentMaxHeight
+}
+
+function applyChapterContextFromItem(item, chapterState) {
+  if (item.type !== "title" && item.type !== "heading") return
+
+  if (item.isChapterStart || item.type === "title") {
+    chapterState.pageChapterTitle = item.chapterTitle ?? item.text
+    chapterState.pageIsChapterStart = true
+  } else if (!chapterState.pageChapterTitle) {
+    chapterState.pageChapterTitle = item.chapterTitle ?? item.text
+  }
+}
+
+/**
+ * Stage 3 streaming layout: paginates visual units with overflow-aware flushing.
+ */
+function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
+  const layoutStream = buildLayoutStream(flatBlocks)
   const pages = []
-  let currentBlocks = []
-  let pageChapterTitle = null
-  let pageIsChapterStart = false
+  let currentPageItems = []
+  const chapterState = {
+    pageChapterTitle: null,
+    pageIsChapterStart: false,
+  }
+
+  const showChapterLabel = () =>
+    chapterState.pageIsChapterStart &&
+    Boolean(chapterState.pageChapterTitle) &&
+    currentPageItems.length === 0
 
   const flushPage = () => {
-    if (currentBlocks.length === 0) return
+    if (currentPageItems.length === 0) return
 
     pages.push({
       pageNumber: pages.length + 1,
-      blocks: currentBlocks.map((block) => ({
-        text: block.text,
-        isHeading: block.isHeading,
-        fontSize: block.fontSize,
-        chapterId: block.chapterId,
-      })),
-      chapterTitle: pageChapterTitle,
-      isChapterStart: pageIsChapterStart,
+      visualItems: [...currentPageItems],
+      chapterTitle: chapterState.pageChapterTitle,
+      isChapterStart: chapterState.pageIsChapterStart,
     })
 
-    pageChapterTitle = null
-    pageIsChapterStart = false
+    currentPageItems = []
+    chapterState.pageChapterTitle = null
+    chapterState.pageIsChapterStart = false
   }
 
-  for (const block of flatBlocks) {
-    if (block.isHeading) {
-      flushPage()
-      currentBlocks = []
-      pageChapterTitle = block.chapterTitle ?? block.text.trim()
-      pageIsChapterStart = block.isChapterStart
+  const tryAppendToCurrentPage = (unit) => {
+    const trialItems = [...currentPageItems, unit]
+    return measurePageFits(
+      bodyEl,
+      trialItems,
+      contentMaxHeight,
+      showChapterLabel(),
+      chapterState.pageChapterTitle
+    )
+  }
+
+  const appendUnit = (unit) => {
+    const placeUnit = (candidate) => {
+      if (tryAppendToCurrentPage(candidate)) {
+        currentPageItems.push(candidate)
+        return true
+      }
+
+      if (currentPageItems.length > 0) {
+        flushPage()
+      }
+
+      if (tryAppendToCurrentPage(candidate)) {
+        currentPageItems.push(candidate)
+        return true
+      }
+
+      return false
     }
 
-    const trialBlocks = [...currentBlocks, block]
-    const showChapterLabel =
-      pageIsChapterStart && Boolean(pageChapterTitle) && currentBlocks.length === 0
+    if (placeUnit(unit)) return
 
-    renderMeasureBody(bodyEl, trialBlocks, showChapterLabel, pageChapterTitle)
+    const subdivisions = unit.type === "prose" ? expandOversizedProseUnit(unit) : [unit]
 
-    if (bodyEl.scrollHeight > contentMaxHeight && currentBlocks.length > 0) {
-      flushPage()
-      currentBlocks = [block]
-      pageChapterTitle = block.chapterTitle ?? block.text.trim()
-      pageIsChapterStart = block.isChapterStart
+    for (const subdivision of subdivisions) {
+      if (placeUnit(subdivision)) continue
 
-      renderMeasureBody(
-        bodyEl,
-        currentBlocks,
-        pageIsChapterStart && Boolean(pageChapterTitle),
-        pageChapterTitle
-      )
-    } else {
-      currentBlocks = trialBlocks
+      if (subdivision.type !== "prose") {
+        currentPageItems.push(subdivision)
+        continue
+      }
+
+      for (const chunk of splitProseIntoWordChunks(subdivision.text, 60)) {
+        const chunkUnit = { type: "prose", text: chunk }
+
+        if (!placeUnit(chunkUnit)) {
+          currentPageItems.push(chunkUnit)
+          flushPage()
+        }
+      }
     }
   }
 
-  flushPage()
+  for (const item of layoutStream) {
+    applyChapterContextFromItem(item, chapterState)
+
+    const units = expandVisualItemToUnits(item)
+    for (const unit of units) {
+      appendUnit(unit)
+    }
+  }
+
+  if (currentPageItems.length > 0) {
+    flushPage()
+  }
+
   return pages
 }
 
@@ -242,7 +434,7 @@ function BookPageContent({ page }) {
     return <div className="book-page book-page--empty" />
   }
 
-  const visualItems = groupBlocksForDisplay(page.blocks ?? [])
+  const visualItems = page.visualItems ?? []
 
   return (
     <div className="book-page">
@@ -305,12 +497,12 @@ function formatNavChapterTitle(leftPage, rightPage) {
   return leftTitle ?? rightTitle ?? ""
 }
 
-function formatPageCounter(leftPage, rightPage, totalPages) {
+function formatPageCounter(leftPage, rightPage, totalPages, isSpreadView) {
   if (!leftPage || totalPages === 0) return ""
 
   const leftNumber = leftPage.pageNumber
 
-  if (rightPage) {
+  if (isSpreadView && rightPage) {
     return `Pages ${leftNumber}–${rightPage.pageNumber} of ${totalPages}`
   }
 
@@ -338,6 +530,41 @@ function FullscreenIcon() {
   )
 }
 
+function LayoutModeIcon({ isSpreadView }) {
+  if (isSpreadView) {
+    return (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        aria-hidden="true"
+      >
+        <rect x="3" y="4" width="8" height="16" rx="1" />
+        <rect x="13" y="4" width="8" height="16" rx="1" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <rect x="6" y="4" width="12" height="16" rx="1" />
+    </svg>
+  )
+}
+
 export default function BookViewer({
   document: bookDocument,
   initialPage = 1,
@@ -351,6 +578,7 @@ export default function BookViewer({
   const [flipDirection, setFlipDirection] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [layoutMode, setLayoutMode] = useState("spread")
 
   useEffect(() => {
     if (!bookDocument) {
@@ -375,7 +603,6 @@ export default function BookViewer({
 
       const measuredPages = paginateBlocksByDom(
         flatBlocks,
-        measureElements.page,
         measureElements.body,
         contentMaxHeight
       )
@@ -403,14 +630,15 @@ export default function BookViewer({
     }
   }, [bookDocument, initialPage])
 
+  const isSpreadView = !isMobile && layoutMode === "spread"
   const totalPages = pages.length
-  const pageStep = isMobile ? 1 : 2
-  const maxSpreadPage = isMobile ? totalPages : Math.max(1, totalPages - 1)
+  const pageStep = isSpreadView ? 2 : 1
+  const maxPageIndex = Math.max(1, totalPages)
 
   const leftPage = pages[currentPage - 1] ?? null
-  const rightPage = isMobile ? null : pages[currentPage] ?? null
+  const rightPage = isSpreadView ? pages[currentPage] ?? null : null
   const navChapterTitle = formatNavChapterTitle(leftPage, rightPage)
-  const pageCounterText = formatPageCounter(leftPage, rightPage, totalPages)
+  const pageCounterText = formatPageCounter(leftPage, rightPage, totalPages, isSpreadView)
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)")
@@ -434,6 +662,12 @@ export default function BookViewer({
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
   }, [])
 
+  useEffect(() => {
+    if (currentPage > maxPageIndex) {
+      setCurrentPage(maxPageIndex)
+    }
+  }, [currentPage, maxPageIndex])
+
   const toggleFullscreen = useCallback(async () => {
     try {
       if (document.fullscreenElement) {
@@ -446,16 +680,21 @@ export default function BookViewer({
     }
   }, [])
 
+  const toggleLayoutMode = useCallback(() => {
+    setLayoutMode((mode) => (mode === "spread" ? "single" : "spread"))
+  }, [])
+
   const canGoBack = currentPage - pageStep >= 1
-  const canGoForward = currentPage + pageStep <= maxSpreadPage
+  const canGoForward = currentPage + pageStep <= maxPageIndex
 
   const finishFlip = useCallback(
     (nextPage) => {
-      setCurrentPage(nextPage)
-      onPageChange?.(nextPage)
+      const clampedPage = Math.min(Math.max(1, nextPage), maxPageIndex)
+      setCurrentPage(clampedPage)
+      onPageChange?.(clampedPage)
       setFlipDirection(null)
     },
-    [onPageChange]
+    [maxPageIndex, onPageChange]
   )
 
   const goBack = useCallback(() => {
@@ -533,6 +772,18 @@ export default function BookViewer({
         <p className="book-viewer__chapter">{navChapterTitle}</p>
         <div className="book-viewer__nav-right">
           <p className="book-viewer__counter">{pageCounterText}</p>
+          {!isMobile && (
+            <button
+              type="button"
+              className="book-viewer__layout-toggle"
+              onClick={toggleLayoutMode}
+              title={isSpreadView ? "Switch to single page" : "Switch to spread"}
+              aria-label={isSpreadView ? "Switch to single page" : "Switch to spread"}
+              aria-pressed={isSpreadView}
+            >
+              <LayoutModeIcon isSpreadView={isSpreadView} />
+            </button>
+          )}
           <button
             type="button"
             className="book-viewer__fullscreen"
@@ -568,12 +819,16 @@ export default function BookViewer({
           ›
         </span>
 
-        <div className="book-viewer__spread">
+        <div
+          className={`book-viewer__spread ${
+            !isSpreadView ? "book-viewer__spread--single" : ""
+          }`}
+        >
           <motion.div
             className={`book-viewer__page-slot book-viewer__page-slot--left ${
-              isMobile ? "book-viewer__page-slot--single" : ""
+              !isSpreadView ? "book-viewer__page-slot--single" : ""
             }`}
-            style={{ transformOrigin: "right center" }}
+            style={{ transformOrigin: isSpreadView ? "right center" : "center center" }}
             animate={leftPageMotion}
             transition={flipTransition}
             onAnimationComplete={
@@ -585,7 +840,7 @@ export default function BookViewer({
             </div>
           </motion.div>
 
-          {!isMobile && (
+          {isSpreadView && (
             <>
               <div className="book-viewer__spine" aria-hidden="true" />
 
