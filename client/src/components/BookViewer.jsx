@@ -40,15 +40,19 @@ function createMeasureElements() {
   return { root, page, body }
 }
 
-const STANDALONE_BULLET_PATTERN = /^([•o\-—])$/
-const INLINE_BULLET_PATTERN = /^([•o\-—])\s+/
+const STANDALONE_BULLET_PATTERN = /^([•o\-—])\s*$/
+const LIST_MARKER_PREFIX_PATTERN = /^([•o\-—])\s*/
+
+function stripListMarker(text) {
+  return (text ?? "").trim().replace(LIST_MARKER_PREFIX_PATTERN, "").trim()
+}
 
 function isStandaloneBulletText(text) {
   return STANDALONE_BULLET_PATTERN.test(text.trim())
 }
 
-function isInlineBulletText(text) {
-  return INLINE_BULLET_PATTERN.test(text.trim())
+function hasListMarkerPrefix(text) {
+  return LIST_MARKER_PREFIX_PATTERN.test(text.trim())
 }
 
 function groupBlocksForDisplay(blocks) {
@@ -78,6 +82,8 @@ function groupBlocksForDisplay(blocks) {
     const block = blocks[index]
     const trimmed = (block.text ?? "").trim()
 
+    if (!trimmed) continue
+
     if (block.isHeading) {
       flushProse()
       flushList()
@@ -85,36 +91,44 @@ function groupBlocksForDisplay(blocks) {
       continue
     }
 
-    let listText = null
-
     if (isStandaloneBulletText(trimmed)) {
-      const nextBlock = blocks[index + 1]
+      flushProse()
 
-      if (nextBlock && !nextBlock.isHeading && nextBlock.text?.trim()) {
-        listText = `${trimmed} ${nextBlock.text.trim()}`.replace(/\s+/g, " ").trim()
+      const nextBlock = blocks[index + 1]
+      const nextTrimmed = nextBlock?.text?.trim() ?? ""
+
+      if (nextBlock && !nextBlock.isHeading && nextTrimmed) {
+        const cleanText = stripListMarker(nextTrimmed)
+
+        if (cleanText) {
+          listItems.push({ text: cleanText })
+        }
+
         index += 1
-      } else {
-        listText = trimmed
       }
-    } else if (isInlineBulletText(trimmed)) {
-      listText = trimmed
+
+      continue
     }
 
-    if (listText !== null) {
+    if (hasListMarkerPrefix(trimmed)) {
       flushProse()
-      listItems.push({ text: listText, isListItem: true })
+
+      const cleanText = stripListMarker(trimmed)
+
+      if (cleanText) {
+        listItems.push({ text: cleanText })
+      }
+
       continue
     }
 
     flushList()
 
-    if (trimmed) {
-      proseParts.push(trimmed)
-    }
+    proseParts.push(trimmed)
   }
 
-  flushProse()
   flushList()
+  flushProse()
 
   return visualItems
 }

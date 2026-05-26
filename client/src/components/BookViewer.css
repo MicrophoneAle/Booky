@@ -264,6 +264,7 @@
   font-size: 10px;
   line-height: 1.15;
   color: #1c1917;
+  list-style-type: disc;
 }
 
 .book-page__number {
