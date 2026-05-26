@@ -17,11 +17,21 @@ const STANDALONE_URL_REGEX = /^https?:\/\/\S+$/i
 
 const LEVEL_0_NUMBER_REGEX = /^(\d+[\.\)])\s*(.*)$/
 const LEVEL_0_BULLET_REGEX = /^([•·\-—])\s*(.*)$/
-const LEVEL_1_MARKER_REGEX = /^([o*]|[a-z][\.\)])\s*(.*)$/i
+const LEVEL_1_SUB_BULLET_REGEX = /^([o*])\s+(.+)$/i
+const LEVEL_1_LETTERED_REGEX = /^([a-z][\.\)])\s+(.+)$/i
 const LEVEL_2_MARKER_REGEX = /^((?:[ivxlcdm]+|\([a-z]\))[\.\)])\s*(.*)$/i
-const LONE_MARKER_REGEX = /^(\d+[\.\)]|[•·\-—]|[o*]|[a-z][\.\)]|(?:[ivxlcdm]+|\([a-z]\))[\.\)])$/i
 const EMBEDDED_LIST_MARKER_REGEX = /\s+(\d+[\.\)]|[a-z][\.\)])\s+/gi
 let listGroupCounter = 0
+
+function isHeadingVisualItem(item) {
+  return item?.type === "title" || item?.type === "heading"
+}
+
+function proseParagraphClassName(previousItem) {
+  return isHeadingVisualItem(previousItem)
+    ? "book-page__text book-page__text--first"
+    : "book-page__text"
+}
 
 function isStandaloneUrl(text) {
   return STANDALONE_URL_REGEX.test(text.trim())
@@ -31,8 +41,15 @@ function isImpliedListLine(text) {
   return IMPLIED_LIST_LINE_REGEX.test(text.trim())
 }
 
-function isListMarkerLine(text) {
-  return parseListLine(text) !== null || LONE_MARKER_REGEX.test(text.trim())
+function pendingHasLevel0List(pendingListItems) {
+  return pendingListItems.some((item) => item.level === 0)
+}
+
+function isListMarkerLine(text, pendingListItems = []) {
+  return (
+    parseListLine(text, pendingListItems) !== null ||
+    parseLoneMarker(text, pendingListItems) !== null
+  )
 }
 
 function buildNumberedListText(marker, body) {
@@ -40,9 +57,11 @@ function buildNumberedListText(marker, body) {
   return trimmedBody ? `${marker} ${trimmedBody}`.replace(/\s+/g, " ").trim() : marker
 }
 
-function parseListLine(text) {
+function parseListLine(text, pendingListItems = []) {
   const trimmed = text.trim()
   if (!trimmed) return null
+
+  const hasLevel0ListContext = pendingHasLevel0List(pendingListItems)
 
   let match = trimmed.match(LEVEL_0_NUMBER_REGEX)
   if (match) {
@@ -83,20 +102,22 @@ function parseListLine(text) {
     }
   }
 
-  match = trimmed.match(/^([o*])\s*(.*)$/i)
-  if (match) {
-    const marker = match[1]
-    const body = match[2].trim()
-    return {
-      level: 1,
-      marker,
-      hasBullet: true,
-      text: body,
-      markerOnly: !body,
+  if (hasLevel0ListContext) {
+    match = trimmed.match(LEVEL_1_SUB_BULLET_REGEX)
+    if (match) {
+      const marker = match[1]
+      const body = match[2].trim()
+      return {
+        level: 1,
+        marker,
+        hasBullet: true,
+        text: body,
+        markerOnly: !body,
+      }
     }
   }
 
-  match = trimmed.match(/^([a-z][\.\)])\s*(.*)$/i)
+  match = trimmed.match(LEVEL_1_LETTERED_REGEX)
   if (match) {
     const marker = match[1]
     const body = match[2].trim()
@@ -112,9 +133,9 @@ function parseListLine(text) {
   return null
 }
 
-function parseLoneMarker(text) {
+function parseLoneMarker(text, pendingListItems = []) {
   const trimmed = text.trim()
-  if (!trimmed || !LONE_MARKER_REGEX.test(trimmed)) return null
+  if (!trimmed) return null
 
   if (/^\d+[\.\)]$/.test(trimmed)) {
     return { level: 0, markerOnly: true, text: "" }
@@ -124,7 +145,7 @@ function parseLoneMarker(text) {
     return { level: 0, markerOnly: true, text: "" }
   }
 
-  if (/^[o*]$/i.test(trimmed)) {
+  if (/^[o*]$/i.test(trimmed) && pendingHasLevel0List(pendingListItems)) {
     return { level: 1, markerOnly: true, text: "" }
   }
 
@@ -399,17 +420,12 @@ function expandBlocksForEmbeddedListMarkers(blocks) {
 function groupBlocksForDisplay(blocks) {
   const expandedBlocks = expandBlocksForEmbeddedListMarkers(blocks)
   const visualItems = []
-  let currentProse = []
   let pendingListItems = []
 
-  const flushProse = () => {
-    if (currentProse.length === 0) return
-
-    const combinedText = currentProse.join(" ").replace(/\s+/g, " ").trim()
-    currentProse = []
-
-    if (combinedText) {
-      visualItems.push({ type: "prose", text: combinedText })
+  const pushProse = (proseText) => {
+    const trimmed = proseText.trim()
+    if (trimmed) {
+      visualItems.push({ type: "prose", text: trimmed })
     }
   }
 
@@ -440,13 +456,11 @@ function groupBlocksForDisplay(blocks) {
     const text = (block.text ?? "").trim()
 
     if (!text) {
-      flushProse()
       flushPendingList()
       continue
     }
 
     if (block.isHeading) {
-      flushProse()
       flushPendingList()
 
       const headingFontSize = block.fontSize ?? 16
@@ -469,24 +483,22 @@ function groupBlocksForDisplay(blocks) {
       }
 
       flushPendingList()
-      currentProse.push(text)
+      pushProse(text)
       continue
     }
 
-    const loneMarker = parseLoneMarker(text)
+    const loneMarker = parseLoneMarker(text, pendingListItems)
     if (loneMarker) {
-      flushProse()
-
       const nextBlock = expandedBlocks[index + 1]
       const nextText = (nextBlock?.text ?? "").trim()
       const canConsumeNextLine =
         nextBlock &&
         !nextBlock.isHeading &&
         nextText &&
-        !isListMarkerLine(nextText)
+        !isListMarkerLine(nextText, pendingListItems)
 
       if (canConsumeNextLine) {
-        const parsedNext = parseListLine(nextText)
+        const parsedNext = parseListLine(nextText, pendingListItems)
         if (parsedNext && !parsedNext.markerOnly) {
           pushListItem(toFlatListItem(parsedNext))
         } else if (!parsedNext) {
@@ -503,15 +515,13 @@ function groupBlocksForDisplay(blocks) {
       continue
     }
 
-    const parsedList = parseListLine(text)
+    const parsedList = parseListLine(text, pendingListItems)
     if (parsedList && !parsedList.markerOnly) {
-      flushProse()
       pushListItem(toFlatListItem(parsedList))
       continue
     }
 
     if (isImpliedListLine(text) && pendingListItems.length > 0) {
-      flushProse()
       const previousItem = pendingListItems[pendingListItems.length - 1]
       pushListItem({
         text,
@@ -523,17 +533,15 @@ function groupBlocksForDisplay(blocks) {
     }
 
     if (pendingListItems.length > 0) {
-      flushProse()
       const lastListItem = pendingListItems[pendingListItems.length - 1]
       lastListItem.text = `${lastListItem.text} ${text}`.replace(/\s+/g, " ").trim()
       continue
     }
 
     flushPendingList()
-    currentProse.push(text)
+    pushProse(text)
   }
 
-  flushProse()
   flushPendingList()
 
   return visualItems
@@ -587,7 +595,7 @@ function appendGroupedListNodes(parentEl, nodes) {
   }
 }
 
-function appendVisualItem(body, item) {
+function appendVisualItem(body, item, previousItem = null) {
   if (item.type === "title") {
     const title = document.createElement("h1")
     title.className = "book-page__title"
@@ -611,7 +619,7 @@ function appendVisualItem(body, item) {
 
   if (item.type === "prose") {
     const paragraph = document.createElement("p")
-    paragraph.className = "book-page__text"
+    paragraph.className = proseParagraphClassName(previousItem)
     paragraph.textContent = item.text
     body.appendChild(paragraph)
   }
@@ -624,8 +632,8 @@ function renderMeasureBody(body, visualItems, showChapterLabel, chapterTitle) {
     appendChapterLabel(body, chapterTitle)
   }
 
-  for (const item of visualItems) {
-    appendVisualItem(body, item)
+  for (let index = 0; index < visualItems.length; index += 1) {
+    appendVisualItem(body, visualItems[index], visualItems[index - 1])
   }
 }
 
@@ -731,10 +739,6 @@ function cleanupPages(pages, bodyEl, contentMaxHeight) {
 /**
  * Stage 3: paginate pre-grouped visual items so measurement matches rendered DOM.
  */
-function isHeadingVisualItem(item) {
-  return item?.type === "title" || item?.type === "heading"
-}
-
 function flattenVisualItemsToPlaceables(visualItems) {
   listGroupCounter = 0
   const placeables = []
@@ -1107,8 +1111,10 @@ function BookPageContent({ page }) {
             )
           }
 
+          const previousItem = index > 0 ? visualItems[index - 1] : null
+
           return (
-            <p key={index} className="book-page__text">
+            <p key={index} className={proseParagraphClassName(previousItem)}>
               {item.text}
             </p>
           )

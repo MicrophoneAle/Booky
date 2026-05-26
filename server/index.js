@@ -279,8 +279,9 @@ function linesFromPdfText(text) {
 
 function buildBlocksFromLines(lines, headingStrings) {
   const blocks = []
-  const bulletCharsRegex = /^([•·o\-—*])\s*$/
-  const inlineBulletRegex = /^([•·o\-—*])\s*(.*)$/
+  const bulletCharsRegex = /^([•·\-—*])\s*$/
+  const inlineBulletRegex = /^([•·\-—*])\s*(.*)$/
+  const subBulletLineRegex = /^[o*]\s+/i
 
   for (let index = 0; index < lines.length; index += 1) {
     const currentLine = lines[index]
@@ -346,7 +347,8 @@ function buildBlocksFromLines(lines, headingStrings) {
         !prevText.includes("http://") &&
         !prevText.includes("https://") &&
         !/[:.\)\/"']$/.test(prevText.trim()) &&
-        !/^[•·\-—o*]\s/.test(trimmedLine) &&
+        !/^[•·\-—*]\s/.test(trimmedLine) &&
+        !subBulletLineRegex.test(trimmedLine) &&
         !/^\d+[\.\)]/.test(trimmedLine) &&
         !/^[a-z][\.\)]/i.test(trimmedLine) &&
         !trimmedLine.endsWith(":") &&

@@ -265,6 +265,11 @@
   font-size: 10px;
   line-height: 1.15;
   color: #1c1917;
+  text-indent: 1.5em;
+}
+
+.book-page__text--first {
+  text-indent: 0;
 }
 
 .book-page__list,
