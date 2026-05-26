@@ -40,96 +40,112 @@ function createMeasureElements() {
   return { root, page, body }
 }
 
-const STANDALONE_BULLET_PATTERN = /^([•o\-—])\s*$/
-const LIST_MARKER_PREFIX_PATTERN = /^([•o\-—])\s*/
+function mergeConsecutiveHeadingBlocks(flatBlocks) {
+  const mergedBlocks = []
+  let index = 0
 
-function stripListMarker(text) {
-  return (text ?? "").trim().replace(LIST_MARKER_PREFIX_PATTERN, "").trim()
-}
+  while (index < flatBlocks.length) {
+    const block = flatBlocks[index]
 
-function isStandaloneBulletText(text) {
-  return STANDALONE_BULLET_PATTERN.test(text.trim())
-}
+    if (!block.isHeading) {
+      mergedBlocks.push(block)
+      index += 1
+      continue
+    }
 
-function hasListMarkerPrefix(text) {
-  return LIST_MARKER_PREFIX_PATTERN.test(text.trim())
+    let combinedHeading = block.text.trim()
+    const mergedBlock = { ...block }
+
+    index += 1
+
+    while (index < flatBlocks.length && flatBlocks[index].isHeading) {
+      combinedHeading += ` ${flatBlocks[index].text.trim()}`
+      index += 1
+    }
+
+    mergedBlocks.push({
+      ...mergedBlock,
+      text: combinedHeading.replace(/\s+/g, " ").trim(),
+      isHeading: true,
+    })
+  }
+
+  return mergedBlocks
 }
 
 function groupBlocksForDisplay(blocks) {
   const visualItems = []
-  let proseParts = []
-  let listItems = []
+  let currentProse = []
+  let currentListItems = []
 
   const flushProse = () => {
-    if (proseParts.length === 0) return
-
-    const text = proseParts.join(" ").replace(/\s+/g, " ").trim()
-    proseParts = []
-
-    if (text) {
-      visualItems.push({ type: "prose", text })
-    }
+    if (currentProse.length === 0) return
+    const combinedText = currentProse.join(" ").replace(/\s+/g, " ").trim()
+    currentProse = []
+    if (combinedText) visualItems.push({ type: "prose", text: combinedText })
   }
 
   const flushList = () => {
-    if (listItems.length === 0) return
-
-    visualItems.push({ type: "list", items: [...listItems] })
-    listItems = []
+    if (currentListItems.length === 0) return
+    visualItems.push({ type: "list", items: [...currentListItems] })
+    currentListItems = []
   }
 
-  for (let index = 0; index < blocks.length; index += 1) {
-    const block = blocks[index]
-    const trimmed = (block.text ?? "").trim()
+  // Broad matching regex matching bullet tokens cleanly at the front of text
+  const rawBulletMarkerRegex = /^([•o·\-—\s\d\.\)]+)/
 
-    if (!trimmed) continue
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i]
+    let text = (block.text ?? "").trim()
+    if (!text) continue
 
+    // Handle heading strings smoothly
     if (block.isHeading) {
       flushProse()
       flushList()
-      visualItems.push({ type: "heading", block })
-      continue
-    }
 
-    if (isStandaloneBulletText(trimmed)) {
-      flushProse()
-
-      const nextBlock = blocks[index + 1]
-      const nextTrimmed = nextBlock?.text?.trim() ?? ""
-
-      if (nextBlock && !nextBlock.isHeading && nextTrimmed) {
-        const cleanText = stripListMarker(nextTrimmed)
-
-        if (cleanText) {
-          listItems.push({ text: cleanText })
-        }
-
-        index += 1
+      // Look-ahead to group consecutive pieces of headers
+      let combinedHeading = text
+      while (i + 1 < blocks.length && blocks[i + 1].isHeading) {
+        combinedHeading += ` ${(blocks[i + 1].text ?? "").trim()}`
+        i++
       }
-
+      visualItems.push({ type: "heading", text: combinedHeading })
       continue
     }
 
-    if (hasListMarkerPrefix(trimmed)) {
+    // Check if block is just a lone layout bullet character
+    const isLoneMarker = /^([•o·\-—])$/.test(text)
+
+    if (isLoneMarker) {
       flushProse()
-
-      const cleanText = stripListMarker(trimmed)
-
-      if (cleanText) {
-        listItems.push({ text: cleanText })
+      // Look ahead to capture the actual content description
+      if (i + 1 < blocks.length && !blocks[i + 1].isHeading) {
+        let contentText = (blocks[i + 1].text ?? "").trim()
+        // Clear any repeated token headers from the content text string
+        contentText = contentText.replace(rawBulletMarkerRegex, "").trim()
+        currentListItems.push({ text: contentText })
+        i++ // advance scanner past text element
       }
-
       continue
     }
 
-    flushList()
+    // Check if the block has an inline bullet embedded directly at the start
+    const matchesInlineBullet = /^([•o·\-—]|\d+[\.\)])\s+(.*)$/.test(text)
+    if (matchesInlineBullet) {
+      flushProse()
+      const cleanListContent = text.replace(/^([•o·\-—]|\d+[\.\)])\s*/, "").trim()
+      currentListItems.push({ text: cleanListContent })
+      continue
+    }
 
-    proseParts.push(trimmed)
+    // Default: It is standard paragraph prose
+    flushList() // ensure past lists are closed
+    currentProse.push(text)
   }
 
-  flushList()
   flushProse()
-
+  flushList()
   return visualItems
 }
 
@@ -144,7 +160,7 @@ function appendVisualItem(body, item) {
   if (item.type === "heading") {
     const heading = document.createElement("h2")
     heading.className = "book-page__heading"
-    heading.textContent = item.block.text
+    heading.textContent = item.text
     body.appendChild(heading)
     return
   }
@@ -262,7 +278,7 @@ function BookPageContent({ page }) {
           if (item.type === "heading") {
             return (
               <h2 key={index} className="book-page__heading">
-                {item.block.text}
+                {item.text}
               </h2>
             )
           }
@@ -365,7 +381,7 @@ export default function BookViewer({
     setPages([])
 
     const runMeasurement = () => {
-      const flatBlocks = flattenDocument(bookDocument)
+      const flatBlocks = mergeConsecutiveHeadingBlocks(flattenDocument(bookDocument))
       const { pageOuterHeight, contentMaxHeight } = getLayoutHeights()
       const measureElements = createMeasureElements()
 
@@ -383,8 +399,13 @@ export default function BookViewer({
       measureRoot = null
 
       if (!cancelled) {
+        const totalMeasuredPages = measuredPages.length
         setPages(measuredPages)
-        setCurrentPage(initialPage)
+        setCurrentPage((previousPage) => {
+          const maxPage = Math.max(1, totalMeasuredPages)
+          if (totalMeasuredPages === 0) return 1
+          return Math.min(Math.max(1, previousPage), maxPage)
+        })
         setIsPaginating(false)
       }
     }
