@@ -11,6 +11,22 @@ const TERMINAL_PUNCTUATION_PATTERN = /[.?!:;"'»)\]]\s*$/
 
 const LIST_ITEM_REGEX = /^([•o·\-—]|\d+[\.\)]|[a-zA-Z][\.\)])\s*(.*)$/
 const LONE_LIST_MARKER_REGEX = /^([•o·\-—]|\d+[\.\)]|[a-zA-Z][\.\)])$/
+const IMPLIED_LIST_LINE_REGEX =
+  /^(Add|Test|Explore|Run:|Verify|Ensure|Click)\b/i
+const STANDALONE_URL_REGEX = /^https?:\/\/\S+$/i
+
+function isStandaloneUrl(text) {
+  return STANDALONE_URL_REGEX.test(text.trim())
+}
+
+function isListMarkerLine(text) {
+  const trimmed = text.trim()
+  return LONE_LIST_MARKER_REGEX.test(trimmed) || LIST_ITEM_REGEX.test(trimmed)
+}
+
+function isImpliedListLine(text) {
+  return IMPLIED_LIST_LINE_REGEX.test(text.trim())
+}
 
 function getLayoutHeights() {
   const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
@@ -91,48 +107,37 @@ function groupBlocksForDisplay(blocks) {
       flushProse()
       flushPendingList()
 
-      let combinedText = text
-      let combinedFontSize = block.fontSize ?? 16
-      let chapterId = block.chapterId ?? null
-      let chapterTitle = block.chapterTitle ?? null
-      let isChapterStart = Boolean(block.isChapterStart)
-
-      while (
-        index + 1 < blocks.length &&
-        blocks[index + 1].isHeading &&
-        !TERMINAL_PUNCTUATION_PATTERN.test(combinedText)
-      ) {
-        index += 1
-        const nextBlock = blocks[index]
-        const nextText = (nextBlock.text ?? "").trim()
-
-        if (!nextText) {
-          break
-        }
-
-        combinedText = `${combinedText} ${nextText}`.replace(/\s+/g, " ").trim()
-        combinedFontSize = Math.max(combinedFontSize, nextBlock.fontSize ?? 16)
-        chapterId = chapterId ?? nextBlock.chapterId ?? null
-        chapterTitle = chapterTitle ?? nextBlock.chapterTitle ?? null
-        isChapterStart = isChapterStart || Boolean(nextBlock.isChapterStart)
-      }
-
+      const headingFontSize = block.fontSize ?? 16
       visualItems.push({
-        type: resolveHeadingType(combinedFontSize),
-        text: combinedText,
-        fontSize: combinedFontSize,
-        chapterId,
-        chapterTitle,
-        isChapterStart,
+        type: resolveHeadingType(headingFontSize),
+        text,
+        fontSize: headingFontSize,
+        chapterId: block.chapterId ?? null,
+        chapterTitle: block.chapterTitle ?? null,
+        isChapterStart: Boolean(block.isChapterStart),
       })
+      continue
+    }
+
+    if (isStandaloneUrl(text) && pendingListItems.length > 0) {
+      const lastListItem = pendingListItems[pendingListItems.length - 1]
+      lastListItem.text = `${lastListItem.text} ${text}`.replace(/\s+/g, " ").trim()
       continue
     }
 
     if (LONE_LIST_MARKER_REGEX.test(text)) {
       flushProse()
 
-      if (index + 1 < blocks.length && !blocks[index + 1].isHeading) {
-        let contentText = (blocks[index + 1].text ?? "").trim()
+      const nextBlock = blocks[index + 1]
+      const nextText = (nextBlock?.text ?? "").trim()
+      const canConsumeNextLine =
+        nextBlock &&
+        !nextBlock.isHeading &&
+        nextText &&
+        !isListMarkerLine(nextText)
+
+      if (canConsumeNextLine) {
+        let contentText = nextText
 
         if (LIST_ITEM_REGEX.test(contentText)) {
           contentText = contentText.replace(LIST_ITEM_REGEX, "$2").trim()
@@ -156,6 +161,15 @@ function groupBlocksForDisplay(blocks) {
         pendingListItems.push({ text: cleanListContent })
       }
 
+      continue
+    }
+
+    if (
+      isImpliedListLine(text) &&
+      (pendingListItems.length > 0 || currentProse.length === 0)
+    ) {
+      flushProse()
+      pendingListItems.push({ text })
       continue
     }
 
