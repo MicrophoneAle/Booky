@@ -78,8 +78,7 @@
   font-size: 12px;
 }
 
-.book-viewer__layout-toggle,
-.book-viewer__fullscreen {
+.book-viewer__layout-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,8 +90,7 @@
   transition: color 0.2s ease;
 }
 
-.book-viewer__layout-toggle:hover,
-.book-viewer__fullscreen:hover {
+.book-viewer__layout-toggle:hover {
   color: #d4af37;
 }
 

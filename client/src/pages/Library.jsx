@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
+import FullscreenButton from "../components/FullscreenButton"
 import "./Library.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
@@ -161,6 +162,7 @@ export default function Library() {
 
   return (
     <div className="library-page">
+      <FullscreenButton className="library-page__fullscreen" />
       <nav className="library-nav" aria-label="Primary">
         <div className="library-logo">BOOKY</div>
         <div className="library-nav-links">

@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react"
 import { Link, NavLink, useNavigate } from "react-router-dom"
+import FullscreenButton from "../components/FullscreenButton"
 import "./Home.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
@@ -157,6 +158,7 @@ export default function Home() {
 
   return (
     <div className="home-page">
+      <FullscreenButton className="home-page__fullscreen" />
       <nav className="home-nav" aria-label="Primary">
         <div className="home-logo">BOOKY</div>
         <div className="home-nav-links">

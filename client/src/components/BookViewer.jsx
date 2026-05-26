@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom"
 import { motion, useReducedMotion } from "framer-motion"
 import { flattenDocument } from "../utils/paginator"
+import FullscreenButton from "./FullscreenButton"
 import "../pages/Reader.css"
 import "./BookViewer.css"
 
@@ -1305,27 +1306,6 @@ function formatPageCounter(leftPage, rightPage, totalPages, isSpreadView) {
   return `Page ${leftNumber} of ${totalPages}`
 }
 
-function FullscreenIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M8 3H5a2 2 0 0 0-2 2v3" />
-      <path d="M16 3h3a2 2 0 0 1 2 2v3" />
-      <path d="M8 21H5a2 2 0 0 1-2-2v-3" />
-      <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
-    </svg>
-  )
-}
-
 function LayoutModeIcon({ isSpreadView }) {
   if (isSpreadView) {
     return (
@@ -1373,7 +1353,6 @@ export default function BookViewer({
   const [currentPage, setCurrentPage] = useState(initialPage)
   const [flipDirection, setFlipDirection] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const [layoutMode, setLayoutMode] = useState("spread")
 
   useEffect(() => {
@@ -1453,31 +1432,10 @@ export default function BookViewer({
   }, [initialPage])
 
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement))
-    }
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange)
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
-  }, [])
-
-  useEffect(() => {
     if (currentPage > maxPageIndex) {
       setCurrentPage(maxPageIndex)
     }
   }, [currentPage, maxPageIndex])
-
-  const toggleFullscreen = useCallback(async () => {
-    try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen()
-      } else {
-        await document.documentElement.requestFullscreen()
-      }
-    } catch {
-      // Fullscreen may be blocked by the browser.
-    }
-  }, [])
 
   const toggleLayoutMode = useCallback(() => {
     setLayoutMode((mode) => (mode === "spread" ? "single" : "spread"))
@@ -1583,15 +1541,7 @@ export default function BookViewer({
               <LayoutModeIcon isSpreadView={isSpreadView} />
             </button>
           )}
-          <button
-            type="button"
-            className="book-viewer__fullscreen"
-            onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          >
-            <FullscreenIcon />
-          </button>
+          <FullscreenButton className="book-viewer__fullscreen" />
         </div>
       </header>
 
