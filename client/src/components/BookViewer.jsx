@@ -40,6 +40,85 @@ function createMeasureElements() {
   return { root, page, body }
 }
 
+const STANDALONE_BULLET_PATTERN = /^([•o\-—])$/
+const INLINE_BULLET_PATTERN = /^([•o\-—])\s+/
+
+function isStandaloneBulletText(text) {
+  return STANDALONE_BULLET_PATTERN.test(text.trim())
+}
+
+function isInlineBulletText(text) {
+  return INLINE_BULLET_PATTERN.test(text.trim())
+}
+
+function groupBlocksForDisplay(blocks) {
+  const visualItems = []
+  let proseParts = []
+  let listItems = []
+
+  const flushProse = () => {
+    if (proseParts.length === 0) return
+
+    const text = proseParts.join(" ").replace(/\s+/g, " ").trim()
+    proseParts = []
+
+    if (text) {
+      visualItems.push({ type: "prose", text })
+    }
+  }
+
+  const flushList = () => {
+    if (listItems.length === 0) return
+
+    visualItems.push({ type: "list", items: [...listItems] })
+    listItems = []
+  }
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    const trimmed = (block.text ?? "").trim()
+
+    if (block.isHeading) {
+      flushProse()
+      flushList()
+      visualItems.push({ type: "heading", block })
+      continue
+    }
+
+    let listText = null
+
+    if (isStandaloneBulletText(trimmed)) {
+      const nextBlock = blocks[index + 1]
+
+      if (nextBlock && !nextBlock.isHeading && nextBlock.text?.trim()) {
+        listText = `${trimmed} ${nextBlock.text.trim()}`.replace(/\s+/g, " ").trim()
+        index += 1
+      } else {
+        listText = trimmed
+      }
+    } else if (isInlineBulletText(trimmed)) {
+      listText = trimmed
+    }
+
+    if (listText !== null) {
+      flushProse()
+      listItems.push({ text: listText, isListItem: true })
+      continue
+    }
+
+    flushList()
+
+    if (trimmed) {
+      proseParts.push(trimmed)
+    }
+  }
+
+  flushProse()
+  flushList()
+
+  return visualItems
+}
+
 function appendChapterLabel(body, title) {
   const label = document.createElement("p")
   label.className = "book-page__chapter-label"
@@ -47,19 +126,36 @@ function appendChapterLabel(body, title) {
   body.appendChild(label)
 }
 
-function appendBlock(body, block) {
-  if (block.isHeading) {
+function appendVisualItem(body, item) {
+  if (item.type === "heading") {
     const heading = document.createElement("h2")
     heading.className = "book-page__heading"
-    heading.textContent = block.text
+    heading.textContent = item.block.text
     body.appendChild(heading)
     return
   }
 
-  const paragraph = document.createElement("p")
-  paragraph.className = "book-page__text"
-  paragraph.textContent = block.text
-  body.appendChild(paragraph)
+  if (item.type === "list") {
+    const list = document.createElement("ul")
+    list.className = "book-page__list"
+
+    for (const listItem of item.items) {
+      const listEntry = document.createElement("li")
+      listEntry.className = "book-page__list-item"
+      listEntry.textContent = listItem.text
+      list.appendChild(listEntry)
+    }
+
+    body.appendChild(list)
+    return
+  }
+
+  if (item.type === "prose") {
+    const paragraph = document.createElement("p")
+    paragraph.className = "book-page__text"
+    paragraph.textContent = item.text
+    body.appendChild(paragraph)
+  }
 }
 
 function renderMeasureBody(body, blocks, showChapterLabel, chapterTitle) {
@@ -69,8 +165,8 @@ function renderMeasureBody(body, blocks, showChapterLabel, chapterTitle) {
     appendChapterLabel(body, chapterTitle)
   }
 
-  for (const block of blocks) {
-    appendBlock(body, block)
+  for (const item of groupBlocksForDisplay(blocks)) {
+    appendVisualItem(body, item)
   }
 }
 
@@ -139,6 +235,8 @@ function BookPageContent({ page }) {
     return <div className="book-page book-page--empty" />
   }
 
+  const visualItems = groupBlocksForDisplay(page.blocks ?? [])
+
   return (
     <div className="book-page">
       {page.chapterTitle && (
@@ -146,17 +244,33 @@ function BookPageContent({ page }) {
       )}
 
       <div className="book-page__body">
-        {page.blocks.map((block, index) =>
-          block.isHeading ? (
-            <h2 key={index} className="book-page__heading">
-              {block.text}
-            </h2>
-          ) : (
+        {visualItems.map((item, index) => {
+          if (item.type === "heading") {
+            return (
+              <h2 key={index} className="book-page__heading">
+                {item.block.text}
+              </h2>
+            )
+          }
+
+          if (item.type === "list") {
+            return (
+              <ul key={index} className="book-page__list">
+                {item.items.map((listItem, listIndex) => (
+                  <li key={listIndex} className="book-page__list-item">
+                    {listItem.text}
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+
+          return (
             <p key={index} className="book-page__text">
-              {block.text}
+              {item.text}
             </p>
           )
-        )}
+        })}
       </div>
 
       <p className="book-page__number">— {page.pageNumber} —</p>
