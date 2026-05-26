@@ -152,6 +152,7 @@ const Y_LINE_BREAK_DELTA = 2
 const Y_SAME_LINE_TOLERANCE = 2
 
 async function extractLinesByPosition(buffer) {
+  const sameLineTolerance = 0.5
   const loadingTask = getDocument({ data: new Uint8Array(buffer) })
   const pdf = await loadingTask.promise
   const pageSections = []
@@ -170,17 +171,36 @@ async function extractLinesByPosition(buffer) {
         continue
       }
 
-      const y = getItemY(item)
+      const currentY = getItemY(item)
+      console.log(
+        "ITEM y=" +
+          item.transform[5].toFixed(2) +
+          " text=" +
+          JSON.stringify(item.str.slice(0, 60))
+      )
 
       if (previousY !== null) {
-        const yDelta = y - previousY
+        const prevY = previousY
+        const yDelta = currentY - prevY
+        const isSameLine = Math.abs(currentY - prevY) <= sameLineTolerance
+
+        console.log(
+          "Y DIFF: prev=" +
+            prevY.toFixed(2) +
+            " current=" +
+            currentY.toFixed(2) +
+            " diff=" +
+            (prevY - currentY).toFixed(2) +
+            " sameLine=" +
+            isSameLine
+        )
 
         if (yDelta < -Y_LINE_BREAK_DELTA) {
           if (currentLine.trim()) {
             pageLines.push(currentLine.trim())
           }
           currentLine = fragment
-        } else if (Math.abs(yDelta) <= Y_SAME_LINE_TOLERANCE) {
+        } else if (isSameLine) {
           currentLine = currentLine ? `${currentLine} ${fragment}` : fragment
         } else {
           currentLine = currentLine ? `${currentLine} ${fragment}` : fragment
@@ -189,11 +209,16 @@ async function extractLinesByPosition(buffer) {
         currentLine = fragment
       }
 
-      previousY = y
+      previousY = currentY
     }
 
     if (currentLine.trim()) {
       pageLines.push(currentLine.trim())
+    }
+
+    console.log("PAGE " + pageNumber + " LINES:")
+    for (const line of pageLines) {
+      console.log("  > " + JSON.stringify(line.slice(0, 80)))
     }
 
     pageSections.push(pageLines.join("\n"))
