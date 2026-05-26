@@ -1,7 +1,14 @@
+import 'dotenv/config'
 import express from "express"
 import cors from "cors"
 import multer from "multer"
+import { createClient } from "@supabase/supabase-js"
 import { getDocument, OPS } from "pdfjs-dist/legacy/build/pdf.mjs"
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+)
 
 const app = express()
 
@@ -137,9 +144,39 @@ app.post("/upload", (req, res) => {
       const title = uploadedFile.originalname.replace(/\.pdf$/i, "")
       const { chapters, content: contentWithChapters } = detectChapters(content)
 
+      const storagePath = `${Date.now()}-${uploadedFile.originalname}`
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from("pdfs")
+        .upload(storagePath, uploadedFile.buffer, {
+          contentType: "application/pdf",
+        })
+
+      if (storageError) {
+        res.status(500).json({ success: false, error: "Storage upload failed" })
+        return
+      }
+
+      const { data: insertedDocument, error: insertError } = await supabase
+        .from("documents")
+        .insert({
+          name: title,
+          storage_path: storageData.path,
+          total_pages: pdf.numPages,
+          chapters,
+          content: contentWithChapters,
+        })
+        .select("id")
+        .single()
+
+      if (insertError) {
+        res.status(500).json({ success: false, error: "Database insert failed" })
+        return
+      }
+
       res.json({
         success: true,
         document: {
+          id: insertedDocument.id,
           title,
           totalPages: pdf.numPages,
           chapters,
