@@ -40,39 +40,6 @@ function createMeasureElements() {
   return { root, page, body }
 }
 
-function mergeConsecutiveHeadingBlocks(flatBlocks) {
-  const mergedBlocks = []
-  let index = 0
-
-  while (index < flatBlocks.length) {
-    const block = flatBlocks[index]
-
-    if (!block.isHeading) {
-      mergedBlocks.push(block)
-      index += 1
-      continue
-    }
-
-    let combinedHeading = block.text.trim()
-    const mergedBlock = { ...block }
-
-    index += 1
-
-    while (index < flatBlocks.length && flatBlocks[index].isHeading) {
-      combinedHeading += ` ${flatBlocks[index].text.trim()}`
-      index += 1
-    }
-
-    mergedBlocks.push({
-      ...mergedBlock,
-      text: combinedHeading.replace(/\s+/g, " ").trim(),
-      isHeading: true,
-    })
-  }
-
-  return mergedBlocks
-}
-
 function groupBlocksForDisplay(blocks) {
   const visualItems = []
   let currentProse = []
@@ -91,56 +58,58 @@ function groupBlocksForDisplay(blocks) {
     currentListItems = []
   }
 
-  // Broad matching regex matching bullet tokens cleanly at the front of text
-  const rawBulletMarkerRegex = /^([•o·\-—\s\d\.\)]+)/
+  // Regular expression to identify inline bullets, numbers (1., 2.), or letters (a., b.)
+  const listItemRegex = /^([•o·\-—]|\d+[\.\)]|[a-zA-Z][\.\)])\s*(.*)$/
+  const loneMarkerRegex = /^([•o·\-—]|\d+[\.\)]|[a-zA-Z][\.\)])$/
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i]
     let text = (block.text ?? "").trim()
-    if (!text) continue
 
-    // Handle heading strings smoothly
+    // Natural Enter/Paragraph Break Detection
+    if (!text) {
+      flushProse()
+      flushList()
+      continue
+    }
+
+    // Dynamic Header Handling based on fontSize metric
     if (block.isHeading) {
       flushProse()
       flushList()
 
-      // Look-ahead to group consecutive pieces of headers
-      let combinedHeading = text
-      while (i + 1 < blocks.length && blocks[i + 1].isHeading) {
-        combinedHeading += ` ${(blocks[i + 1].text ?? "").trim()}`
-        i++
-      }
-      visualItems.push({ type: "heading", text: combinedHeading })
+      const type = block.fontSize > 18 ? "title" : "heading"
+      visualItems.push({ type, text })
       continue
     }
 
-    // Check if block is just a lone layout bullet character
-    const isLoneMarker = /^([•o·\-—])$/.test(text)
-
-    if (isLoneMarker) {
+    // Capture explicit list item structures
+    if (loneMarkerRegex.test(text)) {
       flushProse()
-      // Look ahead to capture the actual content description
       if (i + 1 < blocks.length && !blocks[i + 1].isHeading) {
         let contentText = (blocks[i + 1].text ?? "").trim()
-        // Clear any repeated token headers from the content text string
-        contentText = contentText.replace(rawBulletMarkerRegex, "").trim()
+        if (listItemRegex.test(contentText)) {
+          contentText = contentText.replace(listItemRegex, "$2").trim()
+        }
         currentListItems.push({ text: contentText })
-        i++ // advance scanner past text element
+        i++
       }
       continue
     }
 
-    // Check if the block has an inline bullet embedded directly at the start
-    const matchesInlineBullet = /^([•o·\-—]|\d+[\.\)])\s+(.*)$/.test(text)
-    if (matchesInlineBullet) {
+    if (listItemRegex.test(text)) {
       flushProse()
-      const cleanListContent = text.replace(/^([•o·\-—]|\d+[\.\)])\s*/, "").trim()
+      const cleanListContent = text.replace(listItemRegex, "$2").trim()
       currentListItems.push({ text: cleanListContent })
       continue
     }
 
-    // Default: It is standard paragraph prose
-    flushList() // ensure past lists are closed
+    // Standard Prose Path: If a list was active, close it out to ensure a newline break
+    if (currentListItems.length > 0) {
+      flushList()
+    }
+
+    flushProse()
     currentProse.push(text)
   }
 
@@ -157,6 +126,14 @@ function appendChapterLabel(body, title) {
 }
 
 function appendVisualItem(body, item) {
+  if (item.type === "title") {
+    const title = document.createElement("h1")
+    title.className = "book-page__title"
+    title.textContent = item.text
+    body.appendChild(title)
+    return
+  }
+
   if (item.type === "heading") {
     const heading = document.createElement("h2")
     heading.className = "book-page__heading"
@@ -275,6 +252,14 @@ function BookPageContent({ page }) {
 
       <div className="book-page__body">
         {visualItems.map((item, index) => {
+          if (item.type === "title") {
+            return (
+              <h1 key={index} className="book-page__title">
+                {item.text}
+              </h1>
+            )
+          }
+
           if (item.type === "heading") {
             return (
               <h2 key={index} className="book-page__heading">
@@ -381,7 +366,7 @@ export default function BookViewer({
     setPages([])
 
     const runMeasurement = () => {
-      const flatBlocks = mergeConsecutiveHeadingBlocks(flattenDocument(bookDocument))
+      const flatBlocks = flattenDocument(bookDocument)
       const { pageOuterHeight, contentMaxHeight } = getLayoutHeights()
       const measureElements = createMeasureElements()
 

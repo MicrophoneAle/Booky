@@ -235,6 +235,15 @@
   gap: 0.3rem;
 }
 
+.book-page__title {
+  margin: 0;
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1c1917;
+}
+
 .book-page__heading {
   margin: 0;
   font-family: "EB Garamond", Georgia, serif;

@@ -17,8 +17,6 @@ export function flattenDocument(document) {
   for (const page of document?.content ?? []) {
     for (const block of page?.blocks ?? []) {
       const text = block?.text ?? ""
-      if (!text.trim()) continue
-
       const chapterId = block.chapterId ?? null
 
       flatBlocks.push({
