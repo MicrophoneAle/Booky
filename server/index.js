@@ -1,24 +1,36 @@
-import 'dotenv/config'
+import "dotenv/config"
 import express from "express"
 import cors from "cors"
 import multer from "multer"
 import { createClient } from "@supabase/supabase-js"
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
-import pdfParse from "pdf-parse/lib/pdf-parse.js"
+import { spawn } from "child_process"
+import fs from "fs/promises"
+import os from "os"
+import path from "path"
+import { fileURLToPath } from "url"
+import { randomUUID } from "crypto"
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 )
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const REPO_ROOT = path.resolve(__dirname, "..")
+const MARKER_SCRIPT = path.join(REPO_ROOT, "pipeline", "parse_marker.py")
+const PYTHON_EXECUTABLE = process.env.PYTHON_PATH || "python3"
+const MARKER_TIMEOUT_MS = Number(process.env.MARKER_TIMEOUT_MS || 600_000)
+const UPLOAD_TMP_DIR =
+  process.env.BOOKY_UPLOAD_TMP_DIR || path.join(os.tmpdir(), "uploads")
+
 const app = express()
 
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://booky-lemon.vercel.app"
-  ]
-}))
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://booky-lemon.vercel.app"],
+  })
+)
 
 app.use(express.json())
 
@@ -123,53 +135,15 @@ app.get("/documents/:id", async (req, res) => {
 const CHAPTER_PATTERN =
   /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|one|two|three)|prologue|epilogue|introduction|conclusion)\.?$/i
 
+const LIST_LINE_PATTERN = /^([-*+]\s+|\d+\.\s+)/
+const BOOKY_PAGES_PATTERN = /BOOKY_PAGES:(\d+)/
+
 function slugify(text) {
   return text
     .trim()
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "")
-}
-
-function getItemFontSize(item) {
-  const matrix = Array.isArray(item.transform) ? item.transform : []
-  const scaleX = Number.isFinite(matrix[0]) ? Math.abs(matrix[0]) : 0
-  const scaleY = Number.isFinite(matrix[3]) ? Math.abs(matrix[3]) : 0
-  return Number(Math.max(scaleX, scaleY).toFixed(2))
-}
-
-function getItemY(item) {
-  const matrix = Array.isArray(item.transform) ? item.transform : []
-  return Number.isFinite(matrix[5]) ? matrix[5] : 0
-}
-
-function getItemX(item) {
-  const matrix = Array.isArray(item.transform) ? item.transform : []
-  return Number.isFinite(matrix[4]) ? matrix[4] : 0
-}
-
-async function extractHeadingLines(buffer) {
-  const headingStrings = new Set()
-  const loadingTask = getDocument({ data: new Uint8Array(buffer) })
-  const pdf = await loadingTask.promise
-
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    const page = await pdf.getPage(pageNumber)
-    const textContent = await page.getTextContent()
-
-    for (const item of textContent.items) {
-      const fontSize = getItemFontSize(item)
-
-      if (fontSize > 14) {
-        const trimmed = (item.str ?? "").trim()
-        if (trimmed) {
-          headingStrings.add(trimmed)
-        }
-      }
-    }
-  }
-
-  return headingStrings
 }
 
 function isChapterHeading(block) {
@@ -216,6 +190,235 @@ function detectChapters(content) {
   return { chapters, content: updatedContent }
 }
 
+/**
+ * Translate Marker Markdown into Booky content blocks.
+ */
+function markdownToBlocks(markdown) {
+  const blocks = []
+  const normalized = markdown.replace(/\r\n/g, "\n").trim()
+
+  if (!normalized) {
+    return blocks
+  }
+
+  const paragraphs = normalized.split(/\n\n+/).map((part) => part.trim()).filter(Boolean)
+
+  for (const paragraph of paragraphs) {
+    if (paragraph.startsWith("# ") && !paragraph.startsWith("## ")) {
+      blocks.push({
+        text: paragraph.replace(/^#\s+/, "").trim(),
+        isHeading: true,
+        fontSize: 20,
+        chapterId: null,
+      })
+      continue
+    }
+
+    if (paragraph.startsWith("## ")) {
+      blocks.push({
+        text: paragraph.replace(/^##\s+/, "").trim(),
+        isHeading: true,
+        fontSize: 16,
+        chapterId: null,
+      })
+      continue
+    }
+
+    if (/^#{3,6}\s+/.test(paragraph)) {
+      blocks.push({
+        text: paragraph.replace(/^#{3,6}\s+/, "").trim(),
+        isHeading: true,
+        fontSize: 16,
+        chapterId: null,
+      })
+      continue
+    }
+
+    const lines = paragraph.split("\n").map((line) => line.trim()).filter(Boolean)
+
+    if (lines.length === 0) {
+      continue
+    }
+
+    const isListParagraph = lines.every((line) => LIST_LINE_PATTERN.test(line))
+
+    if (isListParagraph) {
+      for (const line of lines) {
+        blocks.push({
+          text: line,
+          isHeading: false,
+          fontSize: 12,
+          chapterId: null,
+        })
+      }
+      continue
+    }
+
+    if (lines.length === 1 && LIST_LINE_PATTERN.test(lines[0])) {
+      blocks.push({
+        text: lines[0],
+        isHeading: false,
+        fontSize: 12,
+        chapterId: null,
+      })
+      continue
+    }
+
+    for (const line of lines) {
+      if (LIST_LINE_PATTERN.test(line)) {
+        blocks.push({
+          text: line,
+          isHeading: false,
+          fontSize: 12,
+          chapterId: null,
+        })
+      } else {
+        blocks.push({
+          text: line,
+          isHeading: false,
+          fontSize: 12,
+          chapterId: null,
+        })
+      }
+    }
+  }
+
+  return blocks
+}
+
+function blocksToContent(blocks, blocksPerPage = 40) {
+  const content = []
+
+  for (let index = 0; index < blocks.length; index += blocksPerPage) {
+    content.push({
+      pageIndex: content.length,
+      blocks: blocks.slice(index, index + blocksPerPage),
+    })
+  }
+
+  return content
+}
+
+function parseMarkerPageCount(stderr) {
+  const match = stderr.match(BOOKY_PAGES_PATTERN)
+  if (!match) {
+    return null
+  }
+
+  const pageCount = Number.parseInt(match[1], 10)
+  return Number.isFinite(pageCount) && pageCount > 0 ? pageCount : null
+}
+
+async function ensureUploadDirectory() {
+  await fs.mkdir(UPLOAD_TMP_DIR, { recursive: true, mode: 0o700 })
+}
+
+async function writeTemporaryPdf(buffer, originalName) {
+  await ensureUploadDirectory()
+
+  const safeBaseName = path
+    .basename(originalName, path.extname(originalName))
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+  const tempFileName = `${Date.now()}-${randomUUID()}-${safeBaseName}.pdf`
+  const tempFilePath = path.join(UPLOAD_TMP_DIR, tempFileName)
+
+  await fs.writeFile(tempFilePath, buffer, { mode: 0o600 })
+  return tempFilePath
+}
+
+async function removeTemporaryPdf(tempFilePath) {
+  try {
+    await fs.unlink(tempFilePath)
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code !== "ENOENT") {
+      console.warn(`Failed to remove temporary PDF: ${tempFilePath}`, error)
+    }
+  }
+}
+
+function runMarkerPipeline(tempFilePath) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(PYTHON_EXECUTABLE, [MARKER_SCRIPT, tempFilePath], {
+      cwd: REPO_ROOT,
+      windowsHide: true,
+    })
+
+    let stdout = ""
+    let stderr = ""
+    let settled = false
+
+    const timeout = setTimeout(() => {
+      if (settled) return
+      settled = true
+      child.kill("SIGTERM")
+      setTimeout(() => {
+        if (!child.killed) {
+          child.kill("SIGKILL")
+        }
+      }, 5_000)
+      reject(
+        new Error(
+          `Marker layout analysis timed out after ${Math.round(MARKER_TIMEOUT_MS / 1000)} seconds.`
+        )
+      )
+    }, MARKER_TIMEOUT_MS)
+
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString("utf8")
+    })
+
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString("utf8")
+    })
+
+    child.on("error", (error) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timeout)
+
+      if (error.code === "ENOENT") {
+        reject(
+          new Error(
+            `Python executable not found (${PYTHON_EXECUTABLE}). Install Python 3.10+ and marker-pdf.`
+          )
+        )
+        return
+      }
+
+      reject(error)
+    })
+
+    child.on("close", (code, signal) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timeout)
+
+      if (signal) {
+        reject(new Error(`Marker process stopped by signal: ${signal}`))
+        return
+      }
+
+      if (code !== 0) {
+        const details = stderr.trim() || stdout.trim() || `exit code ${code}`
+        reject(new Error(`Marker layout analysis failed: ${details}`))
+        return
+      }
+
+      const markdown = stdout.trim()
+      if (!markdown) {
+        reject(new Error("Marker returned empty Markdown output."))
+        return
+      }
+
+      resolve({
+        markdown,
+        pageCount: parseMarkerPageCount(stderr),
+        stderr,
+      })
+    })
+  })
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -237,6 +440,8 @@ app.post("/upload", (req, res) => {
       return
     }
 
+    let tempFilePath = null
+
     try {
       const uploadedFile = req.file
 
@@ -245,104 +450,18 @@ app.post("/upload", (req, res) => {
         return
       }
 
-      const [parsedText, headingStrings] = await Promise.all([
-        pdfParse(uploadedFile.buffer),
-        extractHeadingLines(uploadedFile.buffer),
-      ])
+      tempFilePath = await writeTemporaryPdf(
+        uploadedFile.buffer,
+        uploadedFile.originalname
+      )
 
-      const rawLines = parsedText.text
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0)
-      const blocks = []
+      const { markdown, pageCount } = await runMarkerPipeline(tempFilePath)
+      await removeTemporaryPdf(tempFilePath)
+      tempFilePath = null
 
-      for (let i = 0; i < rawLines.length; i++) {
-        let currentLine = rawLines[i]
-
-        // 1. Identify headings early
-        if (headingStrings.has(currentLine)) {
-          blocks.push({
-            text: currentLine,
-            isHeading: true,
-            fontSize: 16,
-            chapterId: null,
-          })
-          continue
-        }
-
-        // Define regex matches for clean list extraction
-        const bulletCharsRegex = /^([•o\-—])\s*$/
-        const inlineBulletRegex = /^([•o\-—])\s*(.*)$/
-
-        // 2. Look-Ahead Fix: Handle lone standalone bullet characters
-        if (bulletCharsRegex.test(currentLine) && i + 1 < rawLines.length) {
-          let nextLine = rawLines[i + 1].trim()
-
-          // Clean up any duplicated bullet character at the start of the next line
-          if (inlineBulletRegex.test(nextLine)) {
-            nextLine = nextLine.replace(inlineBulletRegex, "$2").trim()
-          }
-
-          blocks.push({
-            text: `${currentLine} ${nextLine}`,
-            isHeading: false,
-            fontSize: 12,
-            chapterId: null,
-          })
-          i++ // Advance past the merged line
-          continue
-        }
-
-        // 3. Clean up inline bullets for lines that already have them
-        if (inlineBulletRegex.test(currentLine)) {
-          const marker = currentLine.match(inlineBulletRegex)[1]
-          const restOfText = currentLine.match(inlineBulletRegex)[2].trim()
-          blocks.push({
-            text: `${marker} ${restOfText}`,
-            isHeading: false,
-            fontSize: 12,
-            chapterId: null,
-          })
-          continue
-        }
-
-        // 4. Look-Behind Fix: Append trailing broken text lines ONLY if it's not a link or new list item
-        if (blocks.length > 0 && !currentLine.startsWith("http")) {
-          const prevBlock = blocks[blocks.length - 1]
-
-          // Only append if the previous item wasn't a heading and the current line isn't a new list start
-          if (
-            !prevBlock.isHeading &&
-            !bulletCharsRegex.test(currentLine) &&
-            !inlineBulletRegex.test(currentLine)
-          ) {
-            // Check if it's a short floating text chunk that was broken mid-sentence
-            if (prevBlock.text.length < 140 && !prevBlock.text.endsWith(".")) {
-              prevBlock.text += ` ${currentLine}`
-              continue
-            }
-          }
-        }
-
-        // 5. Default catch-all fallback
-        blocks.push({
-          text: currentLine,
-          isHeading: false,
-          fontSize: 12,
-          chapterId: null,
-        })
-      }
-
-      const content = []
-      const linesPerPage = 40
-
-      for (let index = 0; index < blocks.length; index += linesPerPage) {
-        content.push({
-          pageIndex: content.length,
-          blocks: blocks.slice(index, index + linesPerPage),
-        })
-      }
-
+      const blocks = markdownToBlocks(markdown)
+      const content = blocksToContent(blocks)
+      const totalPages = pageCount ?? Math.max(1, content.length)
       const hasImages = false
       const title = uploadedFile.originalname.replace(/\.pdf$/i, "")
       const { chapters, content: contentWithChapters } = detectChapters(content)
@@ -364,7 +483,7 @@ app.post("/upload", (req, res) => {
         .insert({
           name: title,
           storage_path: storageData.path,
-          total_pages: parsedText.numpages,
+          total_pages: totalPages,
           chapters,
           content: contentWithChapters,
         })
@@ -381,7 +500,7 @@ app.post("/upload", (req, res) => {
         document: {
           id: insertedDocument.id,
           title,
-          totalPages: parsedText.numpages,
+          totalPages,
           chapters,
           content: contentWithChapters,
           hasImages,
@@ -392,6 +511,10 @@ app.post("/upload", (req, res) => {
         success: false,
         error: error instanceof Error ? error.message : "Failed to parse PDF.",
       })
+    } finally {
+      if (tempFilePath) {
+        await removeTemporaryPdf(tempFilePath)
+      }
     }
   })
 })
