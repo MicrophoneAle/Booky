@@ -17,8 +17,9 @@ const STANDALONE_URL_REGEX = /^https?:\/\/\S+$/i
 
 const LEVEL_0_NUMBER_REGEX = /^(\d+[\.\)])\s*(.*)$/
 const LEVEL_0_BULLET_REGEX = /^([•·\-—])\s*(.*)$/
-const LEVEL_1_SUB_BULLET_REGEX = /^([o*])\s+(.+)$/i
 const LEVEL_1_LETTERED_REGEX = /^([a-z][\.\)])\s+(.+)$/i
+const CHAPTER_LABEL_REGEX =
+  /^(Chapter|Part|Section|Prologue|Epilogue)\s+(\d+|[IVXLCDM]+|[A-Za-z]+)$/i
 const LEVEL_2_MARKER_REGEX = /^((?:[ivxlcdm]+|\([a-z]\))[\.\)])\s*(.*)$/i
 const EMBEDDED_LIST_MARKER_REGEX = /\s+(\d+[\.\)]|[a-z][\.\)])\s+/gi
 let listGroupCounter = 0
@@ -41,10 +42,6 @@ function isImpliedListLine(text) {
   return IMPLIED_LIST_LINE_REGEX.test(text.trim())
 }
 
-function pendingHasLevel0List(pendingListItems) {
-  return pendingListItems.some((item) => item.level === 0)
-}
-
 function isListMarkerLine(text, pendingListItems = []) {
   return (
     parseListLine(text, pendingListItems) !== null ||
@@ -60,8 +57,6 @@ function buildNumberedListText(marker, body) {
 function parseListLine(text, pendingListItems = []) {
   const trimmed = text.trim()
   if (!trimmed) return null
-
-  const hasLevel0ListContext = pendingHasLevel0List(pendingListItems)
 
   let match = trimmed.match(LEVEL_0_NUMBER_REGEX)
   if (match) {
@@ -102,21 +97,6 @@ function parseListLine(text, pendingListItems = []) {
     }
   }
 
-  if (hasLevel0ListContext) {
-    match = trimmed.match(LEVEL_1_SUB_BULLET_REGEX)
-    if (match) {
-      const marker = match[1]
-      const body = match[2].trim()
-      return {
-        level: 1,
-        marker,
-        hasBullet: true,
-        text: body,
-        markerOnly: !body,
-      }
-    }
-  }
-
   match = trimmed.match(LEVEL_1_LETTERED_REGEX)
   if (match) {
     const marker = match[1]
@@ -143,10 +123,6 @@ function parseLoneMarker(text, pendingListItems = []) {
 
   if (/^[•·\-—]$/.test(trimmed)) {
     return { level: 0, markerOnly: true, text: "" }
-  }
-
-  if (/^[o*]$/i.test(trimmed) && pendingHasLevel0List(pendingListItems)) {
-    return { level: 1, markerOnly: true, text: "" }
   }
 
   if (/^[a-z][\.\)]$/i.test(trimmed)) {
@@ -464,12 +440,21 @@ function groupBlocksForDisplay(blocks) {
       flushPendingList()
 
       const headingFontSize = block.fontSize ?? 16
+      let headingText = text
+      const nextBlock = expandedBlocks[index + 1]
+      const nextText = (nextBlock?.text ?? "").trim()
+
+      if (nextBlock?.isHeading && nextText && CHAPTER_LABEL_REGEX.test(text)) {
+        headingText = `${text}: ${nextText}`
+        index += 1
+      }
+
       visualItems.push({
         type: resolveHeadingType(headingFontSize),
-        text,
+        text: headingText,
         fontSize: headingFontSize,
         chapterId: block.chapterId ?? null,
-        chapterTitle: block.chapterTitle ?? null,
+        chapterTitle: block.chapterTitle ?? headingText,
         isChapterStart: Boolean(block.isChapterStart),
       })
       continue
@@ -985,8 +970,24 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     placePlaceable(following)
   }
 
+  const ensureChapterStartsOnNewPage = (placeable) => {
+    const chapterItem = getChapterItemFromPlaceable(placeable)
+
+    if (!chapterItem?.isChapterStart) {
+      return
+    }
+
+    if (currentPagePlaceables.length > 0) {
+      flushPage()
+    }
+
+    markPageStartIfEmpty()
+  }
+
   for (let placeableIndex = 0; placeableIndex < placeables.length; placeableIndex += 1) {
     const placeable = placeables[placeableIndex]
+
+    ensureChapterStartsOnNewPage(placeable)
 
     if (isHeadingPlaceable(placeable)) {
       const followingPlaceable = placeables[placeableIndex + 1]
