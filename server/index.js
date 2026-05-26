@@ -130,6 +130,60 @@ function slugify(text) {
     .replace(/[^a-z0-9-]/g, "")
 }
 
+function getItemFontSize(item) {
+  const matrix = Array.isArray(item.transform) ? item.transform : []
+  const scaleX = Number.isFinite(matrix[0]) ? Math.abs(matrix[0]) : 0
+  const scaleY = Number.isFinite(matrix[3]) ? Math.abs(matrix[3]) : 0
+  return Number(Math.max(scaleX, scaleY).toFixed(2))
+}
+
+function getItemY(item) {
+  const matrix = Array.isArray(item.transform) ? item.transform : []
+  return Number.isFinite(matrix[5]) ? matrix[5] : 0
+}
+
+function getItemX(item) {
+  const matrix = Array.isArray(item.transform) ? item.transform : []
+  return Number.isFinite(matrix[4]) ? matrix[4] : 0
+}
+
+function groupTextItemsIntoLines(items) {
+  const lineGroups = []
+
+  for (const item of items) {
+    const text = item.str ?? ""
+    if (!text.trim()) continue
+
+    const y = getItemY(item)
+    let lineGroup = lineGroups.find((group) => Math.abs(group.y - y) <= 2)
+
+    if (!lineGroup) {
+      lineGroup = { y, items: [] }
+      lineGroups.push(lineGroup)
+    }
+
+    lineGroup.items.push(item)
+  }
+
+  lineGroups.sort((a, b) => b.y - a.y)
+
+  return lineGroups
+    .map((lineGroup) => {
+      const sortedItems = [...lineGroup.items].sort((a, b) => getItemX(a) - getItemX(b))
+      const joinedText = sortedItems
+        .map((item) => item.str ?? "")
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim()
+
+      return {
+        text: joinedText,
+        fontSize: getItemFontSize(sortedItems[0]),
+      }
+    })
+    .filter((block) => block.text.length > 0)
+}
+
 function isChapterHeading(block) {
   const text = block.text.trim()
 
@@ -212,19 +266,11 @@ app.post("/upload", (req, res) => {
       for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
         const page = await pdf.getPage(pageNumber)
         const textContent = await page.getTextContent()
-        const blocks = textContent.items
-          .map((item) => {
-            const matrix = Array.isArray(item.transform) ? item.transform : []
-            const scaleX = Number.isFinite(matrix[0]) ? Math.abs(matrix[0]) : 0
-            const scaleY = Number.isFinite(matrix[3]) ? Math.abs(matrix[3]) : 0
-            const fontSize = Number(Math.max(scaleX, scaleY).toFixed(2))
-            return {
-              text: item.str ?? "",
-              isHeading: fontSize > 14,
-              fontSize,
-            }
-          })
-          .filter((block) => block.text.trim().length > 0)
+        const blocks = groupTextItemsIntoLines(textContent.items).map((block) => ({
+          text: block.text,
+          isHeading: block.fontSize > 14,
+          fontSize: block.fontSize,
+        }))
 
         const operatorList = await page.getOperatorList()
         if (operatorList.fnArray.includes(OPS.paintImageXObject)) {
