@@ -172,28 +172,11 @@ async function extractLinesByPosition(buffer) {
       }
 
       const currentY = getItemY(item)
-      console.log(
-        "ITEM y=" +
-          item.transform[5].toFixed(2) +
-          " text=" +
-          JSON.stringify(item.str.slice(0, 60))
-      )
 
       if (previousY !== null) {
         const prevY = previousY
         const yDelta = currentY - prevY
         const isSameLine = Math.abs(currentY - prevY) <= sameLineTolerance
-
-        console.log(
-          "Y DIFF: prev=" +
-            prevY.toFixed(2) +
-            " current=" +
-            currentY.toFixed(2) +
-            " diff=" +
-            (prevY - currentY).toFixed(2) +
-            " sameLine=" +
-            isSameLine
-        )
 
         if (yDelta < -Y_LINE_BREAK_DELTA) {
           if (currentLine.trim()) {
@@ -214,11 +197,6 @@ async function extractLinesByPosition(buffer) {
 
     if (currentLine.trim()) {
       pageLines.push(currentLine.trim())
-    }
-
-    console.log("PAGE " + pageNumber + " LINES:")
-    for (const line of pageLines) {
-      console.log("  > " + JSON.stringify(line.slice(0, 80)))
     }
 
     pageSections.push(pageLines.join("\n"))
@@ -432,7 +410,26 @@ app.post("/upload", (req, res) => {
       ])
 
       const lines = linesFromPdfText(positionedText)
+
+      console.log("LINES AFTER POSITION EXTRACTION:")
+      for (let i = 0; i < lines.length; i += 1) {
+        console.log("  [" + i + "] " + JSON.stringify(lines[i].slice(0, 100)))
+      }
+
       const blocks = buildBlocksFromLines(lines, headingStrings)
+
+      console.log("FINAL BLOCKS:")
+      for (let i = 0; i < blocks.length; i += 1) {
+        console.log(
+          "  [" +
+            i +
+            "] heading=" +
+            blocks[i].isHeading +
+            " text=" +
+            JSON.stringify(blocks[i].text.slice(0, 100))
+        )
+      }
+
       const content = blocksToContent(blocks)
 
       const hasImages = false
