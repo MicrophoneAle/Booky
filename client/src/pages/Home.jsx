@@ -1,29 +1,33 @@
 import { useCallback, useRef, useState } from "react"
-import { Link, NavLink, useNavigate } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 import FullscreenButton from "../components/FullscreenButton"
 import "./Home.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 
-const UploadStatus = {
-  IDLE: "idle",
-  UPLOADING: "uploading",
-  SUCCESS: "success",
-  ERROR: "error",
+const EMPTY_UPLOAD_STATE = {
+  phase: "idle", // idle | waking | uploading | parsing | storing | done | error
+  progress: 0,
+  fileName: null,
+  fileSize: null,
+  errorMessage: null,
+  slowWake: false,
 }
 
-function formatBytes(bytes) {
-  if (!bytes) return "0 B"
-  const units = ["B", "KB", "MB", "GB"]
-  let size = bytes
-  let unitIndex = 0
+const PHASE_LABELS = {
+  waking: "Connecting to server...",
+  uploading: "Uploading PDF...",
+  parsing: "Reading your PDF...",
+  storing: "Saving to library...",
+  done: "Done!",
+}
 
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024
-    unitIndex += 1
-  }
-
-  return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`
+const PHASE_SUBLABELS = {
+  waking: "Server is waking up, this takes ~15 seconds after a period of inactivity",
+  uploading: null,
+  parsing: "Extracting text, detecting chapters and headings",
+  storing: "Almost there",
+  done: null,
 }
 
 function isPdfFile(file) {
@@ -33,35 +37,72 @@ function isPdfFile(file) {
   return hasPdfMime || hasPdfExtension
 }
 
-function uploadPdf(selectedFile, onProgress) {
-  return new Promise((resolve, reject) => {
+function doUpload(file, setUploadState, navigate) {
+  setUploadState((state) => ({ ...state, phase: "uploading", progress: 0 }))
+
+  return new Promise((resolve) => {
     const xhr = new XMLHttpRequest()
     const formData = new FormData()
-    formData.append("file", selectedFile)
+    formData.append("file", file)
 
     xhr.upload.addEventListener("progress", (event) => {
       if (event.lengthComputable) {
-        onProgress(Math.round((event.loaded / event.total) * 100))
+        const pct = Math.round((event.loaded / event.total) * 100)
+        setUploadState((state) => ({ ...state, progress: pct }))
       }
+    })
+
+    xhr.upload.addEventListener("load", () => {
+      setUploadState((state) => ({ ...state, phase: "parsing", progress: 100 }))
     })
 
     xhr.addEventListener("load", () => {
       try {
         const data = JSON.parse(xhr.responseText)
         if (xhr.status >= 200 && xhr.status < 300 && data.success) {
-          resolve(data)
+          setUploadState((state) => ({ ...state, phase: "storing" }))
+          setTimeout(() => {
+            setUploadState((state) => ({ ...state, phase: "done" }))
+            navigate(`/read/${data.document.id}`)
+          }, 600)
+          resolve()
           return
         }
-        reject(new Error(data.error || "Upload failed."))
+        setUploadState((state) => ({
+          ...state,
+          phase: "error",
+          errorMessage: data.error ?? "Upload failed",
+        }))
+        resolve()
       } catch {
-        reject(new Error("Upload failed."))
+        setUploadState((state) => ({
+          ...state,
+          phase: "error",
+          errorMessage: "Unexpected server response",
+        }))
+        resolve()
       }
     })
 
     xhr.addEventListener("error", () => {
-      reject(new Error("Upload failed."))
+      setUploadState((state) => ({
+        ...state,
+        phase: "error",
+        errorMessage: "Network error — check your connection",
+      }))
+      resolve()
     })
 
+    xhr.addEventListener("timeout", () => {
+      setUploadState((state) => ({
+        ...state,
+        phase: "error",
+        errorMessage: "Request timed out",
+      }))
+      resolve()
+    })
+
+    xhr.timeout = 120000
     xhr.open("POST", `${API_URL}/upload`)
     xhr.send(formData)
   })
@@ -72,37 +113,47 @@ export default function Home() {
   const fileInputRef = useRef(null)
 
   const [file, setFile] = useState(null)
-  const [documentId, setDocumentId] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
-  const [uploadStatus, setUploadStatus] = useState(UploadStatus.IDLE)
-  const [progress, setProgress] = useState(0)
-  const [uploadError, setUploadError] = useState(null)
+  const [uploadState, setUploadState] = useState(EMPTY_UPLOAD_STATE)
 
   const startUpload = useCallback(async (selectedFile) => {
     setFile(selectedFile)
-    setDocumentId(null)
-    setUploadError(null)
-    setUploadStatus(UploadStatus.UPLOADING)
-    setProgress(0)
+    setUploadState({
+      phase: "waking",
+      progress: 0,
+      fileName: selectedFile.name,
+      fileSize: selectedFile.size,
+      errorMessage: null,
+      slowWake: false,
+    })
+
+    const wakeTimer = setTimeout(() => {
+      setUploadState((state) =>
+        state.phase === "waking" ? { ...state, slowWake: true } : state
+      )
+    }, 2000)
 
     try {
-      const data = await uploadPdf(selectedFile, setProgress)
-      setProgress(100)
-      setDocumentId(data.document.id)
-      setUploadStatus(UploadStatus.SUCCESS)
-    } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Upload failed.")
-      setUploadStatus(UploadStatus.ERROR)
-      setProgress(0)
+      await fetch(`${API_URL}/`)
+    } catch {
+      // server unreachable — will fail on upload too
+    } finally {
+      clearTimeout(wakeTimer)
     }
-  }, [])
+
+    await doUpload(selectedFile, setUploadState, navigate)
+  }, [navigate])
 
   const handleInvalidFile = useCallback(() => {
     setFile(null)
-    setDocumentId(null)
-    setProgress(0)
-    setUploadError(null)
-    setUploadStatus(UploadStatus.ERROR)
+    setUploadState({
+      phase: "error",
+      progress: 0,
+      fileName: null,
+      fileSize: null,
+      errorMessage: "Only PDF files are supported.",
+      slowWake: false,
+    })
   }, [])
 
   const handleFileSelection = useCallback(
@@ -150,12 +201,6 @@ export default function Home() {
     [handleFileSelection]
   )
 
-  const onOpenBook = useCallback(() => {
-    if (documentId) {
-      navigate(`/read/${documentId}`)
-    }
-  }, [documentId, navigate])
-
   return (
     <div className="home-page">
       <FullscreenButton className="home-page__fullscreen" />
@@ -194,31 +239,72 @@ export default function Home() {
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop}
-            onClick={onBrowseClick}
+            onClick={() => {
+              if (uploadState.phase === "idle" || uploadState.phase === "error") {
+                onBrowseClick()
+              }
+            }}
             role="button"
             tabIndex={0}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault()
-                onBrowseClick()
+                if (uploadState.phase === "idle" || uploadState.phase === "error") {
+                  onBrowseClick()
+                }
               }
             }}
             aria-label="Upload PDF file"
           >
-            <div className="upload-icon" aria-hidden="true">
-              📖
-            </div>
-            <p className="upload-text">Drop your PDF here</p>
-            <button
-              type="button"
-              className="browse-link"
-              onClick={(event) => {
-                event.stopPropagation()
-                onBrowseClick()
-              }}
-            >
-              or browse files
-            </button>
+            {uploadState.phase !== "idle" && uploadState.phase !== "error" ? (
+              <div className="home__upload-progress">
+                <p className="home__upload-phase">{PHASE_LABELS[uploadState.phase]}</p>
+
+                {uploadState.phase === "uploading" && (
+                  <div className="home__progress-bar-wrap">
+                    <div
+                      className="home__progress-bar-fill"
+                      style={{ width: `${uploadState.progress}%` }}
+                    />
+                  </div>
+                )}
+
+                {(uploadState.phase === "parsing" ||
+                  uploadState.phase === "storing" ||
+                  uploadState.phase === "waking") && (
+                  <div className="home__progress-bar-wrap">
+                    <div className="home__progress-bar-fill home__progress-bar-fill--indeterminate" />
+                  </div>
+                )}
+
+                {PHASE_SUBLABELS[uploadState.phase] && (
+                  <p className="home__upload-sublabel">
+                    {PHASE_SUBLABELS[uploadState.phase]}
+                  </p>
+                )}
+
+                {uploadState.fileName && (
+                  <p className="home__upload-filename">{uploadState.fileName}</p>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="upload-icon" aria-hidden="true">
+                  📖
+                </div>
+                <p className="upload-text">Drop your PDF here</p>
+                <button
+                  type="button"
+                  className="browse-link"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onBrowseClick()
+                  }}
+                >
+                  or browse files
+                </button>
+              </>
+            )}
             <input
               ref={fileInputRef}
               type="file"
@@ -228,41 +314,21 @@ export default function Home() {
             />
           </div>
 
-          {uploadStatus === UploadStatus.ERROR && (
-            <p className="upload-error">
-              {uploadError ?? "Only PDF files are supported."}
-            </p>
-          )}
-
-          {file && uploadStatus !== UploadStatus.ERROR && (
-            <div className="upload-meta">
-              <p className="file-name">{file.name}</p>
-              <p className="file-size">{formatBytes(file.size)}</p>
-
-              {uploadStatus === UploadStatus.UPLOADING && (
-                <>
-                  <div className="progress-track" aria-hidden="true">
-                    <div className="progress-fill" style={{ width: `${progress}%` }} />
-                  </div>
-                  <p className="upload-note">Parsing your book…</p>
-                </>
-              )}
-
-              {uploadStatus === UploadStatus.SUCCESS && (
-                <div className="upload-success">
-                  <p className="success-message">
-                    <span aria-hidden="true">✓</span> Ready to read
-                  </p>
-                  <button
-                    type="button"
-                    className="open-book-btn"
-                    onClick={onOpenBook}
-                    disabled={!documentId}
-                  >
-                    Open Book →
-                  </button>
-                </div>
-              )}
+          {uploadState.phase === "error" && (
+            <div className="home__upload-error">
+              <p className="home__upload-error-msg">
+                {uploadState.errorMessage}
+              </p>
+              <button
+                className="home__upload-retry"
+                type="button"
+                onClick={() => {
+                  setUploadState(EMPTY_UPLOAD_STATE)
+                  setFile(null)
+                }}
+              >
+                Try again
+              </button>
             </div>
           )}
         </section>

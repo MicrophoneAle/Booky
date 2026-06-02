@@ -2004,31 +2004,91 @@ export default function BookViewer({
 
   useEffect(() => {
     const handleKey = (event) => {
+      const tag = document.activeElement?.tagName?.toLowerCase()
+      if (tag === "input" || tag === "textarea") return
+
+      switch (event.key) {
+        case "ArrowRight":
+        case "ArrowDown":
+          event.preventDefault()
+          if (!searchOpen) goForward()
+          break
+
+        case "ArrowLeft":
+        case "ArrowUp":
+          event.preventDefault()
+          if (!searchOpen) goBack()
+          break
+
+        case "f":
+        case "F":
+          if (!event.metaKey && !event.ctrlKey) {
+            event.preventDefault()
+            if (isMobile) {
+              setIsMobileFullscreen((prev) => !prev)
+            } else {
+              toggleFullscreen()
+            }
+          }
+          break
+
+        case "Escape":
+          if (searchOpen) {
+            setSearchOpen(false)
+            setSearchQuery("")
+            setSearchResults([])
+          } else if (tocOpen) {
+            setTocOpen(false)
+          } else if (settingsOpen) {
+            setSettingsOpen(false)
+          } else if (isMobileFullscreen) {
+            setIsMobileFullscreen(false)
+          } else if (isFullscreen) {
+            document.exitFullscreen().catch(() => {})
+          }
+          break
+
+        case "t":
+        case "T":
+          if (!event.metaKey && !event.ctrlKey) {
+            event.preventDefault()
+            setTocOpen((prev) => !prev)
+            setSearchOpen(false)
+            setSettingsOpen(false)
+          }
+          break
+
+        default:
+          break
+      }
+
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f") {
         event.preventDefault()
         setSearchOpen(true)
         setTocOpen(false)
         setSettingsOpen(false)
-        return
       }
-
-      if (event.key === "Escape") {
-        setSearchOpen(false)
-        setTocOpen(false)
-        setSettingsOpen(false)
-        setSearchQuery("")
-        setSearchResults([])
-        return
-      }
-
-      if (searchOpen) return
-      if (event.key === "ArrowRight") goForward()
-      if (event.key === "ArrowLeft") goBack()
     }
 
     window.addEventListener("keydown", handleKey)
     return () => window.removeEventListener("keydown", handleKey)
-  }, [goForward, goBack, searchOpen])
+  }, [
+    goForward,
+    goBack,
+    searchOpen,
+    tocOpen,
+    settingsOpen,
+    isFullscreen,
+    isMobile,
+    isMobileFullscreen,
+    toggleFullscreen,
+    setSearchOpen,
+    setTocOpen,
+    setSettingsOpen,
+    setIsMobileFullscreen,
+    setSearchQuery,
+    setSearchResults,
+  ])
 
   if (isPaginating) {
     return (
@@ -2549,6 +2609,30 @@ export default function BookViewer({
             >
               Reset to defaults
             </button>
+          </div>
+
+          <div className="book-viewer__settings-section book-viewer__kb-hints">
+            <p className="book-viewer__settings-label">Keyboard Shortcuts</p>
+            <div className="book-viewer__kb-list">
+              {[
+                { keys: ["←", "→"], label: "Turn page" },
+                { keys: ["F"], label: "Fullscreen" },
+                { keys: ["T"], label: "Contents" },
+                { keys: ["⌘F"], label: "Search" },
+                { keys: ["Esc"], label: "Close / Exit" },
+              ].map(({ keys, label }) => (
+                <div key={label} className="book-viewer__kb-row">
+                  <span className="book-viewer__kb-label">{label}</span>
+                  <span className="book-viewer__kb-keys">
+                    {keys.map((key) => (
+                      <kbd key={key} className="book-viewer__kbd">
+                        {key}
+                      </kbd>
+                    ))}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
     </div>

@@ -809,6 +809,47 @@
   color: #c4a062;
 }
 
+.book-viewer__kb-hints {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid #2a2420;
+}
+
+.book-viewer__kb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.book-viewer__kb-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.book-viewer__kb-label {
+  font-family: system-ui, sans-serif;
+  font-size: 10px;
+  color: #8b7355;
+  letter-spacing: 0.05em;
+}
+
+.book-viewer__kb-keys {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.book-viewer__kbd {
+  font-family: system-ui, sans-serif;
+  font-size: 9px;
+  color: #c4a062;
+  background: #2a2420;
+  border: 1px solid #3a3330;
+  border-radius: 3px;
+  padding: 0.15rem 0.35rem;
+  letter-spacing: 0.05em;
+}
+
 .book-page--mobile-fs {
   border: none;
   border-radius: 0;
