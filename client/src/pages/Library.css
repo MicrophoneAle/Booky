@@ -23,11 +23,11 @@
 .library-nav {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 2rem;
   min-height: 48px;
   height: 48px;
-  padding: 0 1.25rem;
+  padding: 0 3rem 0 1.25rem;
   background: #1c1917;
   border-bottom: 1px solid #2a2420;
   overflow: visible;
