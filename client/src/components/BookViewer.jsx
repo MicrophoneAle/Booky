@@ -1913,6 +1913,13 @@ export default function BookViewer({
   }, [bookDocument?.id, initialPage, progressKey])
 
   useEffect(() => {
+    if (isPaginating || restoreTargetPage === null || restoreTargetPage === undefined) return
+    const normalized = normalizeBookmarkPage(restoreTargetPage, Math.max(1, pages.length), !isMobile)
+    setCurrentPage(normalized)
+    setRestoreTargetPage(null)
+  }, [isPaginating, restoreTargetPage, pages.length, isMobile, normalizeBookmarkPage])
+
+  useEffect(() => {
     if (isPaginating || totalPages === 0) return
     if (currentPage > maxPageIndex) {
       setCurrentPage(maxPageIndex)
@@ -2122,17 +2129,15 @@ export default function BookViewer({
 
     const animation = element.animate(
       [
-        { transform: "translate(0px, 0px) rotate(0deg) scale(1)", opacity: 1 },
+        { transform: "translate(0px, 0px) rotate(0deg) scale(1)" },
         {
           offset: 0.4,
           transform: `translate(${Math.round(randomX * 0.35)}px, ${Math.round(
             randomY * 0.35
           )}px) rotate(${Math.round(randomRot * 0.3)}deg) scale(0.82)`,
-          opacity: 1,
         },
         {
           transform: `translate(${randomX}px, ${randomY}px) rotate(${randomRot}deg) scale(0.4)`,
-          opacity: 0,
         },
       ],
       {
