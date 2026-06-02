@@ -2038,6 +2038,11 @@ export default function BookViewer({
   }, [bookDocument?.id, pages.length, isMobile, progressKey, normalizeBookmarkPage])
 
   useEffect(() => {
+    if (!bookDocument?.id || isPaginating) return
+    persistReadingPosition()
+  }, [bookDocument?.id, currentPage, isPaginating, persistReadingPosition])
+
+  useEffect(() => {
     if (!bookDocument?.id) return undefined
 
     const handleBeforeUnload = () => {
@@ -2120,7 +2125,8 @@ export default function BookViewer({
     }
 
     const randomAngle = Math.random() * Math.PI * 2
-    const randomDistance = 960 + Math.random() * 640
+    const minExitDistance = Math.hypot(window.innerWidth, window.innerHeight) * 0.7
+    const randomDistance = minExitDistance + Math.random() * minExitDistance
     const randomX = Math.round(Math.cos(randomAngle) * randomDistance)
     const randomY = Math.round(Math.sin(randomAngle) * randomDistance)
     const rotationMagnitude = 300 + Math.floor(Math.random() * 221)
@@ -2147,7 +2153,7 @@ export default function BookViewer({
         },
       ],
       {
-        duration: 420,
+        duration: 900,
         easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
         fill: "forwards",
       }
