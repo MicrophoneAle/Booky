@@ -2120,7 +2120,7 @@ export default function BookViewer({
     }
 
     const randomAngle = Math.random() * Math.PI * 2
-    const randomDistance = 240 + Math.random() * 160
+    const randomDistance = 960 + Math.random() * 640
     const randomX = Math.round(Math.cos(randomAngle) * randomDistance)
     const randomY = Math.round(Math.sin(randomAngle) * randomDistance)
     const rotationMagnitude = 300 + Math.floor(Math.random() * 221)
