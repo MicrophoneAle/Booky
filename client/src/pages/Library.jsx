@@ -262,14 +262,20 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
         throw new Error(data.error || "Download failed")
       }
 
+      const fileResponse = await fetch(data.url)
+      if (!fileResponse.ok) {
+        throw new Error("Failed to download file")
+      }
+      const blob = await fileResponse.blob()
+      const objectUrl = URL.createObjectURL(blob)
+
       const link = window.document.createElement("a")
-      link.href = data.url
+      link.href = objectUrl
       link.download = `${document.name}.pdf`
-      link.rel = "noopener"
-      link.target = "_blank"
       window.document.body.appendChild(link)
       link.click()
       link.remove()
+      URL.revokeObjectURL(objectUrl)
     } catch {
       setDownloadError(true)
     } finally {
