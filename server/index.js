@@ -308,6 +308,36 @@ function linesFromPdfText(text) {
   return (text ?? "").split("\n").map((line) => line.trim())
 }
 
+function isStructuralLine(text, index, allLines) {
+  const trimmed = text.trim()
+  if (!trimmed) return false
+
+  // "by Author Name" or "written by Author Name"
+  if (/^(by|written by|translated by)\s+[A-Z][a-z]/i.test(trimmed)) return true
+
+  // "A Novel in ..." / "A Story of ..." / "A Tale of ..."
+  if (/^A (Novel|Story|Tale|Memoir|Chronicle|History|Collection|Journey|Record)/i.test(trimmed)) {
+    return true
+  }
+
+  // Chapter subtitle — appears immediately after a line that matched a chapter heading
+  const prevNonEmpty = allLines.slice(0, index).filter((l) => l.trim()).slice(-1)[0] ?? ""
+  const isAfterChapterLabel =
+    /^(Chapter|Part|Section|Prologue|Epilogue)\s+(\d+|[IVXLCDM]+|[A-Za-z]+)$/i.test(
+      prevNonEmpty.trim()
+    )
+  if (isAfterChapterLabel && trimmed.length > 3 && trimmed.length < 80) return true
+
+  // Short subtitle on title page — second non-empty line of the document
+  const firstNonEmpty = allLines.find((l) => l.trim())
+  const secondNonEmpty = allLines.filter((l) => l.trim())[1]
+  if (trimmed === secondNonEmpty?.trim() && trimmed.length >= 10 && trimmed.length <= 60) {
+    return true
+  }
+
+  return false
+}
+
 function buildBlocksFromLines(lines, headingStrings) {
   const blocks = []
   const bulletCharsRegex = /^([•·\-—*])\s*$/
@@ -328,12 +358,17 @@ function buildBlocksFromLines(lines, headingStrings) {
     }
 
     if (headingStrings.has(currentLine)) {
-      blocks.push({
+      const block = {
         text: currentLine,
         isHeading: true,
         fontSize: 16,
         chapterId: null,
-      })
+      }
+      if (!block.isHeading && isStructuralLine(block.text, index, lines)) {
+        block.isHeading = true
+        block.fontSize = 13
+      }
+      blocks.push(block)
       continue
     }
 
@@ -368,6 +403,16 @@ function buildBlocksFromLines(lines, headingStrings) {
 
     const trimmedLine = currentLine.trim()
 
+    if (isStructuralLine(trimmedLine, index, lines)) {
+      blocks.push({
+        text: trimmedLine,
+        isHeading: true,
+        fontSize: 13,
+        chapterId: null,
+      })
+      continue
+    }
+
     if (blocks.length > 0) {
       const previousBlock = blocks[blocks.length - 1]
       const prevText = previousBlock?.text ?? ""
@@ -394,12 +439,17 @@ function buildBlocksFromLines(lines, headingStrings) {
       }
     }
 
-    blocks.push({
+    const block = {
       text: trimmedLine,
       isHeading: false,
       fontSize: 12,
       chapterId: null,
-    })
+    }
+    if (!block.isHeading && isStructuralLine(block.text, index, lines)) {
+      block.isHeading = true
+      block.fontSize = 13
+    }
+    blocks.push(block)
   }
 
   return blocks
