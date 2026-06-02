@@ -24,16 +24,15 @@ app.use(
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
 )
 
-// 2. Handle preflight OPTIONS requests explicitly
-app.options("*", cors())
-
-// 3. Clerk middleware after CORS
+// 2. Clerk middleware after CORS
 app.use(clerkMiddleware())
 
-// 4. JSON body parser after Clerk
+// 3. JSON body parser after Clerk
 app.use(express.json())
 
 app.get("/", (req, res) => res.json({ message: "Booky API running" }))
