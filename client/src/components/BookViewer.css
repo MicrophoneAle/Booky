@@ -94,6 +94,10 @@
   color: #d4af37;
 }
 
+.book-viewer__spread--single {
+  justify-content: center;
+}
+
 .book-viewer__stage {
   position: relative;
   flex: 1;
@@ -102,8 +106,14 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 1.5rem 1rem;
+  padding: 1rem;
   box-sizing: border-box;
+}
+
+.book-viewer__scale-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .book-viewer__zone {
@@ -159,8 +169,8 @@
 .book-viewer__spread {
   display: flex;
   align-items: stretch;
-  height: 100%;
-  max-height: 100%;
+  width: fit-content;
+  height: 600px;
   border: 1px solid #2a2420;
   border-radius: 4px;
   overflow: hidden;
@@ -169,8 +179,8 @@
 
 .book-viewer__page-slot {
   width: 400px;
-  height: 100%;
-  max-height: 100%;
+  height: 600px;
+  flex-shrink: 0;
 }
 
 .book-viewer__page-face {
@@ -341,14 +351,35 @@ ol.book-page__list {
 }
 
 @media (max-width: 767px) {
-  .book-viewer__spread {
-    border-radius: 4px;
+  .book-viewer__nav {
+    padding: 0 0.75rem;
+    grid-template-columns: auto 1fr auto;
   }
 
-  .book-viewer__page-slot--single {
-    width: min(400px, calc(100vw - 2rem));
-    height: 100%;
-    max-height: 100%;
+  .book-viewer__logo {
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+  }
+
+  .book-viewer__chapter {
+    font-size: 10px;
+    max-width: 30vw;
+  }
+
+  .book-viewer__counter {
+    font-size: 10px;
+  }
+
+  .book-viewer__back {
+    font-size: 11px;
+  }
+
+  .book-viewer__stage {
+    padding: 0.5rem;
+  }
+
+  .book-viewer__spread {
+    border-radius: 4px;
   }
 }
 

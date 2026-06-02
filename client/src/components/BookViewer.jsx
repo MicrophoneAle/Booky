@@ -1,4 +1,4 @@
-﻿import { Fragment, useCallback, useEffect, useState } from "react"
+﻿import { Fragment, useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { flattenDocument } from "../utils/paginator"
 import FullscreenButton from "./FullscreenButton"
@@ -6,6 +6,9 @@ import "../pages/Reader.css"
 import "./BookViewer.css"
 
 const NAVBAR_HEIGHT_PX = 48
+const PAGE_WIDTH_PX = 400
+const PAGE_HEIGHT_PX = 600
+const SPINE_PX = 1
 const PAGE_NUMBER_RESERVED_PX = 32
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 8
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
@@ -292,16 +295,14 @@ function createListElement(kind) {
 
 function getLayoutHeights() {
   const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-  const stagePaddingY = 1.5 * remPx * 2
-  const pagePaddingY = 1.5 * remPx * 2
-  const pageOuterHeight = window.innerHeight - NAVBAR_HEIGHT_PX - stagePaddingY
+  const pagePaddingY = 0.75 * remPx * 2
   const contentMaxHeight =
-    pageOuterHeight -
+    PAGE_HEIGHT_PX -
     pagePaddingY -
     PAGE_NUMBER_RESERVED_PX -
     CONTENT_HEIGHT_SAFETY_BUFFER_PX
 
-  return { pageOuterHeight, contentMaxHeight }
+  return { pageOuterHeight: PAGE_HEIGHT_PX, contentMaxHeight }
 }
 
 function createMeasureElements() {
@@ -1351,6 +1352,8 @@ export default function BookViewer({
   const [currentPage, setCurrentPage] = useState(initialPage)
   const [isMobile, setIsMobile] = useState(false)
   const [layoutMode, setLayoutMode] = useState("spread")
+  const stageRef = useRef(null)
+  const [scale, setScale] = useState(1)
 
   useEffect(() => {
     if (!bookDocument) {
@@ -1414,6 +1417,32 @@ export default function BookViewer({
   const showSpreadLayout = isSpreadView && !isFinalOddSpreadSingle
   const navChapterTitle = formatNavChapterTitle(pages, currentPage, showSpreadLayout)
   const pageCounterText = formatPageCounter(leftPage, rightPage, totalPages, showSpreadLayout)
+
+  useEffect(() => {
+    const recomputeScale = () => {
+      const stage = stageRef.current
+      if (!stage) return
+      const cs = getComputedStyle(stage)
+      const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)
+      const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
+      const availW = stage.clientWidth - padX
+      const availH = stage.clientHeight - padY
+      const naturalW = showSpreadLayout
+        ? PAGE_WIDTH_PX * 2 + SPINE_PX
+        : PAGE_WIDTH_PX
+      const naturalH = PAGE_HEIGHT_PX
+      const next = Math.min(availW / naturalW, availH / naturalH)
+      setScale(next > 0 && Number.isFinite(next) ? next : 1)
+    }
+
+    recomputeScale()
+    window.addEventListener("resize", recomputeScale)
+    document.addEventListener("fullscreenchange", recomputeScale)
+    return () => {
+      window.removeEventListener("resize", recomputeScale)
+      document.removeEventListener("fullscreenchange", recomputeScale)
+    }
+  }, [showSpreadLayout, isMobile, pages.length, isPaginating])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)")
@@ -1500,7 +1529,7 @@ export default function BookViewer({
         </div>
       </header>
 
-      <div className="book-viewer__stage">
+      <div ref={stageRef} className="book-viewer__stage">
         <button
           type="button"
           className="book-viewer__zone book-viewer__zone--left"
@@ -1524,35 +1553,43 @@ export default function BookViewer({
         </span>
 
         <div
-          className={`book-viewer__spread ${
-            !showSpreadLayout ? "book-viewer__spread--single" : ""
-          }`}
+          className="book-viewer__scale-wrapper"
+          style={{
+            transform: `scale(${scale})`,
+            transformOrigin: "center center",
+          }}
         >
           <div
-            className={`book-viewer__page-slot book-viewer__page-slot--left ${
-              !showSpreadLayout ? "book-viewer__page-slot--single" : ""
+            className={`book-viewer__spread ${
+              !showSpreadLayout ? "book-viewer__spread--single" : ""
             }`}
           >
-            <div className="book-viewer__page-face">
-              <BookPageContent page={leftPage} />
-            </div>
-          </div>
-
-          {showSpreadLayout && (
-            <>
-              <div className="book-viewer__spine" aria-hidden="true" />
-
-              <div className="book-viewer__page-slot book-viewer__page-slot--right">
-                <div className="book-viewer__page-face">
-                  {rightPage ? (
-                    <BookPageContent page={rightPage} />
-                  ) : (
-                    <div className="book-page book-page--empty" />
-                  )}
-                </div>
+            <div
+              className={`book-viewer__page-slot book-viewer__page-slot--left ${
+                !showSpreadLayout ? "book-viewer__page-slot--single" : ""
+              }`}
+            >
+              <div className="book-viewer__page-face">
+                <BookPageContent page={leftPage} />
               </div>
-            </>
-          )}
+            </div>
+
+            {showSpreadLayout && (
+              <>
+                <div className="book-viewer__spine" aria-hidden="true" />
+
+                <div className="book-viewer__page-slot book-viewer__page-slot--right">
+                  <div className="book-viewer__page-face">
+                    {rightPage ? (
+                      <BookPageContent page={rightPage} />
+                    ) : (
+                      <div className="book-page book-page--empty" />
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
