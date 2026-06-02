@@ -187,6 +187,37 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
   }
 })
 
+app.get("/documents/:id/download", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const { data: document, error: documentError } = await supabase
+      .from("documents")
+      .select("storage_path")
+      .eq("id", id)
+      .eq("user_id", req.userId)
+      .single()
+
+    if (documentError || !document?.storage_path) {
+      res.status(404).json({ success: false, error: "Document not found" })
+      return
+    }
+
+    const { data, error } = await supabase.storage
+      .from("pdfs")
+      .createSignedUrl(document.storage_path, 60)
+
+    if (error || !data?.signedUrl) {
+      res.status(500).json({ success: false, error: "Failed to create download URL" })
+      return
+    }
+
+    res.json({ url: data.signedUrl })
+  } catch {
+    res.status(500).json({ success: false, error: "Failed to prepare download" })
+  }
+})
+
 const CHAPTER_PATTERN =
   /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|one|two|three)|prologue|epilogue|introduction|conclusion)\.?$/i
 

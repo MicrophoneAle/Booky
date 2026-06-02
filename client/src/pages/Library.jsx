@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
 import {
   SignedIn,
@@ -77,6 +77,26 @@ function EditTitleIcon() {
   )
 }
 
+function DownloadIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M12 15V3" />
+    </svg>
+  )
+}
+
 function LibraryBookCard({ document, onDelete, onRename, getToken }) {
   const navigate = useNavigate()
   const titleInputRef = useRef(null)
@@ -88,6 +108,8 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
   const [editValue, setEditValue] = useState(document.name)
   const [savingTitle, setSavingTitle] = useState(false)
   const [renameError, setRenameError] = useState(false)
+  const [downloading, setDownloading] = useState(false)
+  const [downloadError, setDownloadError] = useState(false)
 
   const handleDeleteClick = () => {
     setDeleteError(false)
@@ -122,6 +144,16 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
 
     return () => window.clearTimeout(timeoutId)
   }, [renameError])
+
+  useEffect(() => {
+    if (!downloadError) return undefined
+
+    const timeoutId = window.setTimeout(() => {
+      setDownloadError(false)
+    }, 3000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [downloadError])
 
   const cancelTitleEdit = () => {
     cancelingEditRef.current = true
@@ -210,6 +242,41 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
     }
   }
 
+  const handleDownload = async () => {
+    setDownloading(true)
+    setDownloadError(false)
+
+    try {
+      const token = await getToken()
+      if (!token) throw new Error("Unauthorized")
+
+      const response = await fetch(`${API_URL}/documents/${encodeURIComponent(document.id)}/download`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+      const data = await response.json()
+
+      if (!response.ok || !data.url) {
+        throw new Error(data.error || "Download failed")
+      }
+
+      const link = window.document.createElement("a")
+      link.href = data.url
+      link.download = `${document.name}.pdf`
+      link.rel = "noopener"
+      link.target = "_blank"
+      window.document.body.appendChild(link)
+      link.click()
+      link.remove()
+    } catch {
+      setDownloadError(true)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   return (
     <article className="library-card">
       <div
@@ -250,11 +317,24 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
               >
                 <EditTitleIcon />
               </button>
+              <button
+                type="button"
+                className="library-card__download"
+                onClick={handleDownload}
+                aria-label={`Download ${document.name}`}
+                disabled={downloading}
+                title="Download PDF"
+              >
+                {downloading ? "…" : <DownloadIcon />}
+              </button>
             </>
           )}
         </div>
         {renameError && (
           <p className="library-card__rename-error">Rename failed. Try again.</p>
+        )}
+        {downloadError && (
+          <p className="library-card__rename-error">Download failed. Try again.</p>
         )}
         <p className="library-card__pages">{formatPageCount(document.total_pages)}</p>
         <p className="library-card__words">{formatWordCount(document)}</p>
@@ -319,6 +399,7 @@ export default function Library() {
   const { getToken, isSignedIn } = useAuth()
   const { openSignIn } = useClerk()
   const [documents, setDocuments] = useState([])
+  const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [reloadKey, setReloadKey] = useState(0)
@@ -372,6 +453,12 @@ export default function Library() {
       current.map((doc) => (doc.id === documentId ? { ...doc, name: newName } : doc))
     )
   }, [])
+
+  const filteredDocuments = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return documents
+    return documents.filter((document) => document.name.toLowerCase().includes(query))
+  }, [documents, searchQuery])
 
   return (
     <div className="library-page">
@@ -429,6 +516,17 @@ export default function Library() {
               <p>Your uploaded books</p>
             </header>
 
+            <div className="library-search">
+              <input
+                type="text"
+                className="library-search__input"
+                placeholder="Search by title..."
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                aria-label="Search books by title"
+              />
+            </div>
+
             {loading && (
               <div className="library-grid" aria-busy="true" aria-label="Loading library">
                 {Array.from({ length: 6 }, (_, index) => (
@@ -468,9 +566,15 @@ export default function Library() {
               </div>
             )}
 
-            {!loading && !error && documents.length > 0 && (
+            {!loading && !error && documents.length > 0 && filteredDocuments.length === 0 && (
+              <div className="library-state">
+                <p className="library-state__empty">No books match your search.</p>
+              </div>
+            )}
+
+            {!loading && !error && filteredDocuments.length > 0 && (
               <div className="library-grid">
-                {documents.map((document) => (
+                {filteredDocuments.map((document) => (
                   <LibraryBookCard
                     key={document.id}
                     document={document}
