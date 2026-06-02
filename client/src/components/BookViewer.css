@@ -227,7 +227,7 @@
   pointer-events: none;
   z-index: 20;
   white-space: nowrap;
-  animation: toastin 0.3s ease forwards;
+  animation: toastin 0.3s ease;
 }
 
 .book-viewer__toast--fading {

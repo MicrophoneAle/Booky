@@ -2049,18 +2049,24 @@ export default function BookViewer({
       setResumeToast(restoredPage)
       setToastFading(false)
       setRestoredPage(null)
-      const fadeTimerId = setTimeout(() => setToastFading(true), 2000)
-      const removeTimerId = setTimeout(() => {
-        setResumeToast(null)
-        setToastFading(false)
-      }, 2600)
-      return () => {
-        clearTimeout(fadeTimerId)
-        clearTimeout(removeTimerId)
-      }
     }
     return undefined
   }, [isPaginating, restoredPage])
+
+  useEffect(() => {
+    if (!resumeToast) return undefined
+
+    const fadeTimerId = setTimeout(() => setToastFading(true), 2500)
+    const removeTimerId = setTimeout(() => {
+      setResumeToast(null)
+      setToastFading(false)
+    }, 3100)
+
+    return () => {
+      clearTimeout(fadeTimerId)
+      clearTimeout(removeTimerId)
+    }
+  }, [resumeToast])
 
   useEffect(() => {
     setBookmarkDismissed(false)
@@ -2107,7 +2113,7 @@ export default function BookViewer({
     }
 
     const randomAngle = Math.random() * Math.PI * 2
-    const randomDistance = 170 + Math.random() * 140
+    const randomDistance = 240 + Math.random() * 160
     const randomX = Math.round(Math.cos(randomAngle) * randomDistance)
     const randomY = Math.round(Math.sin(randomAngle) * randomDistance)
     const rotationMagnitude = 300 + Math.floor(Math.random() * 221)
