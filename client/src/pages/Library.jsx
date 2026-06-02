@@ -9,6 +9,7 @@ import {
   UserButton,
 } from "@clerk/clerk-react"
 import FullscreenButton from "../components/FullscreenButton"
+import { getAllCachedDocuments } from "../utils/offlineCache"
 import "./Library.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
@@ -77,7 +78,7 @@ function EditTitleIcon() {
   )
 }
 
-function LibraryBookCard({ document, onDelete, onRename, getToken }) {
+function LibraryBookCard({ document, onDelete, onRename, getToken, isCached }) {
   const navigate = useNavigate()
   const titleInputRef = useRef(null)
   const cancelingEditRef = useRef(false)
@@ -256,6 +257,7 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
         {renameError && (
           <p className="library-card__rename-error">Rename failed. Try again.</p>
         )}
+        {isCached && <p className="library-card__offline-badge">Available offline</p>}
         <p className="library-card__pages">{formatPageCount(document.total_pages)}</p>
         <p className="library-card__words">{formatWordCount(document)}</p>
         <p className="library-card__date">{formatUploadDate(document.created_at)}</p>
@@ -319,13 +321,37 @@ export default function Library() {
   const { getToken, isSignedIn } = useAuth()
   const { openSignIn } = useClerk()
   const [documents, setDocuments] = useState([])
+  const [cachedDocumentIds, setCachedDocumentIds] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine)
+
+  const loadCachedDocuments = useCallback(async () => {
+    const cachedPayloads = await getAllCachedDocuments()
+    const ids = new Set(cachedPayloads.map((payload) => payload.document.id))
+    setCachedDocumentIds(ids)
+    return cachedPayloads.map((payload) => ({
+      id: payload.document.id,
+      name: payload.document.title,
+      total_pages: payload.document.content?.length ?? 0,
+      word_count: 0,
+      created_at: new Date(payload.cachedAt ?? Date.now()).toISOString(),
+      offline_cached_at: payload.cachedAt ?? null,
+    }))
+  }, [])
 
   const fetchDocuments = useCallback(async () => {
     setLoading(true)
     setError(null)
+
+    const cachedDocuments = await loadCachedDocuments()
+
+    if (!navigator.onLine) {
+      setDocuments(cachedDocuments)
+      setLoading(false)
+      return
+    }
 
     try {
       const token = await getToken()
@@ -344,14 +370,30 @@ export default function Library() {
 
       setDocuments(data.documents ?? [])
     } catch (fetchError) {
-      setError(
-        fetchError instanceof Error ? fetchError.message : "Failed to fetch documents"
-      )
-      setDocuments([])
+      if (cachedDocuments.length > 0) {
+        setDocuments(cachedDocuments)
+        setError(null)
+      } else {
+        setError(
+          fetchError instanceof Error ? fetchError.message : "Failed to fetch documents"
+        )
+        setDocuments([])
+      }
     } finally {
       setLoading(false)
     }
-  }, [getToken])
+  }, [getToken, loadCachedDocuments])
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+    return () => {
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+    }
+  }, [])
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -414,6 +456,11 @@ export default function Library() {
       </nav>
 
       <main className="library-main">
+        {!isOnline && (
+          <div className="library__offline-banner">
+            You're offline. Showing locally cached books.
+          </div>
+        )}
         {!isSignedIn ? (
           <div className="library__signin-prompt">
             <p className="library__signin-heading">Your Library</p>
@@ -477,6 +524,7 @@ export default function Library() {
                     onDelete={handleDocumentDeleted}
                     onRename={handleDocumentRenamed}
                     getToken={getToken}
+                    isCached={cachedDocumentIds.has(document.id)}
                   />
                 ))}
               </div>

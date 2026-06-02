@@ -12,6 +12,7 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.61.8",
     "@supabase/supabase-js": "^2.106.2",
+    "idb-keyval": "^6.2.2",
     "pdfjs-dist": "^5.7.284",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

@@ -2,9 +2,19 @@ import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAuth } from "@clerk/clerk-react"
 import BookViewer from "../components/BookViewer"
+import { getCachedDocument, saveCachedDocument } from "../utils/offlineCache"
 import "./Reader.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
+
+function formatCachedAge(cachedAt) {
+  if (!cachedAt) return "cached recently"
+  const elapsedMs = Math.max(0, Date.now() - cachedAt)
+  const days = Math.floor(elapsedMs / (1000 * 60 * 60 * 24))
+  if (days <= 0) return "cached today"
+  if (days === 1) return "cached 1 day ago"
+  return `cached ${days} days ago`
+}
 
 export default function Reader() {
   const { id } = useParams()
@@ -17,6 +27,7 @@ export default function Reader() {
   const [bookDocument, setBookDocument] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [offlineMeta, setOfflineMeta] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -24,6 +35,7 @@ export default function Reader() {
     async function loadDocument() {
       setLoading(true)
       setError(null)
+      setOfflineMeta(null)
 
       try {
         const token = await getToken()
@@ -44,14 +56,26 @@ export default function Reader() {
 
         if (cancelled) return
 
-        setBookDocument({
+        const normalizedDocument = {
           id: data.document.id,
           title: data.document.name,
           chapters: data.document.chapters ?? [],
           content: data.document.content ?? [],
-        })
+        }
+
+        setBookDocument(normalizedDocument)
+        setOfflineMeta(null)
+        void saveCachedDocument(normalizedDocument)
       } catch (fetchError) {
-        if (!cancelled) {
+        const cachedPayload = await getCachedDocument(id)
+        if (!cancelled && cachedPayload?.document) {
+          setBookDocument(cachedPayload.document)
+          setOfflineMeta({
+            cachedAt: cachedPayload.cachedAt ?? null,
+            label: formatCachedAge(cachedPayload.cachedAt),
+          })
+          setError(null)
+        } else if (!cancelled) {
           setError(
             fetchError instanceof Error ? fetchError.message : "Could not load document."
           )
@@ -102,6 +126,7 @@ export default function Reader() {
     <BookViewer
       document={bookDocument}
       initialPage={initialPage}
+      offlineMeta={offlineMeta}
       onPageChange={(pageNumber) => {
         console.log(pageNumber)
       }}
