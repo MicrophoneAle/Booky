@@ -1,4 +1,4 @@
-﻿import { Fragment, useCallback, useEffect, useState } from "react"
+﻿import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, useReducedMotion } from "framer-motion"
 import { flattenDocument } from "../utils/paginator"
@@ -7,6 +7,8 @@ import "../pages/Reader.css"
 import "./BookViewer.css"
 
 const NAVBAR_HEIGHT_PX = 48
+const SPREAD_PAGE_WIDTH_PX = 400
+const SPREAD_SPINE_WIDTH_PX = 1
 const PAGE_NUMBER_RESERVED_PX = 32
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 8
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
@@ -1354,6 +1356,8 @@ export default function BookViewer({
   const [flipDirection, setFlipDirection] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
   const [layoutMode, setLayoutMode] = useState("spread")
+  const stageRef = useRef(null)
+  const [scale, setScale] = useState(1)
 
   useEffect(() => {
     if (!bookDocument) {
@@ -1417,6 +1421,40 @@ export default function BookViewer({
   const showSpreadLayout = isSpreadView && !isFinalOddSpreadSingle
   const navChapterTitle = formatNavChapterTitle(pages, currentPage, showSpreadLayout)
   const pageCounterText = formatPageCounter(leftPage, rightPage, totalPages, showSpreadLayout)
+
+  useLayoutEffect(() => {
+    if (isPaginating) return
+
+    const stage = stageRef.current
+    if (!stage) return
+
+    const updateScale = () => {
+      const { width, height } = stage.getBoundingClientRect()
+      if (!width || !height) return
+
+      const spreadWidth = showSpreadLayout
+        ? SPREAD_PAGE_WIDTH_PX * 2 + SPREAD_SPINE_WIDTH_PX
+        : isMobile
+          ? Math.min(SPREAD_PAGE_WIDTH_PX, Math.max(0, window.innerWidth - 32))
+          : SPREAD_PAGE_WIDTH_PX
+
+      const { pageOuterHeight } = getLayoutHeights()
+      const nextScale = Math.min(1, width / spreadWidth, height / pageOuterHeight)
+
+      setScale(nextScale)
+    }
+
+    updateScale()
+
+    const resizeObserver = new ResizeObserver(updateScale)
+    resizeObserver.observe(stage)
+    window.addEventListener("resize", updateScale)
+
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener("resize", updateScale)
+    }
+  }, [isPaginating, isMobile, showSpreadLayout])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)")
@@ -1545,7 +1583,7 @@ export default function BookViewer({
         </div>
       </header>
 
-      <div className="book-viewer__stage">
+      <div ref={stageRef} className="book-viewer__stage">
         <button
           type="button"
           className="book-viewer__zone book-viewer__zone--left"
@@ -1569,51 +1607,59 @@ export default function BookViewer({
         </span>
 
         <div
-          className={`book-viewer__spread ${
-            !showSpreadLayout ? "book-viewer__spread--single" : ""
-          }`}
+          className="book-viewer__scale-wrapper"
+          style={{
+            transform: `scale(${scale})`,
+            transformOrigin: "center center",
+          }}
         >
-          <motion.div
-            className={`book-viewer__page-slot book-viewer__page-slot--left ${
-              !showSpreadLayout ? "book-viewer__page-slot--single" : ""
+          <div
+            className={`book-viewer__spread ${
+              !showSpreadLayout ? "book-viewer__spread--single" : ""
             }`}
-            style={{
-              transformOrigin: showSpreadLayout ? "right center" : "center center",
-            }}
-            animate={leftPageMotion}
-            transition={flipTransition}
-            onAnimationComplete={
-              flipDirection === "backward" ? handleAnimationComplete : undefined
-            }
           >
-            <div className="book-viewer__page-face">
-              <BookPageContent page={leftPage} />
-            </div>
-          </motion.div>
+            <motion.div
+              className={`book-viewer__page-slot book-viewer__page-slot--left ${
+                !showSpreadLayout ? "book-viewer__page-slot--single" : ""
+              }`}
+              style={{
+                transformOrigin: showSpreadLayout ? "right center" : "center center",
+              }}
+              animate={leftPageMotion}
+              transition={flipTransition}
+              onAnimationComplete={
+                flipDirection === "backward" ? handleAnimationComplete : undefined
+              }
+            >
+              <div className="book-viewer__page-face">
+                <BookPageContent page={leftPage} />
+              </div>
+            </motion.div>
 
-          {showSpreadLayout && (
-            <>
-              <div className="book-viewer__spine" aria-hidden="true" />
+            {showSpreadLayout && (
+              <>
+                <div className="book-viewer__spine" aria-hidden="true" />
 
-              <motion.div
-                className="book-viewer__page-slot book-viewer__page-slot--right"
-                style={{ transformOrigin: "left center" }}
-                animate={rightPageMotion}
-                transition={flipTransition}
-                onAnimationComplete={
-                  flipDirection === "forward" ? handleAnimationComplete : undefined
-                }
-              >
-                <div className="book-viewer__page-face">
-                  {rightPage ? (
-                    <BookPageContent page={rightPage} />
-                  ) : (
-                    <div className="book-page book-page--empty" />
-                  )}
-                </div>
-              </motion.div>
-            </>
-          )}
+                <motion.div
+                  className="book-viewer__page-slot book-viewer__page-slot--right"
+                  style={{ transformOrigin: "left center" }}
+                  animate={rightPageMotion}
+                  transition={flipTransition}
+                  onAnimationComplete={
+                    flipDirection === "forward" ? handleAnimationComplete : undefined
+                  }
+                >
+                  <div className="book-viewer__page-face">
+                    {rightPage ? (
+                      <BookPageContent page={rightPage} />
+                    ) : (
+                      <div className="book-page book-page--empty" />
+                    )}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
