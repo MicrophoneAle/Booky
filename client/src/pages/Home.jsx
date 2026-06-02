@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
 import {
   SignedIn,
@@ -126,18 +126,6 @@ export default function Home() {
   const [file, setFile] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
   const [uploadState, setUploadState] = useState(EMPTY_UPLOAD_STATE)
-  const [isOnline, setIsOnline] = useState(() => navigator.onLine)
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true)
-    const handleOffline = () => setIsOnline(false)
-    window.addEventListener("online", handleOnline)
-    window.addEventListener("offline", handleOffline)
-    return () => {
-      window.removeEventListener("online", handleOnline)
-      window.removeEventListener("offline", handleOffline)
-    }
-  }, [])
 
   const startUpload = useCallback(async (selectedFile) => {
     setFile(selectedFile)
@@ -210,26 +198,23 @@ export default function Home() {
   )
 
   const onDragOver = useCallback((event) => {
-    if (!isOnline) return
     event.preventDefault()
     setIsDragging(true)
-  }, [isOnline])
+  }, [])
 
   const onDragLeave = useCallback((event) => {
-    if (!isOnline) return
     event.preventDefault()
     setIsDragging(false)
-  }, [isOnline])
+  }, [])
 
   const onDrop = useCallback(
     (event) => {
-      if (!isOnline) return
       event.preventDefault()
       setIsDragging(false)
       const droppedFile = event.dataTransfer?.files?.[0]
       handleFileSelection(droppedFile)
     },
-    [handleFileSelection, isOnline]
+    [handleFileSelection]
   )
 
   const onBrowseClick = useCallback(() => {
@@ -293,12 +278,11 @@ export default function Home() {
 
         <section className="upload-section">
           <div
-            className={`upload-zone ${isDragging ? "dragging" : ""}${!isOnline ? " upload-zone--disabled" : ""}`}
+            className={`upload-zone ${isDragging ? "dragging" : ""}`}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop}
             onClick={() => {
-              if (!isOnline) return
               if (uploadState.phase === "idle" || uploadState.phase === "error") {
                 onBrowseClick()
               }
@@ -308,7 +292,6 @@ export default function Home() {
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault()
-                if (!isOnline) return
                 if (uploadState.phase === "idle" || uploadState.phase === "error") {
                   onBrowseClick()
                 }
@@ -352,28 +335,17 @@ export default function Home() {
                 <div className="upload-icon" aria-hidden="true">
                   📖
                 </div>
-                {isOnline ? (
-                  <>
-                    <p className="upload-text">Drop your PDF here</p>
-                    <button
-                      type="button"
-                      className="browse-link"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        onBrowseClick()
-                      }}
-                    >
-                      or browse files
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <p className="upload-text">Uploads unavailable offline</p>
-                    <p className="home__offline-upload-note">
-                      Reconnect to upload PDFs to your library.
-                    </p>
-                  </>
-                )}
+                <p className="upload-text">Drop your PDF here</p>
+                <button
+                  type="button"
+                  className="browse-link"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onBrowseClick()
+                  }}
+                >
+                  or browse files
+                </button>
               </>
             )}
             <input

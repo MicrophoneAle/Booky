@@ -200,11 +200,6 @@
     0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
-.upload-zone--disabled {
-  cursor: not-allowed;
-  opacity: 0.72;
-}
-
 .upload-icon {
   font-size: 2rem;
   margin-bottom: 0.25rem;
@@ -217,14 +212,6 @@
   font-size: 1rem;
   font-variant: small-caps;
   letter-spacing: 0.08em;
-}
-
-.home__offline-upload-note {
-  margin: 0;
-  font-size: 11px;
-  color: #8b7355;
-  font-style: italic;
-  text-align: center;
 }
 
 .browse-link {

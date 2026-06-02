@@ -1600,7 +1600,6 @@ export default function BookViewer({
   document: bookDocument,
   initialPage = 1,
   onPageChange,
-  offlineMeta = null,
 }) {
   const navigate = useNavigate()
   const [pages, setPages] = useState([])
@@ -2151,11 +2150,6 @@ export default function BookViewer({
         </div>
         <p className="book-viewer__chapter">{navChapterTitle}</p>
         <div className="book-viewer__nav-right">
-          {offlineMeta && (
-            <p className="book-viewer__offline-indicator" title="Using locally cached document">
-              Reading offline{offlineMeta.label ? ` · ${offlineMeta.label}` : ""}
-            </p>
-          )}
           <p className="book-viewer__counter">{pageCounterText}</p>
           {!isMobile && (
             <button
