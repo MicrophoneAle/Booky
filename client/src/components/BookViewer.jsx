@@ -1649,6 +1649,7 @@ export default function BookViewer({
   const bookmarkRef = useRef(null)
   const currentPageRef = useRef(currentPage)
   const hasShownResumeToastRef = useRef(false)
+  const hasShownFsTipRef = useRef(false)
 
   const normalizeBookmarkPage = useCallback((page, total, desktopSpreadBehavior) => {
     if (!Number.isFinite(page)) return 1
@@ -1915,6 +1916,8 @@ export default function BookViewer({
 
   useEffect(() => {
     if (isMobile && isMobileFullscreen) {
+      if (hasShownFsTipRef.current) return undefined
+      hasShownFsTipRef.current = true
       setShowFsTip(true)
       const tipTimer = setTimeout(() => setShowFsTip(false), 2000)
       return () => clearTimeout(tipTimer)
@@ -2045,6 +2048,7 @@ export default function BookViewer({
 
   useEffect(() => {
     hasShownResumeToastRef.current = false
+    hasShownFsTipRef.current = false
   }, [bookDocument?.id])
 
   useEffect(() => {
