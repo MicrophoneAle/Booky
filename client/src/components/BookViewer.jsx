@@ -2106,8 +2106,10 @@ export default function BookViewer({
       return
     }
 
-    const randomX = Math.floor(Math.random() * 401) - 200
-    const randomY = -(150 + Math.floor(Math.random() * 101))
+    const randomAngle = Math.random() * Math.PI * 2
+    const randomDistance = 170 + Math.random() * 140
+    const randomX = Math.round(Math.cos(randomAngle) * randomDistance)
+    const randomY = Math.round(Math.sin(randomAngle) * randomDistance)
     const rotationMagnitude = 300 + Math.floor(Math.random() * 221)
     const rotationSign = Math.random() > 0.5 ? 1 : -1
     const randomRot = rotationMagnitude * rotationSign
