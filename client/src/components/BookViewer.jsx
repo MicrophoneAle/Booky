@@ -6,7 +6,7 @@ import "../pages/Reader.css"
 import "./BookViewer.css"
 import "./FullscreenButton.css"
 
-const NAVBAR_HEIGHT_PX = 48
+const NAVBAR_HEIGHT_PX = 40
 const PAGE_WIDTH_PX = 400
 const PAGE_HEIGHT_PX = 600
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780

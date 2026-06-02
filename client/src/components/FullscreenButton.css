@@ -1,12 +1,13 @@
 .fullscreen-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
   background: transparent;
   color: var(--color-muted);
   cursor: pointer;
-  padding: 0.2rem;
+  padding: 0;
+  line-height: 0;
   transition: color 0.2s ease;
 }
 
