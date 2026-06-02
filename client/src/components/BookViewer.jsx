@@ -1838,18 +1838,31 @@ export default function BookViewer({
 
       const q = query.toLowerCase().trim()
       const results = []
+
+      const escapedQuery = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      const matcher = new RegExp(escapedQuery, "gi")
+
       for (const [pageNum, text] of Object.entries(pageTextMap)) {
-        if (text.includes(q)) {
-          results.push(Number(pageNum))
+        matcher.lastIndex = 0
+        let match = matcher.exec(text)
+        let occurrenceOnPage = 0
+
+        while (match !== null) {
+          occurrenceOnPage += 1
+          results.push({
+            pageNumber: Number(pageNum),
+            occurrenceOnPage,
+          })
+          match = matcher.exec(text)
         }
       }
 
-      results.sort((a, b) => a - b)
+      results.sort((a, b) => a.pageNumber - b.pageNumber)
       setSearchResults(results)
       setSearchResultIndex(0)
       if (results.length > 0) {
-        setCurrentPage(results[0])
-        onPageChange?.(results[0])
+        setCurrentPage(results[0].pageNumber)
+        onPageChange?.(results[0].pageNumber)
       }
     },
     [pageTextMap, onPageChange]
@@ -1859,16 +1872,16 @@ export default function BookViewer({
     if (searchResults.length === 0) return
     const next = (searchResultIndex + 1) % searchResults.length
     setSearchResultIndex(next)
-    setCurrentPage(searchResults[next])
-    onPageChange?.(searchResults[next])
+    setCurrentPage(searchResults[next].pageNumber)
+    onPageChange?.(searchResults[next].pageNumber)
   }, [searchResultIndex, searchResults, onPageChange])
 
   const goToPrevResult = useCallback(() => {
     if (searchResults.length === 0) return
     const prev = (searchResultIndex - 1 + searchResults.length) % searchResults.length
     setSearchResultIndex(prev)
-    setCurrentPage(searchResults[prev])
-    onPageChange?.(searchResults[prev])
+    setCurrentPage(searchResults[prev].pageNumber)
+    onPageChange?.(searchResults[prev].pageNumber)
   }, [searchResultIndex, searchResults, onPageChange])
 
   useEffect(() => {
