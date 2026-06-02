@@ -21,6 +21,27 @@ function formatPageCount(totalPages) {
   return `${count} ${count === 1 ? "PDF page" : "PDF pages"}`
 }
 
+const SPINE_COLORS = [
+  "#3a1a1a",
+  "#1c2e24",
+  "#2a2418",
+  "#1a2438",
+  "#3a2a1a",
+  "#2e1a3a",
+  "#1a2e2e",
+  "#3a2818",
+  "#24241a",
+  "#1a1f3a",
+]
+
+function getSpineColor(documentId) {
+  let hash = 0
+  for (let index = 0; index < documentId.length; index += 1) {
+    hash = documentId.charCodeAt(index) + ((hash << 5) - hash)
+  }
+  return SPINE_COLORS[Math.abs(hash) % SPINE_COLORS.length]
+}
+
 function EditTitleIcon() {
   return (
     <svg
@@ -167,7 +188,11 @@ function LibraryBookCard({ document, onDelete, onRename }) {
 
   return (
     <article className="library-card">
-      <div className="library-card__spine" aria-hidden="true" />
+      <div
+        className="library-card__spine"
+        style={{ "--spine-color": getSpineColor(document.id) }}
+        aria-hidden="true"
+      />
       <div className="library-card__content">
         <div className="library-card__title-row">
           {isEditingTitle ? (
@@ -336,7 +361,7 @@ export default function Library() {
 
       <main className="library-main">
         <header className="library-header">
-          <h1>Your Library</h1>
+          <h1>Library</h1>
           <p>Your uploaded books</p>
         </header>
 

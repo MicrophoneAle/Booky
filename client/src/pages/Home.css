@@ -29,6 +29,7 @@
   padding: 0 3rem 0 1.25rem;
   background: var(--color-surface);
   border-bottom: 1px solid rgba(197, 160, 89, 0.15);
+  overflow: visible;
 }
 
 .home-logo {
@@ -47,8 +48,10 @@
 }
 
 .home-nav-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   color: var(--color-muted);
   font-size: 0.7rem;
   line-height: 1;
@@ -57,9 +60,8 @@
   font-variant: small-caps;
   letter-spacing: 0.15em;
   font-weight: 600;
-  padding: 0;
-  box-shadow: inset 0 -2px 0 transparent;
-  transition: color 0.2s ease, box-shadow 0.2s ease;
+  padding: 0 0.15em;
+  transition: color 0.2s ease;
 }
 
 .home-nav-link:hover {
@@ -68,7 +70,17 @@
 
 .home-nav-link--active {
   color: var(--color-gold);
-  box-shadow: inset 0 -2px 0 var(--color-gold);
+}
+
+.home-nav-link--active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 100%;
+  height: 1px;
+  background: var(--color-gold);
+  transform: translateX(-50%);
 }
 
 .home-main {
