@@ -1336,6 +1336,10 @@ function BookPageContent({
   settings,
   searchQuery = "",
   activeSearchOccurrence = null,
+  showBookmark = false,
+  bookmarkDismissed = false,
+  bookmarkHidden = false,
+  onDismissBookmark = null,
 }) {
   const themeId = settings?.theme ?? DEFAULT_SETTINGS.theme
   const pageClassName = [
@@ -1358,6 +1362,14 @@ function BookPageContent({
 
   return (
     <div className={pageClassName} style={pageStyle}>
+      {showBookmark && !bookmarkHidden && (
+        <button
+          type="button"
+          className={`book-page__bookmark${bookmarkDismissed ? " book-page__bookmark--dismissed" : ""}`}
+          onClick={onDismissBookmark}
+          aria-label="Dismiss bookmark"
+        />
+      )}
       {page.chapterTitle && (
         <p className="book-page__chapter-label">
           {highlightTextContent(
@@ -1602,9 +1614,11 @@ export default function BookViewer({
   onPageChange,
 }) {
   const navigate = useNavigate()
+  const progressKey = `booky-progress-${bookDocument?.id ?? ""}`
   const [pages, setPages] = useState([])
   const [isPaginating, setIsPaginating] = useState(true)
-  const [currentPage, setCurrentPage] = useState(initialPage)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [restoreTargetPage, setRestoreTargetPage] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
   const [layoutMode, setLayoutMode] = useState("spread")
   const [isMobileFullscreen, setIsMobileFullscreen] = useState(false)
@@ -1636,6 +1650,17 @@ export default function BookViewer({
   const [chapterPageMap, setChapterPageMap] = useState({})
   const [pageTextMap, setPageTextMap] = useState({})
   const [resumeToast, setResumeToast] = useState(null)
+  const [restoredPage, setRestoredPage] = useState(null)
+  const [bookmarkDismissed, setBookmarkDismissed] = useState(false)
+  const [bookmarkHidden, setBookmarkHidden] = useState(false)
+  const bookmarkDismissTimerRef = useRef(null)
+
+  const normalizeBookmarkPage = useCallback((page, total, desktopSpreadBehavior) => {
+    if (!Number.isFinite(page)) return 1
+    const clamped = Math.min(Math.max(1, Number(page)), Math.max(1, total))
+    if (desktopSpreadBehavior && clamped % 2 === 0) return Math.max(1, clamped - 1)
+    return clamped
+  }, [])
 
   useEffect(() => {
     try {
@@ -1768,9 +1793,17 @@ export default function BookViewer({
         setCurrentPage((previousPage) => {
           const maxPage = Math.max(1, totalMeasuredPages)
           if (totalMeasuredPages === 0) return 1
-          return Math.min(Math.max(1, previousPage), maxPage)
+          const target =
+            restoreTargetPage !== null && restoreTargetPage !== undefined
+              ? restoreTargetPage
+              : previousPage
+          return normalizeBookmarkPage(target, maxPage, !isMobile)
         })
+        if (restoreTargetPage && restoreTargetPage > 1) {
+          setRestoredPage(restoreTargetPage)
+        }
         setIsPaginating(false)
+        setRestoreTargetPage(null)
       }
     }
 
@@ -1780,7 +1813,15 @@ export default function BookViewer({
       cancelled = true
       measureRoot?.remove()
     }
-  }, [bookDocument, initialPage, isMobileFullscreen, isMobile, settings])
+  }, [
+    bookDocument,
+    initialPage,
+    isMobileFullscreen,
+    isMobile,
+    settings,
+    restoreTargetPage,
+    normalizeBookmarkPage,
+  ])
 
   const activePageHeight =
     isMobile && isMobileFullscreen ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : PAGE_HEIGHT_PX
@@ -1856,14 +1897,25 @@ export default function BookViewer({
   }, [])
 
   useEffect(() => {
-    setCurrentPage(initialPage)
-  }, [initialPage])
+    if (!bookDocument?.id) return
+    try {
+      const saved = Number(localStorage.getItem(progressKey))
+      if (Number.isFinite(saved) && saved > 0) {
+        setRestoreTargetPage(saved)
+      } else {
+        setRestoreTargetPage(initialPage)
+      }
+    } catch {
+      setRestoreTargetPage(initialPage)
+    }
+  }, [bookDocument?.id, initialPage, progressKey])
 
   useEffect(() => {
+    if (isPaginating || totalPages === 0) return
     if (currentPage > maxPageIndex) {
       setCurrentPage(maxPageIndex)
     }
-  }, [currentPage, maxPageIndex])
+  }, [currentPage, maxPageIndex, isPaginating, totalPages])
 
   useEffect(() => {
     if (isMobile && isMobileFullscreen) {
@@ -1971,23 +2023,37 @@ export default function BookViewer({
 
   useEffect(() => {
     if (!bookDocument?.id || isPaginating) return
-
-    if (currentPage >= totalPages && totalPages > 0) {
-      localStorage.removeItem(`booky-progress-${bookDocument.id}`)
-      return
-    }
-
-    localStorage.setItem(`booky-progress-${bookDocument.id}`, String(currentPage))
-  }, [currentPage, bookDocument?.id, isPaginating, totalPages])
+    const toStore = normalizeBookmarkPage(currentPage, totalPages, !isMobile)
+    localStorage.setItem(progressKey, String(toStore))
+  }, [currentPage, bookDocument?.id, isPaginating, totalPages, isMobile, progressKey, normalizeBookmarkPage])
 
   useEffect(() => {
-    if (!isPaginating && initialPage > 1) {
-      setResumeToast(initialPage)
+    if (!isPaginating && restoredPage > 1) {
+      setResumeToast(restoredPage)
+      setRestoredPage(null)
       const timerId = setTimeout(() => setResumeToast(null), 2500)
       return () => clearTimeout(timerId)
     }
     return undefined
-  }, [isPaginating, initialPage])
+  }, [isPaginating, restoredPage])
+
+  useEffect(() => {
+    setBookmarkDismissed(false)
+    setBookmarkHidden(false)
+  }, [currentPage])
+
+  useEffect(() => {
+    return () => clearTimeout(bookmarkDismissTimerRef.current)
+  }, [])
+
+  const handleDismissBookmark = useCallback(() => {
+    if (bookmarkDismissed || bookmarkHidden) return
+    setBookmarkDismissed(true)
+    clearTimeout(bookmarkDismissTimerRef.current)
+    bookmarkDismissTimerRef.current = setTimeout(() => {
+      setBookmarkHidden(true)
+    }, 300)
+  }, [bookmarkDismissed, bookmarkHidden])
 
   useEffect(() => {
     const timerId = setTimeout(() => runSearch(searchQuery), 300)
@@ -2271,6 +2337,10 @@ export default function BookViewer({
                   isMobileFullscreen={mobileFullscreenActive}
                   settings={settings}
                   searchQuery={searchQuery}
+                  showBookmark={Boolean(leftPage)}
+                  bookmarkDismissed={bookmarkDismissed}
+                  bookmarkHidden={bookmarkHidden}
+                  onDismissBookmark={handleDismissBookmark}
                   activeSearchOccurrence={
                     searchResults[searchResultIndex]?.pageNumber === leftPage?.pageNumber
                       ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
@@ -2295,6 +2365,9 @@ export default function BookViewer({
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
                         searchQuery={searchQuery}
+                        showBookmark={false}
+                        bookmarkDismissed={false}
+                        bookmarkHidden
                         activeSearchOccurrence={
                           searchResults[searchResultIndex]?.pageNumber === rightPage?.pageNumber
                             ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
@@ -2307,6 +2380,9 @@ export default function BookViewer({
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
                         searchQuery={searchQuery}
+                        showBookmark={false}
+                        bookmarkDismissed={false}
+                        bookmarkHidden
                         activeSearchOccurrence={null}
                       />
                     )}
