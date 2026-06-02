@@ -1,9 +1,10 @@
 ﻿import { Fragment, useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { flattenDocument } from "../utils/paginator"
-import FullscreenButton from "./FullscreenButton"
+import { FullscreenIcon } from "./FullscreenButton"
 import "../pages/Reader.css"
 import "./BookViewer.css"
+import "./FullscreenButton.css"
 
 const NAVBAR_HEIGHT_PX = 48
 const PAGE_WIDTH_PX = 400
@@ -1215,15 +1216,24 @@ function renderGroupedListItemsReact(nodes, keyPrefix) {
   return elements
 }
 
-function BookPageContent({ page }) {
+function BookPageContent({ page, isMobileFullscreen = false }) {
+  const mobileFullscreenPageStyle = isMobileFullscreen
+    ? { padding: 0, borderRadius: 0, border: "none" }
+    : undefined
+
   if (!page) {
-    return <div className="book-page book-page--empty" />
+    return (
+      <div
+        className="book-page book-page--empty"
+        style={mobileFullscreenPageStyle}
+      />
+    )
   }
 
   const visualItems = page.visualItems ?? []
 
   return (
-    <div className="book-page">
+    <div className="book-page" style={mobileFullscreenPageStyle}>
       {page.chapterTitle && (
         <p className="book-page__chapter-label">{page.chapterTitle}</p>
       )}
@@ -1384,6 +1394,37 @@ export default function BookViewer({
   const tapCountRef = useRef(0)
   const tapTimerRef = useRef(null)
   const [scale, setScale] = useState(1)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden"
+    document.documentElement.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = ""
+      document.documentElement.style.overflow = ""
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement))
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange)
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
+  }, [])
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+      } else {
+        await document.documentElement.requestFullscreen()
+      }
+    } catch {
+      // Fullscreen may be blocked by the browser.
+    }
+  }, [])
 
   useEffect(() => {
     if (!bookDocument) {
@@ -1439,6 +1480,7 @@ export default function BookViewer({
 
   const activePageHeight =
     isMobile && isMobileFullscreen ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : PAGE_HEIGHT_PX
+  const mobileFullscreenActive = isMobile && isMobileFullscreen
 
   const isSpreadView = !isMobile && layoutMode === "spread"
   const totalPages = pages.length
@@ -1577,7 +1619,6 @@ export default function BookViewer({
           >
             ← Library
           </button>
-          <div className="book-viewer__logo">BOOKY</div>
         </div>
         <p className="book-viewer__chapter">{navChapterTitle}</p>
         <div className="book-viewer__nav-right">
@@ -1594,7 +1635,17 @@ export default function BookViewer({
               <LayoutModeIcon isSpreadView={isSpreadView} />
             </button>
           )}
-          {!isMobile && <FullscreenButton className="book-viewer__fullscreen" />}
+          {!(isMobile && isMobileFullscreen) && (
+            <button
+              type="button"
+              className="fullscreen-button book-viewer__fullscreen"
+              onClick={isMobile ? () => setIsMobileFullscreen(true) : toggleFullscreen}
+              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            >
+              <FullscreenIcon />
+            </button>
+          )}
         </div>
       </header>
 
@@ -1602,18 +1653,25 @@ export default function BookViewer({
         ref={stageRef}
         className="book-viewer__stage"
         onClick={handleStageTap}
+        style={mobileFullscreenActive ? { padding: 0 } : undefined}
       >
         <button
           type="button"
           className="book-viewer__zone book-viewer__zone--left"
-          onClick={goBack}
+          onClick={(event) => {
+            event.stopPropagation()
+            goBack()
+          }}
           disabled={!canGoBack}
           aria-label="Previous page"
         />
         <button
           type="button"
           className="book-viewer__zone book-viewer__zone--right"
-          onClick={goForward}
+          onClick={(event) => {
+            event.stopPropagation()
+            goForward()
+          }}
           disabled={!canGoForward}
           aria-label="Next page"
         />
@@ -1636,7 +1694,10 @@ export default function BookViewer({
             className={`book-viewer__spread ${
               !showSpreadLayout ? "book-viewer__spread--single" : ""
             }`}
-            style={{ height: activePageHeight }}
+            style={{
+              height: activePageHeight,
+              ...(mobileFullscreenActive ? { border: "none", borderRadius: 0 } : {}),
+            }}
           >
             <div
               className={`book-viewer__page-slot book-viewer__page-slot--left ${
@@ -1645,7 +1706,10 @@ export default function BookViewer({
               style={{ height: activePageHeight }}
             >
               <div className="book-viewer__page-face">
-                <BookPageContent page={leftPage} />
+                <BookPageContent
+                  page={leftPage}
+                  isMobileFullscreen={mobileFullscreenActive}
+                />
               </div>
             </div>
 
@@ -1659,9 +1723,19 @@ export default function BookViewer({
                 >
                   <div className="book-viewer__page-face">
                     {rightPage ? (
-                      <BookPageContent page={rightPage} />
+                      <BookPageContent
+                        page={rightPage}
+                        isMobileFullscreen={mobileFullscreenActive}
+                      />
                     ) : (
-                      <div className="book-page book-page--empty" />
+                      <div
+                        className="book-page book-page--empty"
+                        style={
+                          mobileFullscreenActive
+                            ? { padding: 0, borderRadius: 0, border: "none" }
+                            : undefined
+                        }
+                      />
                     )}
                   </div>
                 </div>

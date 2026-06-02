@@ -3,6 +3,7 @@
 .book-viewer {
   width: 100vw;
   height: 100vh;
+  max-height: 100vh;
   background: #12100e;
   display: flex;
   flex-direction: column;
@@ -149,7 +150,6 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 50%;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -159,10 +159,12 @@
 
 .book-viewer__zone--left {
   left: 0;
+  width: 20%;
 }
 
 .book-viewer__zone--right {
   right: 0;
+  width: 20%;
 }
 
 .book-viewer__zone:disabled {
@@ -263,6 +265,7 @@
 
 .book-page__body {
   flex: 1;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -415,6 +418,14 @@ ol.book-page__list {
 
   .book-viewer__stage {
     padding: 0.5rem;
+  }
+
+  .book-viewer__zone--left {
+    width: 18%;
+  }
+
+  .book-viewer__zone--right {
+    width: 18%;
   }
 
   .book-viewer__spread {
