@@ -1217,23 +1217,18 @@ function renderGroupedListItemsReact(nodes, keyPrefix) {
 }
 
 function BookPageContent({ page, isMobileFullscreen = false }) {
-  const mobileFullscreenPageStyle = isMobileFullscreen
-    ? { padding: 0, borderRadius: 0, border: "none" }
-    : undefined
+  const pageClassName = isMobileFullscreen
+    ? "book-page book-page--mobile-fs"
+    : "book-page"
 
   if (!page) {
-    return (
-      <div
-        className="book-page book-page--empty"
-        style={mobileFullscreenPageStyle}
-      />
-    )
+    return <div className={`${pageClassName} book-page--empty`} />
   }
 
   const visualItems = page.visualItems ?? []
 
   return (
-    <div className="book-page" style={mobileFullscreenPageStyle}>
+    <div className={pageClassName}>
       {page.chapterTitle && (
         <p className="book-page__chapter-label">{page.chapterTitle}</p>
       )}
@@ -1508,7 +1503,10 @@ export default function BookViewer({
         ? PAGE_WIDTH_PX * 2 + SPINE_PX
         : PAGE_WIDTH_PX
       const naturalH = activePageHeight
-      const next = Math.min(availW / naturalW, availH / naturalH)
+      const fitScale = Math.min(availW / naturalW, availH / naturalH)
+      const fillScale = Math.max(availW / naturalW, availH / naturalH)
+      const next =
+        isMobile && isMobileFullscreen ? fillScale : fitScale
       setScale(next > 0 && Number.isFinite(next) ? next : 1)
     }
 
@@ -1600,7 +1598,9 @@ export default function BookViewer({
   }
 
   return (
-    <div className="book-viewer">
+    <div
+      className={`book-viewer${mobileFullscreenActive ? " book-viewer--mobile-fs" : ""}`}
+    >
       {showFsTip && <div className="book-viewer__fs-tip">Triple tap to exit</div>}
 
       <header
@@ -1653,7 +1653,6 @@ export default function BookViewer({
         ref={stageRef}
         className="book-viewer__stage"
         onClick={handleStageTap}
-        style={mobileFullscreenActive ? { padding: 0 } : undefined}
       >
         <button
           type="button"
@@ -1694,10 +1693,7 @@ export default function BookViewer({
             className={`book-viewer__spread ${
               !showSpreadLayout ? "book-viewer__spread--single" : ""
             }`}
-            style={{
-              height: activePageHeight,
-              ...(mobileFullscreenActive ? { border: "none", borderRadius: 0 } : {}),
-            }}
+            style={{ height: activePageHeight }}
           >
             <div
               className={`book-viewer__page-slot book-viewer__page-slot--left ${
@@ -1728,14 +1724,7 @@ export default function BookViewer({
                         isMobileFullscreen={mobileFullscreenActive}
                       />
                     ) : (
-                      <div
-                        className="book-page book-page--empty"
-                        style={
-                          mobileFullscreenActive
-                            ? { padding: 0, borderRadius: 0, border: "none" }
-                            : undefined
-                        }
-                      />
+                      <div className="book-page book-page--empty book-page--mobile-fs" />
                     )}
                   </div>
                 </div>
