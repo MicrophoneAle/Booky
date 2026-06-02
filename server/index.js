@@ -33,7 +33,7 @@ app.get("/documents", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("documents")
-      .select("id, name, total_pages, word_count, created_at")
+      .select("id, name, total_pages, word_count, created_at, content")
       .order("created_at", { ascending: false })
 
     if (error) {
@@ -41,9 +41,16 @@ app.get("/documents", async (req, res) => {
       return
     }
 
+    const documents = await Promise.all(
+      (data ?? []).map(async (documentRow) => {
+        const wordCount = await resolveWordCountForDocument(documentRow)
+        return toPublicDocument(documentRow, wordCount)
+      })
+    )
+
     res.json({
       success: true,
-      documents: data ?? [],
+      documents,
     })
   } catch {
     res.status(500).json({ success: false, error: "Failed to fetch documents" })
@@ -435,6 +442,19 @@ function buildBlocksFromLines(lines, headingStrings) {
   return blocks
 }
 
+function countWordsInPlainText(text) {
+  if (typeof text !== "string" || !text.trim()) {
+    return 0
+  }
+
+  return text
+    .replace(/\u00AD/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean).length
+}
+
 function countWordsFromContent(content) {
   if (!Array.isArray(content)) {
     return 0
@@ -444,13 +464,47 @@ function countWordsFromContent(content) {
 
   for (const page of content) {
     for (const block of page.blocks ?? []) {
-      const text = typeof block.text === "string" ? block.text : ""
-      const words = text.trim().split(/\s+/).filter(Boolean)
-      total += words.length
+      total += countWordsInPlainText(block.text)
     }
   }
 
   return total
+}
+
+function countWordsFromBlocks(blocks) {
+  if (!Array.isArray(blocks)) {
+    return 0
+  }
+
+  return blocks.reduce((total, block) => total + countWordsInPlainText(block.text), 0)
+}
+
+async function resolveWordCountForDocument(documentRow) {
+  const storedCount = Number(documentRow.word_count)
+  if (Number.isFinite(storedCount) && storedCount > 0) {
+    return storedCount
+  }
+
+  const fromContent = countWordsFromContent(documentRow.content)
+  if (fromContent > 0) {
+    void supabase
+      .from("documents")
+      .update({ word_count: fromContent })
+      .eq("id", documentRow.id)
+    return fromContent
+  }
+
+  return 0
+}
+
+function toPublicDocument(documentRow, wordCount) {
+  return {
+    id: documentRow.id,
+    name: documentRow.name,
+    total_pages: documentRow.total_pages,
+    created_at: documentRow.created_at,
+    word_count: wordCount,
+  }
 }
 
 function blocksToContent(blocks, blocksPerPage = 40) {
@@ -508,7 +562,11 @@ app.post("/upload", (req, res) => {
       const hasImages = false
       const title = uploadedFile.originalname.replace(/\.pdf$/i, "")
       const { chapters, content: contentWithChapters } = detectChapters(content)
-      const wordCount = countWordsFromContent(contentWithChapters)
+      const wordCount = Math.max(
+        countWordsInPlainText(parsedText.text),
+        countWordsFromBlocks(blocks),
+        countWordsFromContent(contentWithChapters)
+      )
 
       const storagePath = `${Date.now()}-${uploadedFile.originalname}`
       const { data: storageData, error: storageError } = await supabase.storage
@@ -532,7 +590,7 @@ app.post("/upload", (req, res) => {
           chapters,
           content: contentWithChapters,
         })
-        .select("id")
+        .select("id, word_count")
         .single()
 
       if (insertError) {
@@ -546,6 +604,7 @@ app.post("/upload", (req, res) => {
           id: insertedDocument.id,
           title,
           totalPages: parsedText.numpages,
+          wordCount,
           chapters,
           content: contentWithChapters,
           hasImages,

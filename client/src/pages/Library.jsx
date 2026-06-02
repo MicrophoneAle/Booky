@@ -21,8 +21,8 @@ function formatPageCount(totalPages) {
   return `${count} ${count === 1 ? "page" : "pages"}`
 }
 
-function formatWordCount(wordCount) {
-  const count = Number(wordCount) || 0
+function formatWordCount(document) {
+  const count = Number(document?.word_count ?? document?.wordCount) || 0
   if (count < 1000) {
     return `${count.toLocaleString()} ${count === 1 ? "word" : "words"}`
   }
@@ -241,7 +241,7 @@ function LibraryBookCard({ document, onDelete, onRename }) {
           <p className="library-card__rename-error">Rename failed. Try again.</p>
         )}
         <p className="library-card__pages">{formatPageCount(document.total_pages)}</p>
-        <p className="library-card__words">{formatWordCount(document.word_count)}</p>
+        <p className="library-card__words">{formatWordCount(document)}</p>
         <p className="library-card__date">{formatUploadDate(document.created_at)}</p>
 
         {confirming ? (
