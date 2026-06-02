@@ -200,7 +200,7 @@
   max-height: 100%;
   box-sizing: border-box;
   background: #ffffff;
-  padding: 1.5rem 0.75rem;
+  padding: 0.75rem;
   color: #1c1917;
   display: flex;
   flex-direction: column;
@@ -223,7 +223,7 @@
 }
 
 .book-page__chapter-label {
-  margin: 0 0 1rem;
+  margin: 0 0 0.5rem;
   font-family: "EB Garamond", Georgia, serif;
   font-size: 9px;
   text-transform: uppercase;
@@ -241,7 +241,7 @@
 
 .book-page__title {
   margin: 0;
-  margin-bottom: 2rem;
+  margin-bottom: 0.75rem;
   font-family: "EB Garamond", Georgia, serif;
   font-size: 22px;
   font-weight: 700;
@@ -251,7 +251,7 @@
 
 .book-page__heading {
   margin: 0;
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem;
   font-family: "EB Garamond", Georgia, serif;
   font-size: 15px;
   font-weight: 700;
