@@ -1,6 +1,13 @@
 import { useCallback, useRef, useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
-import { useAuth, UserButton } from "@clerk/clerk-react"
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  useAuth,
+  useClerk,
+  UserButton,
+} from "@clerk/clerk-react"
 import FullscreenButton from "../components/FullscreenButton"
 import "./Home.css"
 
@@ -112,7 +119,8 @@ function doUpload(file, token, setUploadState, navigate) {
 
 export default function Home() {
   const navigate = useNavigate()
-  const { getToken } = useAuth()
+  const { getToken, isSignedIn } = useAuth()
+  const { openSignIn } = useClerk()
   const fileInputRef = useRef(null)
 
   const [file, setFile] = useState(null)
@@ -176,13 +184,17 @@ export default function Home() {
   const handleFileSelection = useCallback(
     (selectedFile) => {
       if (!selectedFile) return
+      if (!isSignedIn) {
+        openSignIn()
+        return
+      }
       if (!isPdfFile(selectedFile)) {
         handleInvalidFile()
         return
       }
       startUpload(selectedFile)
     },
-    [handleInvalidFile, startUpload]
+    [handleInvalidFile, isSignedIn, openSignIn, startUpload]
   )
 
   const onDragOver = useCallback((event) => {
@@ -242,14 +254,21 @@ export default function Home() {
             Library
           </NavLink>
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: { width: 28, height: 28 },
-              },
-            }}
-          />
+        <div className="home__nav-auth">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="home__signin-btn">Sign in</button>
+            </SignInButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: { width: 28, height: 28 },
+                },
+              }}
+            />
+          </SignedIn>
         </div>
       </nav>
 

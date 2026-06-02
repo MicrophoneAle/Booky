@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
-import { useAuth, UserButton } from "@clerk/clerk-react"
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  useAuth,
+  useClerk,
+  UserButton,
+} from "@clerk/clerk-react"
 import FullscreenButton from "../components/FullscreenButton"
 import "./Library.css"
 
@@ -309,7 +316,8 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
 
 export default function Library() {
   const navigate = useNavigate()
-  const { getToken } = useAuth()
+  const { getToken, isSignedIn } = useAuth()
+  const { openSignIn } = useClerk()
   const [documents, setDocuments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -346,8 +354,14 @@ export default function Library() {
   }, [getToken])
 
   useEffect(() => {
+    if (!isSignedIn) {
+      setLoading(false)
+      setError(null)
+      setDocuments([])
+      return
+    }
     fetchDocuments()
-  }, [fetchDocuments, reloadKey])
+  }, [fetchDocuments, isSignedIn, reloadKey])
 
   const handleDocumentDeleted = useCallback((documentId) => {
     setDocuments((current) => current.filter((doc) => doc.id !== documentId))
@@ -383,74 +397,93 @@ export default function Library() {
             Library
           </NavLink>
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: { width: 28, height: 28 },
-              },
-            }}
-          />
+        <div className="library__nav-auth">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="library__signin-btn">Sign in</button>
+            </SignInButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: { width: 28, height: 28 },
+                },
+              }}
+            />
+          </SignedIn>
         </div>
       </nav>
 
       <main className="library-main">
-        <header className="library-header">
-          <h1>Library</h1>
-          <p>Your uploaded books</p>
-        </header>
+        {!isSignedIn ? (
+          <div className="library__signin-prompt">
+            <p className="library__signin-heading">Your Library</p>
+            <p className="library__signin-sub">Sign in to view your uploaded books</p>
+            <button className="library__signin-cta" onClick={() => openSignIn()}>
+              Sign in to continue
+            </button>
+          </div>
+        ) : (
+          <>
+            <header className="library-header">
+              <h1>Library</h1>
+              <p>Your uploaded books</p>
+            </header>
 
-        {loading && (
-          <div className="library-grid" aria-busy="true" aria-label="Loading library">
-            {Array.from({ length: 6 }, (_, index) => (
-              <div key={index} className="library-card library-card--skeleton">
-                <div className="skeleton-line skeleton-line--title" />
-                <div className="skeleton-line skeleton-line--meta" />
-                <div className="skeleton-line skeleton-line--date" />
-                <div className="skeleton-line skeleton-line--button" />
+            {loading && (
+              <div className="library-grid" aria-busy="true" aria-label="Loading library">
+                {Array.from({ length: 6 }, (_, index) => (
+                  <div key={index} className="library-card library-card--skeleton">
+                    <div className="skeleton-line skeleton-line--title" />
+                    <div className="skeleton-line skeleton-line--meta" />
+                    <div className="skeleton-line skeleton-line--date" />
+                    <div className="skeleton-line skeleton-line--button" />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
 
-        {!loading && error && (
-          <div className="library-state">
-            <p className="library-state__message">Could not load library.</p>
-            <button
-              type="button"
-              className="library-state__link"
-              onClick={() => setReloadKey((key) => key + 1)}
-            >
-              Try again
-            </button>
-          </div>
-        )}
+            {!loading && error && (
+              <div className="library-state">
+                <p className="library-state__message">Could not load library.</p>
+                <button
+                  type="button"
+                  className="library-state__link"
+                  onClick={() => setReloadKey((key) => key + 1)}
+                >
+                  Try again
+                </button>
+              </div>
+            )}
 
-        {!loading && !error && documents.length === 0 && (
-          <div className="library-state">
-            <p className="library-state__empty">No books yet.</p>
-            <button
-              type="button"
-              className="library-state__button"
-              onClick={() => navigate("/")}
-            >
-              Upload your first book
-            </button>
-          </div>
-        )}
+            {!loading && !error && documents.length === 0 && (
+              <div className="library-state">
+                <p className="library-state__empty">No books yet.</p>
+                <button
+                  type="button"
+                  className="library-state__button"
+                  onClick={() => navigate("/")}
+                >
+                  Upload your first book
+                </button>
+              </div>
+            )}
 
-        {!loading && !error && documents.length > 0 && (
-          <div className="library-grid">
-            {documents.map((document) => (
-              <LibraryBookCard
-                key={document.id}
-                document={document}
-                onDelete={handleDocumentDeleted}
-                onRename={handleDocumentRenamed}
-                getToken={getToken}
-              />
-            ))}
-          </div>
+            {!loading && !error && documents.length > 0 && (
+              <div className="library-grid">
+                {documents.map((document) => (
+                  <LibraryBookCard
+                    key={document.id}
+                    document={document}
+                    onDelete={handleDocumentDeleted}
+                    onRename={handleDocumentRenamed}
+                    getToken={getToken}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

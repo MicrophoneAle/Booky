@@ -83,6 +83,31 @@
   transform: translateX(-50%);
 }
 
+.home__nav-auth {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.home__signin-btn {
+  background: transparent;
+  border: 1px solid #2a2420;
+  color: #8b7355;
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.75rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.home__signin-btn:hover {
+  border-color: #d4af37;
+  color: #d4af37;
+}
+
 .home-main {
   min-height: calc(100vh - var(--nav-height));
   display: flex;
