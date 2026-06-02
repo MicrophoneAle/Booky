@@ -1,4 +1,4 @@
-﻿import { Fragment, useCallback, useEffect, useRef, useState } from "react"
+﻿import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { flattenDocument } from "../utils/paginator"
 import { FullscreenIcon } from "./FullscreenButton"
@@ -1439,6 +1439,47 @@ function NibIcon() {
   )
 }
 
+function TocIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="14" y2="18" />
+    </svg>
+  )
+}
+
+function SearchIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  )
+}
+
+function flattenListText(nodes = []) {
+  return nodes.flatMap((node) => [node.text, ...flattenListText(node.children ?? [])])
+}
+
 export default function BookViewer({
   document: bookDocument,
   initialPage = 1,
@@ -1470,6 +1511,15 @@ export default function BookViewer({
   })
 
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [tocOpen, setTocOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState([])
+  const [searchResultIndex, setSearchResultIndex] = useState(0)
+  const searchInputRef = useRef(null)
+  const [chapterPageMap, setChapterPageMap] = useState({})
+  const [pageTextMap, setPageTextMap] = useState({})
+  const [resumeToast, setResumeToast] = useState(null)
 
   useEffect(() => {
     try {
@@ -1561,7 +1611,44 @@ export default function BookViewer({
 
       if (!cancelled) {
         const totalMeasuredPages = measuredPages.length
+        const chapterMap = {}
+        const textMap = {}
+
+        for (const page of measuredPages) {
+          for (const item of page.visualItems ?? []) {
+            if (
+              (item.type === "heading" || item.type === "title") &&
+              item.chapterId &&
+              !chapterMap[item.chapterId]
+            ) {
+              chapterMap[item.chapterId] = page.pageNumber
+            }
+          }
+
+          const pageText = (page.visualItems ?? [])
+            .map((item) => {
+              if (
+                item.type === "prose" ||
+                item.type === "heading" ||
+                item.type === "title" ||
+                item.type === "subtitle"
+              ) {
+                return item.text
+              }
+              if (item.type === "list") {
+                return flattenListText(item.items).join(" ")
+              }
+              return ""
+            })
+            .filter(Boolean)
+            .join(" ")
+
+          textMap[page.pageNumber] = pageText.toLowerCase()
+        }
+
         setPages(measuredPages)
+        setChapterPageMap(chapterMap)
+        setPageTextMap(textMap)
         setCurrentPage((previousPage) => {
           const maxPage = Math.max(1, totalMeasuredPages)
           if (totalMeasuredPages === 0) return 1
@@ -1600,6 +1687,19 @@ export default function BookViewer({
   const showSpreadLayout = isSpreadView && !isFinalOddSpreadSingle
   const navChapterTitle = formatNavChapterTitle(pages, currentPage, showSpreadLayout)
   const pageCounterText = formatPageCounter(leftPage, rightPage, totalPages, showSpreadLayout)
+  const progressPercent = totalPages > 0 ? (currentPage / totalPages) * 100 : 0
+
+  const activeChapterId = useMemo(() => {
+    const entries = Object.entries(chapterPageMap)
+      .map(([id, pg]) => ({ id, pg }))
+      .sort((a, b) => a.pg - b.pg)
+
+    let active = entries[0]?.id ?? null
+    for (const entry of entries) {
+      if (currentPage >= entry.pg) active = entry.id
+    }
+    return active
+  }, [currentPage, chapterPageMap])
 
   useEffect(() => {
     const recomputeScale = () => {
@@ -1697,6 +1797,110 @@ export default function BookViewer({
     onPageChange?.(nextPage)
   }, [canGoForward, currentPage, onPageChange, pageStep])
 
+  const runSearch = useCallback(
+    (query) => {
+      if (!query.trim()) {
+        setSearchResults([])
+        setSearchResultIndex(0)
+        return
+      }
+
+      const q = query.toLowerCase().trim()
+      const results = []
+      for (const [pageNum, text] of Object.entries(pageTextMap)) {
+        if (text.includes(q)) {
+          results.push(Number(pageNum))
+        }
+      }
+
+      results.sort((a, b) => a - b)
+      setSearchResults(results)
+      setSearchResultIndex(0)
+      if (results.length > 0) {
+        setCurrentPage(results[0])
+        onPageChange?.(results[0])
+      }
+    },
+    [pageTextMap, onPageChange]
+  )
+
+  const goToNextResult = useCallback(() => {
+    if (searchResults.length === 0) return
+    const next = (searchResultIndex + 1) % searchResults.length
+    setSearchResultIndex(next)
+    setCurrentPage(searchResults[next])
+    onPageChange?.(searchResults[next])
+  }, [searchResultIndex, searchResults, onPageChange])
+
+  const goToPrevResult = useCallback(() => {
+    if (searchResults.length === 0) return
+    const prev = (searchResultIndex - 1 + searchResults.length) % searchResults.length
+    setSearchResultIndex(prev)
+    setCurrentPage(searchResults[prev])
+    onPageChange?.(searchResults[prev])
+  }, [searchResultIndex, searchResults, onPageChange])
+
+  useEffect(() => {
+    if (!bookDocument?.id || isPaginating) return
+
+    if (currentPage >= totalPages && totalPages > 0) {
+      localStorage.removeItem(`booky-progress-${bookDocument.id}`)
+      return
+    }
+
+    localStorage.setItem(`booky-progress-${bookDocument.id}`, String(currentPage))
+  }, [currentPage, bookDocument?.id, isPaginating, totalPages])
+
+  useEffect(() => {
+    if (!isPaginating && initialPage > 1) {
+      setResumeToast(initialPage)
+      const timerId = setTimeout(() => setResumeToast(null), 2500)
+      return () => clearTimeout(timerId)
+    }
+    return undefined
+  }, [isPaginating, initialPage])
+
+  useEffect(() => {
+    const timerId = setTimeout(() => runSearch(searchQuery), 300)
+    return () => clearTimeout(timerId)
+  }, [searchQuery, runSearch])
+
+  useEffect(() => {
+    if (searchOpen) {
+      const timerId = setTimeout(() => searchInputRef.current?.focus(), 50)
+      return () => clearTimeout(timerId)
+    }
+    return undefined
+  }, [searchOpen])
+
+  useEffect(() => {
+    const handleKey = (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f") {
+        event.preventDefault()
+        setSearchOpen(true)
+        setTocOpen(false)
+        setSettingsOpen(false)
+        return
+      }
+
+      if (event.key === "Escape") {
+        setSearchOpen(false)
+        setTocOpen(false)
+        setSettingsOpen(false)
+        setSearchQuery("")
+        setSearchResults([])
+        return
+      }
+
+      if (searchOpen) return
+      if (event.key === "ArrowRight") goForward()
+      if (event.key === "ArrowLeft") goBack()
+    }
+
+    window.addEventListener("keydown", handleKey)
+    return () => window.removeEventListener("keydown", handleKey)
+  }, [goForward, goBack, searchOpen])
+
   if (isPaginating) {
     return (
       <div className="reader-screen">
@@ -1713,6 +1917,9 @@ export default function BookViewer({
       className={`book-viewer${mobileFullscreenActive ? " book-viewer--mobile-fs" : ""}`}
     >
       {showFsTip && <div className="book-viewer__fs-tip">Triple tap to exit</div>}
+      {resumeToast && (
+        <div className="book-viewer__toast">Resuming from page {resumeToast}</div>
+      )}
 
       <header className="book-viewer__nav">
         <div className="book-viewer__nav-left">
@@ -1722,6 +1929,34 @@ export default function BookViewer({
             onClick={() => navigate("/library")}
           >
             ← Library
+          </button>
+          <button
+            type="button"
+            className="book-viewer__toc-btn"
+            onClick={() => {
+              setTocOpen((previous) => !previous)
+              setSearchOpen(false)
+              setSettingsOpen(false)
+            }}
+            title="Table of Contents"
+            aria-label="Table of Contents"
+            aria-expanded={tocOpen}
+          >
+            <TocIcon />
+          </button>
+          <button
+            type="button"
+            className="book-viewer__search-btn"
+            onClick={() => {
+              setSearchOpen((previous) => !previous)
+              setTocOpen(false)
+              setSettingsOpen(false)
+            }}
+            title="Search"
+            aria-label="Search"
+            aria-expanded={searchOpen}
+          >
+            <SearchIcon />
           </button>
         </div>
         <p className="book-viewer__chapter">{navChapterTitle}</p>
@@ -1744,7 +1979,11 @@ export default function BookViewer({
             <button
               type="button"
               className="book-viewer__typesetting-btn"
-              onClick={() => setSettingsOpen((prev) => !prev)}
+              onClick={() => {
+                setSettingsOpen((prev) => !prev)
+                setTocOpen(false)
+                setSearchOpen(false)
+              }}
               title="Typesetting"
               aria-label="Typesetting"
               aria-expanded={settingsOpen}
@@ -1765,6 +2004,12 @@ export default function BookViewer({
               <FullscreenIcon />
             </button>
           )}
+        </div>
+        <div className="book-viewer__progress-bar">
+          <div
+            className="book-viewer__progress-fill"
+            style={{ width: `${progressPercent}%` }}
+          />
         </div>
       </header>
 
@@ -1868,6 +2113,125 @@ export default function BookViewer({
             )}
           </div>
         </div>
+      </div>
+
+      <div
+        className={`book-viewer__search-panel ${
+          searchOpen ? "book-viewer__search-panel--open" : ""
+        }`}
+      >
+        <div className="book-viewer__search-inner">
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="book-viewer__search-input"
+            placeholder="Search in book..."
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") goToNextResult()
+              if (event.key === "Escape") {
+                setSearchOpen(false)
+                setSearchQuery("")
+                setSearchResults([])
+              }
+            }}
+            aria-label="Search in book"
+          />
+          {searchResults.length > 0 && (
+            <span className="book-viewer__search-count">
+              {searchResultIndex + 1} / {searchResults.length}
+            </span>
+          )}
+          {searchQuery && searchResults.length === 0 && (
+            <span className="book-viewer__search-count book-viewer__search-count--none">
+              No results
+            </span>
+          )}
+          <button
+            type="button"
+            className="book-viewer__search-nav"
+            onClick={goToPrevResult}
+            disabled={searchResults.length === 0}
+            aria-label="Previous result"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            className="book-viewer__search-nav"
+            onClick={goToNextResult}
+            disabled={searchResults.length === 0}
+            aria-label="Next result"
+          >
+            ›
+          </button>
+          <button
+            type="button"
+            className="book-viewer__search-close"
+            onClick={() => {
+              setSearchOpen(false)
+              setSearchQuery("")
+              setSearchResults([])
+            }}
+            aria-label="Close search"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <div
+        className={`book-viewer__toc-panel ${
+          tocOpen ? "book-viewer__toc-panel--open" : ""
+        }`}
+        role="dialog"
+        aria-label="Table of Contents"
+      >
+        <div className="book-viewer__settings-header">
+          <span className="book-viewer__settings-title">Contents</span>
+          <button
+            className="book-viewer__settings-close"
+            onClick={() => setTocOpen(false)}
+            aria-label="Close contents"
+            type="button"
+          >
+            ✕
+          </button>
+        </div>
+
+        {bookDocument?.chapters?.length > 0 ? (
+          <nav className="book-viewer__toc-list">
+            {bookDocument.chapters.map((chapter) => {
+              const pageNum = chapterPageMap[chapter.id]
+              const isCurrent = chapter.id === activeChapterId
+              return (
+                <button
+                  key={chapter.id}
+                  type="button"
+                  className={`book-viewer__toc-item ${
+                    isCurrent ? "book-viewer__toc-item--active" : ""
+                  }`}
+                  onClick={() => {
+                    if (pageNum) {
+                      setCurrentPage(pageNum)
+                      onPageChange?.(pageNum)
+                    }
+                    setTocOpen(false)
+                  }}
+                >
+                  <span className="book-viewer__toc-title">{chapter.title}</span>
+                  {pageNum && (
+                    <span className="book-viewer__toc-page">p. {pageNum}</span>
+                  )}
+                </button>
+              )
+            })}
+          </nav>
+        ) : (
+          <p className="book-viewer__toc-empty">No chapters detected in this document.</p>
+        )}
+      </div>
 
         <div
           className={`book-viewer__settings-panel ${
@@ -2044,7 +2408,6 @@ export default function BookViewer({
             </button>
           </div>
         </div>
-      </div>
     </div>
   )
 }

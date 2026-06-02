@@ -8,6 +8,10 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 export default function Reader() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const savedPage = parseInt(localStorage.getItem(`booky-progress-${id}`) ?? "1", 10)
+  const [initialPage] = useState(() =>
+    Number.isFinite(savedPage) && savedPage > 0 ? savedPage : 1
+  )
   const [bookDocument, setBookDocument] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -30,6 +34,7 @@ export default function Reader() {
         if (cancelled) return
 
         setBookDocument({
+          id: data.document.id,
           title: data.document.name,
           chapters: data.document.chapters ?? [],
           content: data.document.content ?? [],
@@ -85,7 +90,7 @@ export default function Reader() {
   return (
     <BookViewer
       document={bookDocument}
-      initialPage={1}
+      initialPage={initialPage}
       onPageChange={(pageNumber) => {
         console.log(pageNumber)
       }}
