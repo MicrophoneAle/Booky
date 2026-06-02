@@ -97,7 +97,7 @@
   margin: 0;
   color: var(--color-gold);
   font-family: var(--font-heading);
-  font-size: clamp(2.35rem, 5.5vw, 3.15rem);
+  font-size: clamp(2.85rem, 6.5vw, 3.85rem);
   font-weight: 700;
   line-height: 1.12;
   letter-spacing: 0.02em;
@@ -172,13 +172,13 @@
 
 .library-card__spine {
   position: absolute;
-  left: -8px;
-  top: 12px;
-  bottom: 12px;
-  width: 10px;
+  left: -11px;
+  top: 0;
+  bottom: 0;
+  width: 11px;
   background: var(--spine-color, #3a1a1a);
   border-right: 1px dashed rgba(197, 160, 89, 0.25);
-  border-radius: 3px 0 0 3px;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
   box-shadow:
     2px 0 10px rgba(0, 0, 0, 0.55),
     inset -1px 0 4px rgba(0, 0, 0, 0.35);
@@ -265,6 +265,12 @@
 
 .library-card__pages {
   margin: 0.5rem 0 0;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.library-card__words {
+  margin: 0.25rem 0 0;
   font-size: 12px;
   color: var(--color-muted);
 }

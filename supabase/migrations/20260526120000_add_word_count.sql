@@ -1,0 +1,2 @@
+ALTER TABLE documents
+ADD COLUMN IF NOT EXISTS word_count integer NOT NULL DEFAULT 0;

@@ -33,7 +33,7 @@ app.get("/documents", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("documents")
-      .select("id, name, total_pages, created_at")
+      .select("id, name, total_pages, word_count, created_at")
       .order("created_at", { ascending: false })
 
     if (error) {
@@ -106,7 +106,7 @@ app.patch("/documents/:id", async (req, res) => {
       .from("documents")
       .update({ name })
       .eq("id", id)
-      .select("id, name, total_pages, created_at")
+      .select("id, name, total_pages, word_count, created_at")
       .single()
 
     if (error || !data) {
@@ -435,6 +435,24 @@ function buildBlocksFromLines(lines, headingStrings) {
   return blocks
 }
 
+function countWordsFromContent(content) {
+  if (!Array.isArray(content)) {
+    return 0
+  }
+
+  let total = 0
+
+  for (const page of content) {
+    for (const block of page.blocks ?? []) {
+      const text = typeof block.text === "string" ? block.text : ""
+      const words = text.trim().split(/\s+/).filter(Boolean)
+      total += words.length
+    }
+  }
+
+  return total
+}
+
 function blocksToContent(blocks, blocksPerPage = 40) {
   const content = []
 
@@ -490,6 +508,7 @@ app.post("/upload", (req, res) => {
       const hasImages = false
       const title = uploadedFile.originalname.replace(/\.pdf$/i, "")
       const { chapters, content: contentWithChapters } = detectChapters(content)
+      const wordCount = countWordsFromContent(contentWithChapters)
 
       const storagePath = `${Date.now()}-${uploadedFile.originalname}`
       const { data: storageData, error: storageError } = await supabase.storage
@@ -509,6 +528,7 @@ app.post("/upload", (req, res) => {
           name: title,
           storage_path: storageData.path,
           total_pages: parsedText.numpages,
+          word_count: wordCount,
           chapters,
           content: contentWithChapters,
         })

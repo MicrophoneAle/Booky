@@ -184,8 +184,8 @@ export default function Home() {
 
       <main className="home-main">
         <header className="home-hero">
-          <h1>Pragmatize your Reading</h1>
-          <p>Transform any PDF into an accessable reading experience</p>
+          <h1>Read with Clarity</h1>
+          <p>Transform any PDF into an accessible reading experience</p>
         </header>
 
         <section className="upload-section">
