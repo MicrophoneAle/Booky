@@ -1668,12 +1668,16 @@ export default function BookViewer({
           aria-label="Next page"
         />
 
-        <span className="book-viewer__arrow book-viewer__arrow--left" aria-hidden="true">
-          ‹
-        </span>
-        <span className="book-viewer__arrow book-viewer__arrow--right" aria-hidden="true">
-          ›
-        </span>
+        {!isMobile && (
+          <>
+            <span className="book-viewer__arrow book-viewer__arrow--left" aria-hidden="true">
+              ‹
+            </span>
+            <span className="book-viewer__arrow book-viewer__arrow--right" aria-hidden="true">
+              ›
+            </span>
+          </>
+        )}
 
         <div
           className="book-viewer__scale-wrapper"

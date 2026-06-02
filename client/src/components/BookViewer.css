@@ -464,6 +464,24 @@ ol.book-page__list {
     width: 18%;
   }
 
+  .book-viewer__zone {
+    -webkit-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    background: transparent;
+    touch-action: manipulation;
+  }
+
+  .book-viewer__zone:active,
+  .book-viewer__zone:focus,
+  .book-viewer__zone:focus-visible {
+    background: transparent;
+    outline: none;
+    box-shadow: none;
+  }
+
   .book-viewer__spread {
     border-radius: 4px;
   }
