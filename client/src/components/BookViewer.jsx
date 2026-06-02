@@ -1648,6 +1648,7 @@ export default function BookViewer({
   const rightPageFaceRef = useRef(null)
   const bookmarkRef = useRef(null)
   const currentPageRef = useRef(currentPage)
+  const hasShownResumeToastRef = useRef(false)
 
   const normalizeBookmarkPage = useCallback((page, total, desktopSpreadBehavior) => {
     if (!Number.isFinite(page)) return 1
@@ -1794,8 +1795,9 @@ export default function BookViewer({
           const target = bookmarkPage !== null && bookmarkPage !== undefined ? bookmarkPage : previousPage
           return normalizeBookmarkPage(target, maxPage, !isMobile)
         })
-        if (bookmarkPage && bookmarkPage > 1) {
+        if (!hasShownResumeToastRef.current && bookmarkPage && bookmarkPage > 1) {
           setRestoredPage(bookmarkPage)
+          hasShownResumeToastRef.current = true
         }
         setIsPaginating(false)
       }
@@ -2042,6 +2044,10 @@ export default function BookViewer({
   }, [bookDocument?.id, persistReadingPosition])
 
   useEffect(() => {
+    hasShownResumeToastRef.current = false
+  }, [bookDocument?.id])
+
+  useEffect(() => {
     if (!isPaginating && restoredPage > 1) {
       setResumeToast(restoredPage)
       setToastFading(false)
@@ -2268,7 +2274,7 @@ export default function BookViewer({
       {showFsTip && <div className="book-viewer__fs-tip">Triple tap to exit</div>}
       {resumeToast && (
         <div className={`book-viewer__toast${toastFading ? " book-viewer__toast--fading" : ""}`}>
-          Resuming from page {resumeToast}
+          Resuming from Page {resumeToast}
         </div>
       )}
 
