@@ -2129,20 +2129,26 @@ export default function BookViewer({
 
     const animation = element.animate(
       [
-        { transform: "translate(0px, 0px) rotate(0deg) scale(1)" },
+        { transform: "translate(0px, 0px) rotate(0deg)" },
         {
           offset: 0.4,
           transform: `translate(${Math.round(randomX * 0.35)}px, ${Math.round(
             randomY * 0.35
-          )}px) rotate(${Math.round(randomRot * 0.3)}deg) scale(0.82)`,
+          )}px) rotate(${Math.round(randomRot * 0.3)}deg)`,
         },
         {
-          transform: `translate(${randomX}px, ${randomY}px) rotate(${randomRot}deg) scale(0.4)`,
+          offset: 0.78,
+          transform: `translate(${Math.round(randomX * 0.82)}px, ${Math.round(
+            randomY * 0.82
+          )}px) rotate(${Math.round(randomRot * 0.78)}deg)`,
+        },
+        {
+          transform: `translate(${randomX}px, ${randomY}px) rotate(${randomRot}deg)`,
         },
       ],
       {
         duration: 420,
-        easing: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
         fill: "forwards",
       }
     )
