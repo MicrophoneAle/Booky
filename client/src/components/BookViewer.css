@@ -884,6 +884,13 @@
   text-indent: 0;
 }
 
+.book-page__highlight {
+  background: rgba(212, 175, 55, 0.35);
+  color: inherit;
+  padding: 0 0.05em;
+  border-radius: 2px;
+}
+
 .book-page__list,
 ol.book-page__list {
   margin: 0;

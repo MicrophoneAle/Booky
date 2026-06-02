@@ -1190,7 +1190,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   return cleanupPages(pages, bodyEl, contentMaxHeight)
 }
 
-function renderListNodeReact(node, itemKey) {
+function renderListNodeReact(node, itemKey, highlightQuery = "") {
   const markerNumber = getMarkerNumber(node)
 
   return (
@@ -1199,13 +1199,14 @@ function renderListNodeReact(node, itemKey) {
       className={listItemClassName(node)}
       {...(markerNumber !== null ? { value: markerNumber } : {})}
     >
-      {getListItemDisplayText(node)}
-      {node.children.length > 0 && renderGroupedListItemsReact(node.children, itemKey)}
+      {highlightTextContent(getListItemDisplayText(node), highlightQuery)}
+      {node.children.length > 0 &&
+        renderGroupedListItemsReact(node.children, itemKey, highlightQuery)}
     </li>
   )
 }
 
-function renderGroupedListItemsReact(nodes, keyPrefix) {
+function renderGroupedListItemsReact(nodes, keyPrefix, highlightQuery = "") {
   const elements = []
   let index = 0
   let groupIndex = 0
@@ -1236,7 +1237,7 @@ function renderGroupedListItemsReact(nodes, keyPrefix) {
           {...(listStart !== null ? { start: listStart } : {})}
         >
           {groupNodes.map((node, nodeIndex) =>
-            renderListNodeReact(node, `${listKey}-${nodeIndex}`)
+            renderListNodeReact(node, `${listKey}-${nodeIndex}`, highlightQuery)
           )}
         </ol>
       )
@@ -1244,7 +1245,7 @@ function renderGroupedListItemsReact(nodes, keyPrefix) {
       elements.push(
         <ul key={listKey} className="book-page__list">
           {groupNodes.map((node, nodeIndex) =>
-            renderListNodeReact(node, `${listKey}-${nodeIndex}`)
+            renderListNodeReact(node, `${listKey}-${nodeIndex}`, highlightQuery)
           )}
         </ul>
       )
@@ -1254,7 +1255,35 @@ function renderGroupedListItemsReact(nodes, keyPrefix) {
   return elements
 }
 
-function BookPageContent({ page, isMobileFullscreen = false, settings }) {
+function highlightTextContent(text, query) {
+  const source = String(text ?? "")
+  const normalizedQuery = String(query ?? "").trim()
+  if (!normalizedQuery) return source
+
+  const escaped = normalizedQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  const regex = new RegExp(`(${escaped})`, "gi")
+  const parts = source.split(regex)
+
+  if (parts.length <= 1) return source
+
+  const queryLower = normalizedQuery.toLowerCase()
+  return parts.map((part, index) =>
+    part.toLowerCase() === queryLower ? (
+      <mark key={`${part}-${index}`} className="book-page__highlight">
+        {part}
+      </mark>
+    ) : (
+      <Fragment key={`${part}-${index}`}>{part}</Fragment>
+    )
+  )
+}
+
+function BookPageContent({
+  page,
+  isMobileFullscreen = false,
+  settings,
+  searchQuery = "",
+}) {
   const themeId = settings?.theme ?? DEFAULT_SETTINGS.theme
   const pageClassName = [
     "book-page",
@@ -1276,7 +1305,9 @@ function BookPageContent({ page, isMobileFullscreen = false, settings }) {
   return (
     <div className={pageClassName} style={pageStyle}>
       {page.chapterTitle && (
-        <p className="book-page__chapter-label">{page.chapterTitle}</p>
+        <p className="book-page__chapter-label">
+          {highlightTextContent(page.chapterTitle, searchQuery)}
+        </p>
       )}
 
       <div className="book-page__body">
@@ -1284,7 +1315,7 @@ function BookPageContent({ page, isMobileFullscreen = false, settings }) {
           if (item.type === "title") {
             return (
               <h1 key={index} className="book-page__title">
-                {item.text}
+                {highlightTextContent(item.text, searchQuery)}
               </h1>
             )
           }
@@ -1292,7 +1323,7 @@ function BookPageContent({ page, isMobileFullscreen = false, settings }) {
           if (item.type === "heading") {
             return (
               <h2 key={index} className="book-page__heading">
-                {item.text}
+                {highlightTextContent(item.text, searchQuery)}
               </h2>
             )
           }
@@ -1300,7 +1331,7 @@ function BookPageContent({ page, isMobileFullscreen = false, settings }) {
           if (item.type === "subtitle") {
             return (
               <p key={index} className="book-page__subtitle">
-                {item.text}
+                {highlightTextContent(item.text, searchQuery)}
               </p>
             )
           }
@@ -1308,7 +1339,7 @@ function BookPageContent({ page, isMobileFullscreen = false, settings }) {
           if (item.type === "list") {
             return (
               <Fragment key={index}>
-                {renderGroupedListItemsReact(item.items, `list-${index}`)}
+                {renderGroupedListItemsReact(item.items, `list-${index}`, searchQuery)}
               </Fragment>
             )
           }
@@ -1317,7 +1348,7 @@ function BookPageContent({ page, isMobileFullscreen = false, settings }) {
 
           return (
             <p key={index} className={proseParagraphClassName(previousItem, item)}>
-              {item.text}
+              {highlightTextContent(item.text, searchQuery)}
             </p>
           )
         })}
@@ -2081,6 +2112,7 @@ export default function BookViewer({
                   page={leftPage}
                   isMobileFullscreen={mobileFullscreenActive}
                   settings={settings}
+                  searchQuery={searchQuery}
                 />
               </div>
             </div>
@@ -2099,12 +2131,14 @@ export default function BookViewer({
                         page={rightPage}
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
+                        searchQuery={searchQuery}
                       />
                     ) : (
                       <BookPageContent
                         page={null}
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
+                        searchQuery={searchQuery}
                       />
                     )}
                   </div>
