@@ -1365,7 +1365,7 @@ function BookPageContent({
       {showBookmark && !bookmarkHidden && (
         <button
           type="button"
-          className={`book-page__bookmark${bookmarkDismissed ? " book-page__bookmark--dismissed" : ""}`}
+          className={`book-page__bookmark${bookmarkDismissed ? " book-page__bookmark--flinging" : ""}`}
           onClick={onDismissBookmark}
           aria-label="Dismiss bookmark"
         />
@@ -1652,9 +1652,11 @@ export default function BookViewer({
   const [resumeToast, setResumeToast] = useState(null)
   const [toastFading, setToastFading] = useState(false)
   const [restoredPage, setRestoredPage] = useState(null)
+  const [bookmarkPage, setBookmarkPage] = useState(null)
   const [bookmarkDismissed, setBookmarkDismissed] = useState(false)
   const [bookmarkHidden, setBookmarkHidden] = useState(false)
   const bookmarkDismissTimerRef = useRef(null)
+  const currentPageRef = useRef(currentPage)
 
   const normalizeBookmarkPage = useCallback((page, total, desktopSpreadBehavior) => {
     if (!Number.isFinite(page)) return 1
@@ -1662,6 +1664,10 @@ export default function BookViewer({
     if (desktopSpreadBehavior && clamped % 2 === 0) return Math.max(1, clamped - 1)
     return clamped
   }, [])
+
+  useEffect(() => {
+    currentPageRef.current = currentPage
+  }, [currentPage])
 
   useEffect(() => {
     try {
@@ -1903,11 +1909,14 @@ export default function BookViewer({
       const saved = Number(localStorage.getItem(progressKey))
       if (Number.isFinite(saved) && saved > 0) {
         setRestoreTargetPage(saved)
+        setBookmarkPage(saved)
       } else {
         setRestoreTargetPage(initialPage)
+        setBookmarkPage(initialPage)
       }
     } catch {
       setRestoreTargetPage(initialPage)
+      setBookmarkPage(initialPage)
     }
   }, [bookDocument?.id, initialPage, progressKey])
 
@@ -2022,11 +2031,26 @@ export default function BookViewer({
     onPageChange?.(searchResults[prev].pageNumber)
   }, [searchResultIndex, searchResults, onPageChange])
 
-  useEffect(() => {
-    if (!bookDocument?.id || isPaginating) return
-    const toStore = normalizeBookmarkPage(currentPage, totalPages, !isMobile)
+  const persistReadingPosition = useCallback(() => {
+    if (!bookDocument?.id) return
+    const total = Math.max(1, pages.length)
+    const toStore = normalizeBookmarkPage(currentPageRef.current, total, !isMobile)
     localStorage.setItem(progressKey, String(toStore))
-  }, [currentPage, bookDocument?.id, isPaginating, totalPages, isMobile, progressKey, normalizeBookmarkPage])
+  }, [bookDocument?.id, pages.length, isMobile, progressKey, normalizeBookmarkPage])
+
+  useEffect(() => {
+    if (!bookDocument?.id) return undefined
+
+    const handleBeforeUnload = () => {
+      persistReadingPosition()
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => {
+      persistReadingPosition()
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+    }
+  }, [bookDocument?.id, persistReadingPosition])
 
   useEffect(() => {
     if (!isPaginating && restoredPage > 1) {
@@ -2049,7 +2073,7 @@ export default function BookViewer({
   useEffect(() => {
     setBookmarkDismissed(false)
     setBookmarkHidden(false)
-  }, [currentPage])
+  }, [bookDocument?.id])
 
   useEffect(() => {
     return () => clearTimeout(bookmarkDismissTimerRef.current)
@@ -2061,7 +2085,7 @@ export default function BookViewer({
     clearTimeout(bookmarkDismissTimerRef.current)
     bookmarkDismissTimerRef.current = setTimeout(() => {
       setBookmarkHidden(true)
-    }, 300)
+    }, 420)
   }, [bookmarkDismissed, bookmarkHidden])
 
   useEffect(() => {
@@ -2192,7 +2216,10 @@ export default function BookViewer({
           <button
             type="button"
             className="book-viewer__back"
-            onClick={() => navigate("/library")}
+            onClick={() => {
+              persistReadingPosition()
+              navigate("/library")
+            }}
           >
             ← Library
           </button>
@@ -2348,7 +2375,7 @@ export default function BookViewer({
                   isMobileFullscreen={mobileFullscreenActive}
                   settings={settings}
                   searchQuery={searchQuery}
-                  showBookmark={Boolean(leftPage)}
+                  showBookmark={Boolean(leftPage) && leftPage?.pageNumber === bookmarkPage}
                   bookmarkDismissed={bookmarkDismissed}
                   bookmarkHidden={bookmarkHidden}
                   onDismissBookmark={handleDismissBookmark}
@@ -2376,9 +2403,10 @@ export default function BookViewer({
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
                         searchQuery={searchQuery}
-                        showBookmark={false}
-                        bookmarkDismissed={false}
-                        bookmarkHidden
+                        showBookmark={Boolean(rightPage) && rightPage?.pageNumber === bookmarkPage}
+                        bookmarkDismissed={bookmarkDismissed}
+                        bookmarkHidden={bookmarkHidden}
+                        onDismissBookmark={handleDismissBookmark}
                         activeSearchOccurrence={
                           searchResults[searchResultIndex]?.pageNumber === rightPage?.pageNumber
                             ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
