@@ -1,11 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;700&family=Lora:wght@400;600&display=swap");
-
 .home-page {
   position: relative;
   min-height: 100vh;
-  background: #12100e;
-  color: #8b7355;
-  font-family: system-ui, sans-serif;
+  background: var(--color-shell);
+  color: var(--color-muted);
+  font-family: var(--font-ui);
 }
 
 .home-page__fullscreen {
@@ -21,11 +19,13 @@
   justify-content: flex-start;
   gap: 2.5rem;
   padding: 1.5rem 2rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid rgba(197, 160, 89, 0.15);
 }
 
 .home-logo {
-  color: #d4af37;
-  font-family: "EB Garamond", Georgia, serif;
+  color: var(--color-gold);
+  font-family: var(--font-heading);
   font-size: 1.7rem;
   letter-spacing: 0.3em;
   font-weight: 700;
@@ -38,12 +38,12 @@
 }
 
 .home-nav-link {
-  color: #8b7355;
+  color: var(--color-muted);
   font-size: 0.75rem;
   text-decoration: none;
   text-transform: uppercase;
   font-variant: small-caps;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.15em;
   font-weight: 600;
   padding-bottom: 0.25rem;
   border-bottom: 1px solid transparent;
@@ -51,12 +51,12 @@
 }
 
 .home-nav-link:hover {
-  color: #d4af37;
+  color: var(--color-gold);
 }
 
 .home-nav-link--active {
-  color: #d4af37;
-  border-bottom-color: #d4af37;
+  color: var(--color-gold);
+  border-bottom-color: var(--color-gold);
 }
 
 .home-main {
@@ -75,17 +75,18 @@
 
 .home-hero h1 {
   margin: 0;
-  color: #d7c9a2;
-  font-family: "EB Garamond", Georgia, serif;
+  color: var(--color-gold);
+  font-family: var(--font-heading);
   font-size: clamp(2.1rem, 5vw, 3rem);
   font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .home-hero p {
   margin: 0.7rem 0 0;
-  color: #8b7355;
+  color: var(--color-muted);
   font-size: 1rem;
-  font-family: "Lora", Georgia, serif;
+  font-family: var(--font-body);
 }
 
 .upload-section {
@@ -96,45 +97,61 @@
 .upload-zone {
   width: 100%;
   height: 260px;
-  border-radius: 12px;
-  border: 2px dashed #2a2420;
-  background: #1c1917;
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--color-muted);
+  background: var(--color-surface);
+  box-shadow:
+    inset 0 6px 28px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .upload-zone.dragging {
-  border-color: #d4af37;
-  background: #221e1a;
+  border-color: var(--color-gold);
+  background: #1a1613;
   transform: translateY(-1px);
+  box-shadow:
+    inset 0 6px 28px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(197, 160, 89, 0.12),
+    0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 .upload-icon {
   font-size: 2rem;
   margin-bottom: 0.25rem;
+  color: var(--color-muted);
 }
 
 .upload-text {
   margin: 0;
-  color: #8b7355;
+  color: var(--color-muted);
   font-size: 1rem;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
 }
 
 .browse-link {
   margin: 0;
   border: none;
   background: transparent;
-  color: #d4af37;
+  color: var(--color-gold);
   text-decoration: underline;
   text-underline-offset: 3px;
   font-size: 0.92rem;
   cursor: pointer;
   padding: 0.2rem;
+  transition: opacity 0.2s ease;
 }
 
 .browse-link:hover {
@@ -157,14 +174,14 @@
 
 .file-name {
   margin: 0;
-  color: #d4af37;
+  color: var(--color-gold);
   font-size: 0.95rem;
   word-break: break-word;
 }
 
 .file-size {
   margin: 0.25rem 0 0;
-  color: #8b7355;
+  color: var(--color-muted);
   font-size: 0.85rem;
 }
 
@@ -173,19 +190,19 @@
   width: 100%;
   height: 4px;
   border-radius: 999px;
-  background: #2a2420;
+  background: var(--color-border);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: #d4af37;
+  background: var(--color-gold);
   transition: width 0.08s linear;
 }
 
 .upload-note {
   margin: 0.55rem 0 0;
-  color: #8b7355;
+  color: var(--color-muted);
   font-size: 0.9rem;
 }
 
@@ -199,7 +216,7 @@
 
 .success-message {
   margin: 0;
-  color: #d4af37;
+  color: var(--color-gold);
   font-size: 0.95rem;
   display: inline-flex;
   align-items: center;
@@ -207,9 +224,9 @@
 }
 
 .open-book-btn {
-  background: #d4af37;
-  color: #12100e;
-  border: 1px solid #d4af37;
+  background: var(--color-gold);
+  color: var(--color-shell);
+  border: 1px solid var(--color-gold);
   border-radius: 10px;
   padding: 0.55rem 0.85rem;
   font-weight: 700;

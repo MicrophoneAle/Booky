@@ -3,7 +3,7 @@
 .reader-screen {
   width: 100vw;
   height: 100vh;
-  background: #12100e;
+  background: var(--color-shell);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,8 +15,8 @@
 
 .reader-screen__logo {
   margin: 0;
-  color: #d4af37;
-  font-family: "EB Garamond", Georgia, serif;
+  color: var(--color-gold);
+  font-family: var(--font-heading);
   font-size: 2rem;
   letter-spacing: 0.3em;
   font-weight: 700;
@@ -25,8 +25,8 @@
 .reader-screen__subtext,
 .reader-screen__message {
   margin: 0.85rem 0 0;
-  color: #8b7355;
-  font-family: system-ui, sans-serif;
+  color: var(--color-muted);
+  font-family: var(--font-ui);
   font-size: 13px;
 }
 
@@ -34,14 +34,16 @@
   margin-top: 1rem;
   border: none;
   background: transparent;
-  color: #d4af37;
-  font-family: system-ui, sans-serif;
+  color: var(--color-gold);
+  font-family: var(--font-ui);
   font-size: 13px;
   cursor: pointer;
   text-decoration: none;
   padding: 0;
+  transition: opacity 0.2s ease;
 }
 
 .reader-screen__link:hover {
   text-decoration: underline;
+  opacity: 0.9;
 }

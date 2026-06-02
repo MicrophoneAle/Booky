@@ -4,12 +4,12 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: #8b7355;
+  color: var(--color-muted);
   cursor: pointer;
   padding: 0.2rem;
   transition: color 0.2s ease;
 }
 
 .fullscreen-button:hover {
-  color: #d4af37;
+  color: var(--color-gold);
 }

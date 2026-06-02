@@ -2,13 +2,13 @@
 
 :root {
   /* Colours */
-  --color-shell:   #12100E;
-  --color-surface: #1C1917;
-  --color-border:  #2A2420;
-  --color-gold:    #D4AF37;
-  --color-muted:   #8B7355;
-  --color-page:    #FFFFFF;
-  --color-ink:     #1C1917;
+  --color-shell:   #0d0b0a;
+  --color-surface: #14110f;
+  --color-border:  #26201b;
+  --color-gold:    #c5a059;
+  --color-muted:   #73604f;
+  --color-page:    #ffffff;
+  --color-ink:     #1c1917;
 
   /* Typography */
   --font-heading:      'EB Garamond', Georgia, serif;
