@@ -24,7 +24,7 @@
   --radius-sm:         4px;
   --radius-md:         8px;
   --radius-lg:         12px;
-  --nav-height:        40px;
+  --nav-height:        44px;
 
   /* Mahogany desk surface (public/wood_desk_texture.jpg) */
   --bg-desk: linear-gradient(rgba(13, 11, 10, 0.75), rgba(13, 11, 10, 0.85)),
