@@ -17,6 +17,7 @@
   height: var(--nav-height);
   display: flex;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .library-nav {
@@ -153,6 +154,27 @@
 .library__signin-cta:hover {
   background: #d4af37;
   color: #12100e;
+}
+
+.nav__signin-btn {
+  background: transparent;
+  border: 1px solid #8b7355;
+  color: #8b7355;
+  font-family: system-ui, sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.6rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nav__signin-btn:hover {
+  border-color: #d4af37;
+  color: #d4af37;
 }
 
 .library-main {

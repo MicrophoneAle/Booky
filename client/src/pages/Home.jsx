@@ -232,7 +232,21 @@ export default function Home() {
 
   return (
     <div className="home-page">
-      <FullscreenButton className="home-page__fullscreen" />
+      <div className="home-page__fullscreen">
+        <SignedOut>
+          <SignInButton mode="modal">
+            <button className="nav__signin-btn">Sign in</button>
+          </SignInButton>
+        </SignedOut>
+        <SignedIn>
+          <UserButton
+            appearance={{
+              elements: { avatarBox: { width: 26, height: 26 } },
+            }}
+          />
+        </SignedIn>
+        <FullscreenButton />
+      </div>
       <nav className="home-nav" aria-label="Primary">
         <div className="home-logo">BOOKY</div>
         <div className="home-nav-links">
@@ -253,22 +267,6 @@ export default function Home() {
           >
             Library
           </NavLink>
-        </div>
-        <div className="home__nav-right">
-          <SignedOut>
-            <SignInButton mode="modal">
-              <button className="home__signin-btn">Sign in</button>
-            </SignInButton>
-          </SignedOut>
-          <SignedIn>
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: { width: 28, height: 28 },
-                },
-              }}
-            />
-          </SignedIn>
         </div>
       </nav>
 

@@ -375,7 +375,21 @@ export default function Library() {
 
   return (
     <div className="library-page">
-      <FullscreenButton className="library-page__fullscreen" />
+      <div className="library-page__fullscreen">
+        <SignedOut>
+          <SignInButton mode="modal">
+            <button className="nav__signin-btn">Sign in</button>
+          </SignInButton>
+        </SignedOut>
+        <SignedIn>
+          <UserButton
+            appearance={{
+              elements: { avatarBox: { width: 26, height: 26 } },
+            }}
+          />
+        </SignedIn>
+        <FullscreenButton />
+      </div>
       <nav className="library-nav" aria-label="Primary">
         <div className="library-logo">BOOKY</div>
         <div className="library-nav-links">
@@ -396,22 +410,6 @@ export default function Library() {
           >
             Library
           </NavLink>
-        </div>
-        <div className="library__nav-right">
-          <SignedOut>
-            <SignInButton mode="modal">
-              <button className="library__signin-btn">Sign in</button>
-            </SignInButton>
-          </SignedOut>
-          <SignedIn>
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: { width: 28, height: 28 },
-                },
-              }}
-            />
-          </SignedIn>
         </div>
       </nav>
 
