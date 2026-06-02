@@ -4,7 +4,6 @@ import { flattenDocument } from "../utils/paginator"
 import { FullscreenIcon } from "./FullscreenButton"
 import "../pages/Reader.css"
 import "./BookViewer.css"
-import "./FullscreenButton.css"
 
 const NAVBAR_HEIGHT_PX = 44
 const PAGE_WIDTH_PX = 400
@@ -15,6 +14,42 @@ const PAGE_NUMBER_RESERVED_PX = 32
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 8
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 const GREEDY_PAGE_SAFETY_MARGIN_PX = 10
+
+const DEFAULT_SETTINGS = {
+  theme: "parchment",
+  fontSize: "medium",
+  fontStyle: "lora",
+  lineSpacing: "normal",
+  margins: "normal",
+}
+
+const FONT_SIZE_MAP = {
+  small: { body: 9, heading: 13, title: 19 },
+  medium: { body: 10, heading: 15, title: 22 },
+  large: { body: 12, heading: 17, title: 24 },
+  xlarge: { body: 14, heading: 19, title: 26 },
+}
+
+const FONT_FAMILY_MAP = {
+  lora: { body: "'Lora', Georgia, serif", heading: "'EB Garamond', Georgia, serif" },
+  garamond: { body: "'EB Garamond', Georgia, serif", heading: "'EB Garamond', Georgia, serif" },
+  georgia: { body: "Georgia, serif", heading: "Georgia, serif" },
+  palatino: { body: "'Palatino Linotype', Palatino, serif", heading: "'Palatino Linotype', Palatino, serif" },
+}
+
+const LINE_HEIGHT_MAP = {
+  compact: { body: 1.1, heading: 1.1 },
+  normal: { body: 1.15, heading: 1.2 },
+  relaxed: { body: 1.4, heading: 1.3 },
+  airy: { body: 1.65, heading: 1.4 },
+}
+
+const MARGIN_MAP = {
+  none: "0px",
+  narrow: "0.35rem",
+  normal: "0.75rem",
+  wide: "1.25rem",
+}
 
 const IMPLIED_LIST_LINE_REGEX = /^(Add|Test|Explore|Verify|Ensure|Click)\b/i
 const TRIVIAL_LIST_PAGE_CHAR_LIMIT = 30
@@ -296,9 +331,12 @@ function createListElement(kind) {
   return unorderedList
 }
 
-function getLayoutHeights(pageHeightOverride) {
-  const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-  const pagePaddingY = 0.75 * remPx * 2
+function getLayoutHeights(pageHeightOverride, marginSetting) {
+  const remPx =
+    parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+  const rawMargin = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
+  const marginPx = rawMargin === "0px" ? 0 : parseFloat(rawMargin) * remPx
+  const pagePaddingY = marginPx * 2
   const pageHeight = pageHeightOverride ?? PAGE_HEIGHT_PX
   const contentMaxHeight =
     pageHeight -
@@ -1216,19 +1254,27 @@ function renderGroupedListItemsReact(nodes, keyPrefix) {
   return elements
 }
 
-function BookPageContent({ page, isMobileFullscreen = false }) {
-  const pageClassName = isMobileFullscreen
-    ? "book-page book-page--mobile-fs"
-    : "book-page"
+function BookPageContent({ page, isMobileFullscreen = false, settings }) {
+  const themeId = settings?.theme ?? DEFAULT_SETTINGS.theme
+  const pageClassName = [
+    "book-page",
+    `book-page--theme-${themeId}`,
+    isMobileFullscreen ? "book-page--mobile-fs" : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+
+  const padding = MARGIN_MAP[settings?.margins ?? DEFAULT_SETTINGS.margins] ?? "0px"
+  const pageStyle = { padding }
 
   if (!page) {
-    return <div className={`${pageClassName} book-page--empty`} />
+    return <div className={`${pageClassName} book-page--empty`} style={pageStyle} />
   }
 
   const visualItems = page.visualItems ?? []
 
   return (
-    <div className={pageClassName}>
+    <div className={pageClassName} style={pageStyle}>
       {page.chapterTitle && (
         <p className="book-page__chapter-label">{page.chapterTitle}</p>
       )}
@@ -1372,6 +1418,27 @@ function LayoutModeIcon({ isSpreadView }) {
   )
 }
 
+function NibIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 2 L20 10 L12 22 L4 10 Z" />
+      <path d="M12 22 L12 14" />
+      <path d="M8 12 L12 14 L16 12" />
+      <path d="M12 2 L12 8" />
+    </svg>
+  )
+}
+
 export default function BookViewer({
   document: bookDocument,
   initialPage = 1,
@@ -1390,6 +1457,27 @@ export default function BookViewer({
   const tapTimerRef = useRef(null)
   const [scale, setScale] = useState(1)
   const [isFullscreen, setIsFullscreen] = useState(false)
+
+  const [settings, setSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem("booky-settings")
+      return saved
+        ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
+        : DEFAULT_SETTINGS
+    } catch {
+      return DEFAULT_SETTINGS
+    }
+  })
+
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("booky-settings", JSON.stringify(settings))
+    } catch {
+      // Ignore storage write errors (private mode, quota, etc.)
+    }
+  }, [settings])
 
   useEffect(() => {
     document.body.style.overflow = "hidden"
@@ -1438,11 +1526,29 @@ export default function BookViewer({
       const flatBlocks = flattenDocument(bookDocument)
       const mobileFS = isMobile && isMobileFullscreen
       const pageHeightToUse = mobileFS ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : undefined
-      const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(pageHeightToUse)
+      const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(
+        pageHeightToUse,
+        settings.margins
+      )
       const measureElements = createMeasureElements()
 
       measureRoot = measureElements.root
       measureElements.page.style.height = `${pageOuterHeight}px`
+      measureElements.body.style.padding = MARGIN_MAP[settings.margins]
+
+      const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
+      const line = LINE_HEIGHT_MAP[settings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
+      const family = FONT_FAMILY_MAP[settings.fontStyle] ?? FONT_FAMILY_MAP.lora
+
+      measureElements.page.style.setProperty("--fs-body", `${font.body}px`)
+      measureElements.page.style.setProperty("--fs-heading", `${font.heading}px`)
+      measureElements.page.style.setProperty("--fs-title", `${font.title}px`)
+      measureElements.page.style.setProperty("--ff-body", family.body)
+      measureElements.page.style.setProperty("--ff-heading", family.heading)
+      measureElements.page.style.setProperty("--lh-body", line.body)
+      measureElements.page.style.setProperty("--lh-heading", line.heading)
+
+      measureElements.page.classList.add(`book-page--theme-${settings.theme}`)
 
       const measuredPages = paginateBlocksByDom(
         flatBlocks,
@@ -1471,7 +1577,7 @@ export default function BookViewer({
       cancelled = true
       measureRoot?.remove()
     }
-  }, [bookDocument, initialPage, isMobileFullscreen, isMobile])
+  }, [bookDocument, initialPage, isMobileFullscreen, isMobile, settings])
 
   const activePageHeight =
     isMobile && isMobileFullscreen ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : PAGE_HEIGHT_PX
@@ -1484,6 +1590,11 @@ export default function BookViewer({
 
   const leftPage = pages[currentPage - 1] ?? null
   const rightPage = isSpreadView ? pages[currentPage] ?? null : null
+
+  const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
+  const family = FONT_FAMILY_MAP[settings.fontStyle] ?? FONT_FAMILY_MAP.lora
+  const line = LINE_HEIGHT_MAP[settings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
+
   const isFinalOddSpreadSingle =
     isSpreadView && totalPages % 2 === 1 && Boolean(leftPage) && !rightPage
   const showSpreadLayout = isSpreadView && !isFinalOddSpreadSingle
@@ -1628,10 +1739,25 @@ export default function BookViewer({
               <LayoutModeIcon isSpreadView={isSpreadView} />
             </button>
           )}
+
           {!(isMobile && isMobileFullscreen) && (
             <button
               type="button"
-              className="fullscreen-button book-viewer__fullscreen"
+              className="book-viewer__typesetting-btn"
+              onClick={() => setSettingsOpen((prev) => !prev)}
+              title="Typesetting"
+              aria-label="Typesetting"
+              aria-expanded={settingsOpen}
+            >
+              <NibIcon />
+              <span className="book-viewer__typesetting-label">Typesetting</span>
+            </button>
+          )}
+
+          {!(isMobile && isMobileFullscreen) && (
+            <button
+              type="button"
+              className="book-viewer__fullscreen"
               onClick={isMobile ? () => setIsMobileFullscreen(true) : toggleFullscreen}
               title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
               aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
@@ -1684,6 +1810,13 @@ export default function BookViewer({
           style={{
             transform: `scale(${scale})`,
             transformOrigin: "center center",
+            "--fs-body": `${font.body}px`,
+            "--fs-heading": `${font.heading}px`,
+            "--fs-title": `${font.title}px`,
+            "--ff-body": family.body,
+            "--ff-heading": family.heading,
+            "--lh-body": line.body,
+            "--lh-heading": line.heading,
           }}
         >
           <div
@@ -1702,6 +1835,7 @@ export default function BookViewer({
                 <BookPageContent
                   page={leftPage}
                   isMobileFullscreen={mobileFullscreenActive}
+                  settings={settings}
                 />
               </div>
             </div>
@@ -1719,14 +1853,195 @@ export default function BookViewer({
                       <BookPageContent
                         page={rightPage}
                         isMobileFullscreen={mobileFullscreenActive}
+                        settings={settings}
                       />
                     ) : (
-                      <div className="book-page book-page--empty book-page--mobile-fs" />
+                      <BookPageContent
+                        page={null}
+                        isMobileFullscreen={mobileFullscreenActive}
+                        settings={settings}
+                      />
                     )}
                   </div>
                 </div>
               </>
             )}
+          </div>
+        </div>
+
+        <div
+          className={`book-viewer__settings-panel ${
+            settingsOpen ? "book-viewer__settings-panel--open" : ""
+          }`}
+          role="dialog"
+          aria-label="Typesetting settings"
+        >
+          <div className="book-viewer__settings-header">
+            <span className="book-viewer__settings-title">Typesetting</span>
+            <button
+              className="book-viewer__settings-close"
+              onClick={() => setSettingsOpen(false)}
+              aria-label="Close settings"
+              type="button"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="book-viewer__settings-section">
+            <p className="book-viewer__settings-label">Page Theme</p>
+            <div className="book-viewer__theme-grid">
+              {[
+                { id: "parchment", bg: "#FFFFFF", ink: "#1C1917", label: "Parchment" },
+                { id: "warm", bg: "#F5ECD7", ink: "#2C1810", label: "Warm" },
+                { id: "sepia", bg: "#E8D5B0", ink: "#3B2A1A", label: "Sepia" },
+                { id: "dusk", bg: "#2C2B3C", ink: "#D4CFC7", label: "Dusk" },
+                { id: "midnight", bg: "#1A1A2E", ink: "#E8E4DD", label: "Midnight" },
+                { id: "obsidian", bg: "#1C1917", ink: "#C8C0B4", label: "Obsidian" },
+              ].map((theme) => (
+                <button
+                  key={theme.id}
+                  type="button"
+                  className={`book-viewer__theme-swatch ${
+                    settings.theme === theme.id
+                      ? "book-viewer__theme-swatch--active"
+                      : ""
+                  }`}
+                  style={{
+                    background: theme.bg,
+                    color: theme.ink,
+                    border:
+                      settings.theme === theme.id
+                        ? "2px solid #d4af37"
+                        : "2px solid transparent",
+                  }}
+                  onClick={() => setSettings((s) => ({ ...s, theme: theme.id }))}
+                  title={theme.label}
+                  aria-label={theme.label}
+                  aria-pressed={settings.theme === theme.id}
+                >
+                  <span style={{ fontSize: 9, fontFamily: "Georgia, serif" }}>Aa</span>
+                  <span style={{ fontSize: 8 }}>{theme.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="book-viewer__settings-section">
+            <p className="book-viewer__settings-label">Font Size</p>
+            <div className="book-viewer__settings-row">
+              {["small", "medium", "large", "xlarge"].map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  className={`book-viewer__settings-chip ${
+                    settings.fontSize === size
+                      ? "book-viewer__settings-chip--active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setSettings((s) => ({
+                      ...s,
+                      fontSize: size,
+                    }))
+                  }
+                >
+                  {size === "xlarge"
+                    ? "XL"
+                    : size.charAt(0).toUpperCase() + size.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="book-viewer__settings-section">
+            <p className="book-viewer__settings-label">Typeface</p>
+            <div className="book-viewer__settings-row">
+              {[
+                { id: "lora", label: "Lora" },
+                { id: "garamond", label: "Garamond" },
+                { id: "georgia", label: "Georgia" },
+                { id: "palatino", label: "Palatino" },
+              ].map((fontOption) => (
+                <button
+                  key={fontOption.id}
+                  type="button"
+                  className={`book-viewer__settings-chip ${
+                    settings.fontStyle === fontOption.id
+                      ? "book-viewer__settings-chip--active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setSettings((s) => ({
+                      ...s,
+                      fontStyle: fontOption.id,
+                    }))
+                  }
+                >
+                  {fontOption.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="book-viewer__settings-section">
+            <p className="book-viewer__settings-label">Line Spacing</p>
+            <div className="book-viewer__settings-row">
+              {["compact", "normal", "relaxed", "airy"].map((sp) => (
+                <button
+                  key={sp}
+                  type="button"
+                  className={`book-viewer__settings-chip ${
+                    settings.lineSpacing === sp
+                      ? "book-viewer__settings-chip--active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setSettings((s) => ({
+                      ...s,
+                      lineSpacing: sp,
+                    }))
+                  }
+                >
+                  {sp.charAt(0).toUpperCase() + sp.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="book-viewer__settings-section">
+            <p className="book-viewer__settings-label">Margins</p>
+            <div className="book-viewer__settings-row">
+              {["none", "narrow", "normal", "wide"].map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={`book-viewer__settings-chip ${
+                    settings.margins === m
+                      ? "book-viewer__settings-chip--active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setSettings((s) => ({
+                      ...s,
+                      margins: m,
+                    }))
+                  }
+                >
+                  {m.charAt(0).toUpperCase() + m.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="book-viewer__settings-section">
+            <button
+              type="button"
+              className="book-viewer__settings-reset"
+              onClick={() => setSettings(DEFAULT_SETTINGS)}
+            >
+              Reset to defaults
+            </button>
           </div>
         </div>
       </div>
