@@ -1,4 +1,5 @@
 ﻿import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { useNavigate } from "react-router-dom"
 import { flattenDocument } from "../utils/paginator"
 import { FullscreenIcon } from "./FullscreenButton"
@@ -1336,10 +1337,6 @@ function BookPageContent({
   settings,
   searchQuery = "",
   activeSearchOccurrence = null,
-  showBookmark = false,
-  bookmarkDismissed = false,
-  bookmarkHidden = false,
-  onDismissBookmark = null,
 }) {
   const themeId = settings?.theme ?? DEFAULT_SETTINGS.theme
   const pageClassName = [
@@ -1362,14 +1359,6 @@ function BookPageContent({
 
   return (
     <div className={pageClassName} style={pageStyle}>
-      {showBookmark && !bookmarkHidden && (
-        <button
-          type="button"
-          className={`book-page__bookmark${bookmarkDismissed ? " book-page__bookmark--flinging" : ""}`}
-          onClick={onDismissBookmark}
-          aria-label="Dismiss bookmark"
-        />
-      )}
       {page.chapterTitle && (
         <p className="book-page__chapter-label">
           {highlightTextContent(
@@ -1655,7 +1644,10 @@ export default function BookViewer({
   const [bookmarkPage, setBookmarkPage] = useState(null)
   const [bookmarkDismissed, setBookmarkDismissed] = useState(false)
   const [bookmarkHidden, setBookmarkHidden] = useState(false)
-  const bookmarkDismissTimerRef = useRef(null)
+  const [bookmarkPosition, setBookmarkPosition] = useState(null)
+  const leftPageFaceRef = useRef(null)
+  const rightPageFaceRef = useRef(null)
+  const bookmarkRef = useRef(null)
   const currentPageRef = useRef(currentPage)
 
   const normalizeBookmarkPage = useCallback((page, total, desktopSpreadBehavior) => {
@@ -2076,16 +2068,75 @@ export default function BookViewer({
   }, [bookDocument?.id])
 
   useEffect(() => {
-    return () => clearTimeout(bookmarkDismissTimerRef.current)
-  }, [])
+    const updateBookmarkPosition = () => {
+      if (bookmarkHidden) return
+      const anchorElement =
+        leftPage?.pageNumber === bookmarkPage
+          ? leftPageFaceRef.current
+          : rightPage?.pageNumber === bookmarkPage
+            ? rightPageFaceRef.current
+            : null
+      if (!anchorElement) {
+        setBookmarkPosition(null)
+        return
+      }
+
+      const rect = anchorElement.getBoundingClientRect()
+      setBookmarkPosition({
+        top: rect.top - 1,
+        left: rect.right - 14 - 20,
+      })
+    }
+
+    updateBookmarkPosition()
+    window.addEventListener("resize", updateBookmarkPosition)
+    window.addEventListener("scroll", updateBookmarkPosition, true)
+    return () => {
+      window.removeEventListener("resize", updateBookmarkPosition)
+      window.removeEventListener("scroll", updateBookmarkPosition, true)
+    }
+  }, [bookmarkPage, bookmarkHidden, leftPage?.pageNumber, rightPage?.pageNumber, pages.length, scale])
 
   const handleDismissBookmark = useCallback(() => {
     if (bookmarkDismissed || bookmarkHidden) return
     setBookmarkDismissed(true)
-    clearTimeout(bookmarkDismissTimerRef.current)
-    bookmarkDismissTimerRef.current = setTimeout(() => {
+    const element = bookmarkRef.current
+    if (!element) {
       setBookmarkHidden(true)
-    }, 420)
+      return
+    }
+
+    const randomX = Math.floor(Math.random() * 401) - 200
+    const randomY = -(150 + Math.floor(Math.random() * 101))
+    const rotationMagnitude = 300 + Math.floor(Math.random() * 221)
+    const rotationSign = Math.random() > 0.5 ? 1 : -1
+    const randomRot = rotationMagnitude * rotationSign
+
+    const animation = element.animate(
+      [
+        { transform: "translate(0px, 0px) rotate(0deg) scale(1)", opacity: 1 },
+        {
+          offset: 0.4,
+          transform: `translate(${Math.round(randomX * 0.35)}px, ${Math.round(
+            randomY * 0.35
+          )}px) rotate(${Math.round(randomRot * 0.3)}deg) scale(0.82)`,
+          opacity: 1,
+        },
+        {
+          transform: `translate(${randomX}px, ${randomY}px) rotate(${randomRot}deg) scale(0.4)`,
+          opacity: 0,
+        },
+      ],
+      {
+        duration: 420,
+        easing: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        fill: "forwards",
+      }
+    )
+
+    animation.onfinish = () => {
+      setBookmarkHidden(true)
+    }
   }, [bookmarkDismissed, bookmarkHidden])
 
   useEffect(() => {
@@ -2369,16 +2420,12 @@ export default function BookViewer({
               }`}
               style={{ height: activePageHeight }}
             >
-              <div className="book-viewer__page-face">
+              <div className="book-viewer__page-face" ref={leftPageFaceRef}>
                 <BookPageContent
                   page={leftPage}
                   isMobileFullscreen={mobileFullscreenActive}
                   settings={settings}
                   searchQuery={searchQuery}
-                  showBookmark={Boolean(leftPage) && leftPage?.pageNumber === bookmarkPage}
-                  bookmarkDismissed={bookmarkDismissed}
-                  bookmarkHidden={bookmarkHidden}
-                  onDismissBookmark={handleDismissBookmark}
                   activeSearchOccurrence={
                     searchResults[searchResultIndex]?.pageNumber === leftPage?.pageNumber
                       ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
@@ -2396,17 +2443,13 @@ export default function BookViewer({
                   className="book-viewer__page-slot book-viewer__page-slot--right"
                   style={{ height: activePageHeight }}
                 >
-                  <div className="book-viewer__page-face">
+                  <div className="book-viewer__page-face" ref={rightPageFaceRef}>
                     {rightPage ? (
                       <BookPageContent
                         page={rightPage}
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
                         searchQuery={searchQuery}
-                        showBookmark={Boolean(rightPage) && rightPage?.pageNumber === bookmarkPage}
-                        bookmarkDismissed={bookmarkDismissed}
-                        bookmarkHidden={bookmarkHidden}
-                        onDismissBookmark={handleDismissBookmark}
                         activeSearchOccurrence={
                           searchResults[searchResultIndex]?.pageNumber === rightPage?.pageNumber
                             ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
@@ -2419,9 +2462,6 @@ export default function BookViewer({
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
                         searchQuery={searchQuery}
-                        showBookmark={false}
-                        bookmarkDismissed={false}
-                        bookmarkHidden
                         activeSearchOccurrence={null}
                       />
                     )}
@@ -2498,6 +2538,25 @@ export default function BookViewer({
           </button>
         </div>
       </div>
+
+      {bookmarkPage &&
+        !bookmarkHidden &&
+        bookmarkPosition &&
+        createPortal(
+          <button
+            ref={bookmarkRef}
+            type="button"
+            className="book-page__bookmark"
+            style={{
+              top: `${bookmarkPosition.top}px`,
+              left: `${bookmarkPosition.left}px`,
+              zIndex: 9999,
+            }}
+            onClick={handleDismissBookmark}
+            aria-label="Dismiss bookmark"
+          />,
+          document.body
+        )}
 
       <div
         className={`book-viewer__toc-panel ${
