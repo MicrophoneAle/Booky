@@ -2,6 +2,7 @@ import "dotenv/config"
 import express from "express"
 import cors from "cors"
 import multer from "multer"
+import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
@@ -12,6 +13,7 @@ const supabase = createClient(
 )
 
 const app = express()
+app.use(clerkMiddleware())
 
 app.use(
   cors({
@@ -29,11 +31,21 @@ app.use(express.json())
 
 app.get("/", (req, res) => res.json({ message: "Booky API running" }))
 
-app.get("/documents", async (req, res) => {
+function requireAuth(req, res, next) {
+  const { userId } = getAuth(req)
+  if (!userId) {
+    return res.status(401).json({ success: false, error: "Unauthorized" })
+  }
+  req.userId = userId
+  next()
+}
+
+app.get("/documents", requireAuth, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("documents")
       .select("id, name, total_pages, word_count, created_at, content")
+      .eq("user_id", req.userId)
       .order("created_at", { ascending: false })
 
     if (error) {
@@ -43,7 +55,7 @@ app.get("/documents", async (req, res) => {
 
     const documents = await Promise.all(
       (data ?? []).map(async (documentRow) => {
-        const wordCount = await resolveWordCountForDocument(documentRow)
+        const wordCount = await resolveWordCountForDocument(documentRow, req.userId)
         return toPublicDocument(documentRow, wordCount)
       })
     )
@@ -57,7 +69,7 @@ app.get("/documents", async (req, res) => {
   }
 })
 
-app.delete("/documents/:id", async (req, res) => {
+app.delete("/documents/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params
 
@@ -65,6 +77,7 @@ app.delete("/documents/:id", async (req, res) => {
       .from("documents")
       .select("storage_path")
       .eq("id", id)
+      .eq("user_id", req.userId)
       .single()
 
     if (fetchError || !document) {
@@ -87,6 +100,7 @@ app.delete("/documents/:id", async (req, res) => {
       .from("documents")
       .delete()
       .eq("id", id)
+      .eq("user_id", req.userId)
 
     if (deleteError) {
       res.status(500).json({ success: false, error: "Delete failed" })
@@ -99,7 +113,7 @@ app.delete("/documents/:id", async (req, res) => {
   }
 })
 
-app.patch("/documents/:id", async (req, res) => {
+app.patch("/documents/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params
     const name = typeof req.body?.name === "string" ? req.body.name.trim() : ""
@@ -113,6 +127,7 @@ app.patch("/documents/:id", async (req, res) => {
       .from("documents")
       .update({ name })
       .eq("id", id)
+      .eq("user_id", req.userId)
       .select("id, name, total_pages, word_count, created_at")
       .single()
 
@@ -130,7 +145,7 @@ app.patch("/documents/:id", async (req, res) => {
   }
 })
 
-app.get("/documents/:id", async (req, res) => {
+app.get("/documents/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params
 
@@ -138,6 +153,7 @@ app.get("/documents/:id", async (req, res) => {
       .from("documents")
       .select("id, name, total_pages, chapters, content")
       .eq("id", id)
+      .eq("user_id", req.userId)
       .single()
 
     if (error || !data) {
@@ -479,7 +495,7 @@ function countWordsFromBlocks(blocks) {
   return blocks.reduce((total, block) => total + countWordsInPlainText(block.text), 0)
 }
 
-async function resolveWordCountForDocument(documentRow) {
+async function resolveWordCountForDocument(documentRow, userId) {
   const storedCount = Number(documentRow.word_count)
   if (Number.isFinite(storedCount) && storedCount > 0) {
     return storedCount
@@ -491,6 +507,7 @@ async function resolveWordCountForDocument(documentRow) {
       .from("documents")
       .update({ word_count: fromContent })
       .eq("id", documentRow.id)
+      .eq("user_id", userId)
     return fromContent
   }
 
@@ -534,7 +551,7 @@ const upload = multer({
   },
 })
 
-app.post("/upload", (req, res) => {
+app.post("/upload", requireAuth, (req, res) => {
   upload.single("file")(req, res, async (uploadError) => {
     if (uploadError) {
       res.status(500).json({ success: false, error: uploadError.message })
@@ -589,6 +606,7 @@ app.post("/upload", (req, res) => {
           word_count: wordCount,
           chapters,
           content: contentWithChapters,
+          user_id: req.userId,
         })
         .select("id, word_count")
         .single()

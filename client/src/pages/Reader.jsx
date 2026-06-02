@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { useAuth } from "@clerk/clerk-react"
 import BookViewer from "../components/BookViewer"
 import "./Reader.css"
 
@@ -8,6 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 export default function Reader() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { getToken } = useAuth()
   const savedPage = parseInt(localStorage.getItem(`booky-progress-${id}`) ?? "1", 10)
   const [initialPage] = useState(() =>
     Number.isFinite(savedPage) && savedPage > 0 ? savedPage : 1
@@ -24,7 +26,16 @@ export default function Reader() {
       setError(null)
 
       try {
-        const response = await fetch(`${API_URL}/documents/${id}`)
+        const token = await getToken()
+        if (!token) {
+          throw new Error("Unauthorized")
+        }
+        const response = await fetch(`${API_URL}/documents/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        })
         const data = await response.json()
 
         if (!response.ok || !data.success) {
@@ -57,7 +68,7 @@ export default function Reader() {
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [getToken, id])
 
   if (loading) {
     return (

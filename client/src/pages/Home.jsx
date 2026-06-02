@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
+import { useAuth, UserButton } from "@clerk/clerk-react"
 import FullscreenButton from "../components/FullscreenButton"
 import "./Home.css"
 
@@ -37,7 +38,7 @@ function isPdfFile(file) {
   return hasPdfMime || hasPdfExtension
 }
 
-function doUpload(file, setUploadState, navigate) {
+function doUpload(file, token, setUploadState, navigate) {
   setUploadState((state) => ({ ...state, phase: "uploading", progress: 0 }))
 
   return new Promise((resolve) => {
@@ -104,12 +105,14 @@ function doUpload(file, setUploadState, navigate) {
 
     xhr.timeout = 120000
     xhr.open("POST", `${API_URL}/upload`)
+    xhr.setRequestHeader("Authorization", `Bearer ${token}`)
     xhr.send(formData)
   })
 }
 
 export default function Home() {
   const navigate = useNavigate()
+  const { getToken } = useAuth()
   const fileInputRef = useRef(null)
 
   const [file, setFile] = useState(null)
@@ -133,16 +136,30 @@ export default function Home() {
       )
     }, 2000)
 
+    const token = await getToken()
+    if (!token) {
+      setUploadState((state) => ({
+        ...state,
+        phase: "error",
+        errorMessage: "Unauthorized",
+      }))
+      return
+    }
+
     try {
-      await fetch(`${API_URL}/`)
+      await fetch(`${API_URL}/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
     } catch {
       // server unreachable — will fail on upload too
     } finally {
       clearTimeout(wakeTimer)
     }
 
-    await doUpload(selectedFile, setUploadState, navigate)
-  }, [navigate])
+    await doUpload(selectedFile, token, setUploadState, navigate)
+  }, [getToken, navigate])
 
   const handleInvalidFile = useCallback(() => {
     setFile(null)
@@ -224,6 +241,15 @@ export default function Home() {
           >
             Library
           </NavLink>
+        </div>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: { width: 28, height: 28 },
+              },
+            }}
+          />
         </div>
       </nav>
 

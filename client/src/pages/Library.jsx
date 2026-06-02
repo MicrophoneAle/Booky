@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
+import { useAuth, UserButton } from "@clerk/clerk-react"
 import FullscreenButton from "../components/FullscreenButton"
 import "./Library.css"
 
@@ -69,7 +70,7 @@ function EditTitleIcon() {
   )
 }
 
-function LibraryBookCard({ document, onDelete, onRename }) {
+function LibraryBookCard({ document, onDelete, onRename, getToken }) {
   const navigate = useNavigate()
   const titleInputRef = useRef(null)
   const cancelingEditRef = useRef(false)
@@ -134,12 +135,15 @@ function LibraryBookCard({ document, onDelete, onRename }) {
     setRenameError(false)
 
     try {
+      const token = await getToken()
+      if (!token) throw new Error("Unauthorized")
       const payload = { name }
       const response = await fetch(
         `${API_URL}/documents/${encodeURIComponent(document.id)}`,
         {
           method: "PATCH",
           headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
             Accept: "application/json",
           },
@@ -177,8 +181,13 @@ function LibraryBookCard({ document, onDelete, onRename }) {
     setDeleteError(false)
 
     try {
+      const token = await getToken()
+      if (!token) throw new Error("Unauthorized")
       const response = await fetch(`${API_URL}/documents/${document.id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
       const data = await response.json()
 
@@ -300,6 +309,7 @@ function LibraryBookCard({ document, onDelete, onRename }) {
 
 export default function Library() {
   const navigate = useNavigate()
+  const { getToken } = useAuth()
   const [documents, setDocuments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -310,7 +320,14 @@ export default function Library() {
     setError(null)
 
     try {
-      const response = await fetch(`${API_URL}/documents`)
+      const token = await getToken()
+      if (!token) throw new Error("Unauthorized")
+      const response = await fetch(`${API_URL}/documents`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
       const data = await response.json()
 
       if (!response.ok || !data.success) {
@@ -326,7 +343,7 @@ export default function Library() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [getToken])
 
   useEffect(() => {
     fetchDocuments()
@@ -365,6 +382,15 @@ export default function Library() {
           >
             Library
           </NavLink>
+        </div>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: { width: 28, height: 28 },
+              },
+            }}
+          />
         </div>
       </nav>
 
@@ -421,6 +447,7 @@ export default function Library() {
                 document={document}
                 onDelete={handleDocumentDeleted}
                 onRename={handleDocumentRenamed}
+                getToken={getToken}
               />
             ))}
           </div>
