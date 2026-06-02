@@ -1607,7 +1607,6 @@ export default function BookViewer({
   const [pages, setPages] = useState([])
   const [isPaginating, setIsPaginating] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
-  const [restoreTargetPage, setRestoreTargetPage] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
   const [layoutMode, setLayoutMode] = useState("spread")
   const [isMobileFullscreen, setIsMobileFullscreen] = useState(false)
@@ -1792,17 +1791,13 @@ export default function BookViewer({
         setCurrentPage((previousPage) => {
           const maxPage = Math.max(1, totalMeasuredPages)
           if (totalMeasuredPages === 0) return 1
-          const target =
-            restoreTargetPage !== null && restoreTargetPage !== undefined
-              ? restoreTargetPage
-              : previousPage
+          const target = bookmarkPage !== null && bookmarkPage !== undefined ? bookmarkPage : previousPage
           return normalizeBookmarkPage(target, maxPage, !isMobile)
         })
-        if (restoreTargetPage && restoreTargetPage > 1) {
-          setRestoredPage(restoreTargetPage)
+        if (bookmarkPage && bookmarkPage > 1) {
+          setRestoredPage(bookmarkPage)
         }
         setIsPaginating(false)
-        setRestoreTargetPage(null)
       }
     }
 
@@ -1818,7 +1813,7 @@ export default function BookViewer({
     isMobileFullscreen,
     isMobile,
     settings,
-    restoreTargetPage,
+    bookmarkPage,
     normalizeBookmarkPage,
   ])
 
@@ -1900,24 +1895,14 @@ export default function BookViewer({
     try {
       const saved = Number(localStorage.getItem(progressKey))
       if (Number.isFinite(saved) && saved > 0) {
-        setRestoreTargetPage(saved)
         setBookmarkPage(saved)
       } else {
-        setRestoreTargetPage(initialPage)
         setBookmarkPage(initialPage)
       }
     } catch {
-      setRestoreTargetPage(initialPage)
       setBookmarkPage(initialPage)
     }
   }, [bookDocument?.id, initialPage, progressKey])
-
-  useEffect(() => {
-    if (isPaginating || restoreTargetPage === null || restoreTargetPage === undefined) return
-    const normalized = normalizeBookmarkPage(restoreTargetPage, Math.max(1, pages.length), !isMobile)
-    setCurrentPage(normalized)
-    setRestoreTargetPage(null)
-  }, [isPaginating, restoreTargetPage, pages.length, isMobile, normalizeBookmarkPage])
 
   useEffect(() => {
     if (isPaginating || totalPages === 0) return
