@@ -22,13 +22,13 @@
 .home-nav {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 2rem;
-  min-height: var(--nav-height);
-  height: var(--nav-height);
-  padding: 0 3rem 0 1.25rem;
-  background: var(--color-surface);
-  border-bottom: 1px solid rgba(197, 160, 89, 0.15);
+  min-height: 48px;
+  height: 48px;
+  padding: 0 1.25rem;
+  background: #1c1917;
+  border-bottom: 1px solid #2a2420;
   overflow: visible;
 }
 
@@ -83,15 +83,16 @@
   transform: translateX(-50%);
 }
 
-.home__nav-auth {
+.home__nav-right {
   margin-left: auto;
   display: flex;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .home__signin-btn {
   background: transparent;
-  border: 1px solid #2a2420;
+  border: 1px solid #8b7355;
   color: #8b7355;
   font-family: system-ui, sans-serif;
   font-size: 11px;
@@ -101,6 +102,7 @@
   border-radius: 3px;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .home__signin-btn:hover {

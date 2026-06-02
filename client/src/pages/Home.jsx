@@ -254,7 +254,7 @@ export default function Home() {
             Library
           </NavLink>
         </div>
-        <div className="home__nav-auth">
+        <div className="home__nav-right">
           <SignedOut>
             <SignInButton mode="modal">
               <button className="home__signin-btn">Sign in</button>

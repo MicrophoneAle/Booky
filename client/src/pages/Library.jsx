@@ -397,7 +397,7 @@ export default function Library() {
             Library
           </NavLink>
         </div>
-        <div className="library__nav-auth">
+        <div className="library__nav-right">
           <SignedOut>
             <SignInButton mode="modal">
               <button className="library__signin-btn">Sign in</button>
