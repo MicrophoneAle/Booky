@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@clerk/express": "^2.1.22",
     "@supabase/supabase-js": "^2.106.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
