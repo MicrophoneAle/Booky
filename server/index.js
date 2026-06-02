@@ -348,8 +348,8 @@ function isStructuralLine(text, index, allLines) {
 
 function buildBlocksFromLines(lines, headingStrings) {
   const blocks = []
-  const bulletCharsRegex = /^([•·\-—*])\s*$/
-  const inlineBulletRegex = /^([•·\-—*])\s*(.*)$/
+  const bulletCharsRegex = /^([•·\-*])\s*$/
+  const inlineBulletRegex = /^([•·\-*])\s*(.*)$/
   const subBulletLineRegex = /^[o*]\s+/i
 
   for (let index = 0; index < lines.length; index += 1) {

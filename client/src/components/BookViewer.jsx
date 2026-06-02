@@ -19,7 +19,7 @@ const TRIVIAL_LIST_PAGE_CHAR_LIMIT = 30
 const STANDALONE_URL_REGEX = /^https?:\/\/\S+$/i
 
 const LEVEL_0_NUMBER_REGEX = /^(\d+[\.\)])\s*(.*)$/
-const LEVEL_0_BULLET_REGEX = /^([•·\-—])\s*(.*)$/
+const LEVEL_0_BULLET_REGEX = /^([•·\-])\s*(.*)$/
 const LEVEL_1_LETTERED_REGEX = /^([a-z][\.\)])\s+(.+)$/i
 const CHAPTER_LABEL_REGEX =
   /^(Chapter|Part|Section|Prologue|Epilogue)\s+(\d+|[IVXLCDM]+|[A-Za-z]+)$/i
