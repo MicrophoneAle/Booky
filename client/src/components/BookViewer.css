@@ -230,6 +230,11 @@
   animation: toastin 0.3s ease forwards;
 }
 
+.book-viewer__toast--fading {
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+
 @keyframes toastin {
   from {
     opacity: 0;
@@ -393,28 +398,16 @@
   position: absolute;
   top: -1px;
   right: 14px;
-  width: 14px;
-  height: 48px;
+  width: 20px;
+  height: 56px;
   border: none;
-  background: #6b1a1a;
+  background: #c0152a;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   z-index: 5;
   transform: translateY(0);
   transition: transform 300ms ease-in, opacity 300ms ease-in;
-}
-
-.book-page__bookmark::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -1px;
-  width: 0;
-  height: 0;
-  transform: translateX(-50%);
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-top: 8px solid var(--color-page);
 }
 
 .book-page__bookmark--dismissed {

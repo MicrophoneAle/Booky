@@ -1650,6 +1650,7 @@ export default function BookViewer({
   const [chapterPageMap, setChapterPageMap] = useState({})
   const [pageTextMap, setPageTextMap] = useState({})
   const [resumeToast, setResumeToast] = useState(null)
+  const [toastFading, setToastFading] = useState(false)
   const [restoredPage, setRestoredPage] = useState(null)
   const [bookmarkDismissed, setBookmarkDismissed] = useState(false)
   const [bookmarkHidden, setBookmarkHidden] = useState(false)
@@ -2030,9 +2031,17 @@ export default function BookViewer({
   useEffect(() => {
     if (!isPaginating && restoredPage > 1) {
       setResumeToast(restoredPage)
+      setToastFading(false)
       setRestoredPage(null)
-      const timerId = setTimeout(() => setResumeToast(null), 2500)
-      return () => clearTimeout(timerId)
+      const fadeTimerId = setTimeout(() => setToastFading(true), 2000)
+      const removeTimerId = setTimeout(() => {
+        setResumeToast(null)
+        setToastFading(false)
+      }, 2600)
+      return () => {
+        clearTimeout(fadeTimerId)
+        clearTimeout(removeTimerId)
+      }
     }
     return undefined
   }, [isPaginating, restoredPage])
@@ -2173,7 +2182,9 @@ export default function BookViewer({
     >
       {showFsTip && <div className="book-viewer__fs-tip">Triple tap to exit</div>}
       {resumeToast && (
-        <div className="book-viewer__toast">Resuming from page {resumeToast}</div>
+        <div className={`book-viewer__toast${toastFading ? " book-viewer__toast--fading" : ""}`}>
+          Resuming from page {resumeToast}
+        </div>
       )}
 
       <header className="book-viewer__nav">
