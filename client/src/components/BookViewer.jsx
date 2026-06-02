@@ -1,22 +1,11 @@
-﻿import React, {
-  Fragment,
-  forwardRef,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react"
+﻿import { Fragment, useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import HTMLFlipBook from "react-pageflip"
 import { flattenDocument } from "../utils/paginator"
 import FullscreenButton from "./FullscreenButton"
 import "../pages/Reader.css"
 import "./BookViewer.css"
 
 const NAVBAR_HEIGHT_PX = 48
-const PAGE_WIDTH_PX = 400
-const PAGE_HEIGHT_PX = 600
 const PAGE_NUMBER_RESERVED_PX = 32
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 8
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
@@ -1207,15 +1196,15 @@ function renderGroupedListItemsReact(nodes, keyPrefix) {
   return elements
 }
 
-const BookPage = forwardRef(({ page, pageNumber }, ref) => {
+function BookPageContent({ page }) {
   if (!page) {
-    return <div ref={ref} className="book-page book-page--empty" />
+    return <div className="book-page book-page--empty" />
   }
 
   const visualItems = page.visualItems ?? []
 
   return (
-    <div ref={ref} className="book-page">
+    <div className="book-page">
       {page.chapterTitle && (
         <p className="book-page__chapter-label">{page.chapterTitle}</p>
       )}
@@ -1256,12 +1245,10 @@ const BookPage = forwardRef(({ page, pageNumber }, ref) => {
         })}
       </div>
 
-      <p className="book-page__number">— {pageNumber} —</p>
+      <p className="book-page__number">— {page.pageNumber} —</p>
     </div>
   )
-})
-
-BookPage.displayName = "BookPage"
+}
 
 function collectChapterTitlesForPage(page) {
   if (!page) {
@@ -1318,21 +1305,6 @@ function formatPageCounter(leftPage, rightPage, totalPages, isSpreadView) {
   return `Page ${leftNumber} of ${totalPages}`
 }
 
-function usePrefersReducedMotion() {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
-    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches)
-
-    updatePreference()
-    mediaQuery.addEventListener("change", updatePreference)
-    return () => mediaQuery.removeEventListener("change", updatePreference)
-  }, [])
-
-  return prefersReducedMotion
-}
-
 function LayoutModeIcon({ isSpreadView }) {
   if (isSpreadView) {
     return (
@@ -1374,23 +1346,11 @@ export default function BookViewer({
   onPageChange,
 }) {
   const navigate = useNavigate()
-  const prefersReducedMotion = usePrefersReducedMotion()
   const [pages, setPages] = useState([])
   const [isPaginating, setIsPaginating] = useState(true)
   const [currentPage, setCurrentPage] = useState(initialPage)
   const [isMobile, setIsMobile] = useState(false)
   const [layoutMode, setLayoutMode] = useState("spread")
-  const [scale, setScale] = useState(1)
-  const stageRef = useRef(null)
-  const bookRef = useRef(null)
-
-  const getPageFlip = useCallback(() => {
-    try {
-      return bookRef.current?.pageFlip()
-    } catch {
-      return null
-    }
-  }, [])
 
   useEffect(() => {
     if (!bookDocument) {
@@ -1443,10 +1403,9 @@ export default function BookViewer({
   }, [bookDocument, initialPage])
 
   const isSpreadView = !isMobile && layoutMode === "spread"
-  const usePortrait = isMobile
   const totalPages = pages.length
+  const pageStep = isSpreadView ? 2 : 1
   const maxPageIndex = Math.max(1, totalPages)
-  const { pageOuterHeight: pageHeightPx } = getLayoutHeights()
 
   const leftPage = pages[currentPage - 1] ?? null
   const rightPage = isSpreadView ? pages[currentPage] ?? null : null
@@ -1455,36 +1414,6 @@ export default function BookViewer({
   const showSpreadLayout = isSpreadView && !isFinalOddSpreadSingle
   const navChapterTitle = formatNavChapterTitle(pages, currentPage, showSpreadLayout)
   const pageCounterText = formatPageCounter(leftPage, rightPage, totalPages, showSpreadLayout)
-
-  useLayoutEffect(() => {
-    if (isPaginating) return
-
-    const stage = stageRef.current
-    if (!stage) return
-
-    const updateScale = () => {
-      const { width, height } = stage.getBoundingClientRect()
-      if (!width || !height) return
-
-      const spreadWidth = usePortrait ? PAGE_WIDTH_PX : PAGE_WIDTH_PX * 2
-      const nextScale = Math.min(1, width / spreadWidth, height / pageHeightPx)
-
-      setScale(nextScale)
-    }
-
-    updateScale()
-
-    const resizeObserver = new ResizeObserver(updateScale)
-    resizeObserver.observe(stage)
-    window.addEventListener("resize", updateScale)
-    document.addEventListener("fullscreenchange", updateScale)
-
-    return () => {
-      resizeObserver.disconnect()
-      window.removeEventListener("resize", updateScale)
-      document.removeEventListener("fullscreenchange", updateScale)
-    }
-  }, [isPaginating, usePortrait, pageHeightPx, pages.length])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)")
@@ -1496,9 +1425,8 @@ export default function BookViewer({
   }, [])
 
   useEffect(() => {
-    const clampedPage = Math.min(Math.max(1, initialPage), maxPageIndex)
-    setCurrentPage(clampedPage)
-  }, [initialPage, maxPageIndex])
+    setCurrentPage(initialPage)
+  }, [initialPage])
 
   useEffect(() => {
     if (currentPage > maxPageIndex) {
@@ -1510,42 +1438,24 @@ export default function BookViewer({
     setLayoutMode((mode) => (mode === "spread" ? "single" : "spread"))
   }, [])
 
-  const canGoBack = currentPage > 1
-  const canGoForward = currentPage < totalPages
+  const canGoBack = currentPage - pageStep >= 1
+  const canGoForward = currentPage + pageStep <= maxPageIndex
 
   const goBack = useCallback(() => {
     if (!canGoBack) return
 
-    const pageFlip = getPageFlip()
-    if (!pageFlip) return
-
-    if (prefersReducedMotion) {
-      pageFlip.turnToPrevPage()
-      const newPage = pageFlip.getCurrentPageIndex() + 1
-      setCurrentPage(newPage)
-      onPageChange?.(newPage)
-      return
-    }
-
-    pageFlip.flipPrev()
-  }, [canGoBack, getPageFlip, onPageChange, prefersReducedMotion])
+    const nextPage = currentPage - pageStep
+    setCurrentPage(nextPage)
+    onPageChange?.(nextPage)
+  }, [canGoBack, currentPage, onPageChange, pageStep])
 
   const goForward = useCallback(() => {
     if (!canGoForward) return
 
-    const pageFlip = getPageFlip()
-    if (!pageFlip) return
-
-    if (prefersReducedMotion) {
-      pageFlip.turnToNextPage()
-      const newPage = pageFlip.getCurrentPageIndex() + 1
-      setCurrentPage(newPage)
-      onPageChange?.(newPage)
-      return
-    }
-
-    pageFlip.flipNext()
-  }, [canGoForward, getPageFlip, onPageChange, prefersReducedMotion])
+    const nextPage = currentPage + pageStep
+    setCurrentPage(nextPage)
+    onPageChange?.(nextPage)
+  }, [canGoForward, currentPage, onPageChange, pageStep])
 
   if (isPaginating) {
     return (
@@ -1590,7 +1500,7 @@ export default function BookViewer({
         </div>
       </header>
 
-      <div ref={stageRef} className="book-viewer__stage">
+      <div className="book-viewer__stage">
         <button
           type="button"
           className="book-viewer__zone book-viewer__zone--left"
@@ -1614,49 +1524,34 @@ export default function BookViewer({
         </span>
 
         <div
-          className="book-viewer__scale-wrapper"
-          style={{
-            transform: `scale(${scale})`,
-            transformOrigin: "center center",
-          }}
+          className={`book-viewer__spread ${
+            !showSpreadLayout ? "book-viewer__spread--single" : ""
+          }`}
         >
-          {!isPaginating && pages.length > 0 && (
-            <HTMLFlipBook
-              key={`${usePortrait}-${pages.length}`}
-              ref={bookRef}
-              width={PAGE_WIDTH_PX}
-              height={PAGE_HEIGHT_PX}
-              size="fixed"
-              minWidth={PAGE_WIDTH_PX}
-              maxWidth={PAGE_WIDTH_PX}
-              minHeight={PAGE_HEIGHT_PX}
-              maxHeight={PAGE_HEIGHT_PX}
-              flippingTime={700}
-              drawShadow={true}
-              usePortrait={isMobile}
-              showCover={false}
-              mobileScrollSupport={false}
-              clickEventForward={false}
-              useMouseEvents={true}
-              swipeDistance={30}
-              showPageCorners={true}
-              disableFlipByClick={false}
-              onFlip={(event) => {
-                const newPage = event.data + 1
-                setCurrentPage(newPage)
-                onPageChange?.(newPage)
-              }}
-              className="book-viewer__flipbook"
-            >
-              {pages.map((page, index) => (
-                <BookPage
-                  key={index}
-                  page={page}
-                  pageNumber={page.pageNumber}
-                  totalPages={totalPages}
-                />
-              ))}
-            </HTMLFlipBook>
+          <div
+            className={`book-viewer__page-slot book-viewer__page-slot--left ${
+              !showSpreadLayout ? "book-viewer__page-slot--single" : ""
+            }`}
+          >
+            <div className="book-viewer__page-face">
+              <BookPageContent page={leftPage} />
+            </div>
+          </div>
+
+          {showSpreadLayout && (
+            <>
+              <div className="book-viewer__spine" aria-hidden="true" />
+
+              <div className="book-viewer__page-slot book-viewer__page-slot--right">
+                <div className="book-viewer__page-face">
+                  {rightPage ? (
+                    <BookPageContent page={rightPage} />
+                  ) : (
+                    <div className="book-page book-page--empty" />
+                  )}
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
