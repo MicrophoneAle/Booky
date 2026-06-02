@@ -320,12 +320,20 @@ function isStructuralLine(text, index, allLines) {
     return true
   }
 
-  // Short subtitle in the first few lines of the document (not the title itself)
-  const nonEmptyLines = allLines.filter((l) => l.trim()).slice(0, 8)
-  const positionInDocument = nonEmptyLines.indexOf(trimmed)
-  const isNearTopOfDocument = positionInDocument >= 1 && positionInDocument <= 5
+  // Chapter subtitle: short line immediately after a bare chapter label
+  const prevNonEmpty = allLines.slice(0, index).filter((l) => l.trim()).slice(-1)[0] ?? ""
+  const isAfterChapterLabel =
+    /^(Chapter|Part|Section|Prologue|Epilogue)\s+(\d+|[IVXLCDM]+|[A-Za-z]+)$/i.test(
+      prevNonEmpty.trim()
+    )
+  if (isAfterChapterLabel && trimmed.length > 3 && trimmed.length < 80) return true
+
+  // Short line near top of document (positions 1-5 among non-empty lines) = title page subtitle
+  const nonEmptyLines = allLines.filter((l) => l.trim())
+  const docPosition = nonEmptyLines.findIndex((l) => l.trim() === trimmed)
   if (
-    isNearTopOfDocument &&
+    docPosition >= 1 &&
+    docPosition <= 5 &&
     trimmed.length >= 8 &&
     trimmed.length <= 70 &&
     !/^(Chapter|Part|Section|Prologue|Epilogue)/i.test(trimmed) &&
@@ -334,14 +342,6 @@ function isStructuralLine(text, index, allLines) {
   ) {
     return true
   }
-
-  // Chapter subtitle: line immediately after a chapter label
-  const prevNonEmpty = allLines.slice(0, index).filter((l) => l.trim()).slice(-1)[0] ?? ""
-  const isAfterChapterLabel =
-    /^(Chapter|Part|Section|Prologue|Epilogue)\s+(\d+|[IVXLCDM]+|[A-Za-z]+)$/i.test(
-      prevNonEmpty.trim()
-    )
-  if (isAfterChapterLabel && trimmed.length > 3 && trimmed.length < 80) return true
 
   return false
 }
@@ -356,32 +356,30 @@ function buildBlocksFromLines(lines, headingStrings) {
     const currentLine = lines[index]
 
     if (!currentLine) {
-      blocks.push({
-        text: "",
-        isHeading: false,
-        fontSize: 12,
-        chapterId: null,
-      })
+      blocks.push({ text: "", isHeading: false, fontSize: 12, chapterId: null })
       continue
     }
 
+    const trimmedLine = currentLine.trim()
+
+    // 1. Known heading by font size
     if (headingStrings.has(currentLine)) {
-      blocks.push({
-        text: currentLine,
-        isHeading: true,
-        fontSize: 16,
-        chapterId: null,
-      })
+      blocks.push({ text: currentLine, isHeading: true, fontSize: 16, chapterId: null })
       continue
     }
 
+    // 2. Structural line (subtitle, author, chapter subtitle) — checked BEFORE merge
+    if (isStructuralLine(trimmedLine, index, lines)) {
+      blocks.push({ text: trimmedLine, isHeading: true, fontSize: 13, chapterId: null })
+      continue
+    }
+
+    // 3. Lone bullet char — merge with next line
     if (bulletCharsRegex.test(currentLine) && index + 1 < lines.length) {
       let nextLine = lines[index + 1]
-
       if (inlineBulletRegex.test(nextLine)) {
         nextLine = nextLine.replace(inlineBulletRegex, "$2").trim()
       }
-
       blocks.push({
         text: `${currentLine} ${nextLine}`.replace(/\s+/g, " ").trim(),
         isHeading: false,
@@ -392,6 +390,7 @@ function buildBlocksFromLines(lines, headingStrings) {
       continue
     }
 
+    // 4. Inline bullet
     if (inlineBulletRegex.test(currentLine)) {
       const marker = currentLine.match(inlineBulletRegex)[1]
       const restOfText = currentLine.match(inlineBulletRegex)[2].trim()
@@ -404,18 +403,7 @@ function buildBlocksFromLines(lines, headingStrings) {
       continue
     }
 
-    const trimmedLine = currentLine.trim()
-
-    if (isStructuralLine(trimmedLine, index, lines)) {
-      blocks.push({
-        text: trimmedLine,
-        isHeading: true,
-        fontSize: 13,
-        chapterId: null,
-      })
-      continue
-    }
-
+    // 5. Merge continuation lines
     if (blocks.length > 0) {
       const previousBlock = blocks[blocks.length - 1]
       const prevText = previousBlock?.text ?? ""
@@ -435,19 +423,13 @@ function buildBlocksFromLines(lines, headingStrings) {
         /[a-z]$/.test(prevText.trim())
 
       if (shouldMerge) {
-        previousBlock.text = (prevText + " " + trimmedLine)
-          .replace(/\s+/g, " ")
-          .trim()
+        previousBlock.text = (prevText + " " + trimmedLine).replace(/\s+/g, " ").trim()
         continue
       }
     }
 
-    blocks.push({
-      text: trimmedLine,
-      isHeading: false,
-      fontSize: 12,
-      chapterId: null,
-    })
+    // 6. Plain block
+    blocks.push({ text: trimmedLine, isHeading: false, fontSize: 12, chapterId: null })
   }
 
   return blocks
