@@ -149,7 +149,10 @@
   overflow: hidden;
   padding: 1rem;
   box-sizing: border-box;
-  background: var(--color-shell);
+  background: var(--bg-desk);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .book-viewer__stage::before {
@@ -250,16 +253,11 @@
 }
 
 .book-viewer__spine {
-  width: 12px;
-  margin: 0 -6px;
+  width: 1px;
+  margin: 0;
   flex-shrink: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0.2) 0%,
-    rgba(0, 0, 0, 0) 50%,
-    rgba(0, 0, 0, 0.2) 100%
-  );
-  z-index: 10;
+  background: var(--color-border);
+  z-index: 2;
 }
 
 /* Book paper — kept flat and clean; not themed as leather */

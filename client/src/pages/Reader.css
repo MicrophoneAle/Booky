@@ -3,7 +3,10 @@
 .reader-screen {
   width: 100vw;
   height: 100vh;
-  background: var(--color-shell);
+  background: var(--bg-desk);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;

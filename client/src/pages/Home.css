@@ -1,7 +1,10 @@
 .home-page {
   position: relative;
   min-height: 100vh;
-  background: var(--color-shell);
+  background: var(--bg-desk);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   color: var(--color-muted);
   font-family: var(--font-ui);
 }
