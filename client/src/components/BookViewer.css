@@ -725,6 +725,10 @@ ol.book-page__list {
     grid-template-columns: auto 1fr auto;
   }
 
+  .book-viewer__chapter {
+    display: none;
+  }
+
   .book-viewer__logo {
     font-size: 1rem;
     letter-spacing: 0.1em;
