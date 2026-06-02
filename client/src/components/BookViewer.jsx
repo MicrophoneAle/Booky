@@ -28,6 +28,7 @@ const EMBEDDED_LIST_MARKER_REGEX = /\s+(\d+[\.\)]|[a-z][\.\)])\s+/gi
 let listGroupCounter = 0
 
 function isHeadingVisualItem(item) {
+  // subtitle intentionally excluded
   return item?.type === "title" || item?.type === "heading"
 }
 
@@ -336,7 +337,8 @@ function createMeasureElements() {
 function resolveHeadingType(fontSize) {
   if (fontSize > 18) return "title"
   if (fontSize >= 14) return "heading"
-  return "heading"
+  if (fontSize >= 13) return "subtitle"
+  return "subtitle"
 }
 
 function splitTextAtEmbeddedListMarkers(text) {
@@ -462,17 +464,23 @@ function groupBlocksForDisplay(blocks) {
       flushPendingList()
 
       const headingFontSize = block.fontSize ?? 16
+      const headingType = resolveHeadingType(headingFontSize)
       let headingText = text
       const nextBlock = expandedBlocks[index + 1]
       const nextText = (nextBlock?.text ?? "").trim()
 
-      if (nextBlock?.isHeading && nextText && CHAPTER_LABEL_REGEX.test(text)) {
+      if (
+        (headingType === "heading" || headingType === "title") &&
+        nextBlock?.isHeading &&
+        nextText &&
+        CHAPTER_LABEL_REGEX.test(text)
+      ) {
         headingText = `${text}: ${nextText}`
         index += 1
       }
 
       visualItems.push({
-        type: resolveHeadingType(headingFontSize),
+        type: headingType,
         text: headingText,
         fontSize: headingFontSize,
         chapterId: block.chapterId ?? null,
@@ -616,6 +624,14 @@ function appendVisualItem(body, item, previousItem = null) {
     heading.className = "book-page__heading"
     heading.textContent = item.text
     body.appendChild(heading)
+    return
+  }
+
+  if (item.type === "subtitle") {
+    const subtitle = document.createElement("p")
+    subtitle.className = "book-page__subtitle"
+    subtitle.textContent = item.text
+    body.appendChild(subtitle)
     return
   }
 
@@ -1225,6 +1241,14 @@ function BookPageContent({ page }) {
               <h2 key={index} className="book-page__heading">
                 {item.text}
               </h2>
+            )
+          }
+
+          if (item.type === "subtitle") {
+            return (
+              <p key={index} className="book-page__subtitle">
+                {item.text}
+              </p>
             )
           }
 
