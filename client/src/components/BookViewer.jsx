@@ -1383,6 +1383,14 @@ export default function BookViewer({
   const stageRef = useRef(null)
   const bookRef = useRef(null)
 
+  const getPageFlip = useCallback(() => {
+    try {
+      return bookRef.current?.pageFlip()
+    } catch {
+      return null
+    }
+  }, [])
+
   useEffect(() => {
     if (!bookDocument) {
       setPages([])
@@ -1489,26 +1497,13 @@ export default function BookViewer({
   useEffect(() => {
     const clampedPage = Math.min(Math.max(1, initialPage), maxPageIndex)
     setCurrentPage(clampedPage)
-
-    if (!isPaginating && bookRef.current) {
-      bookRef.current.pageFlip().turnToPage(clampedPage - 1)
-    }
-  }, [initialPage, isPaginating, maxPageIndex])
+  }, [initialPage, maxPageIndex])
 
   useEffect(() => {
     if (currentPage > maxPageIndex) {
       setCurrentPage(maxPageIndex)
     }
   }, [currentPage, maxPageIndex])
-
-  const handleFlip = useCallback(
-    (event) => {
-      const newPage = event.data + 1
-      setCurrentPage(newPage)
-      onPageChange?.(newPage)
-    },
-    [onPageChange]
-  )
 
   const toggleLayoutMode = useCallback(() => {
     setLayoutMode((mode) => (mode === "spread" ? "single" : "spread"))
@@ -1518,9 +1513,10 @@ export default function BookViewer({
   const canGoForward = currentPage < totalPages
 
   const goBack = useCallback(() => {
-    if (!canGoBack || !bookRef.current) return
+    if (!canGoBack) return
 
-    const pageFlip = bookRef.current.pageFlip()
+    const pageFlip = getPageFlip()
+    if (!pageFlip) return
 
     if (prefersReducedMotion) {
       pageFlip.turnToPrevPage()
@@ -1531,12 +1527,13 @@ export default function BookViewer({
     }
 
     pageFlip.flipPrev()
-  }, [canGoBack, onPageChange, prefersReducedMotion])
+  }, [canGoBack, getPageFlip, onPageChange, prefersReducedMotion])
 
   const goForward = useCallback(() => {
-    if (!canGoForward || !bookRef.current) return
+    if (!canGoForward) return
 
-    const pageFlip = bookRef.current.pageFlip()
+    const pageFlip = getPageFlip()
+    if (!pageFlip) return
 
     if (prefersReducedMotion) {
       pageFlip.turnToNextPage()
@@ -1547,7 +1544,7 @@ export default function BookViewer({
     }
 
     pageFlip.flipNext()
-  }, [canGoForward, onPageChange, prefersReducedMotion])
+  }, [canGoForward, getPageFlip, onPageChange, prefersReducedMotion])
 
   if (isPaginating) {
     return (
@@ -1622,34 +1619,39 @@ export default function BookViewer({
             transformOrigin: "center center",
           }}
         >
-          <HTMLFlipBook
-            key={`${usePortrait}-${pages.length}`}
-            ref={bookRef}
-            width={PAGE_WIDTH_PX}
-            height={pageHeightPx}
-            size="fixed"
-            minWidth={PAGE_WIDTH_PX}
-            maxWidth={PAGE_WIDTH_PX}
-            minHeight={pageHeightPx}
-            maxHeight={pageHeightPx}
-            drawShadow={true}
-            flippingTime={prefersReducedMotion ? 0 : 600}
-            usePortrait={usePortrait}
-            startPage={Math.min(Math.max(0, currentPage - 1), Math.max(0, pages.length - 1))}
-            showCover={false}
-            mobileScrollSupport={false}
-            onFlip={handleFlip}
-            className="book-viewer__flipbook"
-            style={{ background: "transparent" }}
-          >
-            {pages.map((page, index) => (
-              <BookPage
-                key={index}
-                page={page}
-                pageNumber={page?.pageNumber ?? index + 1}
-              />
-            ))}
-          </HTMLFlipBook>
+          {!isPaginating && pages.length > 0 && (
+            <HTMLFlipBook
+              key={`${usePortrait}-${pages.length}`}
+              ref={bookRef}
+              width={PAGE_WIDTH_PX}
+              height={pageHeightPx}
+              size="fixed"
+              minWidth={PAGE_WIDTH_PX}
+              maxWidth={PAGE_WIDTH_PX}
+              minHeight={pageHeightPx}
+              maxHeight={pageHeightPx}
+              drawShadow={true}
+              flippingTime={prefersReducedMotion ? 0 : 600}
+              usePortrait={usePortrait}
+              showCover={false}
+              mobileScrollSupport={false}
+              onFlip={(event) => {
+                const newPage = event.data + 1
+                setCurrentPage(newPage)
+                onPageChange?.(newPage)
+              }}
+              className="book-viewer__flipbook"
+              style={{ background: "transparent" }}
+            >
+              {pages.map((page, index) => (
+                <BookPage
+                  key={index}
+                  page={page}
+                  pageNumber={page?.pageNumber ?? index + 1}
+                />
+              ))}
+            </HTMLFlipBook>
+          )}
         </div>
       </div>
     </div>
