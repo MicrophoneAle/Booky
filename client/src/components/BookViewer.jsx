@@ -8,6 +8,7 @@ import "./BookViewer.css"
 const NAVBAR_HEIGHT_PX = 48
 const PAGE_WIDTH_PX = 400
 const PAGE_HEIGHT_PX = 600
+const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const SPINE_PX = 1
 const PAGE_NUMBER_RESERVED_PX = 32
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 8
@@ -294,16 +295,17 @@ function createListElement(kind) {
   return unorderedList
 }
 
-function getLayoutHeights() {
+function getLayoutHeights(pageHeightOverride) {
   const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
   const pagePaddingY = 0.75 * remPx * 2
+  const pageHeight = pageHeightOverride ?? PAGE_HEIGHT_PX
   const contentMaxHeight =
-    PAGE_HEIGHT_PX -
+    pageHeight -
     pagePaddingY -
     PAGE_NUMBER_RESERVED_PX -
     CONTENT_HEIGHT_SAFETY_BUFFER_PX
 
-  return { pageOuterHeight: PAGE_HEIGHT_PX, contentMaxHeight }
+  return { pageOuterHeight: pageHeight, contentMaxHeight }
 }
 
 function createMeasureElements() {
@@ -1376,7 +1378,11 @@ export default function BookViewer({
   const [currentPage, setCurrentPage] = useState(initialPage)
   const [isMobile, setIsMobile] = useState(false)
   const [layoutMode, setLayoutMode] = useState("spread")
+  const [isMobileFullscreen, setIsMobileFullscreen] = useState(false)
+  const [showFsTip, setShowFsTip] = useState(false)
   const stageRef = useRef(null)
+  const tapCountRef = useRef(0)
+  const tapTimerRef = useRef(null)
   const [scale, setScale] = useState(1)
 
   useEffect(() => {
@@ -1394,7 +1400,9 @@ export default function BookViewer({
 
     const runMeasurement = () => {
       const flatBlocks = flattenDocument(bookDocument)
-      const { pageOuterHeight, contentMaxHeight } = getLayoutHeights()
+      const mobileFS = isMobile && isMobileFullscreen
+      const pageHeightToUse = mobileFS ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : undefined
+      const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(pageHeightToUse)
       const measureElements = createMeasureElements()
 
       measureRoot = measureElements.root
@@ -1427,7 +1435,10 @@ export default function BookViewer({
       cancelled = true
       measureRoot?.remove()
     }
-  }, [bookDocument, initialPage])
+  }, [bookDocument, initialPage, isMobileFullscreen, isMobile])
+
+  const activePageHeight =
+    isMobile && isMobileFullscreen ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : PAGE_HEIGHT_PX
 
   const isSpreadView = !isMobile && layoutMode === "spread"
   const totalPages = pages.length
@@ -1454,7 +1465,7 @@ export default function BookViewer({
       const naturalW = showSpreadLayout
         ? PAGE_WIDTH_PX * 2 + SPINE_PX
         : PAGE_WIDTH_PX
-      const naturalH = PAGE_HEIGHT_PX
+      const naturalH = activePageHeight
       const next = Math.min(availW / naturalW, availH / naturalH)
       setScale(next > 0 && Number.isFinite(next) ? next : 1)
     }
@@ -1466,7 +1477,7 @@ export default function BookViewer({
       window.removeEventListener("resize", recomputeScale)
       document.removeEventListener("fullscreenchange", recomputeScale)
     }
-  }, [showSpreadLayout, isMobile, pages.length, isPaginating])
+  }, [showSpreadLayout, isMobile, isMobileFullscreen, activePageHeight, pages.length, isPaginating])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)")
@@ -1486,6 +1497,31 @@ export default function BookViewer({
       setCurrentPage(maxPageIndex)
     }
   }, [currentPage, maxPageIndex])
+
+  useEffect(() => {
+    if (isMobile && isMobileFullscreen) {
+      setShowFsTip(true)
+      const tipTimer = setTimeout(() => setShowFsTip(false), 2000)
+      return () => clearTimeout(tipTimer)
+    }
+    setShowFsTip(false)
+  }, [isMobile, isMobileFullscreen])
+
+  useEffect(() => {
+    return () => clearTimeout(tapTimerRef.current)
+  }, [])
+
+  const handleStageTap = useCallback(() => {
+    if (!isMobile) return
+    tapCountRef.current += 1
+    clearTimeout(tapTimerRef.current)
+    tapTimerRef.current = setTimeout(() => {
+      if (tapCountRef.current >= 3) {
+        setIsMobileFullscreen((previous) => !previous)
+      }
+      tapCountRef.current = 0
+    }, 400)
+  }, [isMobile])
 
   const toggleLayoutMode = useCallback(() => {
     setLayoutMode((mode) => (mode === "spread" ? "single" : "spread"))
@@ -1523,7 +1559,16 @@ export default function BookViewer({
 
   return (
     <div className="book-viewer">
-      <header className="book-viewer__nav">
+      {showFsTip && <div className="book-viewer__fs-tip">Triple tap to exit</div>}
+
+      <header
+        className="book-viewer__nav"
+        style={
+          isMobile && isMobileFullscreen
+            ? { opacity: 0, pointerEvents: "none", height: 0, overflow: "hidden" }
+            : undefined
+        }
+      >
         <div className="book-viewer__nav-left">
           <button
             type="button"
@@ -1549,11 +1594,15 @@ export default function BookViewer({
               <LayoutModeIcon isSpreadView={isSpreadView} />
             </button>
           )}
-          <FullscreenButton className="book-viewer__fullscreen" />
+          {!isMobile && <FullscreenButton className="book-viewer__fullscreen" />}
         </div>
       </header>
 
-      <div ref={stageRef} className="book-viewer__stage">
+      <div
+        ref={stageRef}
+        className="book-viewer__stage"
+        onClick={handleStageTap}
+      >
         <button
           type="button"
           className="book-viewer__zone book-viewer__zone--left"
@@ -1587,11 +1636,13 @@ export default function BookViewer({
             className={`book-viewer__spread ${
               !showSpreadLayout ? "book-viewer__spread--single" : ""
             }`}
+            style={{ height: activePageHeight }}
           >
             <div
               className={`book-viewer__page-slot book-viewer__page-slot--left ${
                 !showSpreadLayout ? "book-viewer__page-slot--single" : ""
               }`}
+              style={{ height: activePageHeight }}
             >
               <div className="book-viewer__page-face">
                 <BookPageContent page={leftPage} />
@@ -1602,7 +1653,10 @@ export default function BookViewer({
               <>
                 <div className="book-viewer__spine" aria-hidden="true" />
 
-                <div className="book-viewer__page-slot book-viewer__page-slot--right">
+                <div
+                  className="book-viewer__page-slot book-viewer__page-slot--right"
+                  style={{ height: activePageHeight }}
+                >
                   <div className="book-viewer__page-face">
                     {rightPage ? (
                       <BookPageContent page={rightPage} />

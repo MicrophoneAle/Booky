@@ -20,6 +20,35 @@
   padding: 0 1.25rem;
   background: #1c1917;
   border-bottom: 1px solid #2a2420;
+  transition: opacity 0.2s ease;
+}
+
+.book-viewer__fs-tip {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(28, 25, 23, 0.85);
+  color: #d4af37;
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  pointer-events: none;
+  animation: fstipin 0.3s ease forwards;
+  z-index: 100;
+}
+
+@keyframes fstipin {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 .book-viewer__nav-left {
