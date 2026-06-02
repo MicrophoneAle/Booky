@@ -1603,14 +1603,7 @@ export default function BookViewer({
     >
       {showFsTip && <div className="book-viewer__fs-tip">Triple tap to exit</div>}
 
-      <header
-        className="book-viewer__nav"
-        style={
-          isMobile && isMobileFullscreen
-            ? { opacity: 0, pointerEvents: "none", height: 0, overflow: "hidden" }
-            : undefined
-        }
-      >
+      <header className="book-viewer__nav">
         <div className="book-viewer__nav-left">
           <button
             type="button"
