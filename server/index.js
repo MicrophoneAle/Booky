@@ -13,8 +13,8 @@ const supabase = createClient(
 )
 
 const app = express()
-app.use(clerkMiddleware())
 
+// 1. CORS first — must be before everything else
 app.use(
   cors({
     origin: [
@@ -27,6 +27,13 @@ app.use(
   })
 )
 
+// 2. Handle preflight OPTIONS requests explicitly
+app.options("*", cors())
+
+// 3. Clerk middleware after CORS
+app.use(clerkMiddleware())
+
+// 4. JSON body parser after Clerk
 app.use(express.json())
 
 app.get("/", (req, res) => res.json({ message: "Booky API running" }))
