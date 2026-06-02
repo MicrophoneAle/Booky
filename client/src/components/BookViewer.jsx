@@ -16,6 +16,7 @@ import "./BookViewer.css"
 
 const NAVBAR_HEIGHT_PX = 48
 const PAGE_WIDTH_PX = 400
+const PAGE_HEIGHT_PX = 600
 const PAGE_NUMBER_RESERVED_PX = 32
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 8
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
@@ -1624,30 +1625,35 @@ export default function BookViewer({
               key={`${usePortrait}-${pages.length}`}
               ref={bookRef}
               width={PAGE_WIDTH_PX}
-              height={pageHeightPx}
+              height={PAGE_HEIGHT_PX}
               size="fixed"
               minWidth={PAGE_WIDTH_PX}
               maxWidth={PAGE_WIDTH_PX}
-              minHeight={pageHeightPx}
-              maxHeight={pageHeightPx}
+              minHeight={PAGE_HEIGHT_PX}
+              maxHeight={PAGE_HEIGHT_PX}
+              flippingTime={700}
               drawShadow={true}
-              flippingTime={prefersReducedMotion ? 0 : 600}
-              usePortrait={usePortrait}
+              usePortrait={isMobile}
               showCover={false}
               mobileScrollSupport={false}
+              clickEventForward={false}
+              useMouseEvents={true}
+              swipeDistance={30}
+              showPageCorners={true}
+              disableFlipByClick={false}
               onFlip={(event) => {
                 const newPage = event.data + 1
                 setCurrentPage(newPage)
                 onPageChange?.(newPage)
               }}
               className="book-viewer__flipbook"
-              style={{ background: "transparent" }}
             >
               {pages.map((page, index) => (
                 <BookPage
                   key={index}
                   page={page}
-                  pageNumber={page?.pageNumber ?? index + 1}
+                  pageNumber={page.pageNumber}
+                  totalPages={totalPages}
                 />
               ))}
             </HTMLFlipBook>
