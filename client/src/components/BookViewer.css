@@ -4,7 +4,10 @@
   width: 100vw;
   height: 100vh;
   max-height: 100vh;
-  background: var(--color-shell);
+  background: var(--bg-desk);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -154,10 +157,7 @@
   overflow: hidden;
   padding: 1rem;
   box-sizing: border-box;
-  background: var(--bg-desk);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: transparent;
 }
 
 .book-viewer__stage::before {
