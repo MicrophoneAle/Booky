@@ -1190,7 +1190,13 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   return cleanupPages(pages, bodyEl, contentMaxHeight)
 }
 
-function renderListNodeReact(node, itemKey, highlightQuery = "") {
+function renderListNodeReact(
+  node,
+  itemKey,
+  highlightQuery = "",
+  highlightTracker = null,
+  activeOccurrence = null
+) {
   const markerNumber = getMarkerNumber(node)
 
   return (
@@ -1199,14 +1205,31 @@ function renderListNodeReact(node, itemKey, highlightQuery = "") {
       className={listItemClassName(node)}
       {...(markerNumber !== null ? { value: markerNumber } : {})}
     >
-      {highlightTextContent(getListItemDisplayText(node), highlightQuery)}
+      {highlightTextContent(
+        getListItemDisplayText(node),
+        highlightQuery,
+        highlightTracker,
+        activeOccurrence
+      )}
       {node.children.length > 0 &&
-        renderGroupedListItemsReact(node.children, itemKey, highlightQuery)}
+        renderGroupedListItemsReact(
+          node.children,
+          itemKey,
+          highlightQuery,
+          highlightTracker,
+          activeOccurrence
+        )}
     </li>
   )
 }
 
-function renderGroupedListItemsReact(nodes, keyPrefix, highlightQuery = "") {
+function renderGroupedListItemsReact(
+  nodes,
+  keyPrefix,
+  highlightQuery = "",
+  highlightTracker = null,
+  activeOccurrence = null
+) {
   const elements = []
   let index = 0
   let groupIndex = 0
@@ -1237,7 +1260,13 @@ function renderGroupedListItemsReact(nodes, keyPrefix, highlightQuery = "") {
           {...(listStart !== null ? { start: listStart } : {})}
         >
           {groupNodes.map((node, nodeIndex) =>
-            renderListNodeReact(node, `${listKey}-${nodeIndex}`, highlightQuery)
+            renderListNodeReact(
+              node,
+              `${listKey}-${nodeIndex}`,
+              highlightQuery,
+              highlightTracker,
+              activeOccurrence
+            )
           )}
         </ol>
       )
@@ -1245,7 +1274,13 @@ function renderGroupedListItemsReact(nodes, keyPrefix, highlightQuery = "") {
       elements.push(
         <ul key={listKey} className="book-page__list">
           {groupNodes.map((node, nodeIndex) =>
-            renderListNodeReact(node, `${listKey}-${nodeIndex}`, highlightQuery)
+            renderListNodeReact(
+              node,
+              `${listKey}-${nodeIndex}`,
+              highlightQuery,
+              highlightTracker,
+              activeOccurrence
+            )
           )}
         </ul>
       )
@@ -1255,7 +1290,7 @@ function renderGroupedListItemsReact(nodes, keyPrefix, highlightQuery = "") {
   return elements
 }
 
-function highlightTextContent(text, query) {
+function highlightTextContent(text, query, tracker = null, activeOccurrence = null) {
   const source = String(text ?? "")
   const normalizedQuery = String(query ?? "").trim()
   if (!normalizedQuery) return source
@@ -1267,15 +1302,32 @@ function highlightTextContent(text, query) {
   if (parts.length <= 1) return source
 
   const queryLower = normalizedQuery.toLowerCase()
-  return parts.map((part, index) =>
-    part.toLowerCase() === queryLower ? (
-      <mark key={`${part}-${index}`} className="book-page__highlight">
+  return parts.map((part, index) => {
+    if (part.toLowerCase() !== queryLower) {
+      return <Fragment key={`${part}-${index}`}>{part}</Fragment>
+    }
+
+    if (tracker && typeof tracker.count === "number") {
+      tracker.count += 1
+    }
+
+    const isActive =
+      tracker &&
+      typeof tracker.count === "number" &&
+      activeOccurrence !== null &&
+      tracker.count === activeOccurrence
+
+    return (
+      <mark
+        key={`${part}-${index}`}
+        className={`book-page__highlight${
+          isActive ? " book-page__highlight--active" : ""
+        }`}
+      >
         {part}
       </mark>
-    ) : (
-      <Fragment key={`${part}-${index}`}>{part}</Fragment>
     )
-  )
+  })
 }
 
 function BookPageContent({
@@ -1283,6 +1335,7 @@ function BookPageContent({
   isMobileFullscreen = false,
   settings,
   searchQuery = "",
+  activeSearchOccurrence = null,
 }) {
   const themeId = settings?.theme ?? DEFAULT_SETTINGS.theme
   const pageClassName = [
@@ -1301,12 +1354,18 @@ function BookPageContent({
   }
 
   const visualItems = page.visualItems ?? []
+  const highlightTracker = { count: 0 }
 
   return (
     <div className={pageClassName} style={pageStyle}>
       {page.chapterTitle && (
         <p className="book-page__chapter-label">
-          {highlightTextContent(page.chapterTitle, searchQuery)}
+          {highlightTextContent(
+            page.chapterTitle,
+            searchQuery,
+            highlightTracker,
+            activeSearchOccurrence
+          )}
         </p>
       )}
 
@@ -1315,7 +1374,12 @@ function BookPageContent({
           if (item.type === "title") {
             return (
               <h1 key={index} className="book-page__title">
-                {highlightTextContent(item.text, searchQuery)}
+                {highlightTextContent(
+                  item.text,
+                  searchQuery,
+                  highlightTracker,
+                  activeSearchOccurrence
+                )}
               </h1>
             )
           }
@@ -1323,7 +1387,12 @@ function BookPageContent({
           if (item.type === "heading") {
             return (
               <h2 key={index} className="book-page__heading">
-                {highlightTextContent(item.text, searchQuery)}
+                {highlightTextContent(
+                  item.text,
+                  searchQuery,
+                  highlightTracker,
+                  activeSearchOccurrence
+                )}
               </h2>
             )
           }
@@ -1331,7 +1400,12 @@ function BookPageContent({
           if (item.type === "subtitle") {
             return (
               <p key={index} className="book-page__subtitle">
-                {highlightTextContent(item.text, searchQuery)}
+                {highlightTextContent(
+                  item.text,
+                  searchQuery,
+                  highlightTracker,
+                  activeSearchOccurrence
+                )}
               </p>
             )
           }
@@ -1339,7 +1413,13 @@ function BookPageContent({
           if (item.type === "list") {
             return (
               <Fragment key={index}>
-                {renderGroupedListItemsReact(item.items, `list-${index}`, searchQuery)}
+                {renderGroupedListItemsReact(
+                  item.items,
+                  `list-${index}`,
+                  searchQuery,
+                  highlightTracker,
+                  activeSearchOccurrence
+                )}
               </Fragment>
             )
           }
@@ -1348,7 +1428,12 @@ function BookPageContent({
 
           return (
             <p key={index} className={proseParagraphClassName(previousItem, item)}>
-              {highlightTextContent(item.text, searchQuery)}
+              {highlightTextContent(
+                item.text,
+                searchQuery,
+                highlightTracker,
+                activeSearchOccurrence
+              )}
             </p>
           )
         })}
@@ -2126,6 +2211,11 @@ export default function BookViewer({
                   isMobileFullscreen={mobileFullscreenActive}
                   settings={settings}
                   searchQuery={searchQuery}
+                  activeSearchOccurrence={
+                    searchResults[searchResultIndex]?.pageNumber === leftPage?.pageNumber
+                      ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
+                      : null
+                  }
                 />
               </div>
             </div>
@@ -2145,6 +2235,11 @@ export default function BookViewer({
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
                         searchQuery={searchQuery}
+                        activeSearchOccurrence={
+                          searchResults[searchResultIndex]?.pageNumber === rightPage?.pageNumber
+                            ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
+                            : null
+                        }
                       />
                     ) : (
                       <BookPageContent
@@ -2152,6 +2247,7 @@ export default function BookViewer({
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
                         searchQuery={searchQuery}
+                        activeSearchOccurrence={null}
                       />
                     )}
                   </div>
