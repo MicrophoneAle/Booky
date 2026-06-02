@@ -7,6 +7,8 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
+const PARSER_VERSION = 1
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
@@ -543,6 +545,107 @@ function blocksToContent(blocks, blocksPerPage = 40) {
   return content
 }
 
+async function parsePdfBuffer(buffer) {
+  const [parsedText, headingStrings, positionedText] = await Promise.all([
+    pdfParse(buffer),
+    extractHeadingLines(buffer),
+    extractLinesByPosition(buffer),
+  ])
+
+  const lines = linesFromPdfText(positionedText)
+  const blocks = buildBlocksFromLines(lines, headingStrings)
+  const content = blocksToContent(blocks)
+  const { chapters, content: contentWithChapters } = detectChapters(content)
+  const wordCount = Math.max(
+    countWordsInPlainText(parsedText.text),
+    countWordsFromBlocks(blocks),
+    countWordsFromContent(contentWithChapters)
+  )
+
+  return {
+    parsedText,
+    chapters,
+    contentWithChapters,
+    wordCount,
+  }
+}
+
+function isValidAdminSecret(secret) {
+  return Boolean(process.env.ADMIN_SECRET) && secret === process.env.ADMIN_SECRET
+}
+
+async function reparseOutdatedDocuments() {
+  const summary = {
+    reparsed: 0,
+    failed: [],
+    skipped: 0,
+  }
+
+  const { data: documents, error: fetchError } = await supabase
+    .from("documents")
+    .select("id, storage_path")
+    .or(`parser_version.lt.${PARSER_VERSION},parser_version.is.null`)
+    .order("created_at", { ascending: true })
+
+  if (fetchError) {
+    throw new Error("Failed to load outdated documents")
+  }
+
+  const total = documents?.length ?? 0
+  if (total === 0) {
+    return summary
+  }
+
+  for (let index = 0; index < total; index += 1) {
+    const documentRow = documents[index]
+
+    if (!documentRow.storage_path) {
+      summary.skipped += 1
+      continue
+    }
+
+    console.log(`Re-parsing document ${documentRow.id} (${index + 1} of ${total})...`)
+
+    try {
+      const { data: storageFile, error: downloadError } = await supabase.storage
+        .from("pdfs")
+        .download(documentRow.storage_path)
+
+      if (downloadError || !storageFile) {
+        throw new Error("Failed to download source PDF")
+      }
+
+      const fileBuffer = Buffer.from(await storageFile.arrayBuffer())
+      const { parsedText, chapters, contentWithChapters, wordCount } =
+        await parsePdfBuffer(fileBuffer)
+
+      const { error: updateError } = await supabase
+        .from("documents")
+        .update({
+          total_pages: parsedText.numpages,
+          chapters,
+          content: contentWithChapters,
+          word_count: wordCount,
+          parser_version: PARSER_VERSION,
+        })
+        .eq("id", documentRow.id)
+
+      if (updateError) {
+        throw new Error("Failed to update document with re-parsed content")
+      }
+
+      summary.reparsed += 1
+    } catch (error) {
+      summary.failed.push({
+        id: documentRow.id,
+        error: error instanceof Error ? error.message : "Re-parse failed",
+      })
+    }
+  }
+
+  return summary
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -572,24 +675,10 @@ app.post("/upload", requireAuth, (req, res) => {
         return
       }
 
-      const [parsedText, headingStrings, positionedText] = await Promise.all([
-        pdfParse(uploadedFile.buffer),
-        extractHeadingLines(uploadedFile.buffer),
-        extractLinesByPosition(uploadedFile.buffer),
-      ])
-
-      const lines = linesFromPdfText(positionedText)
-      const blocks = buildBlocksFromLines(lines, headingStrings)
-      const content = blocksToContent(blocks)
-
       const hasImages = false
       const title = uploadedFile.originalname.replace(/\.pdf$/i, "")
-      const { chapters, content: contentWithChapters } = detectChapters(content)
-      const wordCount = Math.max(
-        countWordsInPlainText(parsedText.text),
-        countWordsFromBlocks(blocks),
-        countWordsFromContent(contentWithChapters)
-      )
+      const { parsedText, chapters, contentWithChapters, wordCount } =
+        await parsePdfBuffer(uploadedFile.buffer)
 
       const storagePath = `${Date.now()}-${uploadedFile.originalname}`
       const { data: storageData, error: storageError } = await supabase.storage
@@ -612,6 +701,7 @@ app.post("/upload", requireAuth, (req, res) => {
           word_count: wordCount,
           chapters,
           content: contentWithChapters,
+          parser_version: PARSER_VERSION,
           user_id: req.userId,
         })
         .select("id, word_count")
@@ -643,5 +733,37 @@ app.post("/upload", requireAuth, (req, res) => {
   })
 })
 
+app.post("/admin/reparse", async (req, res) => {
+  const adminSecret = req.headers["x-admin-secret"]
+  if (!isValidAdminSecret(adminSecret)) {
+    res.status(401).json({ success: false, error: "Unauthorized" })
+    return
+  }
+
+  try {
+    const summary = await reparseOutdatedDocuments()
+    res.json(summary)
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Re-parse failed",
+    })
+  }
+})
+
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => console.log(`Server on port ${PORT}`))
+app.listen(PORT, () => {
+  console.log(`Server on port ${PORT}`)
+
+  setTimeout(async () => {
+    try {
+      const summary = await reparseOutdatedDocuments()
+      console.log(`Re-parse complete: ${summary.reparsed} updated`)
+    } catch (error) {
+      console.error(
+        "Background re-parse failed:",
+        error instanceof Error ? error.message : "Unknown error"
+      )
+    }
+  }, 30_000)
+})
