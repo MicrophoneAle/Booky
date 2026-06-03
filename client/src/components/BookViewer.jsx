@@ -145,22 +145,70 @@ function isChapterBoundaryItem(item) {
 }
 
 function proseParagraphClassName(previousItem, proseItem = null) {
+  const classes = ["book-page__text"]
+
   if (proseItem?.isContinuation) {
-    return "book-page__text book-page__text--continuation"
+    classes.push("book-page__text--continuation")
+  } else if (proseItem?.isIndented) {
+    // default indent only
+  } else {
+    const noIndentAfter =
+      isHeadingVisualItem(previousItem) ||
+      previousItem?.type === "subtitle" ||
+      previousItem?.type === "author"
+
+    if (noIndentAfter) {
+      classes.push("book-page__text--first")
+    }
   }
 
-  if (proseItem?.isIndented) {
-    return "book-page__text"
+  if (proseItem?.textAlign === "center") {
+    classes.push("book-page__text--center")
+  }
+  if (proseItem?.bold) {
+    classes.push("book-page__text--bold")
+  }
+  if (proseItem?.italic) {
+    classes.push("book-page__text--italic")
   }
 
-  const noIndentAfter =
-    isHeadingVisualItem(previousItem) ||
-    previousItem?.type === "subtitle" ||
-    previousItem?.type === "author"
+  return classes.join(" ")
+}
 
-  return noIndentAfter
-    ? "book-page__text book-page__text--first"
-    : "book-page__text"
+function proseRunClassName(run) {
+  const classes = []
+  if (run?.bold) {
+    classes.push("book-page__run--bold")
+  }
+  if (run?.italic) {
+    classes.push("book-page__run--italic")
+  }
+  return classes.length > 0 ? classes.join(" ") : undefined
+}
+
+function renderProseContent(item, searchQuery, highlightTracker, activeSearchOccurrence) {
+  if (item?.runs?.length > 1) {
+    return item.runs.map((run, runIndex) => (
+      <Fragment key={`run-${runIndex}`}>
+        {runIndex > 0 ? " " : null}
+        <span className={proseRunClassName(run)}>
+          {highlightTextContent(
+            run.text,
+            searchQuery,
+            highlightTracker,
+            activeSearchOccurrence
+          )}
+        </span>
+      </Fragment>
+    ))
+  }
+
+  return highlightTextContent(
+    item.text,
+    searchQuery,
+    highlightTracker,
+    activeSearchOccurrence
+  )
 }
 
 function isStandaloneUrl(text) {
@@ -539,11 +587,21 @@ function groupBlocksForDisplay(blocks) {
     return startsLowercase || prevEndsWithContinuation || prevLacksTerminator
   }
 
-  const pushProse = (proseText, isIndented = false) => {
+  const pushProse = (proseText, formatting = {}) => {
     const trimmed = proseText.trim()
     if (!trimmed) return
 
-    if (shouldMergeWithPreviousProse(trimmed, isIndented)) {
+    const isIndented = Boolean(formatting.isIndented)
+    const hasDistinctFormatting =
+      formatting.textAlign === "center" ||
+      formatting.bold ||
+      formatting.italic ||
+      (formatting.runs?.length ?? 0) > 1
+
+    if (
+      !hasDistinctFormatting &&
+      shouldMergeWithPreviousProse(trimmed, isIndented)
+    ) {
       const last = visualItems[visualItems.length - 1]
       last.text = (last.text + " " + trimmed).replace(/\s+/g, " ").trim()
     } else {
@@ -551,6 +609,10 @@ function groupBlocksForDisplay(blocks) {
         type: "prose",
         text: trimmed,
         ...(isIndented ? { isIndented: true } : {}),
+        ...(formatting.textAlign === "center" ? { textAlign: "center" } : {}),
+        ...(formatting.bold ? { bold: true } : {}),
+        ...(formatting.italic ? { italic: true } : {}),
+        ...(formatting.runs?.length ? { runs: formatting.runs } : {}),
       })
     }
   }
@@ -614,7 +676,13 @@ function groupBlocksForDisplay(blocks) {
       continue
     }
 
-    pushProse(text, Boolean(block.isIndented))
+    pushProse(text, {
+      isIndented: Boolean(block.isIndented),
+      textAlign: block.textAlign,
+      bold: block.bold,
+      italic: block.italic,
+      runs: block.runs,
+    })
   }
 
   return visualItems
@@ -717,7 +785,24 @@ function appendVisualItem(body, item, previousItem = null) {
   if (item.type === "prose") {
     const paragraph = document.createElement("p")
     paragraph.className = proseParagraphClassName(previousItem, item)
-    paragraph.textContent = item.text
+
+    if (item.runs?.length > 1) {
+      for (const [runIndex, run] of item.runs.entries()) {
+        if (runIndex > 0) {
+          paragraph.appendChild(document.createTextNode(" "))
+        }
+        const span = document.createElement("span")
+        const runClass = proseRunClassName(run)
+        if (runClass) {
+          span.className = runClass
+        }
+        span.textContent = run.text
+        paragraph.appendChild(span)
+      }
+    } else {
+      paragraph.textContent = item.text
+    }
+
     body.appendChild(paragraph)
   }
 }
@@ -1679,8 +1764,8 @@ function BookPageContent({
 
           return (
             <p key={index} className={proseParagraphClassName(previousItem, item)}>
-              {highlightTextContent(
-                item.text,
+              {renderProseContent(
+                item,
                 searchQuery,
                 highlightTracker,
                 activeSearchOccurrence

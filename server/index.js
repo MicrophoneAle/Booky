@@ -1,4 +1,6 @@
 import "dotenv/config"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
 import express from "express"
 import cors from "cors"
 import multer from "multer"
@@ -7,7 +9,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 13
+const PARSER_VERSION = 16
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -259,9 +261,114 @@ function getItemX(item) {
   return Number.isFinite(matrix[4]) ? matrix[4] : 0
 }
 
+function getItemFontTraits(item) {
+  const fontName = String(item.fontName ?? "").toLowerCase()
+  let bold =
+    /\b(bold|black|heavy|semibold|demi|extrabold|ultra)\b/.test(fontName) ||
+    /-bd\b|_bd\b/.test(fontName)
+  let italic =
+    /\b(italic|oblique|ita)\b/.test(fontName) || /-it\b|_it\b/.test(fontName)
+
+  if (/\b(regular|book|normal|light|roman|medium)\b/.test(fontName)) {
+    bold = false
+  }
+  if (bold && /\b(bolditalic|bold-italic|boldoblique)\b/.test(fontName)) {
+    italic = true
+  }
+
+  const matrix = Array.isArray(item.transform) ? item.transform : []
+  const shearX = Number.isFinite(matrix[2]) ? Math.abs(matrix[2]) : 0
+  const scaleY = Number.isFinite(matrix[3]) ? Math.abs(matrix[3]) : 1
+  if (scaleY > 0 && shearX / scaleY > 0.12) {
+    italic = true
+  }
+
+  return { bold, italic }
+}
+
+function buildRunsFromLineItems(items) {
+  const runs = []
+
+  for (const entry of items) {
+    const piece = (entry.str ?? "").trim()
+    if (!piece) {
+      continue
+    }
+
+    const traits = getItemFontTraits(entry)
+    const last = runs[runs.length - 1]
+
+    if (last && last.bold === traits.bold && last.italic === traits.italic) {
+      last.text = `${last.text} ${piece}`.replace(/\s+/g, " ").trim()
+    } else {
+      runs.push({
+        text: piece,
+        bold: traits.bold,
+        italic: traits.italic,
+      })
+    }
+  }
+
+  return runs
+}
+
+function applyProseFormattingToBlock(block, line) {
+  if (line.centered) {
+    block.textAlign = "center"
+  }
+
+  const runs = line.runs ?? []
+  if (runs.length > 1) {
+    block.runs = runs.map((run) => ({
+      text: run.text,
+      ...(run.bold ? { bold: true } : {}),
+      ...(run.italic ? { italic: true } : {}),
+    }))
+    return
+  }
+
+  if (runs.length === 1) {
+    if (runs[0].bold) {
+      block.bold = true
+    }
+    if (runs[0].italic) {
+      block.italic = true
+    }
+  }
+}
+
+function proseFormattingDiffers(line, previousBlock) {
+  if (!previousBlock) {
+    return false
+  }
+
+  const lineCentered = Boolean(line.centered)
+  const prevCentered = previousBlock.textAlign === "center"
+  if (lineCentered !== prevCentered) {
+    return true
+  }
+
+  const lineRuns = line.runs ?? []
+  const prevRuns = previousBlock.runs ?? []
+
+  if (lineRuns.length > 1 || prevRuns.length > 1) {
+    return true
+  }
+
+  const lineBold = lineRuns.length === 1 ? Boolean(lineRuns[0].bold) : false
+  const lineItalic = lineRuns.length === 1 ? Boolean(lineRuns[0].italic) : false
+
+  return lineBold !== Boolean(previousBlock.bold) || lineItalic !== Boolean(previousBlock.italic)
+}
+
 const Y_LINE_GROUP_TOLERANCE_PX = 3
 const INDENT_THRESHOLD_PX = 12
 const RUNNING_HEADER_MIN_PAGES = 3
+const CENTERED_LINE_LEFT_GAP_MIN_PX = 20
+const CENTERED_LINE_CENTER_TOLERANCE_PX = 25
+const CENTERED_LINE_MAX_WIDTH_RATIO = 0.55
+const CENTERED_REPEATED_LINE_MIN_COUNT = 2
+const CENTERED_REPEATED_LINE_MAX_CHARS = 80
 
 const INLINE_PAGE_DECORATOR_REGEX = /\s*-\s*\d+\s*-\s*/g
 const FOOTNOTE_REFERENCE_REGEX = /\[\d+\]/g
@@ -312,7 +419,12 @@ function isNarrativeBoundaryLine(text) {
   return CHAPTER_PATTERN.test(trimmed)
 }
 
-function shouldDropExtractedLine(text, occurrenceCount) {
+function shouldDropExtractedLine(
+  text,
+  distinctPageCount,
+  occurrencesOnThisPage = 1,
+  isCentered = false
+) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
     return true
@@ -323,7 +435,13 @@ function shouldDropExtractedLine(text, occurrenceCount) {
   if (TOC_HEADER_LINE_REGEX.test(trimmed)) {
     return true
   }
-  if (occurrenceCount >= RUNNING_HEADER_MIN_PAGES) {
+  if (isCentered || isNarrativeBoundaryLine(trimmed) || CHAPTER_NUMBER_REGEX.test(trimmed)) {
+    return false
+  }
+  if (
+    distinctPageCount >= RUNNING_HEADER_MIN_PAGES &&
+    occurrencesOnThisPage <= 1
+  ) {
     return true
   }
   if (/^https?:\/\//i.test(trimmed)) {
@@ -364,6 +482,7 @@ function groupTextItemsIntoLines(items) {
   for (const group of lineGroups) {
     group.items.sort((a, b) => a.x - b.x)
     const leftmost = group.items[0]
+    const rightmost = group.items[group.items.length - 1]
     const text = group.items
       .map((entry) => entry.str)
       .join(" ")
@@ -375,18 +494,93 @@ function groupTextItemsIntoLines(items) {
     }
 
     const fontSize = Math.max(...group.items.map((entry) => entry.fontSize))
+    const runs = buildRunsFromLineItems(group.items)
+
+    const rightEdge =
+      rightmost.x + (rightmost.str?.length ?? 0) * fontSize * 0.5
 
     lines.push({
       text,
       x: leftmost.x,
+      rightEdge,
       y: group.y,
       fontSize,
+      runs,
     })
   }
 
   lines.sort((a, b) => b.y - a.y)
 
   return lines
+}
+
+function annotateLinesCentered(lines) {
+  if (!lines.length) {
+    return
+  }
+
+  let leftBound = Infinity
+  let rightBound = -Infinity
+
+  for (const line of lines) {
+    const leftEdge = line.x ?? 0
+    const rightEdge = line.rightEdge ?? leftEdge
+    if (leftEdge < leftBound) {
+      leftBound = leftEdge
+    }
+    if (rightEdge > rightBound) {
+      rightBound = rightEdge
+    }
+  }
+
+  if (!Number.isFinite(leftBound) || !Number.isFinite(rightBound)) {
+    return
+  }
+
+  const columnWidth = rightBound - leftBound
+  const columnCenter = (leftBound + rightBound) / 2
+  const centerTolerance = Math.max(
+    CENTERED_LINE_CENTER_TOLERANCE_PX * 2,
+    columnWidth * 0.12
+  )
+
+  const lineCountsOnPage = new Map()
+  for (const line of lines) {
+    const trimmed = (line.text ?? "").trim()
+    if (!trimmed) {
+      continue
+    }
+    lineCountsOnPage.set(trimmed, (lineCountsOnPage.get(trimmed) ?? 0) + 1)
+  }
+
+  for (const line of lines) {
+    const trimmed = (line.text ?? "").trim()
+    const leftEdge = line.x ?? 0
+    const rightEdge = line.rightEdge ?? leftEdge
+    const lineWidth = Math.max(0, rightEdge - leftEdge)
+    const leftGap = leftEdge - leftBound
+    const rightGap = rightBound - rightEdge
+    const lineCenter = (leftEdge + rightEdge) / 2
+    const isNarrowLine =
+      columnWidth > 0 && lineWidth > 0 && lineWidth / columnWidth <= CENTERED_LINE_MAX_WIDTH_RATIO
+
+    const symmetricMargins =
+      isNarrowLine &&
+      leftGap >= CENTERED_LINE_LEFT_GAP_MIN_PX &&
+      rightGap >= CENTERED_LINE_LEFT_GAP_MIN_PX &&
+      Math.abs(leftGap - rightGap) <= centerTolerance
+
+    const nearColumnCenter =
+      isNarrowLine && Math.abs(lineCenter - columnCenter) <= centerTolerance
+
+    const repeatedDisplayLine =
+      isNarrowLine &&
+      trimmed.length > 0 &&
+      trimmed.length <= CENTERED_REPEATED_LINE_MAX_CHARS &&
+      (lineCountsOnPage.get(trimmed) ?? 0) >= CENTERED_REPEATED_LINE_MIN_COUNT
+
+    line.centered = symmetricMargins || nearColumnCenter || repeatedDisplayLine
+  }
 }
 
 async function extractLinesByPosition(buffer) {
@@ -410,6 +604,8 @@ async function extractLinesByPosition(buffer) {
         x: getItemX(item),
         y: getItemY(item),
         fontSize: getItemFontSize(item),
+        fontName: item.fontName ?? "",
+        transform: item.transform,
       })
     }
 
@@ -420,24 +616,42 @@ async function extractLinesByPosition(buffer) {
       line.indented = line.x > medianX + INDENT_THRESHOLD_PX
     }
 
+    annotateLinesCentered(rawLines)
     pagesBeforeFilter.push({ lines: rawLines })
   }
 
-  const lineFrequency = new Map()
-  for (const page of pagesBeforeFilter) {
-    for (const line of page.lines) {
-      lineFrequency.set(line.text, (lineFrequency.get(line.text) ?? 0) + 1)
+  const lineDistinctPages = new Map()
+  const lineOccurrencesPerPage = new Map()
+  for (let pageIndex = 0; pageIndex < pagesBeforeFilter.length; pageIndex += 1) {
+    for (const line of pagesBeforeFilter[pageIndex].lines) {
+      if (!lineDistinctPages.has(line.text)) {
+        lineDistinctPages.set(line.text, new Set())
+        lineOccurrencesPerPage.set(line.text, new Map())
+      }
+      lineDistinctPages.get(line.text).add(pageIndex)
+      const pageCounts = lineOccurrencesPerPage.get(line.text)
+      pageCounts.set(pageIndex, (pageCounts.get(pageIndex) ?? 0) + 1)
     }
   }
 
   const pageData = []
 
-  for (const page of pagesBeforeFilter) {
+  for (let pageIndex = 0; pageIndex < pagesBeforeFilter.length; pageIndex += 1) {
+    const page = pagesBeforeFilter[pageIndex]
     const lines = []
 
     for (const line of page.lines) {
-      const occurrenceCount = lineFrequency.get(line.text) ?? 0
-      if (shouldDropExtractedLine(line.text, occurrenceCount)) {
+      const distinctPageCount = lineDistinctPages.get(line.text)?.size ?? 0
+      const occurrencesOnThisPage =
+        lineOccurrencesPerPage.get(line.text)?.get(pageIndex) ?? 1
+      if (
+        shouldDropExtractedLine(
+          line.text,
+          distinctPageCount,
+          occurrencesOnThisPage,
+          Boolean(line.centered)
+        )
+      ) {
         continue
       }
 
@@ -449,7 +663,9 @@ async function extractLinesByPosition(buffer) {
       lines.push({
         text: cleanedText,
         indented: Boolean(line.indented),
+        centered: Boolean(line.centered),
         fontSize: line.fontSize,
+        runs: line.runs ?? [],
         x: line.x,
         y: line.y,
       })
@@ -511,41 +727,13 @@ function isLikelyChapterNumberLine(text, line) {
   return (line.fontSize ?? 0) >= CHAPTER_HEADING_MIN_FONT_SIZE
 }
 
-function buildRepeatedChapterBoundaryKeys(allLines) {
-  const freq = new Map()
-
-  for (const { text } of allLines) {
-    const trimmed = (text ?? "").trim()
-    if (!trimmed) {
-      continue
-    }
-    const key = trimmed.toLowerCase()
-    if (CHAPTER_NUMBER_REGEX.test(trimmed)) {
-      freq.set(key, (freq.get(key) ?? 0) + 1)
-      continue
-    }
-    if (
-      /^chapter\s+(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i.test(
-        trimmed
-      )
-    ) {
-      freq.set(key, (freq.get(key) ?? 0) + 1)
-    }
-  }
-
-  return new Set(
-    [...freq.entries()].filter(([, count]) => count >= 3).map(([key]) => key)
-  )
-}
-
-function isChapterHeading(block, repeatedBoundaryKeys) {
+function isChapterHeading(block) {
   const lowercaseText = block.text.trim().toLowerCase()
   if (/^(chapter|part)\b/i.test(lowercaseText)) {
     return true
   }
 
   const text = block.text.trim()
-  const boundaryKey = text.toLowerCase()
 
   if (block.isChapterStart) {
     return true
@@ -556,23 +744,7 @@ function isChapterHeading(block, repeatedBoundaryKeys) {
   }
 
   const blocklist = ["and", "or", "but", "the", "a", "an", "to", "by", "and."]
-  if (blocklist.includes(boundaryKey)) {
-    return false
-  }
-
-  if (
-    CHAPTER_NUMBER_REGEX.test(text) &&
-    repeatedBoundaryKeys?.has(boundaryKey) &&
-    !block.isChapterStart
-  ) {
-    return false
-  }
-
-  if (
-    /^chapter\s+\d{1,2}\.?$/i.test(text) &&
-    repeatedBoundaryKeys?.has(boundaryKey) &&
-    !block.isChapterStart
-  ) {
+  if (blocklist.includes(text.trim().toLowerCase())) {
     return false
   }
 
@@ -589,10 +761,10 @@ function isChapterHeading(block, repeatedBoundaryKeys) {
   return false
 }
 
-function contentHasChapterHeadings(content, repeatedBoundaryKeys) {
+function contentHasChapterHeadings(content) {
   for (const page of content) {
     for (const block of page.blocks ?? []) {
-      if (isChapterHeading(block, repeatedBoundaryKeys)) {
+      if (isChapterHeading(block)) {
         return true
       }
     }
@@ -600,10 +772,10 @@ function contentHasChapterHeadings(content, repeatedBoundaryKeys) {
   return false
 }
 
-function detectChapters(content, bookTitle = "", repeatedBoundaryKeys = new Set()) {
+function detectChapters(content, bookTitle = "") {
   const trimmedBookTitle = (bookTitle ?? "").trim()
 
-  if (!contentHasChapterHeadings(content, repeatedBoundaryKeys) && trimmedBookTitle) {
+  if (!contentHasChapterHeadings(content) && trimmedBookTitle) {
     const id = slugify(trimmedBookTitle)
     const chapters = [
       {
@@ -638,7 +810,7 @@ function detectChapters(content, bookTitle = "", repeatedBoundaryKeys = new Set(
       let chapterId = currentChapterId
       let isChapterStart = false
 
-      if (isChapterHeading(block, repeatedBoundaryKeys)) {
+      if (isChapterHeading(block)) {
         const title = block.text.trim()
         let id = slugify(title)
         let chapterTitle = title
@@ -748,11 +920,19 @@ function shouldStartNewProseBlock(line, previousBlock) {
     return true
   }
 
+  if (line.centered) {
+    return true
+  }
+
   if (!previousBlock) {
     return true
   }
 
-  if (previousBlock.isHeading) {
+  if (previousBlock.isHeading || previousBlock.textAlign === "center") {
+    return true
+  }
+
+  if (proseFormattingDiffers(line, previousBlock)) {
     return true
   }
 
@@ -834,7 +1014,6 @@ function buildBlocksFromLines(pageData, headingStrings) {
     }
   }
 
-  const repeatedBoundaryKeys = buildRepeatedChapterBoundaryKeys(allLines)
   let pendingConnective = null
   let nonEmptyLineIndex = 0
   let index = 0
@@ -909,23 +1088,16 @@ function buildBlocksFromLines(pageData, headingStrings) {
     }
 
     if (isNarrativeBoundaryLine(text)) {
-      const boundaryKey = text.trim().toLowerCase()
-      const isRepeatedChapterNumber =
-        /^chapter\s+\d{1,2}\.?$/i.test(text.trim()) &&
-        repeatedBoundaryKeys.has(boundaryKey)
-
-      if (!isRepeatedChapterNumber || PART_HEADING_PATTERN.test(text.trim())) {
-        pendingConnective = null
-        blocks.push({
-          text: text.trim(),
-          isHeading: true,
-          fontSize: 15,
-          isChapterStart: true,
-          chapterId: null,
-        })
-        index += 1
-        continue
-      }
+      pendingConnective = null
+      blocks.push({
+        text: text.trim(),
+        isHeading: true,
+        fontSize: 15,
+        isChapterStart: true,
+        chapterId: null,
+      })
+      index += 1
+      continue
     }
 
     if (isTocHeadingCandidate(text, line, headingStrings, lineIndex)) {
@@ -984,12 +1156,29 @@ function buildBlocksFromLines(pageData, headingStrings) {
       if (line.indented) {
         proseBlock.isIndented = true
       }
+      applyProseFormattingToBlock(proseBlock, line)
       blocks.push(proseBlock)
       index += 1
       continue
     }
 
     const previous = blocks[blocks.length - 1]
+    if (proseFormattingDiffers(line, previous)) {
+      const splitBlock = {
+        text: proseText,
+        isHeading: false,
+        fontSize: 12,
+        chapterId: null,
+      }
+      if (line.indented) {
+        splitBlock.isIndented = true
+      }
+      applyProseFormattingToBlock(splitBlock, line)
+      blocks.push(splitBlock)
+      index += 1
+      continue
+    }
+
     previous.text = `${previous.text} ${proseText}`.replace(/\s+/g, " ").trim()
     index += 1
   }
@@ -1125,14 +1314,7 @@ async function parsePdfBuffer(buffer, fileName = "") {
     bookTitle = fileName.replace(/\.pdf$/i, "").replace(/[-_]+/g, " ").trim()
   }
 
-  const repeatedBoundaryKeys = buildRepeatedChapterBoundaryKeys(
-    blocks.map((block) => ({ text: block.text }))
-  )
-  const { chapters, content: contentWithChapters } = detectChapters(
-    content,
-    bookTitle,
-    repeatedBoundaryKeys
-  )
+  const { chapters, content: contentWithChapters } = detectChapters(content, bookTitle)
   const wordCount = Math.max(
     countWordsInPlainText(parsedText.text),
     countWordsFromBlocks(blocks),
@@ -1328,19 +1510,27 @@ app.post("/admin/reparse", async (req, res) => {
   }
 })
 
-const PORT = process.env.PORT || 3000
-app.listen(PORT, () => {
-  console.log(`Server on port ${PORT}`)
+export { parsePdfBuffer, PARSER_VERSION }
 
-  setTimeout(async () => {
-    try {
-      const summary = await reparseOutdatedDocuments()
-      console.log(`Re-parse complete: ${summary.reparsed} updated`)
-    } catch (error) {
-      console.error(
-        "Background re-parse failed:",
-        error instanceof Error ? error.message : "Unknown error"
-      )
-    }
-  }, 30_000)
-})
+const isServerEntryPoint =
+  process.argv[1] &&
+  path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1])
+
+if (isServerEntryPoint) {
+  const PORT = process.env.PORT || 3000
+  app.listen(PORT, () => {
+    console.log(`Server on port ${PORT}`)
+
+    setTimeout(async () => {
+      try {
+        const summary = await reparseOutdatedDocuments()
+        console.log(`Re-parse complete: ${summary.reparsed} updated`)
+      } catch (error) {
+        console.error(
+          "Background re-parse failed:",
+          error instanceof Error ? error.message : "Unknown error"
+        )
+      }
+    }, 30_000)
+  })
+}

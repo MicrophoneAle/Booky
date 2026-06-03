@@ -319,6 +319,10 @@ export function flattenDocument(document) {
         chapterTitle: chapterId ? chapterTitleById[chapterId] ?? null : null,
         isChapterStart: inferBlockIsChapterStart(block),
         ...(block.isIndented ? { isIndented: true } : {}),
+        ...(block.textAlign === "center" ? { textAlign: "center" } : {}),
+        ...(block.bold ? { bold: true } : {}),
+        ...(block.italic ? { italic: true } : {}),
+        ...(block.runs?.length ? { runs: block.runs } : {}),
       })
     }
   }
