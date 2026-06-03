@@ -20,6 +20,7 @@ const PAGE_HEIGHT_PX = 600
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const SPINE_PX = 1
 const PAGE_NUMBER_RESERVED_PX = 20
+const BODY_DESCENDER_PAD_PX = 4
 const MOBILE_BROWSER_UI_PX = 40
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
 const MOBILE_PAGE_NUMBER_RESERVED_PX =
@@ -71,7 +72,7 @@ const MARGIN_MAP = {
   wide: "1.25rem",
 }
 
-function getPagePaddingStyle(marginSetting, { bottomInset = false } = {}) {
+function getPagePaddingStyle(marginSetting) {
   const pad = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
   if (pad === "0px") {
     return { padding: 0 }
@@ -80,7 +81,7 @@ function getPagePaddingStyle(marginSetting, { bottomInset = false } = {}) {
     paddingTop: pad,
     paddingRight: pad,
     paddingLeft: pad,
-    paddingBottom: bottomInset ? pad : 0,
+    paddingBottom: 0,
   }
 }
 
@@ -376,19 +377,16 @@ function createListElement(kind) {
 function getLayoutHeights(
   pageHeightOverride,
   marginSetting,
-  pageNumberReservedPx = PAGE_NUMBER_RESERVED_PX,
-  isMobileViewport = false
+  pageNumberReservedPx = PAGE_NUMBER_RESERVED_PX
 ) {
   const remPx =
     parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
   const rawMargin = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
   const marginPx = rawMargin === "0px" ? 0 : parseFloat(rawMargin) * remPx
   const pageHeight = pageHeightOverride ?? PAGE_HEIGHT_PX
-  const bottomInsetPx = isMobileViewport ? 0 : marginPx
   const contentMaxHeight =
     pageHeight -
     marginPx -
-    bottomInsetPx -
     pageNumberReservedPx -
     CONTENT_HEIGHT_SAFETY_BUFFER_PX
 
@@ -1440,7 +1438,6 @@ function highlightTextContent(text, query, tracker = null, activeOccurrence = nu
 
 function BookPageContent({
   page,
-  isMobile = false,
   isMobileFullscreen = false,
   settings,
   searchQuery = "",
@@ -1455,9 +1452,7 @@ function BookPageContent({
     .filter(Boolean)
     .join(" ")
 
-  const pageStyle = getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins, {
-    bottomInset: !isMobile && !isMobileFullscreen,
-  })
+  const pageStyle = getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins)
 
   if (!page) {
     return <div className={`${pageClassName} book-page--empty`} style={pageStyle} />
@@ -1975,22 +1970,19 @@ export default function BookViewer({
       const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(
         pageHeightToUse,
         settings.margins,
-        pageNumberReservedPx,
-        isMobile
+        pageNumberReservedPx
       )
       const measureElements = createMeasureElements()
 
       measureRoot = measureElements.root
       measureElements.page.style.height = `${pageOuterHeight}px`
-      const pagePad = getPagePaddingStyle(settings.margins, {
-        bottomInset: !isMobile,
-      })
+      const pagePad = getPagePaddingStyle(settings.margins)
       measureElements.page.style.paddingTop = pagePad.paddingTop ?? "0"
       measureElements.page.style.paddingRight = pagePad.paddingRight ?? "0"
       measureElements.page.style.paddingLeft = pagePad.paddingLeft ?? "0"
       measureElements.page.style.paddingBottom = pagePad.paddingBottom ?? "0"
       measureElements.body.style.padding = "0"
-      measureElements.body.style.paddingBottom = `${PAGE_NUMBER_RESERVED_PX}px`
+      measureElements.body.style.paddingBottom = `${BODY_DESCENDER_PAD_PX}px`
       measureElements.footer.style.height = `${pageNumberReservedPx}px`
 
       const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
@@ -2751,7 +2743,6 @@ export default function BookViewer({
               <div className="book-viewer__page-face" ref={leftPageFaceRef}>
                 <BookPageContent
                   page={leftPage}
-                  isMobile={isMobile}
                   isMobileFullscreen={mobileFullscreenActive}
                   settings={settings}
                   searchQuery={searchOpen ? searchQuery : ""}
@@ -2777,7 +2768,6 @@ export default function BookViewer({
                     {rightPage ? (
                       <BookPageContent
                         page={rightPage}
-                        isMobile={isMobile}
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
                         searchQuery={searchOpen ? searchQuery : ""}
@@ -2791,7 +2781,6 @@ export default function BookViewer({
                     ) : (
                       <BookPageContent
                         page={null}
-                        isMobile={isMobile}
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
                         searchQuery={searchOpen ? searchQuery : ""}
