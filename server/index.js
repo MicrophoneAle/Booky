@@ -9,7 +9,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 19
+const PARSER_VERSION = 20
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -190,9 +190,11 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("documents")
-      .select("id, name, total_pages, chapters, content")
+      .select(
+        "id, name, total_pages, chapters, content, parser_version, storage_path"
+      )
       .eq("id", id)
       .eq("user_id", req.userId)
       .single()
@@ -200,6 +202,20 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
     if (error || !data) {
       res.status(404).json({ success: false, error: "Document not found" })
       return
+    }
+
+    const reparsed = await reparseDocumentIfOutdated(data)
+    if (reparsed.updated) {
+      const refreshed = await supabase
+        .from("documents")
+        .select("id, name, total_pages, chapters, content, parser_version")
+        .eq("id", id)
+        .eq("user_id", req.userId)
+        .single()
+
+      if (!refreshed.error && refreshed.data) {
+        data = refreshed.data
+      }
     }
 
     res.json({
@@ -210,6 +226,7 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
         total_pages: data.total_pages,
         chapters: data.chapters,
         content: data.content,
+        parser_version: data.parser_version ?? PARSER_VERSION,
       },
     })
   } catch (error) {
@@ -401,7 +418,7 @@ const MARGIN_CALLOUT_MIN_LONG_LINES = 5
 const MARGIN_CALLOUT_LONG_LINE_CHARS = 65
 const MARGIN_CALLOUT_SUBSTRING_PARENT_GAP = 12
 
-const PROSE_BLOCKLIST_WORD_REGEX = /^(and|or|but|the|a|an|to|by)$/i
+const PROSE_BLOCKLIST_WORD_REGEX = /^(and|or|but|the|a|an)$/i
 
 function medianValue(values) {
   if (values.length === 0) {
@@ -421,7 +438,26 @@ function normalizeExtractedText(text) {
       .replace(/\u00AD/g, "")
       .replace(/\bfi\s+(?=[a-z])/gi, "fi")
       .replace(/\bfl\s+(?=[a-z])/gi, "fl")
+      .replace(/\b([a-z]{4,})\s+(ed|ing|ly|es|er|est)\b/gi, "$1$2")
+      .replace(/\bout-\s+/gi, "out-")
   )
+}
+
+function isLikelyDialogueContinuationLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (/^[''\u2018\u201c"]/.test(trimmed)) {
+    return true
+  }
+  if (/[—–-]{2,}\s*[''\u2019"]?\s*$/u.test(trimmed)) {
+    return true
+  }
+  if (/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\s*[—–-]{1,2}/.test(trimmed)) {
+    return true
+  }
+  return false
 }
 
 function stripInlineArtifacts(text) {
@@ -503,10 +539,15 @@ function dropMarginCalloutLines(lines) {
         return false
       }
 
+      if (isLikelyDialogueContinuationLine(text)) {
+        return true
+      }
+
       if (
         words.length <= MARGIN_CALLOUT_MAX_WORDS &&
         text.length <= 42 &&
-        longLineCount >= MARGIN_CALLOUT_MIN_LONG_LINES
+        longLineCount >= MARGIN_CALLOUT_MIN_LONG_LINES &&
+        /^[a-z]/.test(text)
       ) {
         return false
       }
@@ -1667,7 +1708,43 @@ function isValidAdminSecret(secret) {
   return Boolean(process.env.ADMIN_SECRET) && secret === process.env.ADMIN_SECRET
 }
 
-async function reparseOutdatedDocuments() {
+async function reparseDocumentIfOutdated(documentRow) {
+  const currentVersion = documentRow.parser_version ?? 0
+  if (currentVersion >= PARSER_VERSION || !documentRow.storage_path) {
+    return { updated: false }
+  }
+
+  const { data: storageFile, error: downloadError } = await supabase.storage
+    .from("pdfs")
+    .download(documentRow.storage_path)
+
+  if (downloadError || !storageFile) {
+    throw new Error("Failed to download source PDF")
+  }
+
+  const fileBuffer = Buffer.from(await storageFile.arrayBuffer())
+  const { parsedText, chapters, contentWithChapters, wordCount } =
+    await parsePdfBuffer(fileBuffer, documentRow.name ?? "")
+
+  const { error: updateError } = await supabase
+    .from("documents")
+    .update({
+      total_pages: parsedText.numpages,
+      chapters,
+      content: contentWithChapters,
+      word_count: wordCount,
+      parser_version: PARSER_VERSION,
+    })
+    .eq("id", documentRow.id)
+
+  if (updateError) {
+    throw new Error("Failed to update document with re-parsed content")
+  }
+
+  return { updated: true }
+}
+
+async function reparseOutdatedDocuments({ limit = 5 } = {}) {
   const summary = {
     reparsed: 0,
     failed: [],
@@ -1676,9 +1753,10 @@ async function reparseOutdatedDocuments() {
 
   const { data: documents, error: fetchError } = await supabase
     .from("documents")
-    .select("id, storage_path, name")
+    .select("id, storage_path, name, parser_version")
     .or(`parser_version.lt.${PARSER_VERSION},parser_version.is.null`)
     .order("created_at", { ascending: true })
+    .limit(limit)
 
   if (fetchError) {
     throw new Error("Failed to load outdated documents")
@@ -1700,34 +1778,12 @@ async function reparseOutdatedDocuments() {
     console.log(`Re-parsing document ${documentRow.id} (${index + 1} of ${total})...`)
 
     try {
-      const { data: storageFile, error: downloadError } = await supabase.storage
-        .from("pdfs")
-        .download(documentRow.storage_path)
-
-      if (downloadError || !storageFile) {
-        throw new Error("Failed to download source PDF")
+      const result = await reparseDocumentIfOutdated(documentRow)
+      if (result.updated) {
+        summary.reparsed += 1
+      } else {
+        summary.skipped += 1
       }
-
-      const fileBuffer = Buffer.from(await storageFile.arrayBuffer())
-      const { parsedText, chapters, contentWithChapters, wordCount } =
-        await parsePdfBuffer(fileBuffer, documentRow.name ?? "")
-
-      const { error: updateError } = await supabase
-        .from("documents")
-        .update({
-          total_pages: parsedText.numpages,
-          chapters,
-          content: contentWithChapters,
-          word_count: wordCount,
-          parser_version: PARSER_VERSION,
-        })
-        .eq("id", documentRow.id)
-
-      if (updateError) {
-        throw new Error("Failed to update document with re-parsed content")
-      }
-
-      summary.reparsed += 1
     } catch (error) {
       summary.failed.push({
         id: documentRow.id,
@@ -1857,14 +1913,18 @@ if (isServerEntryPoint) {
 
     setTimeout(async () => {
       try {
-        const summary = await reparseOutdatedDocuments()
-        console.log(`Re-parse complete: ${summary.reparsed} updated`)
+        const summary = await reparseOutdatedDocuments({ limit: 3 })
+        if (summary.reparsed > 0 || summary.failed.length > 0) {
+          console.log(
+            `Background re-parse: ${summary.reparsed} updated, ${summary.failed.length} failed, ${summary.skipped} skipped`
+          )
+        }
       } catch (error) {
         console.error(
           "Background re-parse failed:",
           error instanceof Error ? error.message : "Unknown error"
         )
       }
-    }, 30_000)
+    }, 5_000)
   })
 }

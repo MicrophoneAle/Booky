@@ -111,6 +111,25 @@ if (downWithBigBrotherCount < 5) {
   pass = false
 }
 
+const paddingtonPass = allBlocks.some((block) => {
+  const text = (block.text ?? "").trim()
+  return (
+    /remember this/i.test(text) &&
+    /Go to Paddington Station/i.test(text) &&
+    !/Go to With a sort of military precision/i.test(text)
+  )
+})
+
+lines.push("")
+lines.push(
+  paddingtonPass
+    ? "  Paddington dialogue continuity: OK"
+    : "  Paddington dialogue continuity: FAIL — missing or scrambled Go to / Paddington lines"
+)
+if (!paddingtonPass) {
+  pass = false
+}
+
 lines.push("")
 if (romanOnlyStray.length > 0) {
   pass = false
