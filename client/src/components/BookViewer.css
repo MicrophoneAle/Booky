@@ -934,12 +934,20 @@
 }
 
 .book-page__chapter-label {
-  margin: 0 0 0.5rem;
+  margin: 0;
   font-family: var(--ff-heading);
   font-size: 9px;
+  line-height: 1.2;
+  text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: currentColor;
+}
+
+.book-page__chapter-label + .book-page__chapter-heading,
+.book-page__chapter-label + .book-page__heading,
+.book-page__chapter-label + .book-page__title {
+  margin-top: 0.2rem;
 }
 
 .book-page__body:not(.book-page__body--title-spread) {
@@ -952,7 +960,7 @@
   gap: 0;
   box-sizing: border-box;
   padding-bottom: 6px;
-  --lh-display: calc(var(--lh-body, 1.15) * 1.065);
+  --lh-display: calc(var(--lh-body, 1.15) * 1.04);
 }
 
 .book-page__body--title-spread {
@@ -975,8 +983,7 @@
 }
 
 .book-page__heading {
-  margin: 0;
-  margin-bottom: 0.6rem;
+  margin: 0 0 0.45rem;
   font-family: var(--ff-heading, var(--font-heading));
   font-size: var(--fs-heading, 15px);
   font-weight: 700;
@@ -985,25 +992,41 @@
 }
 
 .book-page__chapter-heading {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-family: var(--ff-heading, var(--font-heading));
   font-size: max(0.95rem, calc(var(--fs-body, 10px) * 1.35));
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.2;
+  text-align: center;
   color: inherit;
 }
 
+.book-page__chapter-heading + .book-page__subtitle {
+  margin-top: 0.18rem;
+}
+
+.book-page__title + .book-page__subtitle,
+.book-page__heading + .book-page__subtitle {
+  margin-top: 0.18rem;
+}
+
 .book-page__subtitle {
-  margin: 0;
-  margin-top: 0.25rem;
+  margin: 0 0 0.4rem;
   font-family: var(--ff-body, var(--font-body));
   font-size: max(0.8rem, min(0.95rem, calc(var(--fs-body, 10px) * 1.52)));
   font-weight: 400;
   font-style: italic;
   letter-spacing: 0.04em;
-  line-height: var(--lh-body, 1.15);
+  line-height: 1.2;
   text-align: center;
   color: var(--color-muted);
+}
+
+.book-page__subtitle + .book-page__text,
+.book-page__subtitle + .book-page__text--first,
+.book-page__chapter-heading + .book-page__text,
+.book-page__chapter-heading + .book-page__text--first {
+  margin-top: 0.45rem;
 }
 
 .book-page__author {
@@ -1043,28 +1066,27 @@
 }
 
 .book-page__text--center {
-  margin: 0.35rem 0;
-  line-height: var(--lh-display, 1.22);
+  margin: 0;
+  line-height: var(--lh-display, 1.2);
   text-align: center;
   text-indent: 0;
   hyphens: none;
 }
 
-.book-page__text--center + .book-page__text--center {
-  margin-top: 0.1rem;
-  margin-bottom: 0.1rem;
+:not(.book-page__text--center) + .book-page__text--center {
+  margin-top: 0.45rem;
 }
 
-.book-page__text + .book-page__text--center {
-  margin-top: 0.75rem;
+.book-page__text--center + .book-page__text--center {
+  margin-top: 0.14rem;
+}
+
+.book-page__text--center:has(+ :not(.book-page__text--center)) {
+  margin-bottom: 0.45rem;
 }
 
 .book-page__text--center + .book-page__text:not(.book-page__text--center) {
-  margin-top: 0.75rem;
-}
-
-.book-page__text--center:has(+ .book-page__text:not(.book-page__text--center)) {
-  margin-bottom: 0.55rem;
+  margin-top: 0;
 }
 
 .book-page__text--bold,
