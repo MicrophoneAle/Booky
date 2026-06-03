@@ -13,6 +13,11 @@ export const TOC_CHAPTER_LISTING_REGEX =
 export const CHAPTER_BOUNDARY_REGEX =
   /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six)|prologue|epilogue|introduction|conclusion)\.?$/i
 
+export const CHAPTER_NUMBER_REGEX =
+  /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
+
+export const CHAPTER_HEADING_MIN_FONT_SIZE = 12.5
+
 /**
  * Maps API chapter ids to first reader page numbers from measured layout pages.
  */
@@ -81,6 +86,11 @@ export function inferBlockIsChapterStart(block) {
   }
 
   const text = (block.text ?? "").trim()
+  const lowercaseText = text.toLowerCase()
+
+  if (/^(chapter|part)\b/i.test(lowercaseText)) {
+    return true
+  }
 
   if (!block.chapterId && isTocChapterListingText(text)) {
     return false
@@ -89,7 +99,13 @@ export function inferBlockIsChapterStart(block) {
   if (isChapterBoundaryText(text)) {
     return true
   }
-  if (/^\d{1,2}\.?$/.test(text) && (block.fontSize ?? 0) >= 13) {
+
+  const numericCheckRegex =
+    /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
+  if (
+    numericCheckRegex.test(text) &&
+    (block.fontSize ?? 0) >= CHAPTER_HEADING_MIN_FONT_SIZE
+  ) {
     return true
   }
 

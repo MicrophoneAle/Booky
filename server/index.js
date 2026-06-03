@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 12
+const PARSER_VERSION = 13
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -229,8 +229,10 @@ const TOC_CHAPTER_LISTING_REGEX =
 
 const EARLY_TOC_SCAN_LINE_LIMIT = 80
 
-const STANDALONE_CHAPTER_NUMERAL_REGEX =
+const CHAPTER_NUMBER_REGEX =
   /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
+
+const CHAPTER_HEADING_MIN_FONT_SIZE = 12.5
 
 function slugify(text) {
   return text
@@ -484,8 +486,10 @@ async function extractHeadingLines(buffer) {
 }
 
 function isStandaloneChapterNumber(text, block) {
+  const chapterNumberRegex =
+    /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
   const trimmed = (text ?? "").trim()
-  if (!STANDALONE_CHAPTER_NUMERAL_REGEX.test(trimmed)) {
+  if (!chapterNumberRegex.test(trimmed)) {
     return false
   }
   if (block?.isChapterStart) {
@@ -494,15 +498,17 @@ function isStandaloneChapterNumber(text, block) {
   if (!block?.isHeading) {
     return false
   }
-  return (block.fontSize ?? 0) >= 13
+  return (block.fontSize ?? 0) >= CHAPTER_HEADING_MIN_FONT_SIZE
 }
 
 function isLikelyChapterNumberLine(text, line) {
+  const chapterNumberRegex =
+    /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
   const trimmed = (text ?? "").trim()
-  if (!STANDALONE_CHAPTER_NUMERAL_REGEX.test(trimmed)) {
+  if (!chapterNumberRegex.test(trimmed)) {
     return false
   }
-  return (line.fontSize ?? 0) >= 13
+  return (line.fontSize ?? 0) >= CHAPTER_HEADING_MIN_FONT_SIZE
 }
 
 function buildRepeatedChapterBoundaryKeys(allLines) {
@@ -514,11 +520,15 @@ function buildRepeatedChapterBoundaryKeys(allLines) {
       continue
     }
     const key = trimmed.toLowerCase()
-    if (STANDALONE_CHAPTER_NUMERAL_REGEX.test(trimmed)) {
+    if (CHAPTER_NUMBER_REGEX.test(trimmed)) {
       freq.set(key, (freq.get(key) ?? 0) + 1)
       continue
     }
-    if (/^chapter\s+\d{1,2}\.?$/i.test(trimmed)) {
+    if (
+      /^chapter\s+(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i.test(
+        trimmed
+      )
+    ) {
       freq.set(key, (freq.get(key) ?? 0) + 1)
     }
   }
@@ -528,18 +538,12 @@ function buildRepeatedChapterBoundaryKeys(allLines) {
   )
 }
 
-function isExplicitChapterOrPartLabel(text) {
-  const trimmed = (text ?? "").trim()
-  if (!trimmed) {
-    return false
-  }
-  if (CHAPTER_PATTERN.test(trimmed)) {
+function isChapterHeading(block, repeatedBoundaryKeys) {
+  const lowercaseText = block.text.trim().toLowerCase()
+  if (/^(chapter|part)\b/i.test(lowercaseText)) {
     return true
   }
-  return /^(chapter|part)\b/i.test(trimmed)
-}
 
-function isChapterHeading(block, repeatedBoundaryKeys) {
   const text = block.text.trim()
   const boundaryKey = text.toLowerCase()
 
@@ -547,7 +551,7 @@ function isChapterHeading(block, repeatedBoundaryKeys) {
     return true
   }
 
-  if (isExplicitChapterOrPartLabel(text)) {
+  if (CHAPTER_PATTERN.test(text)) {
     return true
   }
 
@@ -557,7 +561,7 @@ function isChapterHeading(block, repeatedBoundaryKeys) {
   }
 
   if (
-    STANDALONE_CHAPTER_NUMERAL_REGEX.test(text) &&
+    CHAPTER_NUMBER_REGEX.test(text) &&
     repeatedBoundaryKeys?.has(boundaryKey) &&
     !block.isChapterStart
   ) {
@@ -644,8 +648,7 @@ function detectChapters(content, bookTitle = "", repeatedBoundaryKeys = new Set(
           currentPartTitle = title
         } else if (
           currentPartId &&
-          (STANDALONE_CHAPTER_NUMERAL_REGEX.test(title) ||
-            /^chapter\s+/i.test(title))
+          (CHAPTER_NUMBER_REGEX.test(title) || /^chapter\s+/i.test(title))
         ) {
           id = `${currentPartId}-${slugify(title)}`
           chapterTitle = `${currentPartTitle ?? currentPartId} — ${title}`
@@ -733,7 +736,7 @@ function isHeadingLine(text, line, headingStrings) {
     return true
   }
 
-  if (text.length < 60 && line.fontSize >= 14) {
+  if (text.length < 60 && line.fontSize >= CHAPTER_HEADING_MIN_FONT_SIZE) {
     return true
   }
 
