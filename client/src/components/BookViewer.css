@@ -1223,6 +1223,11 @@ ol.book-page__list {
 
 .book-viewer__measure .book-page__body {
   flex: 0 0 auto;
+  max-height: none;
+}
+
+.book-page__body--measure {
+  max-height: none;
 }
 
 .book-viewer__measure-footer {

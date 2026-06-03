@@ -29,23 +29,38 @@ const MOBILE_PAGE_NUMBER_GAP_PX = 3
 const MOBILE_PAGE_NUMBER_RESERVED_PX =
   PAGE_NUMBER_RESERVED_PX + MOBILE_BROWSER_UI_PX + MOBILE_PAGE_NUMBER_GAP_PX
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 2
+const CHAPTER_LABEL_RESERVED_PX = 18
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 
-function bodyContentFitsPage(bodyEl, contentMaxHeight) {
-  const limit = Math.floor(contentMaxHeight - PAGE_CONTENT_FIT_BUFFER_PX)
+/**
+ * Text area budget from typesetting: available height, line height, and max prose lines.
+ */
+function getPageTextCapacity(contentMaxHeight, font, line, { showChapterLabel = false } = {}) {
+  const lineHeightPx = font.body * line.body
+  const reserved =
+    BODY_DESCENDER_PAD_PX +
+    PAGE_CONTENT_FIT_BUFFER_PX +
+    (showChapterLabel ? CHAPTER_LABEL_RESERVED_PX : 0)
+  const usableHeight = Math.max(0, contentMaxHeight - reserved)
+  const maxLines = Math.max(1, Math.floor(usableHeight / lineHeightPx))
 
-  if (bodyEl.scrollHeight > limit + 1) {
-    return false
+  return {
+    lineHeightPx,
+    usableHeight,
+    maxLines,
+    fitHeight: usableHeight,
   }
+}
 
+function bodyContentFitsPage(bodyEl, fitHeight) {
+  const limit = Math.floor(fitHeight)
   const lastChild = bodyEl.lastElementChild
+
   if (!lastChild) {
     return true
   }
 
-  const bodyRect = bodyEl.getBoundingClientRect()
-  const lastRect = lastChild.getBoundingClientRect()
-  const bottom = Math.ceil(lastRect.bottom - bodyRect.top)
+  const bottom = lastChild.offsetTop + lastChild.offsetHeight
   return bottom <= limit
 }
 
@@ -697,7 +712,7 @@ function renderMeasureBody(
   body.replaceChildren()
   body.className = centerTitlePage
     ? "book-page__body book-page__body--title-spread"
-    : "book-page__body"
+    : "book-page__body book-page__body--measure"
 
   if (showChapterLabel && chapterTitle) {
     appendChapterLabel(body, chapterTitle)
@@ -724,8 +739,8 @@ function applyChapterContextFromItem(item, chapterState) {
   }
 }
 
-function pageContentOverflows(bodyEl, contentMaxHeight) {
-  return !bodyContentFitsPage(bodyEl, contentMaxHeight)
+function pageContentOverflows(bodyEl, fitHeight) {
+  return !bodyContentFitsPage(bodyEl, fitHeight)
 }
 
 function countListItemsInTree(nodes) {
@@ -761,7 +776,7 @@ function isTrivialListPage(page) {
   return itemCount <= 1 && textLength < TRIVIAL_LIST_PAGE_CHAR_LIMIT
 }
 
-function cleanupPages(pages, bodyEl, contentMaxHeight) {
+function cleanupPages(pages, bodyEl, pageLayout) {
   let cleaned = pages.filter(
     (page) => page.visualItems.length > 0 && !isTrivialListPage(page)
   )
@@ -775,15 +790,20 @@ function cleanupPages(pages, bodyEl, contentMaxHeight) {
 
       if (onlyItem.type === "prose" && onlyItem.text.length < TRIVIAL_LAST_PAGE_CHAR_LIMIT) {
         const mergedItems = [...previousPage.visualItems, ...lastPage.visualItems]
-
-        renderMeasureBody(
-          bodyEl,
-          mergedItems,
-          Boolean(previousPage.isChapterStart && previousPage.chapterTitle),
-          previousPage.chapterTitle
+        const showLabel = Boolean(
+          previousPage.isChapterStart && previousPage.chapterTitle
         )
 
-        if (!pageContentOverflows(bodyEl, contentMaxHeight)) {
+        renderMeasureBody(bodyEl, mergedItems, showLabel, previousPage.chapterTitle)
+
+        const { fitHeight } = getPageTextCapacity(
+          pageLayout.contentMaxHeight,
+          pageLayout.font,
+          pageLayout.line,
+          { showChapterLabel: showLabel }
+        )
+
+        if (!pageContentOverflows(bodyEl, fitHeight)) {
           previousPage.visualItems = mergedItems
           cleaned = cleaned.slice(0, -1)
         }
@@ -910,18 +930,30 @@ function prosePlaceableFromItem(proseItem) {
   return { type: "prose", item: proseItem }
 }
 
-function pagePlaceablesFit(bodyEl, pagePlaceables, contentMaxHeight, showLabel, labelTitle) {
+function pagePlaceablesFit(
+  bodyEl,
+  pagePlaceables,
+  pageLayout,
+  showLabel,
+  labelTitle
+) {
   const trialVisualItems = placeablesToVisualItems(pagePlaceables)
   renderMeasureBody(bodyEl, trialVisualItems, showLabel, labelTitle, {
     centerTitlePage: shouldCenterTitlePage(trialVisualItems),
   })
-  return bodyContentFitsPage(bodyEl, contentMaxHeight)
+  const { fitHeight } = getPageTextCapacity(
+    pageLayout.contentMaxHeight,
+    pageLayout.font,
+    pageLayout.line,
+    { showChapterLabel: showLabel }
+  )
+  return bodyContentFitsPage(bodyEl, fitHeight)
 }
 
 function splitProseAcrossPages(
   proseItem,
   bodyEl,
-  contentMaxHeight,
+  pageLayout,
   alreadyOnPage,
   showLabel,
   labelTitle
@@ -947,7 +979,7 @@ function splitProseAcrossPages(
     !pagePlaceablesFit(
       bodyEl,
       [prosePlaceableFromItem(singleWordItem)],
-      contentMaxHeight,
+      pageLayout,
       showLabel,
       labelTitle
     )
@@ -955,8 +987,15 @@ function splitProseAcrossPages(
     return null
   }
 
+  const { maxLines } = getPageTextCapacity(
+    pageLayout.contentMaxHeight,
+    pageLayout.font,
+    pageLayout.line,
+    { showChapterLabel: showLabel }
+  )
+  const wordsPerLineHint = Math.max(8, Math.ceil(words.length / Math.max(1, maxLines)))
   let low = 1
-  let high = words.length
+  let high = Math.min(words.length, maxLines * wordsPerLineHint)
   let best = 0
 
   while (low <= high) {
@@ -968,7 +1007,7 @@ function splitProseAcrossPages(
     }
     const trialPlaceables = [...alreadyOnPage, prosePlaceableFromItem(fittingItem)]
 
-    if (pagePlaceablesFit(bodyEl, trialPlaceables, contentMaxHeight, showLabel, labelTitle)) {
+    if (pagePlaceablesFit(bodyEl, trialPlaceables, pageLayout, showLabel, labelTitle)) {
       best = mid
       low = mid + 1
     } else {
@@ -994,7 +1033,8 @@ function splitProseAcrossPages(
   }
 }
 
-function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
+function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout) {
+  const { contentMaxHeight } = pageLayout
   const visualItems = groupBlocksForDisplay(flatBlocks)
   const placeables = flattenVisualItemsToPlaceables(visualItems)
   const pages = []
@@ -1063,7 +1103,13 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     renderMeasureBody(bodyEl, pageItems, showLabel, labelTitle, {
       centerTitlePage: shouldCenterTitlePage(pageItems),
     })
-    return bodyContentFitsPage(bodyEl, contentMaxHeight)
+    const { fitHeight } = getPageTextCapacity(
+      contentMaxHeight,
+      pageLayout.font,
+      pageLayout.line,
+      { showChapterLabel: showLabel }
+    )
+    return bodyContentFitsPage(bodyEl, fitHeight)
   }
 
   const flushPage = () => {
@@ -1129,7 +1175,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       const split = splitProseAcrossPages(
         placeable.item,
         bodyEl,
-        contentMaxHeight,
+        pageLayout,
         currentPagePlaceables,
         showChapterLabel(),
         chapterState.pageChapterTitle
@@ -1237,7 +1283,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
           pagePlaceablesFit(
             bodyEl,
             trial,
-            contentMaxHeight,
+            pageLayout,
             showChapterLabel(),
             chapterState.pageChapterTitle
           )
@@ -1341,7 +1387,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     flushPage()
   }
 
-  return cleanupPages(pages, bodyEl, contentMaxHeight)
+  return cleanupPages(pages, bodyEl, pageLayout)
 }
 
 function renderListNodeReact(
@@ -2044,13 +2090,21 @@ export default function BookViewer({
       measureElements.page.style.paddingBottom = pagePad.paddingBottom ?? "0"
       measureElements.body.style.padding = "0"
       measureElements.body.style.paddingBottom = `${BODY_DESCENDER_PAD_PX}px`
+      measureElements.body.style.height = `${contentMaxHeight}px`
       measureElements.body.style.maxHeight = `${contentMaxHeight}px`
+      measureElements.body.style.minHeight = `${contentMaxHeight}px`
       measureElements.body.style.overflow = "hidden"
       measureElements.footer.style.display = "none"
 
       const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
       const line = LINE_HEIGHT_MAP[settings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
       const family = FONT_FAMILY_MAP[settings.fontStyle] ?? FONT_FAMILY_MAP.lora
+      const pageLayout = {
+        contentMaxHeight,
+        font,
+        line,
+        ...getPageTextCapacity(contentMaxHeight, font, line),
+      }
 
       measureElements.page.style.setProperty("--fs-body", `${font.body}px`)
       measureElements.page.style.setProperty("--fs-heading", `${font.heading}px`)
@@ -2065,7 +2119,7 @@ export default function BookViewer({
       const measuredPages = paginateBlocksByDom(
         flatBlocks,
         measureElements.body,
-        contentMaxHeight
+        pageLayout
       )
 
       measureRoot.remove()
