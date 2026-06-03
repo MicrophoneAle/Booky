@@ -8,7 +8,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 22
+const PARSER_VERSION = 23
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
@@ -688,6 +688,8 @@ const MARGIN_CALLOUT_FRAGMENT_MAX_WORDS = 7
 const MARGIN_CALLOUT_MIN_LONG_LINES = 5
 const MARGIN_CALLOUT_LONG_LINE_CHARS = 65
 const MARGIN_CALLOUT_SUBSTRING_PARENT_GAP = 12
+const MARGIN_CALLOUT_LEFT_DISPLACE_PX = 16
+const MARGIN_CALLOUT_RIGHT_DISPLACE_PX = 48
 
 const PROSE_BLOCKLIST_WORD_REGEX = /^(and|or|but|the|a|an)$/i
 
@@ -703,7 +705,7 @@ const SPLIT_WORD_STOPWORDS =
   /^(of|in|on|at|to|by|or|an|the|he|she|it|we|is|was|be|as|if|so|no|do|up|my|me|and|but|for|not|you|all|are|had|her|his|him|has|were|been|from|that|this|with|they|them|then|than|when|what|will|would|could|should|ear|red)$/i
 
 const SPLIT_SYLLABLE_SUFFIX =
-  /^(cient|tion|ing|ment|ness|able|ure|ous|ive|ly|ed|es|er|est|ple|sprawl|line|penetr|hairy)/i
+  /^(cient|tion|sion|ing|ment|ments|ness|able|ible|ure|ous|ive|ly|ed|es|er|est|ple)$/i
 
 function joinSplitWordFragments(text) {
   return (text ?? "").replace(
@@ -712,7 +714,7 @@ function joinSplitWordFragments(text) {
       if (SPLIT_WORD_STOPWORDS.test(right)) {
         return match
       }
-      if (/^[A-Z]/.test(left) && /^[A-Z]/.test(right)) {
+      if (/^[A-Z]/.test(right)) {
         return match
       }
       if (left.length <= 6 && SPLIT_SYLLABLE_SUFFIX.test(right)) {
@@ -721,6 +723,41 @@ function joinSplitWordFragments(text) {
       return match
     }
   )
+}
+
+function joinWrappedText(left, right) {
+  const leftText = (left ?? "").trim()
+  const rightText = (right ?? "").trim()
+  if (!leftText) {
+    return rightText
+  }
+  if (!rightText) {
+    return leftText
+  }
+
+  // Reconnect a word split across a line break: the previous line ends with a
+  // trailing word fragment + hyphen that continues on the next line.
+  const hyphenMatch = leftText.match(/([A-Za-z]+)-$/)
+  if (hyphenMatch) {
+    const fragment = hyphenMatch[1]
+    const rightLetter = rightText[0]
+    const fragmentAllCaps = /^[A-Z]+$/.test(fragment) && fragment.length >= 2
+    if (/[a-z]/.test(rightLetter)) {
+      // Lowercase continuation: a syllable break ("simulta-" + "neously").
+      return `${leftText.slice(0, -1)}${rightText}`.replace(/\s+/g, " ").trim()
+    }
+    if (/[A-Z]/.test(rightLetter)) {
+      if (fragmentAllCaps) {
+        // All-caps word continued in caps ("CIGA-" + "RETTES" -> "CIGARETTES").
+        return `${leftText.slice(0, -1)}${rightText}`.replace(/\s+/g, " ").trim()
+      }
+      // Capitalised continuation after a non-all-caps fragment is a hyphenated
+      // compound ("Anti-" + "Sex" -> "Anti-Sex"): keep the hyphen, drop the gap.
+      return `${leftText}${rightText}`.replace(/\s+/g, " ").trim()
+    }
+  }
+
+  return `${leftText} ${rightText}`.replace(/\s+/g, " ").trim()
 }
 
 function normalizeExtractedText(text) {
@@ -735,7 +772,13 @@ function normalizeExtractedText(text) {
         .replace(/\b([a-zA-Z]{2,})-\s+([a-z])/g, "$1$2")
         .replace(/\bfi\s+(?=[a-z])/gi, "fi")
         .replace(/\bfl\s+(?=[a-z])/gi, "fl")
+        .replace(/([a-z]+f[il])\s+(?=[a-z])/g, "$1")
         .replace(/\b([a-z]{4,})\s+(ed|ing|ly|es|er|est)\b/gi, "$1$2")
+        .replace(/([a-z])([A-Z]{2,})/g, "$1 $2")
+        .replace(
+          /\b(of|the|and|to|in|on|at|by|for|with|from|as|an|a)([A-Z][a-z]{2,})/g,
+          "$1 $2"
+        )
         .replace(/\bout-\s+/gi, "out-")
         .replace(/\b(the|at|in|on)(edge|op)\b/gi, "$1 $2")
     )
@@ -821,8 +864,17 @@ function dropMarginCalloutLines(lines) {
 
   const texts = entries.map((entry) => entry.text)
   const textsByLength = [...texts].sort((a, b) => b.length - a.length)
-  const longLineCount = texts.filter((text) => text.length >= MARGIN_CALLOUT_LONG_LINE_CHARS)
-    .length
+
+  // Body column left edge. A genuine margin callout/side note sits outside this
+  // column; prose that merely ends a paragraph on a short line is aligned to
+  // the column (or its paragraph indent) and must never be treated as a callout.
+  const bodyXs = entries
+    .filter((entry) => !entry.line.centered && Number.isFinite(entry.line.x))
+    .map((entry) => entry.line.x)
+  if (bodyXs.length === 0) {
+    return lines
+  }
+  const bodyLeftX = medianValue(bodyXs)
 
   return entries
     .filter((entry) => {
@@ -842,7 +894,17 @@ function dropMarginCalloutLines(lines) {
       }
 
       const words = text.split(/\s+/).filter(Boolean)
+      const isShort =
+        text.length <= MARGIN_CALLOUT_MAX_CHARS &&
+        words.length <= MARGIN_CALLOUT_MAX_WORDS
 
+      // Body-length lines are always content.
+      if (!isShort) {
+        return true
+      }
+
+      // A short fragment fully contained inside a longer line on the same page
+      // (e.g. a running header echoed within body text) is a duplicate artifact.
       for (const other of textsByLength) {
         if (other.length <= text.length) {
           break
@@ -858,40 +920,22 @@ function dropMarginCalloutLines(lines) {
         }
       }
 
-      if (text.length > MARGIN_CALLOUT_MAX_CHARS || words.length > MARGIN_CALLOUT_MAX_WORDS) {
+      const x = Number.isFinite(line.x) ? line.x : bodyLeftX
+      const displacedLeft = x < bodyLeftX - MARGIN_CALLOUT_LEFT_DISPLACE_PX
+      const displacedRight = x > bodyLeftX + MARGIN_CALLOUT_RIGHT_DISPLACE_PX
+
+      // Short line aligned to the body column: keep it, it is paragraph prose.
+      if (!displacedLeft && !displacedRight) {
         return true
       }
 
-      if (longLineCount < MARGIN_CALLOUT_MIN_LONG_LINES) {
-        return true
-      }
-
-      if (
-        words.length <= MARGIN_CALLOUT_FRAGMENT_MAX_WORDS &&
-        /^[a-z]/.test(text) &&
-        /[.!?]["'»]?$/.test(text)
-      ) {
-        return false
-      }
-
-      if (text.length <= 14 && /[.!?]$/.test(text)) {
-        return false
-      }
-
+      // Displaced short line that still reads like narrative dialogue: keep.
       if (isLikelyDialogueContinuationLine(text)) {
         return true
       }
 
-      if (
-        words.length <= MARGIN_CALLOUT_MAX_WORDS &&
-        text.length <= 42 &&
-        longLineCount >= MARGIN_CALLOUT_MIN_LONG_LINES &&
-        /^[a-z]/.test(text)
-      ) {
-        return false
-      }
-
-      return true
+      // Displaced short line out in the margin: a genuine callout/side note.
+      return false
     })
     .map((entry) => entry.line)
 }
@@ -1910,7 +1954,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
 
     let proseText = text
     if (pendingConnective) {
-      proseText = `${pendingConnective} ${proseText}`.replace(/\s+/g, " ").trim()
+      proseText = joinWrappedText(pendingConnective, proseText)
       pendingConnective = null
     }
 
@@ -1966,7 +2010,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
       applyProseBlockDefaults(proseBlock, line, proseText)
       blocks.push(proseBlock)
     } else {
-      previous.text = `${previous.text} ${proseText}`.replace(/\s+/g, " ").trim()
+      previous.text = joinWrappedText(previous.text, proseText)
       if (line.indented) {
         previous.isIndented = true
       }
