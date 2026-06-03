@@ -72,26 +72,16 @@ const MARGIN_MAP = {
   wide: "1.25rem",
 }
 
-function getPagePaddingStyle(marginSetting, symmetricEdges = true) {
+function getPagePaddingStyle(marginSetting, { bottomInset = false } = {}) {
   const pad = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
   if (pad === "0px") {
-    return { padding: 0, "--page-edge": "0px" }
-  }
-  if (!symmetricEdges) {
-    return {
-      paddingTop: pad,
-      paddingRight: pad,
-      paddingLeft: pad,
-      paddingBottom: 0,
-      "--page-edge": pad,
-    }
+    return { padding: 0 }
   }
   return {
     paddingTop: pad,
     paddingRight: pad,
     paddingLeft: pad,
-    paddingBottom: pad,
-    "--page-edge": pad,
+    paddingBottom: bottomInset ? pad : 0,
   }
 }
 
@@ -395,12 +385,11 @@ function getLayoutHeights(
   const rawMargin = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
   const marginPx = rawMargin === "0px" ? 0 : parseFloat(rawMargin) * remPx
   const pageHeight = pageHeightOverride ?? PAGE_HEIGHT_PX
-  const verticalMarginPx = isMobileViewport
-    ? marginPx
-    : marginPx * 3
+  const bottomInsetPx = isMobileViewport ? 0 : marginPx
   const contentMaxHeight =
     pageHeight -
-    verticalMarginPx -
+    marginPx -
+    bottomInsetPx -
     pageNumberReservedPx -
     CONTENT_HEIGHT_SAFETY_BUFFER_PX
 
@@ -1452,6 +1441,7 @@ function highlightTextContent(text, query, tracker = null, activeOccurrence = nu
 
 function BookPageContent({
   page,
+  isMobile = false,
   isMobileFullscreen = false,
   settings,
   searchQuery = "",
@@ -1466,10 +1456,9 @@ function BookPageContent({
     .filter(Boolean)
     .join(" ")
 
-  const pageStyle = getPagePaddingStyle(
-    settings?.margins ?? DEFAULT_SETTINGS.margins,
-    !isMobileFullscreen
-  )
+  const pageStyle = getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins, {
+    bottomInset: !isMobile && !isMobileFullscreen,
+  })
 
   if (!page) {
     return <div className={`${pageClassName} book-page--empty`} style={pageStyle} />
@@ -1994,7 +1983,9 @@ export default function BookViewer({
 
       measureRoot = measureElements.root
       measureElements.page.style.height = `${pageOuterHeight}px`
-      const pagePad = getPagePaddingStyle(settings.margins)
+      const pagePad = getPagePaddingStyle(settings.margins, {
+        bottomInset: !isMobile,
+      })
       measureElements.page.style.paddingTop = pagePad.paddingTop ?? "0"
       measureElements.page.style.paddingRight = pagePad.paddingRight ?? "0"
       measureElements.page.style.paddingLeft = pagePad.paddingLeft ?? "0"
@@ -2761,6 +2752,7 @@ export default function BookViewer({
               <div className="book-viewer__page-face" ref={leftPageFaceRef}>
                 <BookPageContent
                   page={leftPage}
+                  isMobile={isMobile}
                   isMobileFullscreen={mobileFullscreenActive}
                   settings={settings}
                   searchQuery={searchOpen ? searchQuery : ""}
@@ -2786,6 +2778,7 @@ export default function BookViewer({
                     {rightPage ? (
                       <BookPageContent
                         page={rightPage}
+                        isMobile={isMobile}
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
                         searchQuery={searchOpen ? searchQuery : ""}
@@ -2799,6 +2792,7 @@ export default function BookViewer({
                     ) : (
                       <BookPageContent
                         page={null}
+                        isMobile={isMobile}
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
                         searchQuery={searchOpen ? searchQuery : ""}
