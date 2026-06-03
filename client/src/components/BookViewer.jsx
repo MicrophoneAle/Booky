@@ -72,16 +72,26 @@ const MARGIN_MAP = {
   wide: "1.25rem",
 }
 
-function getPagePaddingStyle(marginSetting) {
+function getPagePaddingStyle(marginSetting, symmetricEdges = true) {
   const pad = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
   if (pad === "0px") {
-    return { padding: 0 }
+    return { padding: 0, "--page-edge": "0px" }
+  }
+  if (!symmetricEdges) {
+    return {
+      paddingTop: pad,
+      paddingRight: pad,
+      paddingLeft: pad,
+      paddingBottom: 0,
+      "--page-edge": pad,
+    }
   }
   return {
     paddingTop: pad,
     paddingRight: pad,
     paddingLeft: pad,
-    paddingBottom: 0,
+    paddingBottom: pad,
+    "--page-edge": pad,
   }
 }
 
@@ -377,17 +387,20 @@ function createListElement(kind) {
 function getLayoutHeights(
   pageHeightOverride,
   marginSetting,
-  pageNumberReservedPx = PAGE_NUMBER_RESERVED_PX
+  pageNumberReservedPx = PAGE_NUMBER_RESERVED_PX,
+  isMobileViewport = false
 ) {
   const remPx =
     parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
   const rawMargin = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
   const marginPx = rawMargin === "0px" ? 0 : parseFloat(rawMargin) * remPx
-  const pagePaddingTop = marginPx
   const pageHeight = pageHeightOverride ?? PAGE_HEIGHT_PX
+  const verticalMarginPx = isMobileViewport
+    ? marginPx
+    : marginPx * 3
   const contentMaxHeight =
     pageHeight -
-    pagePaddingTop -
+    verticalMarginPx -
     pageNumberReservedPx -
     CONTENT_HEIGHT_SAFETY_BUFFER_PX
 
@@ -1453,7 +1466,10 @@ function BookPageContent({
     .filter(Boolean)
     .join(" ")
 
-  const pageStyle = getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins)
+  const pageStyle = getPagePaddingStyle(
+    settings?.margins ?? DEFAULT_SETTINGS.margins,
+    !isMobileFullscreen
+  )
 
   if (!page) {
     return <div className={`${pageClassName} book-page--empty`} style={pageStyle} />
@@ -1883,6 +1899,7 @@ export default function BookViewer({
   const [searchResults, setSearchResults] = useState([])
   const [searchResultIndex, setSearchResultIndex] = useState(0)
   const searchInputRef = useRef(null)
+  const viewerRef = useRef(null)
   const [chapterPageMap, setChapterPageMap] = useState({})
   const [pageTextMap, setPageTextMap] = useState({})
   const [resumeToast, setResumeToast] = useState(null)
@@ -1941,7 +1958,8 @@ export default function BookViewer({
       if (document.fullscreenElement) {
         await document.exitFullscreen()
       } else {
-        await document.documentElement.requestFullscreen()
+        const target = viewerRef.current ?? document.documentElement
+        await target.requestFullscreen()
       }
     } catch {
       // Fullscreen may be blocked by the browser.
@@ -1969,7 +1987,8 @@ export default function BookViewer({
       const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(
         pageHeightToUse,
         settings.margins,
-        pageNumberReservedPx
+        pageNumberReservedPx,
+        isMobile
       )
       const measureElements = createMeasureElements()
 
@@ -1979,7 +1998,7 @@ export default function BookViewer({
       measureElements.page.style.paddingTop = pagePad.paddingTop ?? "0"
       measureElements.page.style.paddingRight = pagePad.paddingRight ?? "0"
       measureElements.page.style.paddingLeft = pagePad.paddingLeft ?? "0"
-      measureElements.page.style.paddingBottom = "0"
+      measureElements.page.style.paddingBottom = pagePad.paddingBottom ?? "0"
       measureElements.body.style.padding = "0"
       measureElements.body.style.paddingBottom = `${BODY_DESCENDER_PAD_PX}px`
       measureElements.footer.style.height = `${pageNumberReservedPx}px`
@@ -2183,6 +2202,12 @@ export default function BookViewer({
       setCurrentPage(maxPageIndex)
     }
   }, [currentPage, maxPageIndex, isPaginating, totalPages])
+
+  useEffect(() => {
+    if (!isPaginating && pages.length > 0) {
+      viewerRef.current?.focus({ preventScroll: true })
+    }
+  }, [isPaginating, pages.length])
 
   useEffect(() => {
     if (isMobile && isMobileFullscreen) {
@@ -2430,22 +2455,28 @@ export default function BookViewer({
   }, [bookmarkDismissed, bookmarkHidden])
 
   useEffect(() => {
+    if (!searchOpen) {
+      setSearchQuery("")
+      setSearchResults([])
+      searchInputRef.current?.blur()
+      return undefined
+    }
+
     const timerId = setTimeout(() => runSearch(searchQuery), 300)
     return () => clearTimeout(timerId)
-  }, [searchQuery, runSearch])
+  }, [searchQuery, runSearch, searchOpen])
 
   useEffect(() => {
-    if (searchOpen) {
-      const timerId = setTimeout(() => searchInputRef.current?.focus(), 50)
-      return () => clearTimeout(timerId)
-    }
-    return undefined
+    if (!searchOpen) return undefined
+    const timerId = setTimeout(() => searchInputRef.current?.focus(), 50)
+    return () => clearTimeout(timerId)
   }, [searchOpen])
 
   useEffect(() => {
     const handleKey = (event) => {
       const tag = document.activeElement?.tagName?.toLowerCase()
-      if (tag === "input" || tag === "textarea") return
+      if (tag === "input" || tag === "textarea" || tag === "select") return
+      if (document.activeElement?.isContentEditable) return
 
       switch (event.key) {
         case "ArrowRight":
@@ -2462,12 +2493,13 @@ export default function BookViewer({
 
         case "f":
         case "F":
-          if (!event.metaKey && !event.ctrlKey) {
+          if (!event.metaKey && !event.ctrlKey && !event.altKey) {
             event.preventDefault()
+            event.stopPropagation()
             if (isMobile) {
               setIsMobileFullscreen((prev) => !prev)
             } else {
-              toggleFullscreen()
+              void toggleFullscreen()
             }
           }
           break
@@ -2510,8 +2542,8 @@ export default function BookViewer({
       }
     }
 
-    window.addEventListener("keydown", handleKey)
-    return () => window.removeEventListener("keydown", handleKey)
+    window.addEventListener("keydown", handleKey, true)
+    return () => window.removeEventListener("keydown", handleKey, true)
   }, [
     goForward,
     goBack,
@@ -2543,7 +2575,9 @@ export default function BookViewer({
 
   return (
     <div
+      ref={viewerRef}
       className={`book-viewer${mobileFullscreenActive ? " book-viewer--mobile-fs" : ""}`}
+      tabIndex={-1}
     >
       {showFsTip && <div className="book-viewer__fs-tip">Triple tap to exit</div>}
       {resumeToast && (
@@ -2582,7 +2616,13 @@ export default function BookViewer({
             type="button"
             className="book-viewer__search-btn"
             onClick={() => {
-              setSearchOpen((previous) => !previous)
+              setSearchOpen((previous) => {
+                if (previous) {
+                  setSearchQuery("")
+                  setSearchResults([])
+                }
+                return !previous
+              })
               setTocOpen(false)
               setSettingsOpen(false)
             }}
@@ -2657,6 +2697,7 @@ export default function BookViewer({
       <div
         ref={stageRef}
         className="book-viewer__stage"
+        onPointerDown={() => viewerRef.current?.focus({ preventScroll: true })}
         onClick={handleStageTap}
       >
         <button
@@ -2722,8 +2763,9 @@ export default function BookViewer({
                   page={leftPage}
                   isMobileFullscreen={mobileFullscreenActive}
                   settings={settings}
-                  searchQuery={searchQuery}
+                  searchQuery={searchOpen ? searchQuery : ""}
                   activeSearchOccurrence={
+                    searchOpen &&
                     searchResults[searchResultIndex]?.pageNumber === leftPage?.pageNumber
                       ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
                       : null
@@ -2746,8 +2788,9 @@ export default function BookViewer({
                         page={rightPage}
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
-                        searchQuery={searchQuery}
+                        searchQuery={searchOpen ? searchQuery : ""}
                         activeSearchOccurrence={
+                          searchOpen &&
                           searchResults[searchResultIndex]?.pageNumber === rightPage?.pageNumber
                             ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
                             : null
@@ -2758,7 +2801,7 @@ export default function BookViewer({
                         page={null}
                         isMobileFullscreen={mobileFullscreenActive}
                         settings={settings}
-                        searchQuery={searchQuery}
+                        searchQuery={searchOpen ? searchQuery : ""}
                         activeSearchOccurrence={null}
                       />
                     )}
@@ -2774,8 +2817,10 @@ export default function BookViewer({
         className={`book-viewer__search-panel ${
           searchOpen ? "book-viewer__search-panel--open" : ""
         }`}
+        aria-hidden={!searchOpen}
       >
         <div className="book-viewer__search-inner">
+          {searchOpen && (
           <input
             ref={searchInputRef}
             type="text"
@@ -2787,12 +2832,11 @@ export default function BookViewer({
               if (event.key === "Enter") goToNextResult()
               if (event.key === "Escape") {
                 setSearchOpen(false)
-                setSearchQuery("")
-                setSearchResults([])
               }
             }}
             aria-label="Search in book"
           />
+          )}
           {searchResults.length > 0 && (
             <span className="book-viewer__search-count">
               {searchResultIndex + 1} / {searchResults.length}

@@ -4,6 +4,7 @@
   width: 100vw;
   height: 100vh;
   max-height: 100vh;
+  outline: none;
   background: var(--bg-desk);
   background-size: cover;
   background-position: center;
@@ -944,7 +945,7 @@
 .book-page__body:not(.book-page__body--title-spread) {
   flex: 0 0 auto;
   min-height: 0;
-  max-height: calc(100% - 20px);
+  max-height: calc(100% - 20px - 2 * var(--page-edge, 0.75rem));
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1104,7 +1105,7 @@ ol.book-page__list {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: var(--page-edge, 0.75rem);
   z-index: 2;
   margin: 0;
   padding: 0;
