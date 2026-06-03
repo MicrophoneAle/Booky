@@ -145,6 +145,64 @@
   letter-spacing: 0.15em;
 }
 
+.book-viewer__counter--editing {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.book-viewer__counter-label,
+.book-viewer__counter-suffix {
+  flex-shrink: 0;
+}
+
+.book-viewer__counter-page-btn {
+  margin: 0;
+  padding: 0 0.1em;
+  border: none;
+  background: none;
+  color: var(--color-gold);
+  font: inherit;
+  font-variant: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 2px;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+
+.book-viewer__counter-page-btn:hover,
+.book-viewer__counter-page-btn:focus-visible {
+  color: #e0c078;
+  text-decoration-color: currentColor;
+  outline: none;
+}
+
+.book-viewer__counter-input {
+  width: 3.25rem;
+  margin: 0;
+  padding: 0.15rem 0.35rem;
+  border: 1px solid #3a3330;
+  border-radius: 3px;
+  background: #1a1614;
+  color: #e8e4dd;
+  font-family: inherit;
+  font-size: 11px;
+  font-variant: small-caps;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.book-viewer__counter-input:focus {
+  outline: none;
+  border-color: var(--color-gold);
+}
+
 .book-viewer__progress-bar {
   position: absolute;
   bottom: 0;
