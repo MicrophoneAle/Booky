@@ -49,6 +49,7 @@ export default function Reader() {
           title: data.document.name,
           chapters: data.document.chapters ?? [],
           content: data.document.content ?? [],
+          parserVersion: data.document.parser_version,
         })
       } catch (fetchError) {
         if (!cancelled) {
@@ -75,7 +76,9 @@ export default function Reader() {
       <div className="reader-screen">
         <div className="reader-screen__content">
           <p className="reader-screen__logo">BOOKY</p>
-          <p className="reader-screen__subtext">Opening your book...</p>
+          <p className="reader-screen__subtext">
+            Opening your book… (first open after an update may take a moment)
+          </p>
         </div>
       </div>
     )

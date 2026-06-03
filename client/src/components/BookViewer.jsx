@@ -12,6 +12,8 @@ import {
   isTitlePageVisualItems,
   resolveHeadingVisualType,
   shouldCenterTitlePage,
+  isShortDialogueLine,
+  proseShouldBeCentered,
 } from "../utils/paginator"
 import { FullscreenIcon } from "./FullscreenButton"
 import "../pages/Reader.css"
@@ -158,7 +160,7 @@ function proseParagraphClassName(previousItem, proseItem = null) {
     }
   }
 
-  if (proseItem?.textAlign === "center") {
+  if (proseShouldBeCentered(proseItem)) {
     classes.push("book-page__text--center")
   }
   if (proseItem?.bold) {
@@ -571,11 +573,13 @@ function groupBlocksForDisplay(blocks) {
 
   const shouldMergeWithPreviousProse = (newText, isIndented = false, formatting = {}) => {
     if (isIndented) return false
-    if (formatting.textAlign === "center") return false
+    if (proseShouldBeCentered({ textAlign: formatting.textAlign, text: newText })) {
+      return false
+    }
 
     const last = visualItems[visualItems.length - 1]
     if (!last || last.type !== "prose") return false
-    if (last.textAlign === "center") return false
+    if (proseShouldBeCentered(last)) return false
     if (last.bold || last.italic || (last.runs?.length ?? 0) > 1) return false
 
     const prev = last.text
@@ -592,7 +596,7 @@ function groupBlocksForDisplay(blocks) {
 
     const isIndented = Boolean(formatting.isIndented)
     const hasDistinctFormatting =
-      formatting.textAlign === "center" ||
+      proseShouldBeCentered({ textAlign: formatting.textAlign, text: trimmed }) ||
       formatting.bold ||
       formatting.italic ||
       (formatting.runs?.length ?? 0) > 1
@@ -608,7 +612,9 @@ function groupBlocksForDisplay(blocks) {
         type: "prose",
         text: trimmed,
         ...(isIndented ? { isIndented: true } : {}),
-        ...(formatting.textAlign === "center" ? { textAlign: "center" } : {}),
+        ...(proseShouldBeCentered({ textAlign: formatting.textAlign, text: trimmed })
+          ? { textAlign: "center" }
+          : {}),
         ...(formatting.bold ? { bold: true } : {}),
         ...(formatting.italic ? { italic: true } : {}),
         ...(formatting.runs?.length ? { runs: formatting.runs } : {}),
@@ -675,13 +681,17 @@ function groupBlocksForDisplay(blocks) {
       continue
     }
 
-    pushProse(text, {
+    const formatting = {
       isIndented: Boolean(block.isIndented),
       textAlign: block.textAlign,
       bold: block.bold,
       italic: block.italic,
       runs: block.runs,
-    })
+    }
+    if (isShortDialogueLine(text)) {
+      formatting.textAlign = undefined
+    }
+    pushProse(text, formatting)
   }
 
   return visualItems
@@ -1012,7 +1022,7 @@ function proseFormattingFields(proseItem) {
   return {
     ...(proseItem.isIndented ? { isIndented: true } : {}),
     ...(proseItem.isContinuation ? { isContinuation: true } : {}),
-    ...(proseItem.textAlign === "center" ? { textAlign: "center" } : {}),
+    ...(proseShouldBeCentered(proseItem) ? { textAlign: "center" } : {}),
     ...(proseItem.bold ? { bold: true } : {}),
     ...(proseItem.italic ? { italic: true } : {}),
     ...(proseItem.runs?.length ? { runs: proseItem.runs } : {}),
@@ -1037,7 +1047,7 @@ function pagePlaceablesFit(bodyEl, pagePlaceables, pageLayout) {
 }
 
 function splitProseAcrossPages(proseItem, bodyEl, pageLayout, alreadyOnPage) {
-  if (proseItem.textAlign === "center") {
+  if (proseShouldBeCentered(proseItem)) {
     return null
   }
 

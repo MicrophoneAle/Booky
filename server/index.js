@@ -9,7 +9,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 20
+const PARSER_VERSION = 21
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -204,7 +204,9 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
       return
     }
 
-    const reparsed = await reparseDocumentIfOutdated(data)
+    const forceReparse =
+      req.query.refresh === "1" || req.query.reparse === "true"
+    const reparsed = await reparseDocumentIfOutdated(data, { force: forceReparse })
     if (reparsed.updated) {
       const refreshed = await supabase
         .from("documents")
@@ -220,6 +222,7 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
 
     res.json({
       success: true,
+      reparsed: reparsed.updated,
       document: {
         id: data.id,
         name: data.name,
@@ -233,6 +236,56 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Failed to load document.",
+    })
+  }
+})
+
+app.post("/documents/:id/reparse", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const { data, error } = await supabase
+      .from("documents")
+      .select("id, name, storage_path, parser_version, content")
+      .eq("id", id)
+      .eq("user_id", req.userId)
+      .single()
+
+    if (error || !data) {
+      res.status(404).json({ success: false, error: "Document not found" })
+      return
+    }
+
+    const result = await reparseDocumentIfOutdated(data, { force: true })
+
+    const refreshed = await supabase
+      .from("documents")
+      .select("id, name, total_pages, chapters, content, parser_version")
+      .eq("id", id)
+      .eq("user_id", req.userId)
+      .single()
+
+    if (refreshed.error || !refreshed.data) {
+      res.status(500).json({ success: false, error: "Failed to load updated document" })
+      return
+    }
+
+    res.json({
+      success: true,
+      reparsed: result.updated,
+      document: {
+        id: refreshed.data.id,
+        name: refreshed.data.name,
+        total_pages: refreshed.data.total_pages,
+        chapters: refreshed.data.chapters,
+        content: refreshed.data.content,
+        parser_version: refreshed.data.parser_version ?? PARSER_VERSION,
+      },
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to re-parse document.",
     })
   }
 })
@@ -339,7 +392,8 @@ function buildRunsFromLineItems(items) {
 }
 
 function applyProseFormattingToBlock(block, line) {
-  if (line.centered) {
+  const lineText = (line.text ?? block.text ?? "").trim()
+  if (line.centered && !isShortDialogueLine(lineText)) {
     block.textAlign = "center"
   }
 
@@ -441,6 +495,17 @@ function normalizeExtractedText(text) {
       .replace(/\b([a-z]{4,})\s+(ed|ing|ly|es|er|est)\b/gi, "$1$2")
       .replace(/\bout-\s+/gi, "out-")
   )
+}
+
+function isShortDialogueLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 48) {
+    return false
+  }
+  if (/^[''\u2018\u201c][^''""]{0,40}[''\u2019\u201d]?\.?$/.test(trimmed)) {
+    return true
+  }
+  return /^[''\u2018]?\s*(yes|no|ok|okay)\.?\s*[''\u2019]?\.?$/i.test(trimmed)
 }
 
 function isLikelyDialogueContinuationLine(text) {
@@ -865,6 +930,11 @@ function annotateLinesCentered(lines) {
 
   for (const line of lines) {
     const trimmed = (line.text ?? "").trim()
+    if (isShortDialogueLine(trimmed)) {
+      line.centered = false
+      continue
+    }
+
     const leftEdge = line.x ?? 0
     const rightEdge = line.rightEdge ?? leftEdge
     const lineWidth = Math.max(0, rightEdge - leftEdge)
@@ -1708,9 +1778,44 @@ function isValidAdminSecret(secret) {
   return Boolean(process.env.ADMIN_SECRET) && secret === process.env.ADMIN_SECRET
 }
 
-async function reparseDocumentIfOutdated(documentRow) {
-  const currentVersion = documentRow.parser_version ?? 0
-  if (currentVersion >= PARSER_VERSION || !documentRow.storage_path) {
+function contentLooksStale(content) {
+  if (!Array.isArray(content)) {
+    return false
+  }
+
+  for (const page of content) {
+    for (const block of page.blocks ?? []) {
+      const text = block.text ?? ""
+      if (/Go to With a sort of military precision/i.test(text)) {
+        return true
+      }
+      if (
+        isShortDialogueLine(text) &&
+        (block.textAlign === "center" || block.centered === true)
+      ) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
+function documentNeedsReparse(documentRow, { force = false } = {}) {
+  if (force) {
+    return Boolean(documentRow.storage_path)
+  }
+  if (!documentRow.storage_path) {
+    return false
+  }
+  if ((documentRow.parser_version ?? 0) < PARSER_VERSION) {
+    return true
+  }
+  return contentLooksStale(documentRow.content)
+}
+
+async function reparseDocumentIfOutdated(documentRow, options = {}) {
+  if (!documentNeedsReparse(documentRow, options)) {
     return { updated: false }
   }
 

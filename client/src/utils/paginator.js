@@ -76,6 +76,24 @@ export function isTocChapterListingText(text) {
   return TOC_CHAPTER_LISTING_REGEX.test((text ?? "").trim())
 }
 
+export function isShortDialogueLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 48) {
+    return false
+  }
+  if (/^[''\u2018\u201c][^''""]{0,40}[''\u2019\u201d]?\.?$/.test(trimmed)) {
+    return true
+  }
+  return /^[''\u2018]?\s*(yes|no|ok|okay)\.?\s*[''\u2019]?\.?$/i.test(trimmed)
+}
+
+export function proseShouldBeCentered(proseItem) {
+  if (proseItem?.textAlign !== "center") {
+    return false
+  }
+  return !isShortDialogueLine(proseItem?.text ?? "")
+}
+
 function countStructuralMarkers(text) {
   const pattern =
     /\b(chapter|letter|volume|part|section|book)\s+([IVXLCDM]+|\d+|one|two|three|four|five|six|seven|eight|nine|ten)\b/gi

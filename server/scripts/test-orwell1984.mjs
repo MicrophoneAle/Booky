@@ -111,6 +111,12 @@ if (downWithBigBrotherCount < 5) {
   pass = false
 }
 
+const yesCentered = allBlocks.filter(
+  (block) =>
+    /^['\u2018]?Yes\.?['\u2019]?$/i.test((block.text ?? "").trim()) &&
+    block.textAlign === "center"
+)
+
 const paddingtonPass = allBlocks.some((block) => {
   const text = (block.text ?? "").trim()
   return (
@@ -119,6 +125,16 @@ const paddingtonPass = allBlocks.some((block) => {
     !/Go to With a sort of military precision/i.test(text)
   )
 })
+
+lines.push("")
+lines.push(
+  yesCentered.length === 0
+    ? "  Short dialogue (Yes.) not centered: OK"
+    : `  Short dialogue (Yes.) not centered: FAIL — ${yesCentered.length} centered`
+)
+if (yesCentered.length > 0) {
+  pass = false
+}
 
 lines.push("")
 lines.push(
