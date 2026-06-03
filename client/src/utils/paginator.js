@@ -11,7 +11,51 @@ export const TOC_CHAPTER_LISTING_REGEX =
   /^Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:\s+\S/i
 
 export const CHAPTER_BOUNDARY_REGEX =
-  /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|one|two|three)|prologue|epilogue|introduction|conclusion)\.?$/i
+  /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six)|prologue|epilogue|introduction|conclusion)\.?$/i
+
+/**
+ * Maps API chapter ids to first reader page numbers from measured layout pages.
+ */
+export function buildChapterPageMap(measuredPages, apiChapters) {
+  const map = {}
+
+  if (!Array.isArray(apiChapters) || apiChapters.length === 0) {
+    return map
+  }
+
+  for (const chapter of apiChapters) {
+    for (const page of measuredPages) {
+      if (map[chapter.id] !== undefined) {
+        continue
+      }
+
+      if (
+        page.isChapterStart &&
+        (page.chapterTitle === chapter.title ||
+          page.activeChapterTitle === chapter.title)
+      ) {
+        map[chapter.id] = page.pageNumber
+        continue
+      }
+
+      for (const item of page.visualItems ?? []) {
+        if (item.chapterId !== chapter.id) {
+          continue
+        }
+        if (
+          item.type === "chapter" ||
+          item.type === "heading" ||
+          item.type === "title"
+        ) {
+          map[chapter.id] = page.pageNumber
+          break
+        }
+      }
+    }
+  }
+
+  return map
+}
 
 export function isTocChapterListingText(text) {
   return TOC_CHAPTER_LISTING_REGEX.test((text ?? "").trim())

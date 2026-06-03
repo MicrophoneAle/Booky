@@ -2,6 +2,7 @@
 import { createPortal } from "react-dom"
 import { useNavigate } from "react-router-dom"
 import {
+  buildChapterPageMap,
   buildFrontMatterPack,
   flattenDocument,
   groupFrontMatterPlacementUnits,
@@ -31,8 +32,9 @@ const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 2
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 
 function bodyContentFitsPage(bodyEl, contentMaxHeight) {
-  const limit = contentMaxHeight - PAGE_CONTENT_FIT_BUFFER_PX
-  if (bodyEl.scrollHeight > limit) {
+  const limit = Math.floor(contentMaxHeight - PAGE_CONTENT_FIT_BUFFER_PX)
+
+  if (bodyEl.scrollHeight > limit + 1) {
     return false
   }
 
@@ -41,7 +43,9 @@ function bodyContentFitsPage(bodyEl, contentMaxHeight) {
     return true
   }
 
-  const bottom = lastChild.offsetTop + lastChild.offsetHeight
+  const bodyRect = bodyEl.getBoundingClientRect()
+  const lastRect = lastChild.getBoundingClientRect()
+  const bottom = Math.ceil(lastRect.bottom - bodyRect.top)
   return bottom <= limit
 }
 
@@ -421,10 +425,10 @@ function createMeasureElements() {
 
   const body = document.createElement("div")
   body.className = "book-page__body"
-  body.style.flex = "none"
+  body.style.flex = "1 1 auto"
+  body.style.minHeight = "0"
   body.style.height = "auto"
-  body.style.maxHeight = "none"
-  body.style.overflow = "visible"
+  body.style.boxSizing = "border-box"
 
   const footer = document.createElement("div")
   footer.className = "book-viewer__measure-footer"
@@ -721,18 +725,7 @@ function applyChapterContextFromItem(item, chapterState) {
 }
 
 function pageContentOverflows(bodyEl, contentMaxHeight) {
-  const limit = contentMaxHeight - PAGE_CONTENT_FIT_BUFFER_PX
-  if (bodyEl.scrollHeight > limit) {
-    return true
-  }
-
-  const lastChild = bodyEl.lastElementChild
-  if (!lastChild) {
-    return false
-  }
-
-  const bottom = lastChild.offsetTop + lastChild.offsetHeight
-  return bottom > limit
+  return !bodyContentFitsPage(bodyEl, contentMaxHeight)
 }
 
 function countListItemsInTree(nodes) {
@@ -1291,9 +1284,19 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
 
     if (isChapterBoundaryPlaceable(placeable)) {
       ensureChapterStartsOnNewPage(placeable)
+      const followingPlaceable = remainder[placeableIndex + 1]
+
+      if (
+        followingPlaceable &&
+        !isChapterBoundaryPlaceable(followingPlaceable) &&
+        !isFrontMatterPlaceable(followingPlaceable)
+      ) {
+        placeHeadingWithFollowing(placeable, followingPlaceable)
+        placeableIndex += 1
+        continue
+      }
+
       placePlaceable(placeable)
-      flushPage()
-      markPageStartIfEmpty()
       continue
     }
 
@@ -2041,7 +2044,9 @@ export default function BookViewer({
       measureElements.page.style.paddingBottom = pagePad.paddingBottom ?? "0"
       measureElements.body.style.padding = "0"
       measureElements.body.style.paddingBottom = `${BODY_DESCENDER_PAD_PX}px`
-      measureElements.footer.style.height = `${pageNumberReservedPx}px`
+      measureElements.body.style.maxHeight = `${contentMaxHeight}px`
+      measureElements.body.style.overflow = "hidden"
+      measureElements.footer.style.display = "none"
 
       const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
       const line = LINE_HEIGHT_MAP[settings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
@@ -2068,25 +2073,19 @@ export default function BookViewer({
 
       if (!cancelled) {
         const totalMeasuredPages = measuredPages.length
-        const chapterMap = {}
+        const chapterMap = buildChapterPageMap(
+          measuredPages,
+          bookDocument?.chapters ?? []
+        )
         const textMap = {}
 
         for (const page of measuredPages) {
-          for (const item of page.visualItems ?? []) {
-            if (
-              (item.type === "heading" || item.type === "title") &&
-              item.chapterId &&
-              !chapterMap[item.chapterId]
-            ) {
-              chapterMap[item.chapterId] = page.pageNumber
-            }
-          }
-
           const pageText = (page.visualItems ?? [])
             .map((item) => {
               if (
                 item.type === "prose" ||
                 item.type === "heading" ||
+                item.type === "chapter" ||
                 item.type === "title" ||
                 item.type === "subtitle" ||
                 item.type === "author"
@@ -2981,8 +2980,7 @@ export default function BookViewer({
                   }`}
                   onClick={() => {
                     if (pageNum) {
-                      setCurrentPage(pageNum)
-                      onPageChange?.(pageNum)
+                      jumpToPage(pageNum)
                     }
                     setTocOpen(false)
                   }}

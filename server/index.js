@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 8
+const PARSER_VERSION = 9
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -219,7 +219,10 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
 })
 
 const CHAPTER_PATTERN =
-  /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|one|two|three)|prologue|epilogue|introduction|conclusion)\.?$/i
+  /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six)|prologue|epilogue|introduction|conclusion)\.?$/i
+
+const PART_HEADING_PATTERN =
+  /^part\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six)\.?$/i
 
 const TOC_CHAPTER_LISTING_REGEX =
   /^Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:\s+\S/i
@@ -457,23 +460,58 @@ async function extractHeadingLines(buffer) {
 }
 
 function isStandaloneChapterNumber(text, block) {
-  if (!block?.isHeading) {
-    return false
-  }
   const trimmed = (text ?? "").trim()
   if (!/^\d{1,2}\.?$/.test(trimmed)) {
+    return false
+  }
+  if (block?.isChapterStart) {
+    return true
+  }
+  if (!block?.isHeading) {
     return false
   }
   return (block.fontSize ?? 0) >= 13
 }
 
-function isChapterHeading(block) {
+function isLikelyChapterNumberLine(text, line) {
+  const trimmed = (text ?? "").trim()
+  if (!/^\d{1,2}\.?$/.test(trimmed)) {
+    return false
+  }
+  return (line.fontSize ?? 0) >= 13
+}
+
+function buildRepeatedChapterBoundaryKeys(allLines) {
+  const freq = new Map()
+
+  for (const { text } of allLines) {
+    const trimmed = (text ?? "").trim()
+    if (!trimmed) {
+      continue
+    }
+    const key = trimmed.toLowerCase()
+    if (CHAPTER_PATTERN.test(trimmed) || /^\d{1,2}\.?$/.test(trimmed)) {
+      freq.set(key, (freq.get(key) ?? 0) + 1)
+    }
+  }
+
+  return new Set(
+    [...freq.entries()].filter(([, count]) => count >= 2).map(([key]) => key)
+  )
+}
+
+function isChapterHeading(block, repeatedBoundaryKeys) {
   const blocklist = ["and", "or", "but", "the", "a", "an", "to", "by", "and."]
   if (blocklist.includes(block.text.trim().toLowerCase())) {
     return false
   }
 
   const text = block.text.trim()
+  const boundaryKey = text.toLowerCase()
+
+  if (repeatedBoundaryKeys?.has(boundaryKey)) {
+    return false
+  }
 
   if (block.isChapterStart) {
     return true
@@ -494,10 +532,10 @@ function isChapterHeading(block) {
   return false
 }
 
-function contentHasChapterHeadings(content) {
+function contentHasChapterHeadings(content, repeatedBoundaryKeys) {
   for (const page of content) {
     for (const block of page.blocks ?? []) {
-      if (isChapterHeading(block)) {
+      if (isChapterHeading(block, repeatedBoundaryKeys)) {
         return true
       }
     }
@@ -505,10 +543,10 @@ function contentHasChapterHeadings(content) {
   return false
 }
 
-function detectChapters(content, bookTitle = "") {
+function detectChapters(content, bookTitle = "", repeatedBoundaryKeys = new Set()) {
   const trimmedBookTitle = (bookTitle ?? "").trim()
 
-  if (!contentHasChapterHeadings(content) && trimmedBookTitle) {
+  if (!contentHasChapterHeadings(content, repeatedBoundaryKeys) && trimmedBookTitle) {
     const id = slugify(trimmedBookTitle)
     const chapters = [
       {
@@ -534,6 +572,8 @@ function detectChapters(content, bookTitle = "") {
   const chapters = []
   const seenChapterIds = new Set()
   let currentChapterId = null
+  let currentPartId = null
+  let currentPartTitle = null
 
   const updatedContent = content.map((page) => ({
     ...page,
@@ -541,21 +581,35 @@ function detectChapters(content, bookTitle = "") {
       let chapterId = currentChapterId
       let isChapterStart = false
 
-      if (isChapterHeading(block)) {
+      if (isChapterHeading(block, repeatedBoundaryKeys)) {
         const title = block.text.trim()
-        const id = slugify(title)
+        let id = slugify(title)
+        let chapterTitle = title
+
+        if (PART_HEADING_PATTERN.test(title)) {
+          currentPartId = id
+          currentPartTitle = title
+        } else if (currentPartId && /^\d{1,2}\.?$/.test(title)) {
+          id = `${currentPartId}-${slugify(title)}`
+          chapterTitle = `${currentPartTitle ?? currentPartId} — ${title}`
+        }
 
         if (!seenChapterIds.has(id)) {
           seenChapterIds.add(id)
           chapters.push({
             id,
-            title,
+            title: chapterTitle,
             pageIndex: page.pageIndex,
             blockIndex,
           })
           currentChapterId = id
           chapterId = id
           isChapterStart = true
+
+          if (PART_HEADING_PATTERN.test(title)) {
+            currentPartId = id
+            currentPartTitle = title
+          }
         } else {
           chapterId = currentChapterId
         }
@@ -720,6 +774,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
     }
   }
 
+  const repeatedBoundaryKeys = buildRepeatedChapterBoundaryKeys(allLines)
   let pendingConnective = null
   let nonEmptyLineIndex = 0
   let index = 0
@@ -771,6 +826,22 @@ function buildBlocksFromLines(pageData, headingStrings) {
       pendingConnective = null
       blocks.push({
         text,
+        isHeading: true,
+        fontSize: 15,
+        isChapterStart: true,
+        chapterId: null,
+      })
+      index += 1
+      continue
+    }
+
+    if (
+      isLikelyChapterNumberLine(text, line) &&
+      !repeatedBoundaryKeys.has(text.trim().toLowerCase())
+    ) {
+      pendingConnective = null
+      blocks.push({
+        text: text.trim(),
         isHeading: true,
         fontSize: 15,
         isChapterStart: true,
@@ -975,7 +1046,14 @@ async function parsePdfBuffer(buffer, fileName = "") {
     bookTitle = fileName.replace(/\.pdf$/i, "").replace(/[-_]+/g, " ").trim()
   }
 
-  const { chapters, content: contentWithChapters } = detectChapters(content, bookTitle)
+  const repeatedBoundaryKeys = buildRepeatedChapterBoundaryKeys(
+    blocks.map((block) => ({ text: block.text }))
+  )
+  const { chapters, content: contentWithChapters } = detectChapters(
+    content,
+    bookTitle,
+    repeatedBoundaryKeys
+  )
   const wordCount = Math.max(
     countWordsInPlainText(parsedText.text),
     countWordsFromBlocks(blocks),
