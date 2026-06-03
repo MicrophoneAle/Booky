@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 11
+const PARSER_VERSION = 12
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -528,12 +528,18 @@ function buildRepeatedChapterBoundaryKeys(allLines) {
   )
 }
 
-function isChapterHeading(block, repeatedBoundaryKeys) {
-  const blocklist = ["and", "or", "but", "the", "a", "an", "to", "by", "and."]
-  if (blocklist.includes(block.text.trim().toLowerCase())) {
+function isExplicitChapterOrPartLabel(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
     return false
   }
+  if (CHAPTER_PATTERN.test(trimmed)) {
+    return true
+  }
+  return /^(chapter|part)\b/i.test(trimmed)
+}
 
+function isChapterHeading(block, repeatedBoundaryKeys) {
   const text = block.text.trim()
   const boundaryKey = text.toLowerCase()
 
@@ -541,21 +547,31 @@ function isChapterHeading(block, repeatedBoundaryKeys) {
     return true
   }
 
+  if (isExplicitChapterOrPartLabel(text)) {
+    return true
+  }
+
+  const blocklist = ["and", "or", "but", "the", "a", "an", "to", "by", "and."]
+  if (blocklist.includes(boundaryKey)) {
+    return false
+  }
+
   if (
     STANDALONE_CHAPTER_NUMERAL_REGEX.test(text) &&
-    repeatedBoundaryKeys?.has(boundaryKey)
+    repeatedBoundaryKeys?.has(boundaryKey) &&
+    !block.isChapterStart
   ) {
     return false
   }
 
   if (
     /^chapter\s+\d{1,2}\.?$/i.test(text) &&
-    repeatedBoundaryKeys?.has(boundaryKey)
+    repeatedBoundaryKeys?.has(boundaryKey) &&
+    !block.isChapterStart
   ) {
     return false
   }
 
-  if (block.isHeading && block.fontSize === 13) return false
   if (/^To\s+[A-Z]/.test(text)) return false
   if (/^(by|written by|translated by)\s+/i.test(text)) return false
 
@@ -563,7 +579,6 @@ function isChapterHeading(block, repeatedBoundaryKeys) {
     return true
   }
 
-  if (CHAPTER_PATTERN.test(text)) return true
   if (isTocChapterListingLine(text)) return false
   if (isStandaloneChapterNumber(text, block)) return true
 
@@ -877,10 +892,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
       continue
     }
 
-    if (
-      isLikelyChapterNumberLine(text, line) &&
-      !repeatedBoundaryKeys.has(text.trim().toLowerCase())
-    ) {
+    if (isLikelyChapterNumberLine(text, line)) {
       pendingConnective = null
       blocks.push({
         text: text.trim(),

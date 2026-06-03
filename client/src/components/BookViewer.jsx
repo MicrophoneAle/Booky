@@ -1695,16 +1695,6 @@ function BookPageContent({
   )
 }
 
-function spreadHasChapterId(pages, pageIndices) {
-  return pageIndices.some((pageIndex) => {
-    const page = pages[pageIndex]
-    if (!page) {
-      return false
-    }
-    return (page.visualItems ?? []).some((item) => item.chapterId != null)
-  })
-}
-
 function collectChapterTitlesForPage(page) {
   if (!page || page.isTitlePage) {
     return []
@@ -1725,6 +1715,22 @@ function collectChapterTitlesForPage(page) {
   return []
 }
 
+function resolveNavChapterTitlesForPageIndex(pages, pageIndex) {
+  for (let index = pageIndex; index >= 0; index -= 1) {
+    const page = pages[index]
+    if (!page || page.isTitlePage) {
+      continue
+    }
+
+    const titles = collectChapterTitlesForPage(page)
+    if (titles.length > 0) {
+      return titles
+    }
+  }
+
+  return []
+}
+
 function formatNavChapterTitle(pages, currentPage, isSpreadView) {
   const pageIndices = [currentPage - 1]
 
@@ -1732,15 +1738,10 @@ function formatNavChapterTitle(pages, currentPage, isSpreadView) {
     pageIndices.push(currentPage)
   }
 
-  if (!spreadHasChapterId(pages, pageIndices)) {
-    return ""
-  }
-
   const titles = []
 
   for (const pageIndex of pageIndices) {
-    const page = pages[pageIndex]
-    const pageTitles = collectChapterTitlesForPage(page)
+    const pageTitles = resolveNavChapterTitlesForPageIndex(pages, pageIndex)
 
     for (const title of pageTitles) {
       if (title && !titles.includes(title)) {
@@ -1754,9 +1755,6 @@ function formatNavChapterTitle(pages, currentPage, isSpreadView) {
     return ""
   }
   if (/^(and|or|but|the|a|an)$/i.test(result)) {
-    return ""
-  }
-  if (!result.includes("·") && result.length < 4) {
     return ""
   }
 
