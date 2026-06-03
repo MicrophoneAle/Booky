@@ -12,6 +12,7 @@ import FullscreenButton from "../components/FullscreenButton"
 import "./Library.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
+const PARSE_STATUS_POLL_MS = 5000
 
 function formatUploadDate(dateString) {
   const date = new Date(dateString)
@@ -342,6 +343,9 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
         {downloadError && (
           <p className="library-card__rename-error">Download failed. Try again.</p>
         )}
+        {document.parse_status === "pending" && (
+          <span className="library-card__processing-badge">Processing...</span>
+        )}
         <p className="library-card__pages">{formatPageCount(document.total_pages)}</p>
         <p className="library-card__words">{formatWordCount(document)}</p>
         <p className="library-card__date">{formatUploadDate(document.created_at)}</p>
@@ -409,6 +413,8 @@ export default function Library() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const getTokenRef = useRef(getToken)
+  getTokenRef.current = getToken
 
   const fetchDocuments = useCallback(async () => {
     setLoading(true)
@@ -449,6 +455,68 @@ export default function Library() {
     }
     fetchDocuments()
   }, [fetchDocuments, isSignedIn, reloadKey])
+
+  const handleParseReady = useCallback((documentId) => {
+    setReloadKey((key) => key + 1)
+  }, [])
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      return undefined
+    }
+
+    const pendingIds = documents
+      .filter((doc) => doc.parse_status === "pending")
+      .map((doc) => doc.id)
+
+    if (pendingIds.length === 0) {
+      return undefined
+    }
+
+    let cancelled = false
+
+    const pollPending = async () => {
+      const token = await getTokenRef.current()
+      if (!token || cancelled) {
+        return
+      }
+
+      for (const documentId of pendingIds) {
+        if (cancelled) {
+          return
+        }
+
+        try {
+          const response = await fetch(
+            `${API_URL}/documents/${encodeURIComponent(documentId)}/status`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          )
+          const data = await response.json()
+
+          if (response.ok && data.success && data.parse_status === "ready") {
+            handleParseReady(documentId)
+          }
+        } catch {
+          // keep polling on transient errors
+        }
+      }
+    }
+
+    void pollPending()
+    const intervalId = window.setInterval(() => {
+      void pollPending()
+    }, PARSE_STATUS_POLL_MS)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(intervalId)
+    }
+  }, [documents, handleParseReady, isSignedIn])
 
   const handleDocumentDeleted = useCallback((documentId) => {
     setDocuments((current) => current.filter((doc) => doc.id !== documentId))

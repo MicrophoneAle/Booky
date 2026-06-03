@@ -44,6 +44,58 @@ export default function Reader() {
 
         if (cancelled) return
 
+        if (data.document?.parse_status === "pending") {
+          const startedAt = Date.now()
+          const pollTimeoutMs = 5 * 60 * 1000
+
+          while (Date.now() - startedAt < pollTimeoutMs) {
+            await new Promise((resolve) => setTimeout(resolve, 3000))
+            if (cancelled) return
+
+            const statusResponse = await fetch(
+              `${API_URL}/documents/${encodeURIComponent(id)}/status`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            )
+            const statusData = await statusResponse.json()
+
+            if (statusData.parse_status === "error") {
+              throw new Error("Processing failed. Try uploading again.")
+            }
+
+            if (statusData.parse_status === "ready") {
+              break
+            }
+          }
+
+          const retryResponse = await fetch(`${API_URL}/documents/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          })
+          const retryData = await retryResponse.json()
+
+          if (!retryResponse.ok || !retryData.success) {
+            throw new Error(retryData.error || "Could not load document.")
+          }
+
+          if (cancelled) return
+
+          setBookDocument({
+            id: retryData.document.id,
+            title: retryData.document.name,
+            chapters: retryData.document.chapters ?? [],
+            content: retryData.document.content ?? [],
+            parserVersion: retryData.document.parser_version,
+          })
+          return
+        }
+
         setBookDocument({
           id: data.document.id,
           title: data.document.name,

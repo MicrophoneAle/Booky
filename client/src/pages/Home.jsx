@@ -13,28 +13,31 @@ import "./Home.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 
+const LARGE_FILE_BYTES = 15 * 1024 * 1024
+const PARSE_POLL_INTERVAL_MS = 3000
+const PARSE_POLL_TIMEOUT_MS = 5 * 60 * 1000
+
 const EMPTY_UPLOAD_STATE = {
-  phase: "idle", // idle | waking | uploading | parsing | storing | done | error
+  phase: "idle", // idle | waking | uploading | processing | done | error
   progress: 0,
   fileName: null,
   fileSize: null,
   errorMessage: null,
   slowWake: false,
+  documentId: null,
 }
 
 const PHASE_LABELS = {
   waking: "Connecting to server...",
   uploading: "Uploading PDF...",
-  parsing: "Reading your PDF...",
-  storing: "Saving to library...",
+  processing: "Processing your book...",
   done: "Done!",
 }
 
 const PHASE_SUBLABELS = {
   waking: "Server is waking up, this takes ~15 seconds after a period of inactivity",
   uploading: null,
-  parsing: "Extracting text, detecting chapters and headings",
-  storing: "Almost there",
+  processing: "Extracting text, detecting chapters and headings — large books may take a few minutes",
   done: null,
 }
 
@@ -43,6 +46,43 @@ function isPdfFile(file) {
   const hasPdfMime = file.type === "application/pdf"
   const hasPdfExtension = file.name.toLowerCase().endsWith(".pdf")
   return hasPdfMime || hasPdfExtension
+}
+
+async function pollDocumentParseStatus(documentId, token) {
+  const startedAt = Date.now()
+
+  while (Date.now() - startedAt < PARSE_POLL_TIMEOUT_MS) {
+    await new Promise((resolve) => setTimeout(resolve, PARSE_POLL_INTERVAL_MS))
+
+    const response = await fetch(
+      `${API_URL}/documents/${encodeURIComponent(documentId)}/status`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error("Failed to check processing status")
+    }
+
+    const data = await response.json()
+    if (!data.success) {
+      throw new Error(data.error ?? "Failed to check processing status")
+    }
+
+    if (data.parse_status === "ready") {
+      return
+    }
+
+    if (data.parse_status === "error") {
+      throw new Error("Processing failed. Try uploading again.")
+    }
+  }
+
+  throw new Error("Processing timed out. Try again in a few minutes.")
 }
 
 function doUpload(file, token, setUploadState, navigate) {
@@ -60,19 +100,43 @@ function doUpload(file, token, setUploadState, navigate) {
       }
     })
 
-    xhr.upload.addEventListener("load", () => {
-      setUploadState((state) => ({ ...state, phase: "parsing", progress: 100 }))
-    })
-
-    xhr.addEventListener("load", () => {
+    xhr.addEventListener("load", async () => {
       try {
         const data = JSON.parse(xhr.responseText)
         if (xhr.status >= 200 && xhr.status < 300 && data.success) {
-          setUploadState((state) => ({ ...state, phase: "storing" }))
-          setTimeout(() => {
+          const documentId = data.document?.id
+          const isPending = data.document?.status === "pending"
+
+          if (isPending && documentId) {
+            setUploadState((state) => ({
+              ...state,
+              phase: "processing",
+              progress: 100,
+              documentId,
+            }))
+
+            try {
+              await pollDocumentParseStatus(documentId, token)
+              setUploadState((state) => ({ ...state, phase: "done" }))
+              setTimeout(() => navigate("/library"), 600)
+            } catch (pollError) {
+              setUploadState((state) => ({
+                ...state,
+                phase: "error",
+                errorMessage:
+                  pollError instanceof Error
+                    ? pollError.message
+                    : "Processing failed",
+              }))
+            }
+            resolve()
+            return
+          }
+
+          if (documentId) {
             setUploadState((state) => ({ ...state, phase: "done" }))
-            navigate(`/read/${data.document.id}`)
-          }, 600)
+            setTimeout(() => navigate(`/read/${documentId}`), 600)
+          }
           resolve()
           return
         }
@@ -124,6 +188,7 @@ export default function Home() {
   const fileInputRef = useRef(null)
 
   const [file, setFile] = useState(null)
+  const [largeFileWarning, setLargeFileWarning] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [uploadState, setUploadState] = useState(EMPTY_UPLOAD_STATE)
 
@@ -192,6 +257,7 @@ export default function Home() {
         handleInvalidFile()
         return
       }
+      setLargeFileWarning(selectedFile.size > LARGE_FILE_BYTES)
       startUpload(selectedFile)
     },
     [handleInvalidFile, isSignedIn, openSignIn, startUpload]
@@ -312,8 +378,7 @@ export default function Home() {
                   </div>
                 )}
 
-                {(uploadState.phase === "parsing" ||
-                  uploadState.phase === "storing" ||
+                {(uploadState.phase === "processing" ||
                   uploadState.phase === "waking") && (
                   <div className="home__progress-bar-wrap">
                     <div className="home__progress-bar-fill home__progress-bar-fill--indeterminate" />
@@ -346,6 +411,11 @@ export default function Home() {
                 >
                   or browse files
                 </button>
+                {largeFileWarning && (
+                  <p className="home__large-file-warning">
+                    Large file — processing may take a few minutes
+                  </p>
+                )}
               </>
             )}
             <input
@@ -368,6 +438,7 @@ export default function Home() {
                 onClick={() => {
                   setUploadState(EMPTY_UPLOAD_STATE)
                   setFile(null)
+                  setLargeFileWarning(false)
                 }}
               >
                 Try again

@@ -341,6 +341,14 @@
   font-style: italic;
 }
 
+.home__large-file-warning {
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+  color: #d97706;
+  margin: 0.75rem 0 0;
+  text-align: center;
+}
+
 .home__upload-filename {
   font-family: system-ui, sans-serif;
   font-size: 10px;

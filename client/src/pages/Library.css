@@ -451,6 +451,18 @@
   z-index: 1;
 }
 
+.library-card__processing-badge {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #d97706;
+  border: 1px solid rgba(217, 119, 6, 0.35);
+  border-radius: 3px;
+}
+
 .library-card__pages {
   margin: 0.5rem 0 0;
   font-size: 12px;

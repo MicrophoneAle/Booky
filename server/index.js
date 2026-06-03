@@ -9,7 +9,18 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 21
+const PARSER_VERSION = 22
+
+const MAX_PROSE_BLOCK_WORDS = 120
+const MAX_PROSE_BLOCK_CHARS = 700
+
+const PARSE_STATUS = {
+  PENDING: "pending",
+  READY: "ready",
+  ERROR: "error",
+}
+
+const backgroundParseInFlight = new Set()
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -50,11 +61,37 @@ function requireAuth(req, res, next) {
   next()
 }
 
+app.get("/documents/:id/status", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const { data, error } = await supabase
+      .from("documents")
+      .select("id, parse_status")
+      .eq("id", id)
+      .eq("user_id", req.userId)
+      .single()
+
+    if (error || !data) {
+      res.status(404).json({ success: false, error: "Document not found" })
+      return
+    }
+
+    res.json({
+      success: true,
+      id: data.id,
+      parse_status: data.parse_status ?? PARSE_STATUS.READY,
+    })
+  } catch {
+    res.status(500).json({ success: false, error: "Failed to fetch document status" })
+  }
+})
+
 app.get("/documents", requireAuth, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("documents")
-      .select("id, name, total_pages, word_count, created_at, content")
+      .select("id, name, total_pages, word_count, created_at, parse_status")
       .eq("user_id", req.userId)
       .order("created_at", { ascending: false })
 
@@ -65,7 +102,11 @@ app.get("/documents", requireAuth, async (req, res) => {
 
     const documents = await Promise.all(
       (data ?? []).map(async (documentRow) => {
-        const wordCount = await resolveWordCountForDocument(documentRow, req.userId)
+        const parseStatus = documentRow.parse_status ?? PARSE_STATUS.READY
+        const wordCount =
+          parseStatus === PARSE_STATUS.PENDING
+            ? 0
+            : await resolveWordCountForDocument(documentRow, req.userId)
         return toPublicDocument(documentRow, wordCount)
       })
     )
@@ -201,6 +242,29 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
 
     if (error || !data) {
       res.status(404).json({ success: false, error: "Document not found" })
+      return
+    }
+
+    const parseStatus = data.parse_status ?? PARSE_STATUS.READY
+    if (parseStatus === PARSE_STATUS.PENDING) {
+      res.json({
+        success: true,
+        document: {
+          id: data.id,
+          name: data.name,
+          parse_status: parseStatus,
+          total_pages: data.total_pages ?? 0,
+        },
+      })
+      return
+    }
+
+    if (parseStatus === PARSE_STATUS.ERROR) {
+      res.status(422).json({
+        success: false,
+        error: "Document processing failed. Try uploading again.",
+        parse_status: parseStatus,
+      })
       return
     }
 
@@ -482,18 +546,73 @@ function medianValue(values) {
   return sorted[Math.floor(sorted.length / 2)]
 }
 
+const SPLIT_WORD_STOPWORDS =
+  /^(of|in|on|at|to|by|or|an|the|he|she|it|we|is|was|be|as|if|so|no|do|up|my|me|and|but|for|not|you|all|are|had|her|his|him|has|were|been|from|that|this|with|they|them|then|than|when|what|will|would|could|should|ear|red)$/i
+
+const SPLIT_SYLLABLE_SUFFIX =
+  /^(cient|tion|ing|ment|ness|able|ure|ous|ive|ly|ed|es|er|est|ple|sprawl|line|penetr|hairy)/i
+
+function joinSplitWordFragments(text) {
+  return (text ?? "").replace(
+    /\b([a-z]{2,})\s+([a-z]{2,})\b/gi,
+    (match, left, right) => {
+      if (SPLIT_WORD_STOPWORDS.test(right)) {
+        return match
+      }
+      if (/^[A-Z]/.test(left) && /^[A-Z]/.test(right)) {
+        return match
+      }
+      if (left.length <= 6 && SPLIT_SYLLABLE_SUFFIX.test(right)) {
+        return `${left}${right}`
+      }
+      if (left.length <= 5 && !/[aeiouy]$/i.test(left)) {
+        return `${left}${right}`
+      }
+      return match
+    }
+  )
+}
+
 function normalizeExtractedText(text) {
   if (!text) {
     return ""
   }
 
   return stripInlineArtifacts(
-    text
-      .replace(/\u00AD/g, "")
-      .replace(/\bfi\s+(?=[a-z])/gi, "fi")
-      .replace(/\bfl\s+(?=[a-z])/gi, "fl")
-      .replace(/\b([a-z]{4,})\s+(ed|ing|ly|es|er|est)\b/gi, "$1$2")
-      .replace(/\bout-\s+/gi, "out-")
+    joinSplitWordFragments(
+      text
+        .replace(/\u00AD/g, "")
+        .replace(/\b([a-zA-Z]{2,})-\s+([a-z])/g, "$1$2")
+        .replace(/\bfi\s+(?=[a-z])/gi, "fi")
+        .replace(/\bfl\s+(?=[a-z])/gi, "fl")
+        .replace(/\b([a-z]{4,})\s+(ed|ing|ly|es|er|est)\b/gi, "$1$2")
+        .replace(/\bout-\s+/gi, "out-")
+    )
+  )
+}
+
+function isAllCapsCalloutLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (trimmed.length < 20 || trimmed.length > 220) {
+    return false
+  }
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 16) {
+    return false
+  }
+  const upperCount = (trimmed.match(/[A-Z]/g) ?? []).length
+  return upperCount / letters.length >= 0.85
+}
+
+function countWordsInText(text) {
+  return (text ?? "").trim().split(/\s+/).filter(Boolean).length
+}
+
+function proseBlockExceedsMergeLimit(block) {
+  const text = block?.text ?? ""
+  return (
+    countWordsInText(text) >= MAX_PROSE_BLOCK_WORDS ||
+    text.length >= MAX_PROSE_BLOCK_CHARS
   )
 }
 
@@ -935,6 +1054,11 @@ function annotateLinesCentered(lines) {
       continue
     }
 
+    if (isAllCapsCalloutLine(trimmed)) {
+      line.centered = true
+      continue
+    }
+
     const leftEdge = line.x ?? 0
     const rightEdge = line.rightEdge ?? leftEdge
     const lineWidth = Math.max(0, rightEdge - leftEdge)
@@ -1336,7 +1460,18 @@ function shouldStartNewProseBlock(line, previousBlock) {
     return true
   }
 
+  if (/^['\u2018\u201c]/.test(text)) {
+    return true
+  }
+
   return false
+}
+
+function applyProseBlockDefaults(proseBlock, line, proseText) {
+  if (line.indented || /^['\u2018\u201c]/.test((proseText ?? "").trim())) {
+    proseBlock.isIndented = true
+  }
+  applyProseFormattingToBlock(proseBlock, line)
 }
 
 const DEDICATION_LINE_REGEX = /^To\s+[A-Z]/
@@ -1591,23 +1726,25 @@ function buildBlocksFromLines(pageData, headingStrings) {
 
     const previousBlock = blocks.length > 0 ? blocks[blocks.length - 1] : null
 
-    if (shouldStartNewProseBlock(line, previousBlock)) {
+    const previous = blocks[blocks.length - 1]
+    const forceNewProseBlock =
+      previous &&
+      !previous.isHeading &&
+      proseBlockExceedsMergeLimit(previous)
+
+    if (shouldStartNewProseBlock(line, previousBlock) || forceNewProseBlock) {
       const proseBlock = {
         text: proseText,
         isHeading: false,
         fontSize: 12,
         chapterId: null,
       }
-      if (line.indented) {
-        proseBlock.isIndented = true
-      }
-      applyProseFormattingToBlock(proseBlock, line)
+      applyProseBlockDefaults(proseBlock, line, proseText)
       blocks.push(proseBlock)
       index += 1
       continue
     }
 
-    const previous = blocks[blocks.length - 1]
     if (proseFormattingDiffers(line, previous)) {
       const splitBlock = {
         text: proseText,
@@ -1615,16 +1752,17 @@ function buildBlocksFromLines(pageData, headingStrings) {
         fontSize: 12,
         chapterId: null,
       }
-      if (line.indented) {
-        splitBlock.isIndented = true
-      }
-      applyProseFormattingToBlock(splitBlock, line)
+      applyProseBlockDefaults(splitBlock, line, proseText)
       blocks.push(splitBlock)
       index += 1
       continue
     }
 
     previous.text = `${previous.text} ${proseText}`.replace(/\s+/g, " ").trim()
+    if (line.indented) {
+      previous.isIndented = true
+    }
+    applyProseFormattingToBlock(previous, line)
     index += 1
   }
 
@@ -1694,6 +1832,50 @@ function toPublicDocument(documentRow, wordCount) {
     total_pages: documentRow.total_pages,
     created_at: documentRow.created_at,
     word_count: wordCount,
+    parse_status: documentRow.parse_status ?? PARSE_STATUS.READY,
+  }
+}
+
+async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
+  if (backgroundParseInFlight.has(documentId)) {
+    return
+  }
+
+  backgroundParseInFlight.add(documentId)
+
+  try {
+    const { parsedText, chapters, contentWithChapters, wordCount } =
+      await parsePdfBuffer(buffer, fileName)
+
+    const { error: updateError } = await supabase
+      .from("documents")
+      .update({
+        total_pages: parsedText.numpages,
+        chapters,
+        content: contentWithChapters,
+        word_count: wordCount,
+        parser_version: PARSER_VERSION,
+        parse_status: PARSE_STATUS.READY,
+      })
+      .eq("id", documentId)
+      .eq("user_id", userId)
+
+    if (updateError) {
+      throw new Error("Failed to save parsed document")
+    }
+  } catch (error) {
+    console.error(
+      `Background parse failed for document ${documentId}:`,
+      error instanceof Error ? error.message : error
+    )
+
+    await supabase
+      .from("documents")
+      .update({ parse_status: PARSE_STATUS.ERROR })
+      .eq("id", documentId)
+      .eq("user_id", userId)
+  } finally {
+    backgroundParseInFlight.delete(documentId)
   }
 }
 
@@ -1839,6 +2021,7 @@ async function reparseDocumentIfOutdated(documentRow, options = {}) {
       content: contentWithChapters,
       word_count: wordCount,
       parser_version: PARSER_VERSION,
+      parse_status: PARSE_STATUS.READY,
     })
     .eq("id", documentRow.id)
 
@@ -1929,11 +2112,7 @@ app.post("/upload", requireAuth, (req, res) => {
         return
       }
 
-      const hasImages = false
       const title = uploadedFile.originalname.replace(/\.pdf$/i, "")
-      const { parsedText, chapters, contentWithChapters, wordCount } =
-        await parsePdfBuffer(uploadedFile.buffer, uploadedFile.originalname)
-
       const storagePath = `${Date.now()}-${uploadedFile.originalname}`
       const { data: storageData, error: storageError } = await supabase.storage
         .from("pdfs")
@@ -1951,14 +2130,15 @@ app.post("/upload", requireAuth, (req, res) => {
         .insert({
           name: title,
           storage_path: storageData.path,
-          total_pages: parsedText.numpages,
-          word_count: wordCount,
-          chapters,
-          content: contentWithChapters,
+          total_pages: 0,
+          word_count: 0,
+          chapters: null,
+          content: null,
           parser_version: PARSER_VERSION,
+          parse_status: PARSE_STATUS.PENDING,
           user_id: req.userId,
         })
-        .select("id, word_count")
+        .select("id")
         .single()
 
       if (insertError) {
@@ -1966,16 +2146,21 @@ app.post("/upload", requireAuth, (req, res) => {
         return
       }
 
+      const pdfBuffer = Buffer.from(uploadedFile.buffer)
+      const documentId = insertedDocument.id
+      const userId = req.userId
+      const originalName = uploadedFile.originalname
+
+      setImmediate(() => {
+        void parseDocumentInBackground(documentId, userId, pdfBuffer, originalName)
+      })
+
       res.json({
         success: true,
         document: {
-          id: insertedDocument.id,
+          id: documentId,
           title,
-          totalPages: parsedText.numpages,
-          wordCount,
-          chapters,
-          content: contentWithChapters,
-          hasImages,
+          status: PARSE_STATUS.PENDING,
         },
       })
     } catch (error) {
