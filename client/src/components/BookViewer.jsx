@@ -408,7 +408,7 @@ function createMeasureElements() {
   root.appendChild(page)
   document.body.appendChild(root)
 
-  return { root, page, body }
+  return { root, page, body, footer }
 }
 
 function splitTextAtEmbeddedListMarkers(text) {
