@@ -564,6 +564,7 @@ function normalizeExtractedText(text) {
         .replace(/\bfl\s+(?=[a-z])/gi, "fl")
         .replace(/\b([a-z]{4,})\s+(ed|ing|ly|es|er|est)\b/gi, "$1$2")
         .replace(/\bout-\s+/gi, "out-")
+        .replace(/\b(the|at|in|on)(edge|op)\b/gi, "$1 $2")
     )
   )
 }

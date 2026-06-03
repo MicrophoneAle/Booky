@@ -317,7 +317,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 1rem;
+  padding: 0.25rem;
   box-sizing: border-box;
   background: transparent;
 }
@@ -329,9 +329,9 @@
   pointer-events: none;
   z-index: 1;
   background: radial-gradient(
-    circle,
-    transparent 40%,
-    rgba(13, 11, 10, 0.9) 100%
+    ellipse at center,
+    transparent 55%,
+    rgba(13, 11, 10, 0.75) 100%
   );
 }
 
@@ -398,7 +398,7 @@
   display: flex;
   align-items: stretch;
   width: fit-content;
-  height: 600px;
+  height: var(--book-page-height, 720px);
   border: none;
   border-radius: 4px;
   overflow: hidden;
@@ -409,8 +409,8 @@
 }
 
 .book-viewer__page-slot {
-  width: 400px;
-  height: 600px;
+  width: var(--book-page-width, 480px);
+  height: var(--book-page-height, 720px);
   flex-shrink: 0;
 }
 
@@ -440,7 +440,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  --page-footer-reserve: 12px;
+  --page-footer-reserve: 4px;
 }
 
 .book-page::after {
@@ -937,6 +937,7 @@
 .book-page__body:not(.book-page__body--title-spread) {
   flex: 1 1 auto;
   min-height: 0;
+  width: 100%;
   max-height: calc(100% - var(--page-footer-reserve));
   overflow: hidden;
   display: flex;
@@ -1167,14 +1168,14 @@ ol.book-page__list {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 8px;
+  bottom: 3px;
   z-index: 2;
   margin: 0;
   padding: 0;
   text-align: center;
   font-family: var(--ff-body, var(--font-body));
-  font-size: 9px;
-  line-height: 12px;
+  font-size: 8px;
+  line-height: 10px;
   color: inherit;
   letter-spacing: 0.15em;
 }
@@ -1270,7 +1271,7 @@ ol.book-page__list {
   top: 0;
   visibility: hidden;
   pointer-events: none;
-  width: 400px;
+  width: var(--book-page-width, 480px);
   z-index: -1;
 }
 
@@ -1285,6 +1286,6 @@ ol.book-page__list {
 
 .book-viewer__measure-footer {
   flex-shrink: 0;
-  height: 20px;
+  height: 10px;
   margin: 0;
 }
