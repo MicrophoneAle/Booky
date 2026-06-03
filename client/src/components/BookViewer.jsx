@@ -55,16 +55,15 @@ function getPageTextCapacity(contentMaxHeight, font, line) {
 }
 
 function bodyContentFitsPage(bodyEl, fitHeight) {
-  const boxLimit =
-    bodyEl.clientHeight > 0
-      ? bodyEl.clientHeight
-      : Math.floor(fitHeight) + PAGE_FIT_OVERFLOW_TOLERANCE_PX
-  const limit = Math.min(
-    Math.floor(fitHeight) + PAGE_FIT_OVERFLOW_TOLERANCE_PX,
-    boxLimit
-  )
+  const limit = Math.floor(fitHeight) + PAGE_FIT_OVERFLOW_TOLERANCE_PX
+  const lastChild = bodyEl.lastElementChild
 
-  return bodyEl.scrollHeight <= limit
+  if (!lastChild) {
+    return true
+  }
+
+  const bottom = lastChild.offsetTop + lastChild.offsetHeight
+  return bottom <= limit
 }
 
 function getPageNumberReservedPx(isMobileViewport) {
@@ -157,8 +156,7 @@ function proseParagraphClassName(previousItem, proseItem = null) {
     const noIndentAfter =
       isHeadingVisualItem(previousItem) ||
       previousItem?.type === "subtitle" ||
-      previousItem?.type === "author" ||
-      previousItem?.textAlign === "center"
+      previousItem?.type === "author"
 
     if (noIndentAfter) {
       classes.push("book-page__text--first")
@@ -2174,10 +2172,9 @@ export default function BookViewer({
       measureElements.page.style.paddingBottom = pagePad.paddingBottom ?? "0"
       measureElements.body.style.padding = "0"
       measureElements.body.style.paddingBottom = `${BODY_BOTTOM_PADDING_PX}px`
-      measureElements.body.style.flex = "1 1 auto"
-      measureElements.body.style.minHeight = "0"
-      measureElements.body.style.height = "auto"
-      measureElements.body.style.maxHeight = `calc(100% - ${PAGE_FOOTER_RESERVE_PX}px)`
+      measureElements.body.style.height = `${contentMaxHeight}px`
+      measureElements.body.style.maxHeight = `${contentMaxHeight}px`
+      measureElements.body.style.minHeight = `${contentMaxHeight}px`
       measureElements.body.style.overflow = "hidden"
       measureElements.footer.style.display = "none"
 
