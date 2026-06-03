@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 10
+const PARSER_VERSION = 11
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -228,6 +228,9 @@ const TOC_CHAPTER_LISTING_REGEX =
   /^Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:\s+\S/i
 
 const EARLY_TOC_SCAN_LINE_LIMIT = 80
+
+const STANDALONE_CHAPTER_NUMERAL_REGEX =
+  /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
 
 function slugify(text) {
   return text
@@ -482,7 +485,7 @@ async function extractHeadingLines(buffer) {
 
 function isStandaloneChapterNumber(text, block) {
   const trimmed = (text ?? "").trim()
-  if (!/^\d{1,2}\.?$/.test(trimmed)) {
+  if (!STANDALONE_CHAPTER_NUMERAL_REGEX.test(trimmed)) {
     return false
   }
   if (block?.isChapterStart) {
@@ -496,7 +499,7 @@ function isStandaloneChapterNumber(text, block) {
 
 function isLikelyChapterNumberLine(text, line) {
   const trimmed = (text ?? "").trim()
-  if (!/^\d{1,2}\.?$/.test(trimmed)) {
+  if (!STANDALONE_CHAPTER_NUMERAL_REGEX.test(trimmed)) {
     return false
   }
   return (line.fontSize ?? 0) >= 13
@@ -511,7 +514,7 @@ function buildRepeatedChapterBoundaryKeys(allLines) {
       continue
     }
     const key = trimmed.toLowerCase()
-    if (/^\d{1,2}\.?$/.test(trimmed)) {
+    if (STANDALONE_CHAPTER_NUMERAL_REGEX.test(trimmed)) {
       freq.set(key, (freq.get(key) ?? 0) + 1)
       continue
     }
@@ -538,7 +541,10 @@ function isChapterHeading(block, repeatedBoundaryKeys) {
     return true
   }
 
-  if (/^\d{1,2}\.?$/.test(text) && repeatedBoundaryKeys?.has(boundaryKey)) {
+  if (
+    STANDALONE_CHAPTER_NUMERAL_REGEX.test(text) &&
+    repeatedBoundaryKeys?.has(boundaryKey)
+  ) {
     return false
   }
 
@@ -623,7 +629,8 @@ function detectChapters(content, bookTitle = "", repeatedBoundaryKeys = new Set(
           currentPartTitle = title
         } else if (
           currentPartId &&
-          (/^\d{1,2}\.?$/.test(title) || /^chapter\s+/i.test(title))
+          (STANDALONE_CHAPTER_NUMERAL_REGEX.test(title) ||
+            /^chapter\s+/i.test(title))
         ) {
           id = `${currentPartId}-${slugify(title)}`
           chapterTitle = `${currentPartTitle ?? currentPartId} — ${title}`
