@@ -155,7 +155,8 @@ function proseParagraphClassName(previousItem, proseItem = null) {
     const noIndentAfter =
       isHeadingVisualItem(previousItem) ||
       previousItem?.type === "subtitle" ||
-      previousItem?.type === "author"
+      previousItem?.type === "author" ||
+      previousItem?.textAlign === "center"
 
     if (noIndentAfter) {
       classes.push("book-page__text--first")
@@ -573,11 +574,14 @@ function groupBlocksForDisplay(blocks) {
   const expandedBlocks = expandBlocksForEmbeddedListMarkers(blocks)
   const visualItems = []
 
-  const shouldMergeWithPreviousProse = (newText, isIndented = false) => {
+  const shouldMergeWithPreviousProse = (newText, isIndented = false, formatting = {}) => {
     if (isIndented) return false
+    if (formatting.textAlign === "center") return false
 
     const last = visualItems[visualItems.length - 1]
     if (!last || last.type !== "prose") return false
+    if (last.textAlign === "center") return false
+    if (last.bold || last.italic || (last.runs?.length ?? 0) > 1) return false
 
     const prev = last.text
     const startsLowercase = /^[a-z]/.test(newText)
@@ -600,7 +604,7 @@ function groupBlocksForDisplay(blocks) {
 
     if (
       !hasDistinctFormatting &&
-      shouldMergeWithPreviousProse(trimmed, isIndented)
+      shouldMergeWithPreviousProse(trimmed, isIndented, formatting)
     ) {
       const last = visualItems[visualItems.length - 1]
       last.text = (last.text + " " + trimmed).replace(/\s+/g, " ").trim()
@@ -1031,6 +1035,17 @@ function getChapterItemFromPlaceable(placeable) {
   return null
 }
 
+function proseFormattingFields(proseItem) {
+  return {
+    ...(proseItem.isIndented ? { isIndented: true } : {}),
+    ...(proseItem.isContinuation ? { isContinuation: true } : {}),
+    ...(proseItem.textAlign === "center" ? { textAlign: "center" } : {}),
+    ...(proseItem.bold ? { bold: true } : {}),
+    ...(proseItem.italic ? { italic: true } : {}),
+    ...(proseItem.runs?.length ? { runs: proseItem.runs } : {}),
+  }
+}
+
 function prosePlaceableFromItem(proseItem) {
   return { type: "prose", item: proseItem }
 }
@@ -1063,6 +1078,10 @@ function splitProseAcrossPages(
   showLabel,
   labelTitle
 ) {
+  if (proseItem.textAlign === "center") {
+    return null
+  }
+
   const words = (proseItem.text ?? "").trim().split(/\s+/).filter(Boolean)
   if (words.length === 0) {
     return null
@@ -1077,7 +1096,7 @@ function splitProseAcrossPages(
   const singleWordItem = {
     type: "prose",
     text: words[0],
-    ...(proseItem.isContinuation ? { isContinuation: true } : {}),
+    ...proseFormattingFields(proseItem),
   }
 
   if (
@@ -1108,7 +1127,7 @@ function splitProseAcrossPages(
     const fittingItem = {
       type: "prose",
       text: words.slice(0, mid).join(" "),
-      ...(proseItem.isContinuation ? { isContinuation: true } : {}),
+      ...proseFormattingFields(proseItem),
     }
     const trialPlaceables = [...alreadyOnPage, prosePlaceableFromItem(fittingItem)]
 
@@ -1128,12 +1147,12 @@ function splitProseAcrossPages(
     fitting: {
       type: "prose",
       text: words.slice(0, best).join(" "),
-      ...(proseItem.isContinuation ? { isContinuation: true } : {}),
+      ...proseFormattingFields(proseItem),
     },
     overflow: {
       type: "prose",
       text: words.slice(best).join(" "),
-      isContinuation: true,
+      ...proseFormattingFields({ ...proseItem, isContinuation: true }),
     },
   }
 }

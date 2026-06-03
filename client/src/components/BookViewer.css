@@ -1033,10 +1033,12 @@
 }
 
 .book-page__text--first {
+  text-align: justify;
   text-indent: 0;
 }
 
 .book-page__text--continuation {
+  text-align: justify;
   text-indent: 0;
 }
 
