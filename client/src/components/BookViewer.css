@@ -936,11 +936,8 @@
   bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
 }
 
-.book-page--mobile-fs .book-page__body,
-.book-page--mobile-fs .book-page__body--title-spread {
-  max-height: calc(
-    100% - 20px - max(0.75rem, env(safe-area-inset-bottom, 0px))
-  );
+.book-page--mobile-fs .book-page__body:not(.book-page__body--title-spread) {
+  max-height: calc(100% - 32px);
 }
 
 .book-page__chapter-label {
@@ -961,7 +958,7 @@
   flex-direction: column;
   gap: 0;
   box-sizing: border-box;
-  padding-bottom: 20px;
+  padding-bottom: 0;
 }
 
 .book-page__body--title-spread {
