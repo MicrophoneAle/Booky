@@ -7,6 +7,13 @@ export const AUTHOR_LINE_REGEX = /^(by|written by|translated by)\s+/i
 
 export const DEDICATION_SUBTITLE_REGEX = /^To\s+[A-Z]/i
 
+export const TOC_CHAPTER_LISTING_REGEX =
+  /^Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:\s+\S/i
+
+export function isTocChapterListingText(text) {
+  return TOC_CHAPTER_LISTING_REGEX.test((text ?? "").trim())
+}
+
 export function isAuthorLineText(text) {
   return AUTHOR_LINE_REGEX.test((text ?? "").trim())
 }
@@ -45,6 +52,9 @@ export function isFrontMatterVisualType(type) {
 
 function qualifiesAsFrontMatterPlaceable(placeable) {
   const item = placeable.item
+  if (isTocChapterListingText(item?.text)) {
+    return false
+  }
   return (
     isFrontMatterVisualType(item?.type) ||
     isDedicationSubtitlePlaceable(placeable) ||
@@ -192,6 +202,10 @@ export function flattenDocument(document) {
     for (const block of page?.blocks ?? []) {
       const text = block?.text ?? ""
       const chapterId = block.chapterId ?? null
+
+      if (!chapterId && isTocChapterListingText(text)) {
+        continue
+      }
 
       flatBlocks.push({
         text,

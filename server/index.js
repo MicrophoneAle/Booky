@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 6
+const PARSER_VERSION = 7
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -220,6 +220,11 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
 
 const CHAPTER_PATTERN =
   /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|one|two|three)|prologue|epilogue|introduction|conclusion)\.?$/i
+
+const TOC_CHAPTER_LISTING_REGEX =
+  /^Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:\s+\S/i
+
+const EARLY_TOC_SCAN_LINE_LIMIT = 80
 
 function slugify(text) {
   return text
@@ -471,6 +476,9 @@ function isChapterHeading(block) {
     return true
   }
 
+  if (isTocChapterListingLine(text)) {
+    return false
+  }
   if (CHAPTER_PATTERN.test(text)) return true
   if (text.length < 60 && block.fontSize > 13 && /^\d+[\.\)]\s/.test(text)) {
     return true
@@ -577,6 +585,10 @@ function isStructuralLine(text, nonEmptyLineIndex) {
   return false
 }
 
+function isTocChapterListingLine(text) {
+  return TOC_CHAPTER_LISTING_REGEX.test((text ?? "").trim())
+}
+
 function isHeadingLine(text, line, headingStrings) {
   if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
     return false
@@ -648,6 +660,9 @@ function isTocHeadingCandidate(text, line, headingStrings, lineIndex) {
   }
   if (isStructuralLine(text, lineIndex)) {
     return false
+  }
+  if (isTocChapterListingLine(text)) {
+    return true
   }
   return isHeadingLine(text, line, headingStrings)
 }
@@ -730,6 +745,12 @@ function buildBlocksFromLines(pageData, headingStrings) {
       continue
     }
 
+    if (lineIndex < EARLY_TOC_SCAN_LINE_LIMIT && isTocChapterListingLine(text)) {
+      pendingConnective = null
+      index += 1
+      continue
+    }
+
     if (isTocHeadingCandidate(text, line, headingStrings, lineIndex)) {
       const { run, nextIndex } = collectConsecutiveTocHeadingRun(
         allLines,
@@ -738,7 +759,9 @@ function buildBlocksFromLines(pageData, headingStrings) {
         lineIndex
       )
 
-      if (run.length >= 3) {
+      const runIsTocListings = run.every((entry) => isTocChapterListingLine(entry.text))
+
+      if (run.length >= 3 || runIsTocListings) {
         pendingConnective = null
         nonEmptyLineIndex += run.length - 1
         index = nextIndex

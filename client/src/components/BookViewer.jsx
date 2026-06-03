@@ -20,16 +20,28 @@ const PAGE_HEIGHT_PX = 600
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const SPINE_PX = 1
 const PAGE_NUMBER_RESERVED_PX = 20
-const BODY_DESCENDER_PAD_PX = 4
+const BODY_DESCENDER_PAD_PX = 6
+const PAGE_CONTENT_FIT_BUFFER_PX = 2
 const MOBILE_BROWSER_UI_PX = 40
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
 const MOBILE_PAGE_NUMBER_RESERVED_PX =
   PAGE_NUMBER_RESERVED_PX + MOBILE_BROWSER_UI_PX + MOBILE_PAGE_NUMBER_GAP_PX
-const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
+const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 2
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 
 function bodyContentFitsPage(bodyEl, contentMaxHeight) {
-  return bodyEl.scrollHeight <= contentMaxHeight
+  const limit = contentMaxHeight - PAGE_CONTENT_FIT_BUFFER_PX
+  if (bodyEl.scrollHeight > limit) {
+    return false
+  }
+
+  const lastChild = bodyEl.lastElementChild
+  if (!lastChild) {
+    return true
+  }
+
+  const bottom = lastChild.offsetTop + lastChild.offsetHeight
+  return bottom <= limit
 }
 
 function getPageNumberReservedPx(isMobileViewport) {
@@ -693,7 +705,8 @@ function applyChapterContextFromItem(item, chapterState) {
 }
 
 function pageContentOverflows(bodyEl, contentMaxHeight) {
-  if (bodyEl.scrollHeight > contentMaxHeight) {
+  const limit = contentMaxHeight - PAGE_CONTENT_FIT_BUFFER_PX
+  if (bodyEl.scrollHeight > limit) {
     return true
   }
 
@@ -703,7 +716,7 @@ function pageContentOverflows(bodyEl, contentMaxHeight) {
   }
 
   const bottom = lastChild.offsetTop + lastChild.offsetHeight
-  return bottom > contentMaxHeight
+  return bottom > limit
 }
 
 function countListItemsInTree(nodes) {

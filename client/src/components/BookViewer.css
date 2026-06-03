@@ -951,7 +951,7 @@
   flex-direction: column;
   gap: 0;
   box-sizing: border-box;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
 }
 
 .book-page__body--title-spread {
@@ -1124,7 +1124,7 @@ ol.book-page__list {
 
   .book-page__body:not(.book-page__body--title-spread) {
     max-height: calc(100% - 63px - env(safe-area-inset-bottom, 0px));
-    padding-bottom: 4px;
+    padding-bottom: 6px;
   }
 
   .book-viewer__nav {
