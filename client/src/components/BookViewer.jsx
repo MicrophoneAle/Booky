@@ -20,6 +20,7 @@ const PAGE_HEIGHT_PX = 600
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const SPINE_PX = 1
 const PAGE_NUMBER_RESERVED_PX = 20
+const MOBILE_PAGE_NUMBER_RESERVED_PX = 52
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 8
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 const GREEDY_PAGE_SAFETY_MARGIN_PX = 10
@@ -362,7 +363,11 @@ function createListElement(kind) {
   return unorderedList
 }
 
-function getLayoutHeights(pageHeightOverride, marginSetting) {
+function getLayoutHeights(
+  pageHeightOverride,
+  marginSetting,
+  pageNumberReservedPx = PAGE_NUMBER_RESERVED_PX
+) {
   const remPx =
     parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
   const rawMargin = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
@@ -372,7 +377,7 @@ function getLayoutHeights(pageHeightOverride, marginSetting) {
   const contentMaxHeight =
     pageHeight -
     pagePaddingTop -
-    PAGE_NUMBER_RESERVED_PX -
+    pageNumberReservedPx -
     CONTENT_HEIGHT_SAFETY_BUFFER_PX
 
   return { pageOuterHeight: pageHeight, contentMaxHeight }
@@ -1949,9 +1954,13 @@ export default function BookViewer({
       const flatBlocks = flattenDocument(bookDocument)
       const mobileFS = isMobile && isMobileFullscreen
       const pageHeightToUse = mobileFS ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : undefined
+      const pageNumberReservedPx = isMobile
+        ? MOBILE_PAGE_NUMBER_RESERVED_PX
+        : PAGE_NUMBER_RESERVED_PX
       const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(
         pageHeightToUse,
-        settings.margins
+        settings.margins,
+        pageNumberReservedPx
       )
       const measureElements = createMeasureElements()
 
@@ -1963,7 +1972,10 @@ export default function BookViewer({
       measureElements.page.style.paddingLeft = pagePad.paddingLeft ?? "0"
       measureElements.page.style.paddingBottom = "0"
       measureElements.body.style.padding = "0"
-      measureElements.body.style.paddingBottom = `${PAGE_NUMBER_RESERVED_PX}px`
+      measureElements.body.style.paddingBottom = isMobile
+        ? "4px"
+        : `${PAGE_NUMBER_RESERVED_PX}px`
+      measureElements.footer.style.height = `${pageNumberReservedPx}px`
 
       const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
       const line = LINE_HEIGHT_MAP[settings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
