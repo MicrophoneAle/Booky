@@ -946,7 +946,7 @@
 }
 
 .book-page__body {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   overflow: hidden;
   display: flex;
@@ -955,6 +955,7 @@
 }
 
 .book-page__body--title-spread {
+  flex: 1;
   justify-content: center;
 }
 
@@ -1102,7 +1103,7 @@ ol.book-page__list {
   position: relative;
   z-index: 2;
   flex-shrink: 0;
-  margin-top: auto;
+  margin: 0.5rem 0 0;
   text-align: center;
   font-family: var(--ff-body, var(--font-body));
   font-size: 9px;
