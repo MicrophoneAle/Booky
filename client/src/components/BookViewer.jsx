@@ -22,15 +22,14 @@ const PAGE_WIDTH_PX = 400
 const PAGE_HEIGHT_PX = 600
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const SPINE_PX = 1
-const PAGE_FOOTER_RESERVE_PX = 14
+const PAGE_FOOTER_RESERVE_PX = 10
 const PAGE_NUMBER_RESERVED_PX = PAGE_FOOTER_RESERVE_PX
-const BODY_DESCENDER_PAD_PX = 3
-const PAGE_CONTENT_FIT_BUFFER_PX = 1
+const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 2
 const MOBILE_BROWSER_UI_PX = 40
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
 const MOBILE_PAGE_NUMBER_RESERVED_PX =
   PAGE_NUMBER_RESERVED_PX + MOBILE_BROWSER_UI_PX + MOBILE_PAGE_NUMBER_GAP_PX
-const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 1
+const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 
 /**
@@ -38,9 +37,7 @@ const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
  */
 function getPageTextCapacity(contentMaxHeight, font, line) {
   const lineHeightPx = font.body * line.body
-  // Headers/labels are already in the measure DOM; only reserve a thin fit buffer.
-  const reserved = BODY_DESCENDER_PAD_PX + PAGE_CONTENT_FIT_BUFFER_PX
-  const usableHeight = Math.max(0, contentMaxHeight - reserved)
+  const usableHeight = Math.max(0, contentMaxHeight)
   const maxLines = Math.max(1, Math.floor(usableHeight / lineHeightPx))
 
   return {
@@ -52,7 +49,7 @@ function getPageTextCapacity(contentMaxHeight, font, line) {
 }
 
 function bodyContentFitsPage(bodyEl, fitHeight) {
-  const limit = Math.floor(fitHeight)
+  const limit = Math.floor(fitHeight) + PAGE_FIT_OVERFLOW_TOLERANCE_PX
   const lastChild = bodyEl.lastElementChild
 
   if (!lastChild) {
@@ -690,13 +687,6 @@ function groupBlocksForDisplay(blocks) {
   return visualItems
 }
 
-function appendChapterLabel(body, title) {
-  const label = document.createElement("p")
-  label.className = "book-page__chapter-label"
-  label.textContent = title
-  body.appendChild(label)
-}
-
 function appendSingleListNode(listEl, node) {
   const listEntry = document.createElement("li")
   listEntry.className = listItemClassName(node)
@@ -809,21 +799,11 @@ function appendVisualItem(body, item, previousItem = null) {
   }
 }
 
-function renderMeasureBody(
-  body,
-  visualItems,
-  showChapterLabel,
-  chapterTitle,
-  { centerTitlePage = false } = {}
-) {
+function renderMeasureBody(body, visualItems, { centerTitlePage = false } = {}) {
   body.replaceChildren()
   body.className = centerTitlePage
     ? "book-page__body book-page__body--title-spread"
     : "book-page__body book-page__body--measure"
-
-  if (showChapterLabel && chapterTitle) {
-    appendChapterLabel(body, chapterTitle)
-  }
 
   for (let index = 0; index < visualItems.length; index += 1) {
     appendVisualItem(body, visualItems[index], visualItems[index - 1])
@@ -897,11 +877,7 @@ function cleanupPages(pages, bodyEl, pageLayout) {
 
       if (onlyItem.type === "prose" && onlyItem.text.length < TRIVIAL_LAST_PAGE_CHAR_LIMIT) {
         const mergedItems = [...previousPage.visualItems, ...lastPage.visualItems]
-        const showLabel = Boolean(
-          previousPage.isChapterStart && previousPage.chapterTitle
-        )
-
-        renderMeasureBody(bodyEl, mergedItems, showLabel, previousPage.chapterTitle)
+        renderMeasureBody(bodyEl, mergedItems)
 
         const { fitHeight } = getPageTextCapacity(
           pageLayout.contentMaxHeight,
@@ -1047,15 +1023,9 @@ function prosePlaceableFromItem(proseItem) {
   return { type: "prose", item: proseItem }
 }
 
-function pagePlaceablesFit(
-  bodyEl,
-  pagePlaceables,
-  pageLayout,
-  showLabel,
-  labelTitle
-) {
+function pagePlaceablesFit(bodyEl, pagePlaceables, pageLayout) {
   const trialVisualItems = placeablesToVisualItems(pagePlaceables)
-  renderMeasureBody(bodyEl, trialVisualItems, showLabel, labelTitle, {
+  renderMeasureBody(bodyEl, trialVisualItems, {
     centerTitlePage: shouldCenterTitlePage(trialVisualItems),
   })
   const { fitHeight } = getPageTextCapacity(
@@ -1066,14 +1036,7 @@ function pagePlaceablesFit(
   return bodyContentFitsPage(bodyEl, fitHeight)
 }
 
-function splitProseAcrossPages(
-  proseItem,
-  bodyEl,
-  pageLayout,
-  alreadyOnPage,
-  showLabel,
-  labelTitle
-) {
+function splitProseAcrossPages(proseItem, bodyEl, pageLayout, alreadyOnPage) {
   if (proseItem.textAlign === "center") {
     return null
   }
@@ -1096,13 +1059,7 @@ function splitProseAcrossPages(
   }
 
   if (
-    !pagePlaceablesFit(
-      bodyEl,
-      [prosePlaceableFromItem(singleWordItem)],
-      pageLayout,
-      showLabel,
-      labelTitle
-    )
+    !pagePlaceablesFit(bodyEl, [prosePlaceableFromItem(singleWordItem)], pageLayout)
   ) {
     return null
   }
@@ -1126,7 +1083,7 @@ function splitProseAcrossPages(
     }
     const trialPlaceables = [...alreadyOnPage, prosePlaceableFromItem(fittingItem)]
 
-    if (pagePlaceablesFit(bodyEl, trialPlaceables, pageLayout, showLabel, labelTitle)) {
+    if (pagePlaceablesFit(bodyEl, trialPlaceables, pageLayout)) {
       best = mid
       low = mid + 1
     } else {
@@ -1164,12 +1121,6 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout) {
     pageChapterTitle: null,
     pageIsChapterStart: false,
   }
-
-  const showChapterLabel = () =>
-    chapterState.pageIsChapterStart &&
-    Boolean(chapterState.pageChapterTitle) &&
-    currentPagePlaceables.length === 0 &&
-    !pageOnlyFrontMatter(currentPagePlaceables)
 
   const updateCurrentActiveChapter = (item) => {
     if (!isHeadingVisualItem(item)) {
@@ -1218,8 +1169,8 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout) {
     }
   }
 
-  const pageItemsFit = (pageItems, showLabel, labelTitle) => {
-    renderMeasureBody(bodyEl, pageItems, showLabel, labelTitle, {
+  const pageItemsFit = (pageItems) => {
+    renderMeasureBody(bodyEl, pageItems, {
       centerTitlePage: shouldCenterTitlePage(pageItems),
     })
     const { fitHeight } = getPageTextCapacity(
@@ -1258,7 +1209,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout) {
     const trialPlaceables = [...currentPagePlaceables, ...toAdd]
     const trialVisualItems = placeablesToVisualItems(trialPlaceables)
 
-    if (!pageItemsFit(trialVisualItems, showChapterLabel(), chapterState.pageChapterTitle)) {
+    if (!pageItemsFit(trialVisualItems)) {
       return false
     }
 
@@ -1294,9 +1245,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout) {
         placeable.item,
         bodyEl,
         pageLayout,
-        currentPagePlaceables,
-        showChapterLabel(),
-        chapterState.pageChapterTitle
+        currentPagePlaceables
       )
 
       if (split) {
@@ -1398,13 +1347,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout) {
       for (const placeable of unit) {
         const trial = [...batch, placeable]
         if (
-          pagePlaceablesFit(
-            bodyEl,
-            trial,
-            pageLayout,
-            showChapterLabel(),
-            chapterState.pageChapterTitle
-          )
+          pagePlaceablesFit(bodyEl, trial, pageLayout)
         ) {
           batch = trial
           continue
@@ -1682,17 +1625,6 @@ function BookPageContent({
             : "book-page__body"
         }
       >
-        {page.isChapterStart && page.chapterTitle && (
-          <p className="book-page__chapter-label">
-            {highlightTextContent(
-              page.chapterTitle,
-              searchQuery,
-              highlightTracker,
-              activeSearchOccurrence
-            )}
-          </p>
-        )}
-
         {visualItems.map((item, index) => {
           if (item.type === "title") {
             return (
@@ -2205,7 +2137,7 @@ export default function BookViewer({
       measureElements.page.style.paddingLeft = pagePad.paddingLeft ?? "0"
       measureElements.page.style.paddingBottom = pagePad.paddingBottom ?? "0"
       measureElements.body.style.padding = "0"
-      measureElements.body.style.paddingBottom = `${BODY_DESCENDER_PAD_PX}px`
+      measureElements.body.style.paddingBottom = "0"
       measureElements.body.style.height = `${contentMaxHeight}px`
       measureElements.body.style.maxHeight = `${contentMaxHeight}px`
       measureElements.body.style.minHeight = `${contentMaxHeight}px`

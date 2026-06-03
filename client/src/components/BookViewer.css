@@ -440,7 +440,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  --page-footer-reserve: 14px;
+  --page-footer-reserve: 10px;
 }
 
 .book-page::after {
@@ -934,23 +934,6 @@
   border-radius: 0;
 }
 
-.book-page__chapter-label {
-  margin: 0;
-  font-family: var(--ff-heading);
-  font-size: 9px;
-  line-height: 1.2;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: currentColor;
-}
-
-.book-page__chapter-label + .book-page__chapter-heading,
-.book-page__chapter-label + .book-page__heading,
-.book-page__chapter-label + .book-page__title {
-  margin-top: 0.2rem;
-}
-
 .book-page__body:not(.book-page__body--title-spread) {
   flex: 1 1 auto;
   min-height: 0;
@@ -960,7 +943,7 @@
   flex-direction: column;
   gap: 0;
   box-sizing: border-box;
-  padding-bottom: 3px;
+  padding-bottom: 0;
   --lh-display: calc(var(--lh-body, 1.15) * 1.04);
 }
 
@@ -979,8 +962,14 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.25;
-  text-align: center;
+  text-align: left;
   color: inherit;
+}
+
+.book-page__body--title-spread .book-page__title,
+.book-page__body--title-spread .book-page__subtitle,
+.book-page__body--title-spread .book-page__author {
+  text-align: center;
 }
 
 .book-page__heading {
@@ -998,7 +987,7 @@
   font-size: max(0.95rem, calc(var(--fs-body, 10px) * 1.35));
   font-weight: 700;
   line-height: 1.2;
-  text-align: center;
+  text-align: left;
   color: inherit;
 }
 
@@ -1019,7 +1008,7 @@
   font-style: italic;
   letter-spacing: 0.04em;
   line-height: 1.2;
-  text-align: center;
+  text-align: left;
   color: var(--color-muted);
 }
 
@@ -1178,26 +1167,26 @@ ol.book-page__list {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 5px;
+  bottom: 3px;
   z-index: 2;
   margin: 0;
   padding: 0;
   text-align: center;
   font-family: var(--ff-body, var(--font-body));
   font-size: 9px;
-  line-height: 14px;
+  line-height: 12px;
   color: inherit;
   letter-spacing: 0.15em;
 }
 
 @media (max-width: 767px) {
   .book-page__number {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 44px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 43px);
   }
 
   .book-page__body:not(.book-page__body--title-spread) {
-    max-height: calc(100% - 57px - env(safe-area-inset-bottom, 0px));
-    padding-bottom: 3px;
+    max-height: calc(100% - 53px - env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0;
   }
 
   .book-viewer__nav {
