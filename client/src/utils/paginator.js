@@ -166,10 +166,7 @@ export function buildFrontMatterPack(placeables) {
 }
 
 export function shouldCenterTitlePage(visualItems) {
-  const frontMatter = (visualItems ?? []).filter((item) =>
-    isFrontMatterVisualType(item.type)
-  )
-  return frontMatter.length > 0 && frontMatter.length <= 2
+  return isTitlePageVisualItems(visualItems)
 }
 
 export function isTitlePageVisualItems(visualItems) {

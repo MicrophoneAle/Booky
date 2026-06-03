@@ -1217,6 +1217,10 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
 
   placeFrontMatterPack(frontMatterPack)
 
+  if (currentPagePlaceables.length > 0) {
+    flushPage()
+  }
+
   for (let placeableIndex = 0; placeableIndex < remainder.length; placeableIndex += 1) {
     const placeable = remainder[placeableIndex]
 

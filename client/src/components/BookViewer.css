@@ -1202,6 +1202,6 @@ ol.book-page__list {
 
 .book-viewer__measure-footer {
   flex-shrink: 0;
-  height: 32px;
-  margin: 0.5rem 0 0;
+  height: 20px;
+  margin: 0;
 }

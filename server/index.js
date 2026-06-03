@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 5
+const PARSER_VERSION = 6
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -628,69 +628,164 @@ function shouldStartNewProseBlock(line, previousBlock) {
   return false
 }
 
+const DEDICATION_LINE_REGEX = /^To\s+[A-Z]/
+
+function isDedicationStructuralBlock(block) {
+  return (
+    block &&
+    block.isHeading === true &&
+    block.fontSize === 13 &&
+    DEDICATION_LINE_REGEX.test((block.text ?? "").trim())
+  )
+}
+
+function isTocHeadingCandidate(text, line, headingStrings, lineIndex) {
+  if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
+    return false
+  }
+  if (!text.includes(" ") && text.length < 5) {
+    return false
+  }
+  if (isStructuralLine(text, lineIndex)) {
+    return false
+  }
+  return isHeadingLine(text, line, headingStrings)
+}
+
+function collectConsecutiveTocHeadingRun(
+  allLines,
+  startIndex,
+  headingStrings,
+  baseLineIndex
+) {
+  const run = []
+  let index = startIndex
+
+  while (index < allLines.length) {
+    const entry = allLines[index]
+    const lineIndex = baseLineIndex + run.length
+
+    if (!isTocHeadingCandidate(entry.text, entry.line, headingStrings, lineIndex)) {
+      break
+    }
+
+    run.push(entry)
+    index += 1
+  }
+
+  return { run, nextIndex: index }
+}
+
 function buildBlocksFromLines(pageData, headingStrings) {
   const blocks = []
-  let nonEmptyLineIndex = 0
+  const allLines = []
 
   for (const page of pageData) {
     for (const line of page.lines ?? []) {
       const text = (line.text ?? "").trim()
-      if (!text) {
-        continue
+      if (text) {
+        allLines.push({ line, text })
       }
+    }
+  }
 
-      const lineIndex = nonEmptyLineIndex
-      nonEmptyLineIndex += 1
+  let pendingConnective = null
+  let nonEmptyLineIndex = 0
+  let index = 0
 
-      if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
-        blocks.push({
-          text,
-          isHeading: false,
-          fontSize: 12,
-          chapterId: null,
-        })
-        continue
-      }
+  while (index < allLines.length) {
+    const entry = allLines[index]
+    const { line, text } = entry
+    const lineIndex = nonEmptyLineIndex
+    nonEmptyLineIndex += 1
 
-      if (isStructuralLine(text, lineIndex)) {
+    if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
+      const previousBlock = blocks[blocks.length - 1] ?? null
+
+      if (isDedicationStructuralBlock(previousBlock)) {
         blocks.push({
           text,
           isHeading: true,
           fontSize: 13,
           chapterId: null,
         })
+        index += 1
         continue
       }
 
-      if (isHeadingLine(text, line, headingStrings)) {
+      pendingConnective = text
+      index += 1
+      continue
+    }
+
+    if (isStructuralLine(text, lineIndex)) {
+      pendingConnective = null
+      blocks.push({
+        text,
+        isHeading: true,
+        fontSize: 13,
+        chapterId: null,
+      })
+      index += 1
+      continue
+    }
+
+    if (isTocHeadingCandidate(text, line, headingStrings, lineIndex)) {
+      const { run, nextIndex } = collectConsecutiveTocHeadingRun(
+        allLines,
+        index,
+        headingStrings,
+        lineIndex
+      )
+
+      if (run.length >= 3) {
+        pendingConnective = null
+        nonEmptyLineIndex += run.length - 1
+        index = nextIndex
+        continue
+      }
+
+      pendingConnective = null
+      for (let runIndex = 0; runIndex < run.length; runIndex += 1) {
+        const runEntry = run[runIndex]
         blocks.push({
-          text,
+          text: runEntry.text,
           isHeading: true,
-          fontSize: Math.max(14, Math.round(line.fontSize ?? 16)),
+          fontSize: Math.max(14, Math.round(runEntry.line.fontSize ?? 16)),
           chapterId: null,
         })
-        continue
       }
-
-      const previousBlock = blocks.length > 0 ? blocks[blocks.length - 1] : null
-
-      if (shouldStartNewProseBlock(line, previousBlock)) {
-        const proseBlock = {
-          text,
-          isHeading: false,
-          fontSize: 12,
-          chapterId: null,
-        }
-        if (line.indented) {
-          proseBlock.isIndented = true
-        }
-        blocks.push(proseBlock)
-        continue
-      }
-
-      const previous = blocks[blocks.length - 1]
-      previous.text = `${previous.text} ${text}`.replace(/\s+/g, " ").trim()
+      nonEmptyLineIndex += run.length - 1
+      index = nextIndex
+      continue
     }
+
+    let proseText = text
+    if (pendingConnective) {
+      proseText = `${pendingConnective} ${proseText}`.replace(/\s+/g, " ").trim()
+      pendingConnective = null
+    }
+
+    const previousBlock = blocks.length > 0 ? blocks[blocks.length - 1] : null
+
+    if (shouldStartNewProseBlock(line, previousBlock)) {
+      const proseBlock = {
+        text: proseText,
+        isHeading: false,
+        fontSize: 12,
+        chapterId: null,
+      }
+      if (line.indented) {
+        proseBlock.isIndented = true
+      }
+      blocks.push(proseBlock)
+      index += 1
+      continue
+    }
+
+    const previous = blocks[blocks.length - 1]
+    previous.text = `${previous.text} ${proseText}`.replace(/\s+/g, " ").trim()
+    index += 1
   }
 
   return blocks
