@@ -1,7 +1,14 @@
 ﻿import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { useNavigate } from "react-router-dom"
-import { flattenDocument } from "../utils/paginator"
+import {
+  buildFrontMatterPack,
+  flattenDocument,
+  isFrontMatterVisualType,
+  isTitlePageVisualItems,
+  resolveHeadingVisualType,
+  shouldCenterTitlePage,
+} from "../utils/paginator"
 import { FullscreenIcon } from "./FullscreenButton"
 import "../pages/Reader.css"
 import "./BookViewer.css"
@@ -75,7 +82,12 @@ function proseParagraphClassName(previousItem, proseItem = null) {
     return "book-page__text book-page__text--continuation"
   }
 
-  return isHeadingVisualItem(previousItem)
+  const noIndentAfter =
+    isHeadingVisualItem(previousItem) ||
+    previousItem?.type === "subtitle" ||
+    previousItem?.type === "author"
+
+  return noIndentAfter
     ? "book-page__text book-page__text--first"
     : "book-page__text"
 }
@@ -376,13 +388,6 @@ function createMeasureElements() {
   return { root, page, body }
 }
 
-function resolveHeadingType(fontSize) {
-  if (fontSize > 18) return "title"
-  if (fontSize >= 14) return "heading"
-  if (fontSize >= 13) return "subtitle"
-  return "subtitle"
-}
-
 function splitTextAtEmbeddedListMarkers(text) {
   const trimmed = text.trim()
   if (!trimmed) {
@@ -506,7 +511,7 @@ function groupBlocksForDisplay(blocks) {
       flushPendingList()
 
       const headingFontSize = block.fontSize ?? 16
-      const headingType = resolveHeadingType(headingFontSize)
+      const headingType = resolveHeadingVisualType(headingFontSize, text)
       let headingText = text
       const nextBlock = expandedBlocks[index + 1]
       const nextText = (nextBlock?.text ?? "").trim()
@@ -677,6 +682,14 @@ function appendVisualItem(body, item, previousItem = null) {
     return
   }
 
+  if (item.type === "author") {
+    const author = document.createElement("p")
+    author.className = "book-page__author"
+    author.textContent = item.text
+    body.appendChild(author)
+    return
+  }
+
   if (item.type === "list") {
     appendGroupedListNodes(body, item.items)
     return
@@ -690,8 +703,17 @@ function appendVisualItem(body, item, previousItem = null) {
   }
 }
 
-function renderMeasureBody(body, visualItems, showChapterLabel, chapterTitle) {
+function renderMeasureBody(
+  body,
+  visualItems,
+  showChapterLabel,
+  chapterTitle,
+  { centerTitlePage = false } = {}
+) {
   body.replaceChildren()
+  body.className = centerTitlePage
+    ? "book-page__body book-page__body--title-spread"
+    : "book-page__body"
 
   if (showChapterLabel && chapterTitle) {
     appendChapterLabel(body, chapterTitle)
@@ -883,6 +905,15 @@ function isHeadingPlaceable(placeable) {
   return placeable.type === "title" || placeable.type === "heading"
 }
 
+function isFrontMatterPlaceable(placeable) {
+  return isFrontMatterVisualType(placeable.item?.type ?? placeable.type)
+}
+
+function pageOnlyFrontMatter(placeables) {
+  const items = placeablesToVisualItems(placeables)
+  return isTitlePageVisualItems(items)
+}
+
 function getChapterItemFromPlaceable(placeable) {
   if (isHeadingPlaceable(placeable)) {
     return placeable.item
@@ -897,7 +928,9 @@ function prosePlaceableFromItem(proseItem) {
 
 function pagePlaceablesFit(bodyEl, pagePlaceables, contentMaxHeight, showLabel, labelTitle) {
   const trialVisualItems = placeablesToVisualItems(pagePlaceables)
-  renderMeasureBody(bodyEl, trialVisualItems, showLabel, labelTitle)
+  renderMeasureBody(bodyEl, trialVisualItems, showLabel, labelTitle, {
+    centerTitlePage: shouldCenterTitlePage(trialVisualItems),
+  })
   return bodyEl.scrollHeight + GREEDY_PAGE_SAFETY_MARGIN_PX < contentMaxHeight
 }
 
@@ -986,7 +1019,8 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   const showChapterLabel = () =>
     chapterState.pageIsChapterStart &&
     Boolean(chapterState.pageChapterTitle) &&
-    currentPagePlaceables.length === 0
+    currentPagePlaceables.length === 0 &&
+    !pageOnlyFrontMatter(currentPagePlaceables)
 
   const updateCurrentActiveChapter = (item) => {
     if (!isHeadingVisualItem(item)) {
@@ -1036,7 +1070,9 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   }
 
   const pageItemsFit = (pageItems, showLabel, labelTitle) => {
-    renderMeasureBody(bodyEl, pageItems, showLabel, labelTitle)
+    renderMeasureBody(bodyEl, pageItems, showLabel, labelTitle, {
+      centerTitlePage: shouldCenterTitlePage(pageItems),
+    })
     return bodyEl.scrollHeight + GREEDY_PAGE_SAFETY_MARGIN_PX < contentMaxHeight
   }
 
@@ -1054,6 +1090,8 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       activeChapterTitle: currentActiveChapter,
       chaptersOnPage: buildChaptersOnPage(pageVisualItems),
       isChapterStart: chapterState.pageIsChapterStart,
+      isTitlePage: isTitlePageVisualItems(pageVisualItems),
+      centerTitlePage: shouldCenterTitlePage(pageVisualItems),
     })
 
     currentPagePlaceables = []
@@ -1153,6 +1191,10 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
   }
 
   const ensureChapterStartsOnNewPage = (placeable) => {
+    if (isFrontMatterPlaceable(placeable)) {
+      return
+    }
+
     const chapterItem = getChapterItemFromPlaceable(placeable)
 
     if (!chapterItem?.isChapterStart) {
@@ -1166,15 +1208,98 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     markPageStartIfEmpty()
   }
 
-  for (let placeableIndex = 0; placeableIndex < placeables.length; placeableIndex += 1) {
-    const placeable = placeables[placeableIndex]
+  const placeFrontMatterPack = (pack) => {
+    if (pack.length === 0) {
+      return
+    }
+
+    if (tryAddPlaceables(pack)) {
+      return
+    }
+
+    if (currentPagePlaceables.length > 0) {
+      flushPage()
+    }
+
+    markPageStartIfEmpty()
+
+    if (tryAddPlaceables(pack)) {
+      return
+    }
+
+    let batch = []
+    for (const placeable of pack) {
+      const trial = [...batch, placeable]
+      if (pagePlaceablesFit(
+        bodyEl,
+        trial,
+        contentMaxHeight,
+        showChapterLabel(),
+        chapterState.pageChapterTitle
+      )) {
+        batch = trial
+        continue
+      }
+
+      if (batch.length > 0) {
+        tryAddPlaceables(batch)
+        flushPage()
+        markPageStartIfEmpty()
+        batch = []
+      }
+
+      if (!tryAddPlaceables([placeable])) {
+        flushPage()
+        markPageStartIfEmpty()
+        currentPagePlaceables = [placeable]
+        const chapterItem = getChapterItemFromPlaceable(placeable)
+        if (chapterItem) {
+          applyChapterContextFromItem(chapterItem, chapterState)
+          updateCurrentActiveChapter(chapterItem)
+        }
+      }
+    }
+
+    if (batch.length > 0) {
+      tryAddPlaceables(batch)
+    }
+  }
+
+  const { frontMatterPack, remainder } = buildFrontMatterPack(placeables)
+
+  placeFrontMatterPack(frontMatterPack)
+
+  for (let placeableIndex = 0; placeableIndex < remainder.length; placeableIndex += 1) {
+    const placeable = remainder[placeableIndex]
 
     ensureChapterStartsOnNewPage(placeable)
 
-    if (isHeadingPlaceable(placeable)) {
-      const followingPlaceable = placeables[placeableIndex + 1]
+    if (isFrontMatterPlaceable(placeable)) {
+      const run = [placeable]
+      while (
+        placeableIndex + 1 < remainder.length &&
+        isFrontMatterPlaceable(remainder[placeableIndex + 1])
+      ) {
+        placeableIndex += 1
+        run.push(remainder[placeableIndex])
+      }
 
-      if (followingPlaceable && !isHeadingPlaceable(followingPlaceable)) {
+      if (!tryAddPlaceables(run)) {
+        for (const runPlaceable of run) {
+          placePlaceable(runPlaceable)
+        }
+      }
+      continue
+    }
+
+    if (isHeadingPlaceable(placeable)) {
+      const followingPlaceable = remainder[placeableIndex + 1]
+
+      if (
+        followingPlaceable &&
+        !isHeadingPlaceable(followingPlaceable) &&
+        !isFrontMatterPlaceable(followingPlaceable)
+      ) {
         placeHeadingWithFollowing(placeable, followingPlaceable)
         placeableIndex += 1
         continue
@@ -1370,7 +1495,13 @@ function BookPageContent({
         </p>
       )}
 
-      <div className="book-page__body">
+      <div
+        className={
+          page.centerTitlePage
+            ? "book-page__body book-page__body--title-spread"
+            : "book-page__body"
+        }
+      >
         {visualItems.map((item, index) => {
           if (item.type === "title") {
             return (
@@ -1401,6 +1532,19 @@ function BookPageContent({
           if (item.type === "subtitle") {
             return (
               <p key={index} className="book-page__subtitle">
+                {highlightTextContent(
+                  item.text,
+                  searchQuery,
+                  highlightTracker,
+                  activeSearchOccurrence
+                )}
+              </p>
+            )
+          }
+
+          if (item.type === "author") {
+            return (
+              <p key={index} className="book-page__author">
                 {highlightTextContent(
                   item.text,
                   searchQuery,
@@ -1772,7 +1916,8 @@ export default function BookViewer({
                 item.type === "prose" ||
                 item.type === "heading" ||
                 item.type === "title" ||
-                item.type === "subtitle"
+                item.type === "subtitle" ||
+                item.type === "author"
               ) {
                 return item.text
               }
