@@ -440,6 +440,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  --page-footer-reserve: 14px;
 }
 
 .book-page::after {
@@ -448,7 +449,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: 20px;
+  height: var(--page-footer-reserve);
   background: linear-gradient(transparent, var(--color-page));
   pointer-events: none;
   z-index: 1;
@@ -951,15 +952,15 @@
 }
 
 .book-page__body:not(.book-page__body--title-spread) {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-height: 0;
-  max-height: calc(100% - 20px);
+  max-height: calc(100% - var(--page-footer-reserve));
   overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 0;
   box-sizing: border-box;
-  padding-bottom: 6px;
+  padding-bottom: 3px;
   --lh-display: calc(var(--lh-body, 1.15) * 1.04);
 }
 
@@ -1177,26 +1178,26 @@ ol.book-page__list {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 5px;
   z-index: 2;
   margin: 0;
   padding: 0;
   text-align: center;
   font-family: var(--ff-body, var(--font-body));
   font-size: 9px;
-  line-height: 20px;
+  line-height: 14px;
   color: inherit;
   letter-spacing: 0.15em;
 }
 
 @media (max-width: 767px) {
   .book-page__number {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 44px);
   }
 
   .book-page__body:not(.book-page__body--title-spread) {
-    max-height: calc(100% - 63px - env(safe-area-inset-bottom, 0px));
-    padding-bottom: 6px;
+    max-height: calc(100% - 57px - env(safe-area-inset-bottom, 0px));
+    padding-bottom: 3px;
   }
 
   .book-viewer__nav {

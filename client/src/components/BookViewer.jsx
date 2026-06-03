@@ -22,26 +22,24 @@ const PAGE_WIDTH_PX = 400
 const PAGE_HEIGHT_PX = 600
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const SPINE_PX = 1
-const PAGE_NUMBER_RESERVED_PX = 20
-const BODY_DESCENDER_PAD_PX = 6
-const PAGE_CONTENT_FIT_BUFFER_PX = 2
+const PAGE_FOOTER_RESERVE_PX = 14
+const PAGE_NUMBER_RESERVED_PX = PAGE_FOOTER_RESERVE_PX
+const BODY_DESCENDER_PAD_PX = 3
+const PAGE_CONTENT_FIT_BUFFER_PX = 1
 const MOBILE_BROWSER_UI_PX = 40
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
 const MOBILE_PAGE_NUMBER_RESERVED_PX =
   PAGE_NUMBER_RESERVED_PX + MOBILE_BROWSER_UI_PX + MOBILE_PAGE_NUMBER_GAP_PX
-const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 2
-const CHAPTER_LABEL_RESERVED_PX = 18
+const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 1
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 
 /**
  * Text area budget from typesetting: available height, line height, and max prose lines.
  */
-function getPageTextCapacity(contentMaxHeight, font, line, { showChapterLabel = false } = {}) {
+function getPageTextCapacity(contentMaxHeight, font, line) {
   const lineHeightPx = font.body * line.body
-  const reserved =
-    BODY_DESCENDER_PAD_PX +
-    PAGE_CONTENT_FIT_BUFFER_PX +
-    (showChapterLabel ? CHAPTER_LABEL_RESERVED_PX : 0)
+  // Headers/labels are already in the measure DOM; only reserve a thin fit buffer.
+  const reserved = BODY_DESCENDER_PAD_PX + PAGE_CONTENT_FIT_BUFFER_PX
   const usableHeight = Math.max(0, contentMaxHeight - reserved)
   const maxLines = Math.max(1, Math.floor(usableHeight / lineHeightPx))
 
@@ -908,8 +906,7 @@ function cleanupPages(pages, bodyEl, pageLayout) {
         const { fitHeight } = getPageTextCapacity(
           pageLayout.contentMaxHeight,
           pageLayout.font,
-          pageLayout.line,
-          { showChapterLabel: showLabel }
+          pageLayout.line
         )
 
         if (!pageContentOverflows(bodyEl, fitHeight)) {
@@ -1064,8 +1061,7 @@ function pagePlaceablesFit(
   const { fitHeight } = getPageTextCapacity(
     pageLayout.contentMaxHeight,
     pageLayout.font,
-    pageLayout.line,
-    { showChapterLabel: showLabel }
+    pageLayout.line
   )
   return bodyContentFitsPage(bodyEl, fitHeight)
 }
@@ -1114,8 +1110,7 @@ function splitProseAcrossPages(
   const { maxLines } = getPageTextCapacity(
     pageLayout.contentMaxHeight,
     pageLayout.font,
-    pageLayout.line,
-    { showChapterLabel: showLabel }
+    pageLayout.line
   )
   const wordsPerLineHint = Math.max(8, Math.ceil(words.length / Math.max(1, maxLines)))
   let low = 1
@@ -1230,8 +1225,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout) {
     const { fitHeight } = getPageTextCapacity(
       contentMaxHeight,
       pageLayout.font,
-      pageLayout.line,
-      { showChapterLabel: showLabel }
+      pageLayout.line
     )
     return bodyContentFitsPage(bodyEl, fitHeight)
   }
