@@ -948,15 +948,20 @@
 .book-page__body {
   flex: 0 0 auto;
   min-height: 0;
+  max-height: calc(100% - 20px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 0;
+  box-sizing: border-box;
+  padding-bottom: 20px;
 }
 
 .book-page__body--title-spread {
   flex: 1;
+  max-height: none;
   justify-content: center;
+  padding-bottom: 20px;
 }
 
 .book-page__title {
@@ -1100,13 +1105,17 @@ ol.book-page__list {
 }
 
 .book-page__number {
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 2;
-  flex-shrink: 0;
-  margin: 0.5rem 0 0;
+  margin: 0;
+  padding: 0;
   text-align: center;
   font-family: var(--ff-body, var(--font-body));
   font-size: 9px;
+  line-height: 20px;
   color: inherit;
   letter-spacing: 0.15em;
 }
