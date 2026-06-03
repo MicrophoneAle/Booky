@@ -317,7 +317,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 0.25rem;
+  padding: 1rem;
   box-sizing: border-box;
   background: transparent;
 }
@@ -329,9 +329,9 @@
   pointer-events: none;
   z-index: 1;
   background: radial-gradient(
-    ellipse at center,
-    transparent 55%,
-    rgba(13, 11, 10, 0.75) 100%
+    circle,
+    transparent 40%,
+    rgba(13, 11, 10, 0.9) 100%
   );
 }
 
@@ -398,7 +398,7 @@
   display: flex;
   align-items: stretch;
   width: fit-content;
-  height: var(--book-page-height, 720px);
+  height: 600px;
   border: none;
   border-radius: 4px;
   overflow: hidden;
@@ -409,8 +409,8 @@
 }
 
 .book-viewer__page-slot {
-  width: var(--book-page-width, 480px);
-  height: var(--book-page-height, 720px);
+  width: 400px;
+  height: 600px;
   flex-shrink: 0;
 }
 
@@ -440,7 +440,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  --page-footer-reserve: 4px;
+  --page-footer-reserve: 12px;
 }
 
 .book-page::after {
@@ -937,14 +937,13 @@
 .book-page__body:not(.book-page__body--title-spread) {
   flex: 1 1 auto;
   min-height: 0;
-  width: 100%;
   max-height: calc(100% - var(--page-footer-reserve));
   overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 0;
   box-sizing: border-box;
-  padding-bottom: 0;
+  padding-bottom: 3px;
   --lh-display: calc(var(--lh-body, 1.15) * 1.04);
 }
 
@@ -1168,14 +1167,14 @@ ol.book-page__list {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 3px;
+  bottom: 8px;
   z-index: 2;
   margin: 0;
   padding: 0;
   text-align: center;
   font-family: var(--ff-body, var(--font-body));
-  font-size: 8px;
-  line-height: 10px;
+  font-size: 9px;
+  line-height: 12px;
   color: inherit;
   letter-spacing: 0.15em;
 }
@@ -1187,7 +1186,7 @@ ol.book-page__list {
 
   .book-page__body:not(.book-page__body--title-spread) {
     max-height: calc(100% - 55px - env(safe-area-inset-bottom, 0px));
-    padding-bottom: 0;
+    padding-bottom: 3px;
   }
 
   .book-viewer__nav {
@@ -1271,7 +1270,7 @@ ol.book-page__list {
   top: 0;
   visibility: hidden;
   pointer-events: none;
-  width: var(--book-page-width, 480px);
+  width: 400px;
   z-index: -1;
 }
 
@@ -1286,6 +1285,6 @@ ol.book-page__list {
 
 .book-viewer__measure-footer {
   flex-shrink: 0;
-  height: 10px;
+  height: 12px;
   margin: 0;
 }

@@ -20,13 +20,15 @@ import "../pages/Reader.css"
 import "./BookViewer.css"
 
 const NAVBAR_HEIGHT_PX = 44
-const PAGE_WIDTH_PX = 480
-const PAGE_HEIGHT_PX = 720
-const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 900
+const PAGE_WIDTH_PX = 400
+const PAGE_HEIGHT_PX = 600
+const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const SPINE_PX = 1
-const PAGE_FOOTER_RESERVE_PX = 4
-const PAGE_NUMBER_RESERVED_PX = 10
-const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 2
+const PAGE_FOOTER_RESERVE_PX = 12
+const PAGE_NUMBER_RESERVED_PX = PAGE_FOOTER_RESERVE_PX
+const BODY_DESCENDER_PAD_PX = 3
+const PAGE_CONTENT_FIT_BUFFER_PX = 1
+const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 1
 const MOBILE_BROWSER_UI_PX = 40
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
 const MOBILE_PAGE_NUMBER_RESERVED_PX =
@@ -39,7 +41,8 @@ const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
  */
 function getPageTextCapacity(contentMaxHeight, font, line) {
   const lineHeightPx = font.body * line.body
-  const usableHeight = Math.max(0, contentMaxHeight)
+  const reserved = BODY_DESCENDER_PAD_PX + PAGE_CONTENT_FIT_BUFFER_PX
+  const usableHeight = Math.max(0, contentMaxHeight - reserved)
   const maxLines = Math.max(1, Math.floor(usableHeight / lineHeightPx))
 
   return {
@@ -71,7 +74,7 @@ const DEFAULT_SETTINGS = {
   fontSize: "medium",
   fontStyle: "lora",
   lineSpacing: "normal",
-  margins: "narrow",
+  margins: "normal",
 }
 
 const FONT_SIZE_MAP = {
@@ -97,9 +100,9 @@ const LINE_HEIGHT_MAP = {
 
 const MARGIN_MAP = {
   none: "0px",
-  narrow: "0.2rem",
-  normal: "0.45rem",
-  wide: "0.85rem",
+  narrow: "0.35rem",
+  normal: "0.75rem",
+  wide: "1.25rem",
 }
 
 function getPagePaddingStyle(marginSetting) {
@@ -2150,8 +2153,6 @@ export default function BookViewer({
       const measureElements = createMeasureElements()
 
       measureRoot = measureElements.root
-      measureElements.root.style.setProperty("--book-page-width", `${PAGE_WIDTH_PX}px`)
-      measureElements.page.style.width = "100%"
       measureElements.page.style.height = `${pageOuterHeight}px`
       const pagePad = getPagePaddingStyle(settings.margins)
       measureElements.page.style.paddingTop = pagePad.paddingTop ?? "0"
@@ -2164,7 +2165,9 @@ export default function BookViewer({
       measureElements.body.style.maxHeight = `${contentMaxHeight}px`
       measureElements.body.style.minHeight = `${contentMaxHeight}px`
       measureElements.body.style.overflow = "hidden"
-      measureElements.footer.style.display = "none"
+      measureElements.footer.style.display = "block"
+      measureElements.footer.style.height = `${PAGE_FOOTER_RESERVE_PX}px`
+      measureElements.footer.style.flexShrink = "0"
 
       const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
       const line = LINE_HEIGHT_MAP[settings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
@@ -2323,9 +2326,7 @@ export default function BookViewer({
       const fitScale = Math.min(availW / naturalW, availH / naturalH)
       const fillScale = Math.max(availW / naturalW, availH / naturalH)
       const next =
-        isFullscreen || (isMobile && isMobileFullscreen)
-          ? fillScale
-          : Math.min(fillScale, fitScale * 1.12)
+        isFullscreen || (isMobile && isMobileFullscreen) ? fillScale : fitScale
       setScale(next > 0 && Number.isFinite(next) ? next : 1)
     }
 
@@ -2911,8 +2912,6 @@ export default function BookViewer({
           style={{
             transform: `scale(${scale})`,
             transformOrigin: "center center",
-            "--book-page-width": `${PAGE_WIDTH_PX}px`,
-            "--book-page-height": `${activePageHeight}px`,
             "--fs-body": `${font.body}px`,
             "--fs-heading": `${font.heading}px`,
             "--fs-title": `${font.title}px`,
