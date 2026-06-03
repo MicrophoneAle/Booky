@@ -447,9 +447,10 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: 32px;
+  height: 20px;
   background: linear-gradient(transparent, var(--color-page));
   pointer-events: none;
+  z-index: 1;
 }
 
 .book-page__bookmark {

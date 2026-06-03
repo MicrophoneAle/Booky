@@ -60,6 +60,19 @@ const MARGIN_MAP = {
   wide: "1.25rem",
 }
 
+function getPagePaddingStyle(marginSetting) {
+  const pad = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
+  if (pad === "0px") {
+    return { padding: 0 }
+  }
+  return {
+    paddingTop: pad,
+    paddingRight: pad,
+    paddingLeft: pad,
+    paddingBottom: 0,
+  }
+}
+
 const IMPLIED_LIST_LINE_REGEX = /^(Add|Test|Explore|Verify|Ensure|Click)\b/i
 const TRIVIAL_LIST_PAGE_CHAR_LIMIT = 30
 const STANDALONE_URL_REGEX = /^https?:\/\/\S+$/i
@@ -354,11 +367,11 @@ function getLayoutHeights(pageHeightOverride, marginSetting) {
     parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
   const rawMargin = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
   const marginPx = rawMargin === "0px" ? 0 : parseFloat(rawMargin) * remPx
-  const pagePaddingY = marginPx * 2
+  const pagePaddingTop = marginPx
   const pageHeight = pageHeightOverride ?? PAGE_HEIGHT_PX
   const contentMaxHeight =
     pageHeight -
-    pagePaddingY -
+    pagePaddingTop -
     PAGE_NUMBER_RESERVED_PX -
     CONTENT_HEIGHT_SAFETY_BUFFER_PX
 
@@ -1424,8 +1437,7 @@ function BookPageContent({
     .filter(Boolean)
     .join(" ")
 
-  const padding = MARGIN_MAP[settings?.margins ?? DEFAULT_SETTINGS.margins] ?? "0px"
-  const pageStyle = { padding }
+  const pageStyle = getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins)
 
   if (!page) {
     return <div className={`${pageClassName} book-page--empty`} style={pageStyle} />
@@ -1945,7 +1957,13 @@ export default function BookViewer({
 
       measureRoot = measureElements.root
       measureElements.page.style.height = `${pageOuterHeight}px`
-      measureElements.body.style.padding = MARGIN_MAP[settings.margins]
+      const pagePad = getPagePaddingStyle(settings.margins)
+      measureElements.page.style.paddingTop = pagePad.paddingTop ?? "0"
+      measureElements.page.style.paddingRight = pagePad.paddingRight ?? "0"
+      measureElements.page.style.paddingLeft = pagePad.paddingLeft ?? "0"
+      measureElements.page.style.paddingBottom = "0"
+      measureElements.body.style.padding = "0"
+      measureElements.body.style.paddingBottom = `${PAGE_NUMBER_RESERVED_PX}px`
 
       const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
       const line = LINE_HEIGHT_MAP[settings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
