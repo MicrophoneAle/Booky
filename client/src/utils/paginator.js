@@ -73,7 +73,16 @@ export function buildFrontMatterPack(placeables) {
 
   for (let index = 0; index < chapterStartIndex; index += 1) {
     const placeable = placeables[index]
-    if (isFrontMatterVisualType(placeable.item?.type)) {
+    const item = placeable.item
+    const isDedicationSubtitle =
+      item?.type === "subtitle" &&
+      /^To\s+[A-Z]/i.test((item.text ?? "").trim())
+    const isFrontMatter =
+      isFrontMatterVisualType(item?.type) ||
+      isDedicationSubtitle ||
+      (item?.type === "heading" && (item.fontSize ?? 16) <= 13)
+
+    if (isFrontMatter) {
       frontMatterPack.push(placeable)
     } else {
       beforeChapterOther.push(placeable)
@@ -123,6 +132,7 @@ export function flattenDocument(document) {
         chapterId,
         chapterTitle: chapterId ? chapterTitleById[chapterId] ?? null : null,
         isChapterStart: Boolean(block.isHeading),
+        ...(block.isIndented ? { isIndented: true } : {}),
       })
     }
   }

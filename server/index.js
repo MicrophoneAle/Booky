@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 1
+const PARSER_VERSION = 2
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -244,11 +244,73 @@ function getItemY(item) {
 const Y_LINE_BREAK_DELTA = 2
 const Y_SAME_LINE_TOLERANCE = 2
 
+const PAGE_NUMBER_DECORATOR_REGEX = /^-\s*\d+\s*-$/
+const PURE_URL_LINE_REGEX = /^(https?:\/\/\S+|www\.\S+)$/i
+const RUNNING_HEADER_MIN_PAGES = 3
+
+function normalizePdfLine(line) {
+  if (line && typeof line === "object" && "text" in line) {
+    return {
+      text: (line.text ?? "").trim(),
+      indented: Boolean(line.indented),
+    }
+  }
+
+  const text = typeof line === "string" ? line : String(line ?? "")
+  const trimmed = text.trim()
+  const indented = /^[\s\t]{2,}/.test(text) || text.startsWith("\t")
+
+  return { text: trimmed, indented }
+}
+
+function lineText(line) {
+  return normalizePdfLine(line).text
+}
+
+function lineIndented(line) {
+  return normalizePdfLine(line).indented
+}
+
+function isPageNumberDecoratorLine(text) {
+  return PAGE_NUMBER_DECORATOR_REGEX.test((text ?? "").trim())
+}
+
+function isPureUrlLine(text) {
+  return PURE_URL_LINE_REGEX.test((text ?? "").trim())
+}
+
+function shouldDropExtractedLine(text, occurrenceCount) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return true
+  }
+  if (isPageNumberDecoratorLine(trimmed)) {
+    return true
+  }
+  if (isPureUrlLine(trimmed)) {
+    return true
+  }
+  if (occurrenceCount >= RUNNING_HEADER_MIN_PAGES) {
+    return true
+  }
+  return false
+}
+
+function pushExtractedLine(pageLines, rawLine) {
+  const trimmed = rawLine.trim()
+  if (!trimmed) {
+    return
+  }
+
+  const indented = /^[\s\t]{2,}/.test(rawLine) || rawLine.startsWith("\t")
+  pageLines.push({ text: trimmed, indented })
+}
+
 async function extractLinesByPosition(buffer) {
   const sameLineTolerance = 0.5
   const loadingTask = getDocument({ data: new Uint8Array(buffer) })
   const pdf = await loadingTask.promise
-  const pageSections = []
+  const pageLineArrays = []
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber)
@@ -267,14 +329,11 @@ async function extractLinesByPosition(buffer) {
       const currentY = getItemY(item)
 
       if (previousY !== null) {
-        const prevY = previousY
-        const yDelta = currentY - prevY
-        const isSameLine = Math.abs(currentY - prevY) <= sameLineTolerance
+        const yDelta = currentY - previousY
+        const isSameLine = Math.abs(currentY - previousY) <= sameLineTolerance
 
         if (yDelta < -Y_LINE_BREAK_DELTA) {
-          if (currentLine.trim()) {
-            pageLines.push(currentLine.trim())
-          }
+          pushExtractedLine(pageLines, currentLine)
           currentLine = fragment
         } else if (isSameLine) {
           currentLine = currentLine ? `${currentLine} ${fragment}` : fragment
@@ -288,14 +347,28 @@ async function extractLinesByPosition(buffer) {
       previousY = currentY
     }
 
-    if (currentLine.trim()) {
-      pageLines.push(currentLine.trim())
-    }
-
-    pageSections.push(pageLines.join("\n"))
+    pushExtractedLine(pageLines, currentLine)
+    pageLineArrays.push(pageLines)
   }
 
-  return pageSections.join("\n\n")
+  const lineOccurrences = new Map()
+  for (const pageLines of pageLineArrays) {
+    for (const line of pageLines) {
+      lineOccurrences.set(line.text, (lineOccurrences.get(line.text) ?? 0) + 1)
+    }
+  }
+
+  const filteredLines = []
+  for (const pageLines of pageLineArrays) {
+    for (const line of pageLines) {
+      const count = lineOccurrences.get(line.text) ?? 0
+      if (!shouldDropExtractedLine(line.text, count)) {
+        filteredLines.push(line)
+      }
+    }
+  }
+
+  return filteredLines
 }
 
 async function extractHeadingLines(buffer) {
@@ -325,9 +398,14 @@ async function extractHeadingLines(buffer) {
 function isChapterHeading(block) {
   const text = block.text.trim()
 
-  if (block.fontSize > 14) return true
+  if (block.isHeading && block.fontSize === 13) return false
+  if (/^To\s+[A-Z]/.test(text)) return false
+  if (/^(by|written by|translated by)\s+/i.test(text)) return false
+
   if (CHAPTER_PATTERN.test(text)) return true
-  if (text.length < 60 && block.fontSize > 13) return true
+  if (text.length < 60 && block.fontSize > 13 && /^\d+[\.\)]\s/.test(text)) {
+    return true
+  }
 
   return false
 }
@@ -366,13 +444,31 @@ function detectChapters(content) {
   return { chapters, content: updatedContent }
 }
 
-function linesFromPdfText(text) {
-  return (text ?? "").split("\n").map((line) => line.trim())
+function linesFromPdfText(input) {
+  if (Array.isArray(input)) {
+    return input.map(normalizePdfLine)
+  }
+
+  return (input ?? "")
+    .split("\n")
+    .map((line) => normalizePdfLine(line))
+    .filter((line) => line.text)
 }
 
 function isStructuralLine(text, index, allLines) {
   const trimmed = text.trim()
   if (!trimmed) return false
+
+  const nonEmptyLines = allLines
+    .map((line) => lineText(line))
+    .filter((line) => line)
+
+  const docPosition = nonEmptyLines.findIndex((line) => line === trimmed)
+
+  // Dedication lines near the start of the book (e.g. "To Charlie Shribner...")
+  if (docPosition >= 0 && docPosition < 15 && /^To\s+[A-Z]/.test(trimmed)) {
+    return true
+  }
 
   // "by Author Name" / "written by" / "translated by"
   if (/^(by|written by|translated by)\s+[A-Z]/i.test(trimmed)) return true
@@ -383,16 +479,16 @@ function isStructuralLine(text, index, allLines) {
   }
 
   // Chapter subtitle: short line immediately after a bare chapter label
-  const prevNonEmpty = allLines.slice(0, index).filter((l) => l.trim()).slice(-1)[0] ?? ""
+  const prevNonEmpty = nonEmptyLines
+    .slice(0, docPosition >= 0 ? docPosition : nonEmptyLines.length)
+    .slice(-1)[0] ?? ""
   const isAfterChapterLabel =
     /^(Chapter|Part|Section|Prologue|Epilogue)\s+(\d+|[IVXLCDM]+|[A-Za-z]+)$/i.test(
-      prevNonEmpty.trim()
+      prevNonEmpty
     )
   if (isAfterChapterLabel && trimmed.length > 3 && trimmed.length < 80) return true
 
   // Short line near top of document (positions 1-5 among non-empty lines) = title page subtitle
-  const nonEmptyLines = allLines.filter((l) => l.trim())
-  const docPosition = nonEmptyLines.findIndex((l) => l.trim() === trimmed)
   if (
     docPosition >= 1 &&
     docPosition <= 5 &&
@@ -400,7 +496,7 @@ function isStructuralLine(text, index, allLines) {
     trimmed.length <= 70 &&
     !/^(Chapter|Part|Section|Prologue|Epilogue)/i.test(trimmed) &&
     !/^https?:\/\//.test(trimmed) &&
-    !/^[•·\-—*\d]/.test(trimmed)
+    !/^[•·—*\d]/.test(trimmed)
   ) {
     return true
   }
@@ -410,40 +506,40 @@ function isStructuralLine(text, index, allLines) {
 
 function buildBlocksFromLines(lines, headingStrings) {
   const blocks = []
-  const bulletCharsRegex = /^([•·\-*])\s*$/
-  const inlineBulletRegex = /^([•·\-*])\s*(.*)$/
+  const bulletCharsRegex = /^([•·])\s*$/
+  const inlineBulletRegex = /^([•·])\s*(.*)$/
   const subBulletLineRegex = /^[o*]\s+/i
 
   for (let index = 0; index < lines.length; index += 1) {
-    const currentLine = lines[index]
+    const normalizedLine = normalizePdfLine(lines[index])
+    const trimmedLine = normalizedLine.text
+    const isIndented = normalizedLine.indented
 
-    if (!currentLine) {
+    if (!trimmedLine) {
       blocks.push({ text: "", isHeading: false, fontSize: 12, chapterId: null })
       continue
     }
 
-    const trimmedLine = currentLine.trim()
-
-    // 1. Known heading by font size
-    if (headingStrings.has(currentLine)) {
-      blocks.push({ text: currentLine, isHeading: true, fontSize: 16, chapterId: null })
-      continue
-    }
-
-    // 2. Structural line (subtitle, author, chapter subtitle) — checked BEFORE merge
+    // 1. Structural line (subtitle, author, dedication) — before font-size headings
     if (isStructuralLine(trimmedLine, index, lines)) {
       blocks.push({ text: trimmedLine, isHeading: true, fontSize: 13, chapterId: null })
       continue
     }
 
+    // 2. Known heading by font size
+    if (headingStrings.has(trimmedLine)) {
+      blocks.push({ text: trimmedLine, isHeading: true, fontSize: 16, chapterId: null })
+      continue
+    }
+
     // 3. Lone bullet char — merge with next line
-    if (bulletCharsRegex.test(currentLine) && index + 1 < lines.length) {
-      let nextLine = lines[index + 1]
-      if (inlineBulletRegex.test(nextLine)) {
-        nextLine = nextLine.replace(inlineBulletRegex, "$2").trim()
+    if (bulletCharsRegex.test(trimmedLine) && index + 1 < lines.length) {
+      let nextText = lineText(lines[index + 1])
+      if (inlineBulletRegex.test(nextText)) {
+        nextText = nextText.replace(inlineBulletRegex, "$2").trim()
       }
       blocks.push({
-        text: `${currentLine} ${nextLine}`.replace(/\s+/g, " ").trim(),
+        text: `${trimmedLine} ${nextText}`.replace(/\s+/g, " ").trim(),
         isHeading: false,
         fontSize: 12,
         chapterId: null,
@@ -453,9 +549,9 @@ function buildBlocksFromLines(lines, headingStrings) {
     }
 
     // 4. Inline bullet
-    if (inlineBulletRegex.test(currentLine)) {
-      const marker = currentLine.match(inlineBulletRegex)[1]
-      const restOfText = currentLine.match(inlineBulletRegex)[2].trim()
+    if (inlineBulletRegex.test(trimmedLine)) {
+      const marker = trimmedLine.match(inlineBulletRegex)[1]
+      const restOfText = trimmedLine.match(inlineBulletRegex)[2].trim()
       blocks.push({
         text: `${marker} ${restOfText}`,
         isHeading: false,
@@ -473,10 +569,12 @@ function buildBlocksFromLines(lines, headingStrings) {
       const shouldMerge =
         previousBlock &&
         !previousBlock.isHeading &&
+        !isIndented &&
+        !previousBlock.isIndented &&
         !prevText.includes("http://") &&
         !prevText.includes("https://") &&
         !/[:.\)\/"']$/.test(prevText.trim()) &&
-        !/^[•·\-—*]\s/.test(trimmedLine) &&
+        !/^[•·]\s/.test(trimmedLine) &&
         !subBulletLineRegex.test(trimmedLine) &&
         !/^\d+[\.\)]/.test(trimmedLine) &&
         !/^[a-z][\.\)]/i.test(trimmedLine) &&
@@ -491,7 +589,13 @@ function buildBlocksFromLines(lines, headingStrings) {
     }
 
     // 6. Plain block
-    blocks.push({ text: trimmedLine, isHeading: false, fontSize: 12, chapterId: null })
+    blocks.push({
+      text: trimmedLine,
+      isHeading: false,
+      fontSize: 12,
+      chapterId: null,
+      ...(isIndented ? { isIndented: true } : {}),
+    })
   }
 
   return blocks
@@ -577,13 +681,13 @@ function blocksToContent(blocks, blocksPerPage = 40) {
 }
 
 async function parsePdfBuffer(buffer) {
-  const [parsedText, headingStrings, positionedText] = await Promise.all([
+  const [parsedText, headingStrings, positionedLines] = await Promise.all([
     pdfParse(buffer),
     extractHeadingLines(buffer),
     extractLinesByPosition(buffer),
   ])
 
-  const lines = linesFromPdfText(positionedText)
+  const lines = linesFromPdfText(positionedLines)
   const blocks = buildBlocksFromLines(lines, headingStrings)
   const content = blocksToContent(blocks)
   const { chapters, content: contentWithChapters } = detectChapters(content)

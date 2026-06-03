@@ -64,7 +64,7 @@ const TRIVIAL_LIST_PAGE_CHAR_LIMIT = 30
 const STANDALONE_URL_REGEX = /^https?:\/\/\S+$/i
 
 const LEVEL_0_NUMBER_REGEX = /^(\d+[\.\)])\s*(.*)$/
-const LEVEL_0_BULLET_REGEX = /^([•·\-])\s*(.*)$/
+const LEVEL_0_BULLET_REGEX = /^([•·])\s*(.*)$/
 const LEVEL_1_LETTERED_REGEX = /^([a-z][\.\)])\s+(.+)$/i
 const CHAPTER_LABEL_REGEX =
   /^(Chapter|Part|Section|Prologue|Epilogue)\s+(\d+|[IVXLCDM]+|[A-Za-z]+)$/i
@@ -80,6 +80,10 @@ function isHeadingVisualItem(item) {
 function proseParagraphClassName(previousItem, proseItem = null) {
   if (proseItem?.isContinuation) {
     return "book-page__text book-page__text--continuation"
+  }
+
+  if (proseItem?.isIndented) {
+    return "book-page__text"
   }
 
   const noIndentAfter =
@@ -452,7 +456,9 @@ function groupBlocksForDisplay(blocks) {
   const visualItems = []
   let pendingListItems = []
 
-  const shouldMergeWithPreviousProse = (newText) => {
+  const shouldMergeWithPreviousProse = (newText, isIndented = false) => {
+    if (isIndented) return false
+
     const last = visualItems[visualItems.length - 1]
     if (!last || last.type !== "prose") return false
 
@@ -464,15 +470,19 @@ function groupBlocksForDisplay(blocks) {
     return startsLowercase || prevEndsWithContinuation || prevLacksTerminator
   }
 
-  const pushProse = (proseText) => {
+  const pushProse = (proseText, isIndented = false) => {
     const trimmed = proseText.trim()
     if (!trimmed) return
 
-    if (shouldMergeWithPreviousProse(trimmed)) {
+    if (shouldMergeWithPreviousProse(trimmed, isIndented)) {
       const last = visualItems[visualItems.length - 1]
       last.text = (last.text + " " + trimmed).replace(/\s+/g, " ").trim()
     } else {
-      visualItems.push({ type: "prose", text: trimmed })
+      visualItems.push({
+        type: "prose",
+        text: trimmed,
+        ...(isIndented ? { isIndented: true } : {}),
+      })
     }
   }
 
@@ -601,7 +611,7 @@ function groupBlocksForDisplay(blocks) {
     }
 
     flushPendingList()
-    pushProse(text)
+    pushProse(text, Boolean(block.isIndented))
   }
 
   flushPendingList()
