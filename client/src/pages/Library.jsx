@@ -98,6 +98,27 @@ function DownloadIcon() {
   )
 }
 
+function ReformattedDownloadIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+      <path d="M8 13h8" />
+      <path d="M8 17h8" />
+    </svg>
+  )
+}
+
 function LibraryBookCard({ document, onDelete, onRename, getToken }) {
   const navigate = useNavigate()
   const titleInputRef = useRef(null)
@@ -110,6 +131,7 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
   const [savingTitle, setSavingTitle] = useState(false)
   const [renameError, setRenameError] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [downloadingReformatted, setDownloadingReformatted] = useState(false)
   const [downloadError, setDownloadError] = useState(false)
 
   const handleDeleteClick = () => {
@@ -284,6 +306,51 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
     }
   }
 
+  const handleDownloadReformatted = async () => {
+    setDownloadingReformatted(true)
+    setDownloadError(false)
+
+    try {
+      const token = await getToken()
+      if (!token) throw new Error("Unauthorized")
+
+      const response = await fetch(
+        `${API_URL}/documents/${encodeURIComponent(document.id)}/download/reformatted`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      if (!response.ok) {
+        let message = "Download failed"
+        try {
+          const data = await response.json()
+          message = data.error || message
+        } catch {
+          // non-JSON error body
+        }
+        throw new Error(message)
+      }
+
+      const blob = await response.blob()
+      const objectUrl = URL.createObjectURL(blob)
+
+      const link = window.document.createElement("a")
+      link.href = objectUrl
+      link.download = `${document.name} (reformatted).html`
+      window.document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(objectUrl)
+    } catch {
+      setDownloadError(true)
+    } finally {
+      setDownloadingReformatted(false)
+    }
+  }
+
   return (
     <article className="library-card">
       <div
@@ -328,11 +395,21 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
                 type="button"
                 className="library-card__download"
                 onClick={handleDownload}
-                aria-label={`Download ${document.name}`}
+                aria-label={`Download original PDF of ${document.name}`}
                 disabled={downloading}
-                title="Download PDF"
+                title="Download original PDF"
               >
                 {downloading ? "…" : <DownloadIcon />}
+              </button>
+              <button
+                type="button"
+                className="library-card__download"
+                onClick={handleDownloadReformatted}
+                aria-label={`Download reformatted ${document.name}`}
+                disabled={downloadingReformatted}
+                title="Download reformatted (HTML)"
+              >
+                {downloadingReformatted ? "…" : <ReformattedDownloadIcon />}
               </button>
             </>
           )}

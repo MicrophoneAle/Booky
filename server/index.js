@@ -226,6 +226,179 @@ app.get("/documents/:id/download", requireAuth, async (req, res) => {
   }
 })
 
+function escapeHtmlText(text) {
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+}
+
+function renderBlockInlineHtml(block) {
+  if (Array.isArray(block.runs) && block.runs.length > 1) {
+    return block.runs
+      .map((run) => {
+        let html = escapeHtmlText(run.text ?? "")
+        if (run.bold) html = `<strong>${html}</strong>`
+        if (run.italic) html = `<em>${html}</em>`
+        return html
+      })
+      .join("")
+  }
+
+  let html = escapeHtmlText(block.text ?? "")
+  if (block.bold) html = `<strong>${html}</strong>`
+  if (block.italic) html = `<em>${html}</em>`
+  return html
+}
+
+function buildReformattedHtml(name, content) {
+  const safeTitle = escapeHtmlText(name || "Document")
+  const parts = []
+  let previousWasHeading = false
+  let lastProseIndex = -1
+
+  const pages = Array.isArray(content) ? content : []
+
+  for (const page of pages) {
+    for (const block of page.blocks ?? []) {
+      const text = (block.text ?? "").trim()
+      if (!text) {
+        continue
+      }
+
+      const isCentered =
+        block.textAlign === "center" || block.centered === true
+
+      if (block.isHeading) {
+        const tag = (block.fontSize ?? 0) >= 18 ? "h1" : "h2"
+        parts.push(`<${tag}>${renderBlockInlineHtml(block)}</${tag}>`)
+        previousWasHeading = true
+        lastProseIndex = -1
+        continue
+      }
+
+      if (isCentered) {
+        parts.push(`<p class="center">${renderBlockInlineHtml(block)}</p>`)
+        previousWasHeading = false
+        lastProseIndex = -1
+        continue
+      }
+
+      if (block.isContinuation && lastProseIndex >= 0) {
+        parts[lastProseIndex] = parts[lastProseIndex].replace(
+          /<\/p>$/,
+          ` ${renderBlockInlineHtml(block)}</p>`
+        )
+        continue
+      }
+
+      const className = previousWasHeading ? "first" : "body"
+      parts.push(`<p class="${className}">${renderBlockInlineHtml(block)}</p>`)
+      lastProseIndex = parts.length - 1
+      previousWasHeading = false
+    }
+  }
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${safeTitle}</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0;
+    background: #f4efe6;
+    color: #1c1917;
+    font-family: "Georgia", "Times New Roman", serif;
+    line-height: 1.6;
+  }
+  main {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+  h1 {
+    font-size: 1.9rem;
+    margin: 2.5rem 0 1rem;
+    line-height: 1.2;
+  }
+  h2 {
+    font-size: 1.35rem;
+    margin: 2rem 0 0.75rem;
+    line-height: 1.25;
+  }
+  p {
+    margin: 0;
+    text-align: justify;
+    hyphens: auto;
+  }
+  p.body { text-indent: 1.5em; }
+  p.first { text-indent: 0; }
+  p.center {
+    text-align: center;
+    text-indent: 0;
+    margin: 0.6rem 0;
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+<main>
+${parts.join("\n")}
+</main>
+</body>
+</html>`
+}
+
+app.get("/documents/:id/download/reformatted", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const { data, error } = await supabase
+      .from("documents")
+      .select("name, content, parse_status")
+      .eq("id", id)
+      .eq("user_id", req.userId)
+      .single()
+
+    if (error || !data) {
+      res.status(404).json({ success: false, error: "Document not found" })
+      return
+    }
+
+    const parseStatus = data.parse_status ?? PARSE_STATUS.READY
+    if (parseStatus !== PARSE_STATUS.READY) {
+      res.status(409).json({
+        success: false,
+        error: "Document is still processing. Try again shortly.",
+      })
+      return
+    }
+
+    if (!Array.isArray(data.content) || data.content.length === 0) {
+      res.status(422).json({
+        success: false,
+        error: "No reformatted content available for this document.",
+      })
+      return
+    }
+
+    const html = buildReformattedHtml(data.name, data.content)
+    const safeFileName = (data.name || "document").replace(/[^\w.\- ]+/g, "_")
+
+    res.setHeader("Content-Type", "text/html; charset=utf-8")
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${safeFileName} (reformatted).html"`
+    )
+    res.send(html)
+  } catch {
+    res.status(500).json({ success: false, error: "Failed to build reformatted document" })
+  }
+})
+
 app.get("/documents/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params
