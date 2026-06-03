@@ -230,11 +230,9 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params
 
-    let { data, error } = await supabase
+    const { data, error } = await supabase
       .from("documents")
-      .select(
-        "id, name, total_pages, chapters, content, parser_version, storage_path"
-      )
+      .select("id, name, total_pages, chapters, content, parser_version, parse_status")
       .eq("id", id)
       .eq("user_id", req.userId)
       .single()
@@ -267,25 +265,8 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
       return
     }
 
-    const forceReparse =
-      req.query.refresh === "1" || req.query.reparse === "true"
-    const reparsed = await reparseDocumentIfOutdated(data, { force: forceReparse })
-    if (reparsed.updated) {
-      const refreshed = await supabase
-        .from("documents")
-        .select("id, name, total_pages, chapters, content, parser_version")
-        .eq("id", id)
-        .eq("user_id", req.userId)
-        .single()
-
-      if (!refreshed.error && refreshed.data) {
-        data = refreshed.data
-      }
-    }
-
     res.json({
       success: true,
-      reparsed: reparsed.updated,
       document: {
         id: data.id,
         name: data.name,
@@ -665,6 +646,7 @@ function dropMarginCalloutLines(lines) {
   }
 
   const texts = entries.map((entry) => entry.text)
+  const textsByLength = [...texts].sort((a, b) => b.length - a.length)
   const longLineCount = texts.filter((text) => text.length >= MARGIN_CALLOUT_LONG_LINE_CHARS)
     .length
 
@@ -687,8 +669,11 @@ function dropMarginCalloutLines(lines) {
 
       const words = text.split(/\s+/).filter(Boolean)
 
-      for (const other of texts) {
-        if (other.length <= text.length || other === text) {
+      for (const other of textsByLength) {
+        if (other.length <= text.length) {
+          break
+        }
+        if (other === text) {
           continue
         }
         if (
@@ -944,27 +929,38 @@ function shouldDropExtractedLine(
 }
 
 function groupTextItemsIntoLines(items) {
+  if (!items.length) {
+    return []
+  }
+
+  const sortedItems = [...items].sort((a, b) => b.y - a.y)
   const lineGroups = []
+  let currentGroup = null
 
-  for (const item of items) {
-    let matchedGroup = null
-
-    for (const group of lineGroups) {
-      if (Math.abs(group.y - item.y) <= Y_LINE_GROUP_TOLERANCE_PX) {
-        matchedGroup = group
-        break
+  for (const item of sortedItems) {
+    if (
+      currentGroup &&
+      Math.abs(item.y - currentGroup.runningY) <= Y_LINE_GROUP_TOLERANCE_PX
+    ) {
+      currentGroup.items.push(item)
+      const itemCount = currentGroup.items.length
+      currentGroup.runningY =
+        currentGroup.items.reduce((sum, entry) => sum + entry.y, 0) / itemCount
+      currentGroup.y = currentGroup.runningY
+    } else {
+      if (currentGroup) {
+        lineGroups.push(currentGroup)
+      }
+      currentGroup = {
+        y: item.y,
+        runningY: item.y,
+        items: [item],
       }
     }
+  }
 
-    if (!matchedGroup) {
-      matchedGroup = { y: item.y, items: [] }
-      lineGroups.push(matchedGroup)
-    }
-
-    matchedGroup.items.push(item)
-    const itemCount = matchedGroup.items.length
-    matchedGroup.y =
-      matchedGroup.items.reduce((sum, entry) => sum + entry.y, 0) / itemCount
+  if (currentGroup) {
+    lineGroups.push(currentGroup)
   }
 
   const lines = []
@@ -1096,56 +1092,68 @@ async function readPdfInfo(pdf) {
   }
 }
 
-async function extractPdfStructure(buffer) {
+async function extractPdfStructure(buffer, { onPageProcessed } = {}) {
   const loadingTask = getDocument({
     data: new Uint8Array(buffer),
     disableFontFace: true,
+    useSystemFonts: false,
   })
   const pdf = await loadingTask.promise
   const headingStrings = new Set()
   const pdfInfo = await readPdfInfo(pdf)
+  const totalPages = pdf.numPages
 
   const pagesBeforeFilter = []
 
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    const page = await pdf.getPage(pageNumber)
-    const textContent = await page.getTextContent()
-    const items = []
+  try {
+    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber)
+      const textContent = await page.getTextContent()
+      const pageItems = []
 
-    for (const item of textContent.items) {
-      const str = (item.str ?? "").trim()
-      if (!str) {
-        continue
+      for (const item of textContent.items) {
+        const str = (item.str ?? "").trim()
+        if (!str) {
+          continue
+        }
+
+        const fontSize = getItemFontSize(item)
+        if (fontSize > 14) {
+          headingStrings.add(str)
+        }
+
+        pageItems.push({
+          str,
+          x: getItemX(item),
+          y: getItemY(item),
+          fontSize,
+          fontName: item.fontName ?? "",
+          transform: item.transform,
+        })
       }
 
-      const fontSize = getItemFontSize(item)
-      if (fontSize > 14) {
-        headingStrings.add(str)
+      const rawLines = groupTextItemsIntoLines(pageItems)
+      const medianX = medianValue(rawLines.map((line) => line.x))
+
+      for (const line of rawLines) {
+        line.indented = line.x > medianX + INDENT_THRESHOLD_PX
       }
 
-      items.push({
-        str,
-        x: getItemX(item),
-        y: getItemY(item),
-        fontSize,
-        fontName: item.fontName ?? "",
-        transform: item.transform,
-      })
+      annotateLinesCentered(rawLines)
+      const filteredLines = dropMarginCalloutLines(rawLines)
+      pagesBeforeFilter.push({ lines: filteredLines })
+
+      if (typeof page.cleanup === "function") {
+        page.cleanup()
+      }
+
+      if (onPageProcessed) {
+        onPageProcessed(pageNumber, totalPages)
+      }
     }
-
-    const rawLines = groupTextItemsIntoLines(items)
-    const medianX = medianValue(rawLines.map((line) => line.x))
-
-    for (const line of rawLines) {
-      line.indented = line.x > medianX + INDENT_THRESHOLD_PX
-    }
-
-    annotateLinesCentered(rawLines)
-    const filteredLines = dropMarginCalloutLines(rawLines)
-    pagesBeforeFilter.push({ lines: filteredLines })
-
-    if (typeof page.cleanup === "function") {
-      page.cleanup()
+  } finally {
+    if (typeof pdf.destroy === "function") {
+      await pdf.destroy()
     }
   }
 
@@ -1213,8 +1221,8 @@ async function extractPdfStructure(buffer) {
   }
 }
 
-async function extractLinesByPosition(buffer) {
-  const { pageData } = await extractPdfStructure(buffer)
+async function extractLinesByPosition(buffer, options = {}) {
+  const { pageData } = await extractPdfStructure(buffer, options)
   return pageData
 }
 
@@ -1874,7 +1882,15 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
 
   try {
     const { parsedText, chapters, contentWithChapters, wordCount } =
-      await parsePdfBuffer(buffer, fileName)
+      await parsePdfBuffer(buffer, fileName, {
+        onPageProcessed(pageNumber, totalPages) {
+          if (pageNumber % 100 === 0 || pageNumber === totalPages) {
+            console.log(
+              `Parsed ${pageNumber}/${totalPages} pages for document ${documentId}`
+            )
+          }
+        },
+      })
 
     console.log(
       `Background parse finished for ${documentId} (${parsedText.numpages} PDF pages, ${wordCount.toLocaleString()} words) in ${((Date.now() - parseStartedAt) / 1000).toFixed(1)}s`
@@ -1925,9 +1941,9 @@ function blocksToContent(blocks, blocksPerPage = 40) {
   return content
 }
 
-async function parsePdfBuffer(buffer, fileName = "") {
+async function parsePdfBuffer(buffer, fileName = "", { onPageProcessed } = {}) {
   const { pageData, headingStrings, numPages, pdfInfo } =
-    await extractPdfStructure(buffer)
+    await extractPdfStructure(buffer, { onPageProcessed })
 
   const parsedText = {
     numpages: numPages,
@@ -2076,7 +2092,7 @@ async function reparseOutdatedDocuments({ limit = 5 } = {}) {
 
   const { data: documents, error: fetchError } = await supabase
     .from("documents")
-    .select("id, storage_path, name, parser_version")
+    .select("id, storage_path, name, parser_version, content")
     .or(`parser_version.lt.${PARSER_VERSION},parser_version.is.null`)
     .order("created_at", { ascending: true })
     .limit(limit)
