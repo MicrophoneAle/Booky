@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 2
+const PARSER_VERSION = 3
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -241,12 +241,34 @@ function getItemY(item) {
   return Number.isFinite(matrix[5]) ? matrix[5] : 0
 }
 
+function getItemX(item) {
+  const matrix = Array.isArray(item.transform) ? item.transform : []
+  return Number.isFinite(matrix[4]) ? matrix[4] : 0
+}
+
 const Y_LINE_BREAK_DELTA = 2
 const Y_SAME_LINE_TOLERANCE = 2
 
 const PAGE_NUMBER_DECORATOR_REGEX = /^-\s*\d+\s*-$/
+const INLINE_TOC_HEADER_REGEX = /^-\s*\d+\s*-\s*.+$/
 const PURE_URL_LINE_REGEX = /^(https?:\/\/\S+|www\.\S+)$/i
 const RUNNING_HEADER_MIN_PAGES = 3
+const INDENT_THRESHOLD_PX = 15
+
+const INLINE_PAGE_DECORATOR_REGEX = /\s*-\s*\d+\s*-\s*/g
+const FOOTNOTE_REFERENCE_REGEX = /\[\d+\]/g
+
+function stripInlineArtifacts(text) {
+  if (!text) {
+    return ""
+  }
+
+  return text
+    .replace(INLINE_PAGE_DECORATOR_REGEX, " ")
+    .replace(FOOTNOTE_REFERENCE_REGEX, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
 
 function normalizePdfLine(line) {
   if (line && typeof line === "object" && "text" in line) {
@@ -275,6 +297,10 @@ function isPageNumberDecoratorLine(text) {
   return PAGE_NUMBER_DECORATOR_REGEX.test((text ?? "").trim())
 }
 
+function isInlineTocHeaderLine(text) {
+  return INLINE_TOC_HEADER_REGEX.test((text ?? "").trim())
+}
+
 function isPureUrlLine(text) {
   return PURE_URL_LINE_REGEX.test((text ?? "").trim())
 }
@@ -287,6 +313,9 @@ function shouldDropExtractedLine(text, occurrenceCount) {
   if (isPageNumberDecoratorLine(trimmed)) {
     return true
   }
+  if (isInlineTocHeaderLine(trimmed)) {
+    return true
+  }
   if (isPureUrlLine(trimmed)) {
     return true
   }
@@ -296,14 +325,12 @@ function shouldDropExtractedLine(text, occurrenceCount) {
   return false
 }
 
-function pushExtractedLine(pageLines, rawLine) {
-  const trimmed = rawLine.trim()
-  if (!trimmed) {
-    return
+function medianValue(values) {
+  if (values.length === 0) {
+    return 0
   }
-
-  const indented = /^[\s\t]{2,}/.test(rawLine) || rawLine.startsWith("\t")
-  pageLines.push({ text: trimmed, indented })
+  const sorted = [...values].sort((a, b) => a - b)
+  return sorted[Math.floor(sorted.length / 2)]
 }
 
 async function extractLinesByPosition(buffer) {
@@ -318,7 +345,17 @@ async function extractLinesByPosition(buffer) {
 
     const pageLines = []
     let currentLine = ""
+    let currentStartX = null
     let previousY = null
+
+    const flushLine = () => {
+      const trimmed = currentLine.trim()
+      if (trimmed) {
+        pageLines.push({ text: trimmed, startX: currentStartX ?? 0 })
+      }
+      currentLine = ""
+      currentStartX = null
+    }
 
     for (const item of textContent.items) {
       const fragment = item.str ?? ""
@@ -327,27 +364,36 @@ async function extractLinesByPosition(buffer) {
       }
 
       const currentY = getItemY(item)
+      const itemX = getItemX(item)
 
       if (previousY !== null) {
         const yDelta = currentY - previousY
-        const isSameLine = Math.abs(currentY - previousY) <= sameLineTolerance
 
         if (yDelta < -Y_LINE_BREAK_DELTA) {
-          pushExtractedLine(pageLines, currentLine)
+          flushLine()
           currentLine = fragment
-        } else if (isSameLine) {
-          currentLine = currentLine ? `${currentLine} ${fragment}` : fragment
+          currentStartX = itemX
         } else {
           currentLine = currentLine ? `${currentLine} ${fragment}` : fragment
+          if (currentStartX === null) {
+            currentStartX = itemX
+          }
         }
       } else {
         currentLine = fragment
+        currentStartX = itemX
       }
 
       previousY = currentY
     }
 
-    pushExtractedLine(pageLines, currentLine)
+    flushLine()
+
+    const medianStartX = medianValue(pageLines.map((line) => line.startX))
+    for (const line of pageLines) {
+      line.indented = line.startX > medianStartX + INDENT_THRESHOLD_PX
+    }
+
     pageLineArrays.push(pageLines)
   }
 
@@ -362,9 +408,16 @@ async function extractLinesByPosition(buffer) {
   for (const pageLines of pageLineArrays) {
     for (const line of pageLines) {
       const count = lineOccurrences.get(line.text) ?? 0
-      if (!shouldDropExtractedLine(line.text, count)) {
-        filteredLines.push(line)
+      if (shouldDropExtractedLine(line.text, count)) {
+        continue
       }
+
+      const cleanedText = stripInlineArtifacts(line.text)
+      if (!cleanedText) {
+        continue
+      }
+
+      filteredLines.push({ text: cleanedText, indented: Boolean(line.indented) })
     }
   }
 
@@ -395,9 +448,21 @@ async function extractHeadingLines(buffer) {
   return headingStrings
 }
 
+const CHAPTER_TITLE_BLOCKLIST = new Set([
+  "and",
+  "or",
+  "but",
+  "the",
+  "a",
+  "an",
+  "to",
+  "by",
+])
+
 function isChapterHeading(block) {
   const text = block.text.trim()
 
+  if (CHAPTER_TITLE_BLOCKLIST.has(text.toLowerCase())) return false
   if (block.isHeading && block.fontSize === 13) return false
   if (/^To\s+[A-Z]/.test(text)) return false
   if (/^(by|written by|translated by)\s+/i.test(text)) return false
@@ -512,7 +577,7 @@ function buildBlocksFromLines(lines, headingStrings) {
 
   for (let index = 0; index < lines.length; index += 1) {
     const normalizedLine = normalizePdfLine(lines[index])
-    const trimmedLine = normalizedLine.text
+    const trimmedLine = stripInlineArtifacts(normalizedLine.text)
     const isIndented = normalizedLine.indented
 
     if (!trimmedLine) {
@@ -561,26 +626,31 @@ function buildBlocksFromLines(lines, headingStrings) {
       continue
     }
 
-    // 5. Merge continuation lines
-    if (blocks.length > 0) {
+    // 5. Merge continuation lines (wrapped lines of the same paragraph)
+    if (blocks.length > 0 && !isIndented) {
       const previousBlock = blocks[blocks.length - 1]
       const prevText = previousBlock?.text ?? ""
+      const prevTrim = prevText.trim()
+
+      const startsCapital = /^[A-Z]/.test(trimmedLine)
+      const prevEndsSentence = /[.!?]["”'']?$/.test(prevTrim)
+      const startsQuoteCapital = /^["“'']\s*[A-Z]/.test(trimmedLine)
 
       const shouldMerge =
         previousBlock &&
         !previousBlock.isHeading &&
-        !isIndented &&
         !previousBlock.isIndented &&
         !prevText.includes("http://") &&
         !prevText.includes("https://") &&
-        !/[:.\)\/"']$/.test(prevText.trim()) &&
+        !/[:\)\/]$/.test(prevTrim) &&
         !/^[•·]\s/.test(trimmedLine) &&
         !subBulletLineRegex.test(trimmedLine) &&
         !/^\d+[\.\)]/.test(trimmedLine) &&
         !/^[a-z][\.\)]/i.test(trimmedLine) &&
         !trimmedLine.endsWith(":") &&
-        trimmedLine.length > 0 &&
-        /[a-z]$/.test(prevText.trim())
+        !(startsCapital && prevEndsSentence) &&
+        !startsQuoteCapital &&
+        trimmedLine.length > 0
 
       if (shouldMerge) {
         previousBlock.text = (prevText + " " + trimmedLine).replace(/\s+/g, " ").trim()

@@ -958,6 +958,12 @@ function splitProseAcrossPages(
     return null
   }
 
+  if (words.length > 500) {
+    console.warn(
+      `splitProseAcrossPages: prose block has ${words.length} words — possible runaway merge`
+    )
+  }
+
   const singleWordItem = {
     type: "prose",
     text: words[0],
@@ -1618,8 +1624,19 @@ function BookPageContent({
   )
 }
 
+function isMeaningfulChapterTitle(title) {
+  const trimmed = (title ?? "").trim()
+  if (trimmed.length < 4) {
+    return false
+  }
+  if (/^(and|or|but|the|a|an)$/i.test(trimmed)) {
+    return false
+  }
+  return true
+}
+
 function collectChapterTitlesForPage(page) {
-  if (!page) {
+  if (!page || page.isTitlePage) {
     return []
   }
 
@@ -1638,7 +1655,12 @@ function collectChapterTitlesForPage(page) {
   return []
 }
 
-function formatNavChapterTitle(pages, currentPage, isSpreadView) {
+function formatNavChapterTitle(pages, currentPage, isSpreadView, validChapterTitles = null) {
+  // No chapters detected at all — never fall back to arbitrary heading text.
+  if (validChapterTitles && validChapterTitles.size === 0) {
+    return ""
+  }
+
   const pageIndices = [currentPage - 1]
 
   if (isSpreadView && currentPage < pages.length) {
@@ -1652,9 +1674,16 @@ function formatNavChapterTitle(pages, currentPage, isSpreadView) {
     const pageTitles = collectChapterTitlesForPage(page)
 
     for (const title of pageTitles) {
-      if (title && !titles.includes(title)) {
-        titles.push(title)
+      if (!title || titles.includes(title)) {
+        continue
       }
+      if (!isMeaningfulChapterTitle(title)) {
+        continue
+      }
+      if (validChapterTitles && !validChapterTitles.has(title)) {
+        continue
+      }
+      titles.push(title)
     }
   }
 
@@ -2112,7 +2141,23 @@ export default function BookViewer({
   const isFinalOddSpreadSingle =
     isSpreadView && totalPages % 2 === 1 && Boolean(leftPage) && !rightPage
   const showSpreadLayout = isSpreadView && !isFinalOddSpreadSingle
-  const navChapterTitle = formatNavChapterTitle(pages, currentPage, showSpreadLayout)
+  const validChapterTitles = useMemo(() => {
+    const titles = new Set()
+    for (const chapter of bookDocument?.chapters ?? []) {
+      const title = (chapter?.title ?? "").trim()
+      if (title) {
+        titles.add(title)
+      }
+    }
+    return titles
+  }, [bookDocument?.chapters])
+
+  const navChapterTitle = formatNavChapterTitle(
+    pages,
+    currentPage,
+    showSpreadLayout,
+    validChapterTitles
+  )
   const progressPercent = totalPages > 0 ? (currentPage / totalPages) * 100 : 0
 
   const jumpToPage = useCallback(
