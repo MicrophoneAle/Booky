@@ -9,7 +9,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 16
+const PARSER_VERSION = 18
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -221,10 +221,19 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
 })
 
 const CHAPTER_PATTERN =
-  /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six)|prologue|epilogue|introduction|conclusion)\.?$/i
+  /^(?:(?:chapter|letter|part|section|book|volume|preface|introduction|prologue|epilogue|conclusion|appendix|stave)\s+(?:\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|(?:preface|introduction|prologue|epilogue|conclusion|dedication|contents))\.?$/i
+
+const STRUCTURAL_HEADING_PREFIX_REGEX =
+  /^(chapter|letter|part|section|book|volume|preface|introduction|prologue|epilogue|conclusion|appendix|stave)\s+/i
 
 const PART_HEADING_PATTERN =
   /^part\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six)\.?$/i
+
+const VOLUME_HEADING_PATTERN =
+  /^volume\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
+
+const STRUCTURAL_HEADING_MAX_CHARS = 80
+const STRUCTURAL_HEADING_MAX_WORDS = 12
 
 const TOC_CHAPTER_LISTING_REGEX =
   /^Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:\s+\S/i
@@ -411,12 +420,145 @@ function stripInlineArtifacts(text) {
     .trim()
 }
 
-function isNarrativeBoundaryLine(text) {
+function countStructuralMarkers(text) {
+  const pattern =
+    /\b(chapter|letter|volume|part|section|book)\s+([IVXLCDM]+|\d+|one|two|three|four|five|six|seven|eight|nine|ten)\b/gi
+  let count = 0
+  while (pattern.exec(text)) {
+    count += 1
+  }
+  return count
+}
+
+function isTocDenseListingLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (countStructuralMarkers(trimmed) >= 2) {
+    return true
+  }
+  if (
+    /\b(?:letter|chapter|volume)\s+[IVXLCDM\d]+\s+\d{1,4}\b.*\b(?:letter|chapter|volume)\s+/i.test(
+      trimmed
+    )
+  ) {
+    return true
+  }
+  return false
+}
+
+function isTocPageReferenceLine(text) {
+  const trimmed = (text ?? "").trim()
+  return /^(?:(?:chapter|letter|volume|part)\s+[IVXLCDM\d]+\s+\d{1,4}|volume\s+[IVXLCDM\d]+\s+\d{1,4})$/i.test(
+    trimmed
+  )
+}
+
+function isRunningHeaderMergedLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (isTocPageReferenceLine(trimmed)) {
+    return true
+  }
+  if (
+    /^(?:chapter|letter)\s+[IVXLCDM\d]+\s+\d{0,3}\s+[a-z]/i.test(trimmed) ||
+    /^(?:chapter|letter)\s+[IVXLCDM\d]+\s+\d{1,3}\s+[A-Z][a-z]{2,}/.test(trimmed)
+  ) {
+    return true
+  }
+  return false
+}
+
+function isHeaderPageMarkerLine(text) {
+  const trimmed = (text ?? "").trim()
+  return /^(?:preface|introduction|prologue|epilogue|conclusion)\s+[ivxlcdm]{1,4}$/i.test(
+    trimmed
+  )
+}
+
+function normalizeHeadingCandidate(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return ""
+  }
+
+  if (CHAPTER_PATTERN.test(trimmed)) {
+    return trimmed
+  }
+
+  const withoutPrintedPage = trimmed.replace(
+    /^(?:(?:chapter|letter|volume|part|section|book|stave)\s+(?:[IVXLCDM]+|\d+|one|two|three|four|five|six|seven|eight|nine|ten))\s+\d{1,4}$/i,
+    "$1"
+  )
+  if (CHAPTER_PATTERN.test(withoutPrintedPage)) {
+    return withoutPrintedPage
+  }
+
+  return withoutPrintedPage
+    .replace(/\s+[ivxlcdm]+\s*$/i, "")
+    .replace(/\s+\d{1,3}\s*$/, "")
+    .trim()
+}
+
+function isCleanStructuralHeadingText(text, line = null) {
+  const raw = (text ?? "").trim()
+  if (!raw) {
+    return false
+  }
+  if (/^contents$/i.test(raw)) {
+    return false
+  }
+  if (isTocChapterListingLine(raw)) {
+    return false
+  }
+  if (isTocDenseListingLine(raw)) {
+    return false
+  }
+  if (isTocPageReferenceLine(raw)) {
+    return false
+  }
+  if (isRunningHeaderMergedLine(raw)) {
+    return false
+  }
+  if (isHeaderPageMarkerLine(raw)) {
+    return false
+  }
+
+  const trimmed = normalizeHeadingCandidate(raw)
+  if (!trimmed) {
+    return false
+  }
+  if (trimmed.length > STRUCTURAL_HEADING_MAX_CHARS) {
+    return false
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length > STRUCTURAL_HEADING_MAX_WORDS) {
+    return false
+  }
+  if ((trimmed.match(/[.!?]/g) ?? []).length >= 2) {
+    return false
+  }
+  if (CHAPTER_PATTERN.test(trimmed)) {
+    return true
+  }
+  if (STRUCTURAL_HEADING_PREFIX_REGEX.test(trimmed)) {
+    const fontSize = line?.fontSize ?? 0
+    if (fontSize >= CHAPTER_HEADING_MIN_FONT_SIZE || words.length <= 4) {
+      return true
+    }
+  }
+  return false
+}
+
+function isNarrativeBoundaryLine(text, line = null) {
   const trimmed = (text ?? "").trim()
   if (!trimmed || isTocChapterListingLine(trimmed)) {
     return false
   }
-  return CHAPTER_PATTERN.test(trimmed)
+  return isCleanStructuralHeadingText(trimmed, line)
 }
 
 function shouldDropExtractedLine(
@@ -728,23 +870,14 @@ function isLikelyChapterNumberLine(text, line) {
 }
 
 function isChapterHeading(block) {
-  const lowercaseText = block.text.trim().toLowerCase()
-  if (/^(chapter|part)\b/i.test(lowercaseText)) {
-    return true
-  }
-
   const text = block.text.trim()
 
-  if (block.isChapterStart) {
-    return true
-  }
-
-  if (CHAPTER_PATTERN.test(text)) {
+  if (isCleanStructuralHeadingText(text, { fontSize: block.fontSize ?? 0 })) {
     return true
   }
 
   const blocklist = ["and", "or", "but", "the", "a", "an", "to", "by", "and."]
-  if (blocklist.includes(text.trim().toLowerCase())) {
+  if (blocklist.includes(text.toLowerCase())) {
     return false
   }
 
@@ -755,7 +888,6 @@ function isChapterHeading(block) {
     return true
   }
 
-  if (isTocChapterListingLine(text)) return false
   if (isStandaloneChapterNumber(text, block)) return true
 
   return false
@@ -811,19 +943,24 @@ function detectChapters(content, bookTitle = "") {
       let isChapterStart = false
 
       if (isChapterHeading(block)) {
-        const title = block.text.trim()
-        let id = slugify(title)
-        let chapterTitle = title
+        const rawTitle = block.text.trim()
+        const canonicalTitle = normalizeHeadingCandidate(rawTitle) || rawTitle
+        let id = slugify(canonicalTitle)
+        let chapterTitle = canonicalTitle
 
-        if (PART_HEADING_PATTERN.test(title)) {
+        if (
+          PART_HEADING_PATTERN.test(canonicalTitle) ||
+          VOLUME_HEADING_PATTERN.test(canonicalTitle)
+        ) {
           currentPartId = id
-          currentPartTitle = title
+          currentPartTitle = canonicalTitle
         } else if (
           currentPartId &&
-          (CHAPTER_NUMBER_REGEX.test(title) || /^chapter\s+/i.test(title))
+          (CHAPTER_NUMBER_REGEX.test(canonicalTitle) ||
+            /^(chapter|letter)\s+/i.test(canonicalTitle))
         ) {
-          id = `${currentPartId}-${slugify(title)}`
-          chapterTitle = `${currentPartTitle ?? currentPartId} — ${title}`
+          id = `${currentPartId}-${slugify(canonicalTitle)}`
+          chapterTitle = `${currentPartTitle ?? currentPartId} — ${canonicalTitle}`
         }
 
         if (!seenChapterIds.has(id)) {
@@ -837,11 +974,6 @@ function detectChapters(content, bookTitle = "") {
           currentChapterId = id
           chapterId = id
           isChapterStart = true
-
-          if (PART_HEADING_PATTERN.test(title)) {
-            currentPartId = id
-            currentPartTitle = title
-          }
         } else {
           chapterId = currentChapterId
         }
@@ -904,11 +1036,25 @@ function isHeadingLine(text, line, headingStrings) {
     return true
   }
 
-  if (CHAPTER_PATTERN.test(text)) {
+  if (isCleanStructuralHeadingText(text, line)) {
     return true
   }
 
-  if (text.length < 60 && line.fontSize >= CHAPTER_HEADING_MIN_FONT_SIZE) {
+  if (
+    headingStrings.has(text) &&
+    text.length < 60 &&
+    !isTocDenseListingLine(text) &&
+    !isRunningHeaderMergedLine(text)
+  ) {
+    return true
+  }
+
+  if (
+    text.length < 60 &&
+    line.fontSize >= CHAPTER_HEADING_MIN_FONT_SIZE &&
+    !isTocDenseListingLine(text) &&
+    !isRunningHeaderMergedLine(text)
+  ) {
     return true
   }
 
@@ -1055,6 +1201,16 @@ function buildBlocksFromLines(pageData, headingStrings) {
       continue
     }
 
+    if (
+      isTocDenseListingLine(text) ||
+      isTocPageReferenceLine(text) ||
+      isRunningHeaderMergedLine(text)
+    ) {
+      pendingConnective = null
+      index += 1
+      continue
+    }
+
     if (lineIndex < EARLY_TOC_SCAN_LINE_LIMIT && isTocChapterListingLine(text)) {
       pendingConnective = null
       index += 1
@@ -1087,7 +1243,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
       continue
     }
 
-    if (isNarrativeBoundaryLine(text)) {
+    if (isNarrativeBoundaryLine(text, line)) {
       pendingConnective = null
       blocks.push({
         text: text.trim(),
@@ -1122,14 +1278,18 @@ function buildBlocksFromLines(pageData, headingStrings) {
         const runEntry = run[runIndex]
         const runText = runEntry.text.trim()
         const isListing = isTocChapterListingLine(runText)
-        const isBoundary = isNarrativeBoundaryLine(runText)
+        const isBoundary = isNarrativeBoundaryLine(runText, runEntry.line)
+        const isStructuralStart = isCleanStructuralHeadingText(
+          runText,
+          runEntry.line
+        )
         blocks.push({
           text: runText,
           isHeading: true,
           fontSize: isListing || isBoundary
             ? 15
             : Math.max(14, Math.round(runEntry.line.fontSize ?? 16)),
-          isChapterStart: isListing || isBoundary,
+          isChapterStart: isStructuralStart,
           chapterId: null,
         })
       }

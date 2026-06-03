@@ -11,7 +11,13 @@ export const TOC_CHAPTER_LISTING_REGEX =
   /^Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:\s+\S/i
 
 export const CHAPTER_BOUNDARY_REGEX =
-  /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six)|prologue|epilogue|introduction|conclusion)\.?$/i
+  /^(?:(?:chapter|letter|part|section|book|volume|preface|introduction|prologue|epilogue|conclusion|appendix|stave)\s+(?:\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|(?:preface|introduction|prologue|epilogue|conclusion|dedication))\.?$/i
+
+const STRUCTURAL_HEADING_PREFIX_REGEX =
+  /^(chapter|letter|part|section|book|volume|preface|introduction|prologue|epilogue|conclusion|appendix|stave)\s+/i
+
+const STRUCTURAL_HEADING_MAX_CHARS = 80
+const STRUCTURAL_HEADING_MAX_WORDS = 12
 
 export const CHAPTER_NUMBER_REGEX =
   /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
@@ -70,8 +76,121 @@ export function isTocChapterListingText(text) {
   return TOC_CHAPTER_LISTING_REGEX.test((text ?? "").trim())
 }
 
+function countStructuralMarkers(text) {
+  const pattern =
+    /\b(chapter|letter|volume|part|section|book)\s+([IVXLCDM]+|\d+|one|two|three|four|five|six|seven|eight|nine|ten)\b/gi
+  let count = 0
+  while (pattern.exec(text)) {
+    count += 1
+  }
+  return count
+}
+
+function isHeaderPageMarkerText(text) {
+  const trimmed = (text ?? "").trim()
+  return /^(?:preface|introduction|prologue|epilogue|conclusion)\s+[ivxlcdm]{1,4}$/i.test(
+    trimmed
+  )
+}
+
+function normalizeHeadingCandidate(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return ""
+  }
+
+  if (CHAPTER_BOUNDARY_REGEX.test(trimmed)) {
+    return trimmed
+  }
+
+  const withoutPrintedPage = trimmed.replace(
+    /^(?:(?:chapter|letter|volume|part|section|book|stave)\s+(?:[IVXLCDM]+|\d+|one|two|three|four|five|six|seven|eight|nine|ten))\s+\d{1,4}$/i,
+    "$1"
+  )
+  if (CHAPTER_BOUNDARY_REGEX.test(withoutPrintedPage)) {
+    return withoutPrintedPage
+  }
+
+  return withoutPrintedPage
+    .replace(/\s+[ivxlcdm]+\s*$/i, "")
+    .replace(/\s+\d{1,3}\s*$/, "")
+    .trim()
+}
+
+function isTocDenseListingText(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || countStructuralMarkers(trimmed) >= 2) {
+    return countStructuralMarkers(trimmed) >= 2
+  }
+  return /\b(?:letter|chapter|volume)\s+[IVXLCDM\d]+\s+\d{1,4}\b.*\b(?:letter|chapter|volume)\s+/i.test(
+    trimmed
+  )
+}
+
+function isTocPageReferenceText(text) {
+  const trimmed = (text ?? "").trim()
+  return /^(?:(?:chapter|letter|volume|part)\s+[IVXLCDM\d]+\s+\d{1,4}|volume\s+[IVXLCDM\d]+\s+\d{1,4})$/i.test(
+    trimmed
+  )
+}
+
+function isRunningHeaderMergedText(text) {
+  const trimmed = (text ?? "").trim()
+  if (isTocPageReferenceText(trimmed)) {
+    return true
+  }
+  return (
+    /^(?:chapter|letter)\s+[IVXLCDM\d]+\s+\d{0,3}\s+[a-z]/i.test(trimmed) ||
+    /^(?:chapter|letter)\s+[IVXLCDM\d]+\s+\d{1,3}\s+[A-Z][a-z]{2,}/.test(trimmed)
+  )
+}
+
+export function isCleanStructuralHeadingText(text, block = null) {
+  const raw = (text ?? "").trim()
+  if (!raw || /^contents$/i.test(raw)) {
+    return false
+  }
+  if (isTocChapterListingText(raw)) {
+    return false
+  }
+  if (isTocDenseListingText(raw)) {
+    return false
+  }
+  if (isRunningHeaderMergedText(raw)) {
+    return false
+  }
+  if (isHeaderPageMarkerText(raw)) {
+    return false
+  }
+
+  const trimmed = normalizeHeadingCandidate(raw)
+  if (!trimmed) {
+    return false
+  }
+  if (trimmed.length > STRUCTURAL_HEADING_MAX_CHARS) {
+    return false
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length > STRUCTURAL_HEADING_MAX_WORDS) {
+    return false
+  }
+  if ((trimmed.match(/[.!?]/g) ?? []).length >= 2) {
+    return false
+  }
+  if (CHAPTER_BOUNDARY_REGEX.test(trimmed)) {
+    return true
+  }
+  if (STRUCTURAL_HEADING_PREFIX_REGEX.test(trimmed)) {
+    const fontSize = block?.fontSize ?? 0
+    if (fontSize >= CHAPTER_HEADING_MIN_FONT_SIZE || words.length <= 4) {
+      return true
+    }
+  }
+  return false
+}
+
 export function isChapterBoundaryText(text) {
-  return CHAPTER_BOUNDARY_REGEX.test((text ?? "").trim())
+  return isCleanStructuralHeadingText(text)
 }
 
 export function inferBlockIsChapterStart(block) {
@@ -86,17 +205,12 @@ export function inferBlockIsChapterStart(block) {
   }
 
   const text = (block.text ?? "").trim()
-  const lowercaseText = text.toLowerCase()
-
-  if (/^(chapter|part)\b/i.test(lowercaseText)) {
-    return true
-  }
 
   if (!block.chapterId && isTocChapterListingText(text)) {
     return false
   }
 
-  if (isChapterBoundaryText(text)) {
+  if (isCleanStructuralHeadingText(text, block)) {
     return true
   }
 
