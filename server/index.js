@@ -9,7 +9,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 18
+const PARSER_VERSION = 19
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -381,9 +381,25 @@ const CENTERED_REPEATED_LINE_MAX_CHARS = 80
 
 const INLINE_PAGE_DECORATOR_REGEX = /\s*-\s*\d+\s*-\s*/g
 const FOOTNOTE_REFERENCE_REGEX = /\[\d+\]/g
+const RUNNING_HEADER_INLINE_REGEX =
+  /\s+\d{1,3}\s+(?:chapter|letter)\s+(?:[IVXLCDM]+|\d+)\b/gi
+const ROMAN_PREFIX_BEFORE_HEADING_REGEX =
+  /\b[ivxlcdm]{1,4}\s+(?=(?:PREFACE|Chapter|Letter)\b)/gi
+const EMBEDDED_PREFACE_PAGE_MARKER_REGEX = /\bPREFACE\s+[ivxlcdm]{1,4}\b/gi
 
 const STANDALONE_PAGE_NUMBER_REGEX = /^-?\s*\d+\s*-?\s*$/
+const STANDALONE_ROMAN_PAGE_MARKER_REGEX = /^[ivxlcdm]{1,4}$/i
+const ROMAN_PAGE_MARKER_CLUSTER_REGEX = /^[ivxlcdm]{1,4}(?:\s+[ivxlcdm]{1,4}){0,3}$/i
+const STANDALONE_RUNNING_HEAD_REGEX =
+  /^\d{1,3}\s+(?:chapter|letter)\s+(?:[IVXLCDM]+|\d+)$/i
 const TOC_HEADER_LINE_REGEX = /^-\s*\d+\s*-\s*.+$/
+
+const MARGIN_CALLOUT_MAX_WORDS = 9
+const MARGIN_CALLOUT_MAX_CHARS = 52
+const MARGIN_CALLOUT_FRAGMENT_MAX_WORDS = 7
+const MARGIN_CALLOUT_MIN_LONG_LINES = 5
+const MARGIN_CALLOUT_LONG_LINE_CHARS = 65
+const MARGIN_CALLOUT_SUBSTRING_PARENT_GAP = 12
 
 const PROSE_BLOCKLIST_WORD_REGEX = /^(and|or|but|the|a|an|to|by)$/i
 
@@ -415,9 +431,89 @@ function stripInlineArtifacts(text) {
 
   return text
     .replace(INLINE_PAGE_DECORATOR_REGEX, " ")
+    .replace(RUNNING_HEADER_INLINE_REGEX, " ")
+    .replace(ROMAN_PREFIX_BEFORE_HEADING_REGEX, "")
+    .replace(EMBEDDED_PREFACE_PAGE_MARKER_REGEX, "")
     .replace(FOOTNOTE_REFERENCE_REGEX, "")
     .replace(/\s+/g, " ")
     .trim()
+}
+
+function dropMarginCalloutLines(lines) {
+  const entries = lines
+    .map((line) => ({ line, text: (line.text ?? "").trim() }))
+    .filter((entry) => entry.text)
+
+  if (entries.length === 0) {
+    return lines
+  }
+
+  const texts = entries.map((entry) => entry.text)
+  const longLineCount = texts.filter((text) => text.length >= MARGIN_CALLOUT_LONG_LINE_CHARS)
+    .length
+
+  return entries
+    .filter((entry) => {
+      const { text, line } = entry
+
+      if (line.centered) {
+        return true
+      }
+
+      if (
+        isCleanStructuralHeadingText(text, { fontSize: line.fontSize ?? 0 }) ||
+        PART_HEADING_PATTERN.test(text) ||
+        VOLUME_HEADING_PATTERN.test(text) ||
+        CHAPTER_PATTERN.test(text)
+      ) {
+        return true
+      }
+
+      const words = text.split(/\s+/).filter(Boolean)
+
+      for (const other of texts) {
+        if (other.length <= text.length || other === text) {
+          continue
+        }
+        if (
+          other.includes(text) &&
+          other.length - text.length >= MARGIN_CALLOUT_SUBSTRING_PARENT_GAP
+        ) {
+          return false
+        }
+      }
+
+      if (text.length > MARGIN_CALLOUT_MAX_CHARS || words.length > MARGIN_CALLOUT_MAX_WORDS) {
+        return true
+      }
+
+      if (longLineCount < MARGIN_CALLOUT_MIN_LONG_LINES) {
+        return true
+      }
+
+      if (
+        words.length <= MARGIN_CALLOUT_FRAGMENT_MAX_WORDS &&
+        /^[a-z]/.test(text) &&
+        /[.!?]["'»]?$/.test(text)
+      ) {
+        return false
+      }
+
+      if (text.length <= 14 && /[.!?]$/.test(text)) {
+        return false
+      }
+
+      if (
+        words.length <= MARGIN_CALLOUT_MAX_WORDS &&
+        text.length <= 42 &&
+        longLineCount >= MARGIN_CALLOUT_MIN_LONG_LINES
+      ) {
+        return false
+      }
+
+      return true
+    })
+    .map((entry) => entry.line)
 }
 
 function countStructuralMarkers(text) {
@@ -565,7 +661,9 @@ function shouldDropExtractedLine(
   text,
   distinctPageCount,
   occurrencesOnThisPage = 1,
-  isCentered = false
+  isCentered = false,
+  pageIndex = 0,
+  lineFirstPageIndex = null
 ) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
@@ -574,8 +672,37 @@ function shouldDropExtractedLine(
   if (STANDALONE_PAGE_NUMBER_REGEX.test(trimmed)) {
     return true
   }
+  if (STANDALONE_ROMAN_PAGE_MARKER_REGEX.test(trimmed)) {
+    return true
+  }
+  if (ROMAN_PAGE_MARKER_CLUSTER_REGEX.test(trimmed)) {
+    return true
+  }
+  if (STANDALONE_RUNNING_HEAD_REGEX.test(trimmed)) {
+    return true
+  }
+  if (isHeaderPageMarkerLine(trimmed)) {
+    return true
+  }
+  if (isTocDenseListingLine(trimmed) || isTocPageReferenceLine(trimmed)) {
+    return true
+  }
+  if (isRunningHeaderMergedLine(trimmed)) {
+    return true
+  }
   if (TOC_HEADER_LINE_REGEX.test(trimmed)) {
     return true
+  }
+  if (/^(?:preface|introduction|prologue|epilogue|conclusion)$/i.test(trimmed)) {
+    if (occurrencesOnThisPage > 1) {
+      return true
+    }
+    if (distinctPageCount >= RUNNING_HEADER_MIN_PAGES) {
+      const firstPage = lineFirstPageIndex?.get(trimmed)
+      if (firstPage !== undefined && pageIndex !== firstPage) {
+        return true
+      }
+    }
   }
   if (isCentered || isNarrativeBoundaryLine(trimmed) || CHAPTER_NUMBER_REGEX.test(trimmed)) {
     return false
@@ -759,16 +886,19 @@ async function extractLinesByPosition(buffer) {
     }
 
     annotateLinesCentered(rawLines)
-    pagesBeforeFilter.push({ lines: rawLines })
+    const filteredLines = dropMarginCalloutLines(rawLines)
+    pagesBeforeFilter.push({ lines: filteredLines })
   }
 
   const lineDistinctPages = new Map()
   const lineOccurrencesPerPage = new Map()
+  const lineFirstPageIndex = new Map()
   for (let pageIndex = 0; pageIndex < pagesBeforeFilter.length; pageIndex += 1) {
     for (const line of pagesBeforeFilter[pageIndex].lines) {
       if (!lineDistinctPages.has(line.text)) {
         lineDistinctPages.set(line.text, new Set())
         lineOccurrencesPerPage.set(line.text, new Map())
+        lineFirstPageIndex.set(line.text, pageIndex)
       }
       lineDistinctPages.get(line.text).add(pageIndex)
       const pageCounts = lineOccurrencesPerPage.get(line.text)
@@ -791,7 +921,9 @@ async function extractLinesByPosition(buffer) {
           line.text,
           distinctPageCount,
           occurrencesOnThisPage,
-          Boolean(line.centered)
+          Boolean(line.centered),
+          pageIndex,
+          lineFirstPageIndex
         )
       ) {
         continue
@@ -1123,6 +1255,33 @@ function isTocHeadingCandidate(text, line, headingStrings, lineIndex) {
   return isHeadingLine(text, line, headingStrings)
 }
 
+function consumeRepeatedSectionLabel(text, sectionLabelState) {
+  const canonical = normalizeHeadingCandidate(text.trim()) || text.trim()
+  const sectionLabelKey = /^(?:preface|introduction|prologue|epilogue|conclusion)$/i.test(
+    canonical
+  )
+    ? canonical.toLowerCase()
+    : null
+
+  if (!sectionLabelKey) {
+    if (
+      CHAPTER_PATTERN.test(canonical) ||
+      PART_HEADING_PATTERN.test(canonical) ||
+      VOLUME_HEADING_PATTERN.test(canonical)
+    ) {
+      sectionLabelState.lastRepeatedSectionLabel = null
+    }
+    return { skip: false, canonical }
+  }
+
+  if (sectionLabelKey === sectionLabelState.lastRepeatedSectionLabel) {
+    return { skip: true, canonical }
+  }
+
+  sectionLabelState.lastRepeatedSectionLabel = sectionLabelKey
+  return { skip: false, canonical }
+}
+
 function collectConsecutiveTocHeadingRun(
   allLines,
   startIndex,
@@ -1163,6 +1322,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
   let pendingConnective = null
   let nonEmptyLineIndex = 0
   let index = 0
+  const sectionLabelState = { lastRepeatedSectionLabel: null }
 
   while (index < allLines.length) {
     const entry = allLines[index]
@@ -1245,8 +1405,14 @@ function buildBlocksFromLines(pageData, headingStrings) {
 
     if (isNarrativeBoundaryLine(text, line)) {
       pendingConnective = null
+      const { skip, canonical } = consumeRepeatedSectionLabel(text, sectionLabelState)
+      if (skip) {
+        index += 1
+        continue
+      }
+
       blocks.push({
-        text: text.trim(),
+        text: canonical,
         isHeading: true,
         fontSize: 15,
         isChapterStart: true,
@@ -1277,6 +1443,14 @@ function buildBlocksFromLines(pageData, headingStrings) {
       for (let runIndex = 0; runIndex < run.length; runIndex += 1) {
         const runEntry = run[runIndex]
         const runText = runEntry.text.trim()
+        const { skip, canonical } = consumeRepeatedSectionLabel(
+          runText,
+          sectionLabelState
+        )
+        if (skip) {
+          continue
+        }
+
         const isListing = isTocChapterListingLine(runText)
         const isBoundary = isNarrativeBoundaryLine(runText, runEntry.line)
         const isStructuralStart = isCleanStructuralHeadingText(
@@ -1284,7 +1458,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
           runEntry.line
         )
         blocks.push({
-          text: runText,
+          text: canonical,
           isHeading: true,
           fontSize: isListing || isBoundary
             ? 15
