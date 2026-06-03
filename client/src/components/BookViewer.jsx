@@ -2425,7 +2425,7 @@ export default function BookViewer({
         },
       ],
       {
-        duration: 900,
+        duration: 1800,
         easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
         fill: "forwards",
       }
@@ -2502,6 +2502,22 @@ export default function BookViewer({
           }
           break
 
+        case "s":
+        case "S":
+          if (!event.metaKey && !event.ctrlKey && !event.altKey) {
+            event.preventDefault()
+            setSearchOpen((previous) => {
+              if (previous) {
+                setSearchQuery("")
+                setSearchResults([])
+              }
+              return !previous
+            })
+            setTocOpen(false)
+            setSettingsOpen(false)
+          }
+          break
+
         case "t":
         case "T":
           if (!event.metaKey && !event.ctrlKey) {
@@ -2514,13 +2530,6 @@ export default function BookViewer({
 
         default:
           break
-      }
-
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f") {
-        event.preventDefault()
-        setSearchOpen(true)
-        setTocOpen(false)
-        setSettingsOpen(false)
       }
     }
 
@@ -3115,7 +3124,7 @@ export default function BookViewer({
                 { keys: ["←", "→"], label: "Turn page" },
                 { keys: ["F"], label: "Fullscreen" },
                 { keys: ["T"], label: "Contents" },
-                { keys: ["⌘F"], label: "Search" },
+                { keys: ["S"], label: "Search" },
                 { keys: ["Esc"], label: "Close / Exit" },
               ].map(({ keys, label }) => (
                 <div key={label} className="book-viewer__kb-row">
