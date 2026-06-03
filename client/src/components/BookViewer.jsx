@@ -20,12 +20,21 @@ const PAGE_HEIGHT_PX = 600
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const SPINE_PX = 1
 const PAGE_NUMBER_RESERVED_PX = 20
-const MOBILE_FULLSCREEN_PAGE_NUMBER_OFFSET_PX = 12
-const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX =
-  PAGE_NUMBER_RESERVED_PX + MOBILE_FULLSCREEN_PAGE_NUMBER_OFFSET_PX
-const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 2
+const BODY_DESCENDER_PAD_PX = 4
+const MOBILE_BROWSER_UI_PX = 52
+const MOBILE_PAGE_NUMBER_GAP_PX = 8
+const MOBILE_PAGE_NUMBER_RESERVED_PX =
+  PAGE_NUMBER_RESERVED_PX + MOBILE_BROWSER_UI_PX + MOBILE_PAGE_NUMBER_GAP_PX
+const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
-const GREEDY_PAGE_SAFETY_MARGIN_PX = 2
+
+function bodyContentFitsPage(bodyEl, contentMaxHeight) {
+  return bodyEl.scrollHeight <= contentMaxHeight
+}
+
+function getPageNumberReservedPx(isMobileViewport) {
+  return isMobileViewport ? MOBILE_PAGE_NUMBER_RESERVED_PX : PAGE_NUMBER_RESERVED_PX
+}
 
 const DEFAULT_SETTINGS = {
   theme: "parchment",
@@ -875,7 +884,7 @@ function pagePlaceablesFit(bodyEl, pagePlaceables, contentMaxHeight, showLabel, 
   renderMeasureBody(bodyEl, trialVisualItems, showLabel, labelTitle, {
     centerTitlePage: shouldCenterTitlePage(trialVisualItems),
   })
-  return bodyEl.scrollHeight + GREEDY_PAGE_SAFETY_MARGIN_PX < contentMaxHeight
+  return bodyContentFitsPage(bodyEl, contentMaxHeight)
 }
 
 function splitProseAcrossPages(
@@ -1023,7 +1032,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     renderMeasureBody(bodyEl, pageItems, showLabel, labelTitle, {
       centerTitlePage: shouldCenterTitlePage(pageItems),
     })
-    return bodyEl.scrollHeight + GREEDY_PAGE_SAFETY_MARGIN_PX < contentMaxHeight
+    return bodyContentFitsPage(bodyEl, contentMaxHeight)
   }
 
   const flushPage = () => {
@@ -1455,17 +1464,6 @@ function BookPageContent({
 
   return (
     <div className={pageClassName} style={pageStyle}>
-      {page.chapterTitle && (
-        <p className="book-page__chapter-label">
-          {highlightTextContent(
-            page.chapterTitle,
-            searchQuery,
-            highlightTracker,
-            activeSearchOccurrence
-          )}
-        </p>
-      )}
-
       <div
         className={
           page.centerTitlePage
@@ -1473,6 +1471,17 @@ function BookPageContent({
             : "book-page__body"
         }
       >
+        {page.isChapterStart && page.chapterTitle && (
+          <p className="book-page__chapter-label">
+            {highlightTextContent(
+              page.chapterTitle,
+              searchQuery,
+              highlightTracker,
+              activeSearchOccurrence
+            )}
+          </p>
+        )}
+
         {visualItems.map((item, index) => {
           if (item.type === "title") {
             return (
@@ -1956,9 +1965,7 @@ export default function BookViewer({
       const flatBlocks = flattenDocument(bookDocument)
       const mobileFS = isMobile && isMobileFullscreen
       const pageHeightToUse = mobileFS ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : undefined
-      const pageNumberReservedPx = mobileFS
-        ? MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX
-        : PAGE_NUMBER_RESERVED_PX
+      const pageNumberReservedPx = getPageNumberReservedPx(isMobile)
       const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(
         pageHeightToUse,
         settings.margins,
@@ -1974,7 +1981,7 @@ export default function BookViewer({
       measureElements.page.style.paddingLeft = pagePad.paddingLeft ?? "0"
       measureElements.page.style.paddingBottom = "0"
       measureElements.body.style.padding = "0"
-      measureElements.body.style.paddingBottom = "0"
+      measureElements.body.style.paddingBottom = `${BODY_DESCENDER_PAD_PX}px`
       measureElements.footer.style.height = `${pageNumberReservedPx}px`
 
       const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
