@@ -1118,11 +1118,11 @@ ol.book-page__list {
 
 @media (max-width: 767px) {
   .book-page__number {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 52px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
   }
 
   .book-page__body:not(.book-page__body--title-spread) {
-    max-height: calc(100% - 80px - env(safe-area-inset-bottom, 0px));
+    max-height: calc(100% - 63px - env(safe-area-inset-bottom, 0px));
     padding-bottom: 4px;
   }
 
