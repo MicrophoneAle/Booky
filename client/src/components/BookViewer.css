@@ -440,7 +440,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  --page-footer-reserve: 12px;
+  --page-footer-reserve: 20px;
 }
 
 .book-page::after {
@@ -1285,6 +1285,6 @@ ol.book-page__list {
 
 .book-viewer__measure-footer {
   flex-shrink: 0;
-  height: 12px;
+  height: 20px;
   margin: 0;
 }

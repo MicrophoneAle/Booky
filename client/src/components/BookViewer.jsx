@@ -34,6 +34,7 @@ const MOBILE_PAGE_NUMBER_GAP_PX = 3
 const MOBILE_PAGE_NUMBER_RESERVED_PX =
   PAGE_NUMBER_RESERVED_PX + MOBILE_BROWSER_UI_PX + MOBILE_PAGE_NUMBER_GAP_PX
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
+const BODY_BOTTOM_PADDING_PX = 3
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 
 /**
@@ -54,15 +55,16 @@ function getPageTextCapacity(contentMaxHeight, font, line) {
 }
 
 function bodyContentFitsPage(bodyEl, fitHeight) {
-  const limit = Math.floor(fitHeight) + PAGE_FIT_OVERFLOW_TOLERANCE_PX
-  const lastChild = bodyEl.lastElementChild
+  const boxLimit =
+    bodyEl.clientHeight > 0
+      ? bodyEl.clientHeight
+      : Math.floor(fitHeight) + PAGE_FIT_OVERFLOW_TOLERANCE_PX
+  const limit = Math.min(
+    Math.floor(fitHeight) + PAGE_FIT_OVERFLOW_TOLERANCE_PX,
+    boxLimit
+  )
 
-  if (!lastChild) {
-    return true
-  }
-
-  const bottom = lastChild.offsetTop + lastChild.offsetHeight
-  return bottom <= limit
+  return bodyEl.scrollHeight <= limit
 }
 
 function getPageNumberReservedPx(isMobileViewport) {
@@ -478,6 +480,7 @@ function getLayoutHeights(
     pageHeight -
     marginPx -
     pageNumberReservedPx -
+    BODY_BOTTOM_PADDING_PX -
     CONTENT_HEIGHT_SAFETY_BUFFER_PX
 
   return { pageOuterHeight: pageHeight, contentMaxHeight }
@@ -1630,7 +1633,10 @@ function BookPageContent({
     .filter(Boolean)
     .join(" ")
 
-  const pageStyle = getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins)
+  const pageStyle = {
+    ...getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins),
+    "--page-footer-reserve": `${PAGE_FOOTER_RESERVE_PX}px`,
+  }
 
   if (!page) {
     return <div className={`${pageClassName} book-page--empty`} style={pageStyle} />
@@ -2154,20 +2160,26 @@ export default function BookViewer({
 
       measureRoot = measureElements.root
       measureElements.page.style.height = `${pageOuterHeight}px`
+      measureElements.page.style.display = "flex"
+      measureElements.page.style.flexDirection = "column"
+      measureElements.page.style.boxSizing = "border-box"
+      measureElements.page.style.setProperty(
+        "--page-footer-reserve",
+        `${PAGE_FOOTER_RESERVE_PX}px`
+      )
       const pagePad = getPagePaddingStyle(settings.margins)
       measureElements.page.style.paddingTop = pagePad.paddingTop ?? "0"
       measureElements.page.style.paddingRight = pagePad.paddingRight ?? "0"
       measureElements.page.style.paddingLeft = pagePad.paddingLeft ?? "0"
       measureElements.page.style.paddingBottom = pagePad.paddingBottom ?? "0"
       measureElements.body.style.padding = "0"
-      measureElements.body.style.paddingBottom = "0"
-      measureElements.body.style.height = `${contentMaxHeight}px`
-      measureElements.body.style.maxHeight = `${contentMaxHeight}px`
-      measureElements.body.style.minHeight = `${contentMaxHeight}px`
+      measureElements.body.style.paddingBottom = `${BODY_BOTTOM_PADDING_PX}px`
+      measureElements.body.style.flex = "1 1 auto"
+      measureElements.body.style.minHeight = "0"
+      measureElements.body.style.height = "auto"
+      measureElements.body.style.maxHeight = `calc(100% - ${PAGE_FOOTER_RESERVE_PX}px)`
       measureElements.body.style.overflow = "hidden"
-      measureElements.footer.style.display = "block"
-      measureElements.footer.style.height = `${PAGE_FOOTER_RESERVE_PX}px`
-      measureElements.footer.style.flexShrink = "0"
+      measureElements.footer.style.display = "none"
 
       const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
       const line = LINE_HEIGHT_MAP[settings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
