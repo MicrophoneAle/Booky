@@ -5,8 +5,21 @@
 /** Attribution lines (structural ~13px) rendered as author, not subtitle. */
 export const AUTHOR_LINE_REGEX = /^(by|written by|translated by)\s+/i
 
+export const DEDICATION_SUBTITLE_REGEX = /^To\s+[A-Z]/i
+
 export function isAuthorLineText(text) {
   return AUTHOR_LINE_REGEX.test((text ?? "").trim())
+}
+
+export function isDedicationSubtitleItem(item) {
+  return (
+    item?.type === "subtitle" &&
+    DEDICATION_SUBTITLE_REGEX.test((item.text ?? "").trim())
+  )
+}
+
+export function isDedicationSubtitlePlaceable(placeable) {
+  return isDedicationSubtitleItem(placeable?.item)
 }
 
 /**
@@ -28,6 +41,56 @@ export function resolveHeadingVisualType(fontSize, text = "") {
 
 export function isFrontMatterVisualType(type) {
   return type === "title" || type === "subtitle" || type === "author"
+}
+
+function qualifiesAsFrontMatterPlaceable(placeable) {
+  const item = placeable.item
+  return (
+    isFrontMatterVisualType(item?.type) ||
+    isDedicationSubtitlePlaceable(placeable) ||
+    (item?.type === "heading" && (item.fontSize ?? 16) <= 13)
+  )
+}
+
+/**
+ * Groups a front-matter pack into placement units (consecutive title/subtitle/author lines).
+ * @param {Array<{ type: string, item?: object }>} pack
+ * @returns {Array<Array<{ type: string, item?: object }>>}
+ */
+export function groupFrontMatterPlacementUnits(pack) {
+  if (!pack.length) {
+    return []
+  }
+
+  const units = []
+  let unit = []
+
+  const continuesFrontMatterRun = (item) =>
+    item &&
+    (isFrontMatterVisualType(item.type) || isDedicationSubtitleItem(item))
+
+  for (const placeable of pack) {
+    const item = placeable.item
+
+    if (unit.length === 0) {
+      unit.push(placeable)
+      continue
+    }
+
+    const lastItem = unit[unit.length - 1].item
+    if (continuesFrontMatterRun(item) && continuesFrontMatterRun(lastItem)) {
+      unit.push(placeable)
+    } else {
+      units.push(unit)
+      unit = [placeable]
+    }
+  }
+
+  if (unit.length > 0) {
+    units.push(unit)
+  }
+
+  return units.length > 0 ? units : [pack]
 }
 
 /**
@@ -54,6 +117,8 @@ export function isChapterContentBoundaryItem(item) {
   return false
 }
 
+const DEDICATION_SCAN_AFTER_CHAPTER = 30
+
 /**
  * Splits placeables into a front-matter pack (before first chapter) and the rest.
  * @param {Array<{ type: string, item?: object }>} placeables
@@ -68,28 +133,34 @@ export function buildFrontMatterPack(placeables) {
     }
   }
 
-  const frontMatterPack = []
-  const beforeChapterOther = []
+  const packedIndices = new Set()
+  const dedicationScanEnd = Math.min(
+    placeables.length,
+    chapterStartIndex + DEDICATION_SCAN_AFTER_CHAPTER
+  )
 
   for (let index = 0; index < chapterStartIndex; index += 1) {
-    const placeable = placeables[index]
-    const item = placeable.item
-    const isDedicationSubtitle =
-      item?.type === "subtitle" &&
-      /^To\s+[A-Z]/i.test((item.text ?? "").trim())
-    const isFrontMatter =
-      isFrontMatterVisualType(item?.type) ||
-      isDedicationSubtitle ||
-      (item?.type === "heading" && (item.fontSize ?? 16) <= 13)
-
-    if (isFrontMatter) {
-      frontMatterPack.push(placeable)
-    } else {
-      beforeChapterOther.push(placeable)
+    if (qualifiesAsFrontMatterPlaceable(placeables[index])) {
+      packedIndices.add(index)
     }
   }
 
-  const remainder = [...beforeChapterOther, ...placeables.slice(chapterStartIndex)]
+  for (let index = chapterStartIndex; index < dedicationScanEnd; index += 1) {
+    if (isDedicationSubtitlePlaceable(placeables[index])) {
+      packedIndices.add(index)
+    }
+  }
+
+  const frontMatterPack = []
+  const remainder = []
+
+  for (let index = 0; index < placeables.length; index += 1) {
+    if (packedIndices.has(index)) {
+      frontMatterPack.push(placeables[index])
+    } else {
+      remainder.push(placeables[index])
+    }
+  }
 
   return { frontMatterPack, remainder }
 }

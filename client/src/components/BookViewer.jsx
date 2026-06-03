@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom"
 import {
   buildFrontMatterPack,
   flattenDocument,
+  groupFrontMatterPlacementUnits,
   isFrontMatterVisualType,
   isTitlePageVisualItems,
   resolveHeadingVisualType,
@@ -1223,7 +1224,9 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       return
     }
 
-    if (tryAddPlaceables(pack)) {
+    const placeEntirePack = () => tryAddPlaceables(pack)
+
+    if (placeEntirePack()) {
       return
     }
 
@@ -1233,45 +1236,61 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
 
     markPageStartIfEmpty()
 
-    if (tryAddPlaceables(pack)) {
+    if (placeEntirePack()) {
       return
     }
 
-    let batch = []
-    for (const placeable of pack) {
-      const trial = [...batch, placeable]
-      if (pagePlaceablesFit(
-        bodyEl,
-        trial,
-        contentMaxHeight,
-        showChapterLabel(),
-        chapterState.pageChapterTitle
-      )) {
-        batch = trial
+    const units = groupFrontMatterPlacementUnits(pack)
+
+    for (const unit of units) {
+      if (currentPagePlaceables.length > 0) {
+        flushPage()
+      }
+
+      markPageStartIfEmpty()
+
+      if (tryAddPlaceables(unit)) {
         continue
+      }
+
+      let batch = []
+      for (const placeable of unit) {
+        const trial = [...batch, placeable]
+        if (
+          pagePlaceablesFit(
+            bodyEl,
+            trial,
+            contentMaxHeight,
+            showChapterLabel(),
+            chapterState.pageChapterTitle
+          )
+        ) {
+          batch = trial
+          continue
+        }
+
+        if (batch.length > 0) {
+          tryAddPlaceables(batch)
+          flushPage()
+          markPageStartIfEmpty()
+          batch = []
+        }
+
+        if (!tryAddPlaceables([placeable])) {
+          flushPage()
+          markPageStartIfEmpty()
+          currentPagePlaceables = [placeable]
+          const chapterItem = getChapterItemFromPlaceable(placeable)
+          if (chapterItem) {
+            applyChapterContextFromItem(chapterItem, chapterState)
+            updateCurrentActiveChapter(chapterItem)
+          }
+        }
       }
 
       if (batch.length > 0) {
         tryAddPlaceables(batch)
-        flushPage()
-        markPageStartIfEmpty()
-        batch = []
       }
-
-      if (!tryAddPlaceables([placeable])) {
-        flushPage()
-        markPageStartIfEmpty()
-        currentPagePlaceables = [placeable]
-        const chapterItem = getChapterItemFromPlaceable(placeable)
-        if (chapterItem) {
-          applyChapterContextFromItem(chapterItem, chapterState)
-          updateCurrentActiveChapter(chapterItem)
-        }
-      }
-    }
-
-    if (batch.length > 0) {
-      tryAddPlaceables(batch)
     }
   }
 

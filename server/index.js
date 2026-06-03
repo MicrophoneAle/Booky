@@ -680,7 +680,55 @@ function blocksToContent(blocks, blocksPerPage = 40) {
   return content
 }
 
-async function parsePdfBuffer(buffer) {
+function hasDetectedTitleBlock(blocks) {
+  return blocks.slice(0, 20).some((block) => block.isHeading && (block.fontSize ?? 0) > 14)
+}
+
+function titleFromFilename(fileName) {
+  if (!fileName || typeof fileName !== "string") {
+    return ""
+  }
+
+  return fileName
+    .replace(/\.pdf$/i, "")
+    .replace(/[-_]+/g, " ")
+    .trim()
+}
+
+function prependSyntheticTitleBlocks(blocks, parsedText, fileName) {
+  if (hasDetectedTitleBlock(blocks)) {
+    return blocks
+  }
+
+  let titleText = (parsedText?.info?.Title ?? "").trim()
+  let authorText = (parsedText?.info?.Author ?? "").trim()
+
+  if (!titleText) {
+    titleText = titleFromFilename(fileName)
+  }
+
+  if (!titleText) {
+    return blocks
+  }
+
+  const synthetic = [
+    { text: titleText, isHeading: true, fontSize: 20, chapterId: null },
+  ]
+
+  if (authorText) {
+    const authorLine = /^by\s/i.test(authorText) ? authorText : `By ${authorText}`
+    synthetic.push({
+      text: authorLine,
+      isHeading: true,
+      fontSize: 13,
+      chapterId: null,
+    })
+  }
+
+  return [...synthetic, ...blocks]
+}
+
+async function parsePdfBuffer(buffer, fileName = "") {
   const [parsedText, headingStrings, positionedLines] = await Promise.all([
     pdfParse(buffer),
     extractHeadingLines(buffer),
@@ -688,7 +736,8 @@ async function parsePdfBuffer(buffer) {
   ])
 
   const lines = linesFromPdfText(positionedLines)
-  const blocks = buildBlocksFromLines(lines, headingStrings)
+  let blocks = buildBlocksFromLines(lines, headingStrings)
+  blocks = prependSyntheticTitleBlocks(blocks, parsedText, fileName)
   const content = blocksToContent(blocks)
   const { chapters, content: contentWithChapters } = detectChapters(content)
   const wordCount = Math.max(
@@ -718,7 +767,7 @@ async function reparseOutdatedDocuments() {
 
   const { data: documents, error: fetchError } = await supabase
     .from("documents")
-    .select("id, storage_path")
+    .select("id, storage_path, name")
     .or(`parser_version.lt.${PARSER_VERSION},parser_version.is.null`)
     .order("created_at", { ascending: true })
 
@@ -752,7 +801,7 @@ async function reparseOutdatedDocuments() {
 
       const fileBuffer = Buffer.from(await storageFile.arrayBuffer())
       const { parsedText, chapters, contentWithChapters, wordCount } =
-        await parsePdfBuffer(fileBuffer)
+        await parsePdfBuffer(fileBuffer, documentRow.name ?? "")
 
       const { error: updateError } = await supabase
         .from("documents")
@@ -813,7 +862,7 @@ app.post("/upload", requireAuth, (req, res) => {
       const hasImages = false
       const title = uploadedFile.originalname.replace(/\.pdf$/i, "")
       const { parsedText, chapters, contentWithChapters, wordCount } =
-        await parsePdfBuffer(uploadedFile.buffer)
+        await parsePdfBuffer(uploadedFile.buffer, uploadedFile.originalname)
 
       const storagePath = `${Date.now()}-${uploadedFile.originalname}`
       const { data: storageData, error: storageError } = await supabase.storage

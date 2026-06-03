@@ -888,7 +888,7 @@
 }
 
 .book-page__body {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   overflow: hidden;
   display: flex;
@@ -1043,6 +1043,7 @@ ol.book-page__list {
 .book-page__number {
   position: relative;
   z-index: 2;
+  flex-shrink: 0;
   margin: 0.5rem 0 0;
   text-align: center;
   font-family: var(--ff-body, var(--font-body));
@@ -1135,6 +1136,10 @@ ol.book-page__list {
   pointer-events: none;
   width: 400px;
   z-index: -1;
+}
+
+.book-viewer__measure .book-page__body {
+  flex: 0 0 auto;
 }
 
 .book-viewer__measure-footer {
