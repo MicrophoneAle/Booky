@@ -930,11 +930,17 @@
 .book-page--mobile-fs {
   border: none;
   border-radius: 0;
-  padding:
-    max(0px, env(safe-area-inset-top, 0px))
-    max(0px, env(safe-area-inset-right, 0px))
-    max(0px, env(safe-area-inset-bottom, 0px))
-    max(0px, env(safe-area-inset-left, 0px));
+}
+
+.book-page--mobile-fs .book-page__number {
+  bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.book-page--mobile-fs .book-page__body,
+.book-page--mobile-fs .book-page__body--title-spread {
+  max-height: calc(
+    100% - 20px - max(0.75rem, env(safe-area-inset-bottom, 0px))
+  );
 }
 
 .book-page__chapter-label {
@@ -1122,32 +1128,6 @@ ol.book-page__list {
 }
 
 @media (max-width: 767px) {
-  .book-page__number {
-    position: static;
-    flex-shrink: 0;
-    margin-top: 0.4rem;
-    margin-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
-  }
-
-  .book-page__body {
-    max-height: calc(100% - 3.25rem - env(safe-area-inset-bottom, 0px));
-    padding-bottom: 0.25rem;
-  }
-
-  .book-page__body--title-spread {
-    max-height: calc(100% - 3.25rem - env(safe-area-inset-bottom, 0px));
-    padding-bottom: 0.25rem;
-  }
-
-  .book-page--mobile-fs .book-page__number {
-    margin-bottom: 0.5rem;
-  }
-
-  .book-page--mobile-fs .book-page__body,
-  .book-page--mobile-fs .book-page__body--title-spread {
-    max-height: calc(100% - 2.75rem);
-  }
-
   .book-viewer__nav {
     padding: 0 0.75rem;
     grid-template-columns: auto 1fr auto;
