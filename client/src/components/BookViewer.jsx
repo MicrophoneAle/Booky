@@ -5,6 +5,7 @@ import {
   buildFrontMatterPack,
   flattenDocument,
   groupFrontMatterPlacementUnits,
+  inferBlockIsChapterStart,
   isFrontMatterVisualType,
   isTitlePageVisualItems,
   resolveHeadingVisualType,
@@ -112,7 +113,11 @@ let listGroupCounter = 0
 
 function isHeadingVisualItem(item) {
   // subtitle intentionally excluded
-  return item?.type === "title" || item?.type === "heading"
+  return item?.type === "title" || item?.type === "heading" || item?.type === "chapter"
+}
+
+function isChapterBoundaryItem(item) {
+  return item?.type === "chapter" || Boolean(item?.isChapterStart)
 }
 
 function proseParagraphClassName(previousItem, proseItem = null) {
@@ -551,13 +556,16 @@ function groupBlocksForDisplay(blocks) {
         index += 1
       }
 
+      const isChapterStart = inferBlockIsChapterStart(block)
+      const itemType = isChapterStart ? "chapter" : headingType
+
       visualItems.push({
-        type: headingType,
+        type: itemType,
         text: headingText,
         fontSize: headingFontSize,
         chapterId: block.chapterId ?? null,
         chapterTitle: block.chapterTitle ?? headingText,
-        isChapterStart: Boolean(block.isChapterStart),
+        isChapterStart,
       })
       continue
     }
@@ -638,6 +646,14 @@ function appendVisualItem(body, item, previousItem = null) {
     return
   }
 
+  if (item.type === "chapter") {
+    const chapterHeading = document.createElement("h2")
+    chapterHeading.className = "book-page__chapter-heading"
+    chapterHeading.textContent = item.text
+    body.appendChild(chapterHeading)
+    return
+  }
+
   if (item.type === "subtitle") {
     const subtitle = document.createElement("p")
     subtitle.className = "book-page__subtitle"
@@ -689,11 +705,11 @@ function renderMeasureBody(
 }
 
 function applyChapterContextFromItem(item, chapterState) {
-  if (item.type !== "title" && item.type !== "heading") {
+  if (item.type !== "title" && item.type !== "heading" && item.type !== "chapter") {
     return
   }
 
-  if (item.isChapterStart || item.type === "title") {
+  if (isChapterBoundaryItem(item) || item.type === "title") {
     chapterState.pageChapterTitle = item.chapterTitle ?? item.text
     chapterState.pageIsChapterStart = true
     return
@@ -867,7 +883,17 @@ function placeablesToVisualItems(placeables) {
 }
 
 function isHeadingPlaceable(placeable) {
-  return placeable.type === "title" || placeable.type === "heading"
+  return (
+    placeable.type === "title" ||
+    placeable.type === "heading" ||
+    placeable.type === "chapter"
+  )
+}
+
+function isChapterBoundaryPlaceable(placeable) {
+  return (
+    placeable.type === "chapter" || Boolean(placeable.item?.isChapterStart)
+  )
 }
 
 function isFrontMatterPlaceable(placeable) {
@@ -998,7 +1024,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       return
     }
 
-    if (item.isChapterStart || item.type === "title") {
+    if (isChapterBoundaryItem(item) || item.type === "title") {
       currentActiveChapter = item.chapterTitle ?? item.text
       return
     }
@@ -1018,7 +1044,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
     for (const pageItem of pageItems) {
       if (
         isHeadingVisualItem(pageItem) &&
-        (pageItem.isChapterStart || pageItem.type === "title")
+        (isChapterBoundaryItem(pageItem) || pageItem.type === "title")
       ) {
         const title = pageItem.chapterTitle ?? pageItem.text
         if (title && !chaptersOnPage.includes(title)) {
@@ -1166,9 +1192,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
       return
     }
 
-    const chapterItem = getChapterItemFromPlaceable(placeable)
-
-    if (!chapterItem?.isChapterStart) {
+    if (!isChapterBoundaryPlaceable(placeable)) {
       return
     }
 
@@ -1264,6 +1288,14 @@ function paginateBlocksByDom(flatBlocks, bodyEl, contentMaxHeight) {
 
   for (let placeableIndex = 0; placeableIndex < remainder.length; placeableIndex += 1) {
     const placeable = remainder[placeableIndex]
+
+    if (isChapterBoundaryPlaceable(placeable)) {
+      ensureChapterStartsOnNewPage(placeable)
+      placePlaceable(placeable)
+      flushPage()
+      markPageStartIfEmpty()
+      continue
+    }
 
     ensureChapterStartsOnNewPage(placeable)
 
@@ -1511,6 +1543,19 @@ function BookPageContent({
           if (item.type === "heading") {
             return (
               <h2 key={index} className="book-page__heading">
+                {highlightTextContent(
+                  item.text,
+                  searchQuery,
+                  highlightTracker,
+                  activeSearchOccurrence
+                )}
+              </h2>
+            )
+          }
+
+          if (item.type === "chapter") {
+            return (
+              <h2 key={index} className="book-page__chapter-heading">
                 {highlightTextContent(
                   item.text,
                   searchQuery,

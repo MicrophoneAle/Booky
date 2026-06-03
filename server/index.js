@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 7
+const PARSER_VERSION = 8
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -456,6 +456,17 @@ async function extractHeadingLines(buffer) {
   return headingStrings
 }
 
+function isStandaloneChapterNumber(text, block) {
+  if (!block?.isHeading) {
+    return false
+  }
+  const trimmed = (text ?? "").trim()
+  if (!/^\d{1,2}\.?$/.test(trimmed)) {
+    return false
+  }
+  return (block.fontSize ?? 0) >= 13
+}
+
 function isChapterHeading(block) {
   const blocklist = ["and", "or", "but", "the", "a", "an", "to", "by", "and."]
   if (blocklist.includes(block.text.trim().toLowerCase())) {
@@ -464,8 +475,8 @@ function isChapterHeading(block) {
 
   const text = block.text.trim()
 
-  if (!text.includes(" ") && text.length < 5) {
-    return false
+  if (block.isChapterStart) {
+    return true
   }
 
   if (block.isHeading && block.fontSize === 13) return false
@@ -476,13 +487,9 @@ function isChapterHeading(block) {
     return true
   }
 
-  if (isTocChapterListingLine(text)) {
-    return false
-  }
   if (CHAPTER_PATTERN.test(text)) return true
-  if (text.length < 60 && block.fontSize > 13 && /^\d+[\.\)]\s/.test(text)) {
-    return true
-  }
+  if (isTocChapterListingLine(text)) return false
+  if (isStandaloneChapterNumber(text, block)) return true
 
   return false
 }
@@ -517,6 +524,7 @@ function detectChapters(content, bookTitle = "") {
       blocks: page.blocks.map((block) => ({
         ...block,
         chapterId: id,
+        isChapterStart: false,
       })),
     }))
 
@@ -524,31 +532,39 @@ function detectChapters(content, bookTitle = "") {
   }
 
   const chapters = []
+  const seenChapterIds = new Set()
   let currentChapterId = null
 
   const updatedContent = content.map((page) => ({
     ...page,
     blocks: page.blocks.map((block, blockIndex) => {
       let chapterId = currentChapterId
+      let isChapterStart = false
 
       if (isChapterHeading(block)) {
         const title = block.text.trim()
         const id = slugify(title)
 
-        chapters.push({
-          id,
-          title,
-          pageIndex: page.pageIndex,
-          blockIndex,
-        })
-
-        currentChapterId = id
-        chapterId = id
+        if (!seenChapterIds.has(id)) {
+          seenChapterIds.add(id)
+          chapters.push({
+            id,
+            title,
+            pageIndex: page.pageIndex,
+            blockIndex,
+          })
+          currentChapterId = id
+          chapterId = id
+          isChapterStart = true
+        } else {
+          chapterId = currentChapterId
+        }
       }
 
       return {
         ...block,
         chapterId,
+        isChapterStart,
       }
     }),
   }))
@@ -751,6 +767,19 @@ function buildBlocksFromLines(pageData, headingStrings) {
       continue
     }
 
+    if (lineIndex >= EARLY_TOC_SCAN_LINE_LIMIT && isTocChapterListingLine(text)) {
+      pendingConnective = null
+      blocks.push({
+        text,
+        isHeading: true,
+        fontSize: 15,
+        isChapterStart: true,
+        chapterId: null,
+      })
+      index += 1
+      continue
+    }
+
     if (isTocHeadingCandidate(text, line, headingStrings, lineIndex)) {
       const { run, nextIndex } = collectConsecutiveTocHeadingRun(
         allLines,
@@ -761,7 +790,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
 
       const runIsTocListings = run.every((entry) => isTocChapterListingLine(entry.text))
 
-      if (run.length >= 3 || runIsTocListings) {
+      if (run.length >= 3 && runIsTocListings) {
         pendingConnective = null
         nonEmptyLineIndex += run.length - 1
         index = nextIndex
@@ -771,10 +800,14 @@ function buildBlocksFromLines(pageData, headingStrings) {
       pendingConnective = null
       for (let runIndex = 0; runIndex < run.length; runIndex += 1) {
         const runEntry = run[runIndex]
+        const isListing = isTocChapterListingLine(runEntry.text)
         blocks.push({
           text: runEntry.text,
           isHeading: true,
-          fontSize: Math.max(14, Math.round(runEntry.line.fontSize ?? 16)),
+          fontSize: isListing
+            ? 15
+            : Math.max(14, Math.round(runEntry.line.fontSize ?? 16)),
+          isChapterStart: isListing,
           chapterId: null,
         })
       }

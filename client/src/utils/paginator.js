@@ -10,8 +10,41 @@ export const DEDICATION_SUBTITLE_REGEX = /^To\s+[A-Z]/i
 export const TOC_CHAPTER_LISTING_REGEX =
   /^Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:\s+\S/i
 
+export const CHAPTER_BOUNDARY_REGEX =
+  /^(chapter\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|part\s+(\d+|one|two|three)|prologue|epilogue|introduction|conclusion)\.?$/i
+
 export function isTocChapterListingText(text) {
   return TOC_CHAPTER_LISTING_REGEX.test((text ?? "").trim())
+}
+
+export function inferBlockIsChapterStart(block) {
+  if (block?.isChapterStart === true) {
+    return true
+  }
+  if (block?.isChapterStart === false) {
+    return false
+  }
+  if (!block?.isHeading) {
+    return false
+  }
+
+  const text = (block.text ?? "").trim()
+
+  if (!block.chapterId && isTocChapterListingText(text)) {
+    return false
+  }
+
+  if (CHAPTER_BOUNDARY_REGEX.test(text)) {
+    return true
+  }
+  if (isTocChapterListingText(text)) {
+    return true
+  }
+  if (/^\d{1,2}\.?$/.test(text) && (block.fontSize ?? 0) >= 13) {
+    return true
+  }
+
+  return false
 }
 
 export function isAuthorLineText(text) {
@@ -109,6 +142,10 @@ export function groupFrontMatterPlacementUnits(pack) {
  */
 export function isChapterContentBoundaryItem(item) {
   if (!item) return false
+
+  if (item.type === "chapter") {
+    return true
+  }
 
   if (item.type === "prose" && item.chapterId) {
     return true
@@ -213,7 +250,10 @@ export function flattenDocument(document) {
         fontSize: block.fontSize,
         chapterId,
         chapterTitle: chapterId ? chapterTitleById[chapterId] ?? null : null,
-        isChapterStart: Boolean(block.isHeading),
+        isChapterStart: inferBlockIsChapterStart({
+          ...block,
+          isHeading: Boolean(block.isHeading),
+        }),
         ...(block.isIndented ? { isIndented: true } : {}),
       })
     }
