@@ -48,11 +48,16 @@ function isPdfFile(file) {
   return hasPdfMime || hasPdfExtension
 }
 
-async function pollDocumentParseStatus(documentId, token) {
+async function pollDocumentParseStatus(documentId, getToken) {
   const startedAt = Date.now()
 
   while (Date.now() - startedAt < PARSE_POLL_TIMEOUT_MS) {
     await new Promise((resolve) => setTimeout(resolve, PARSE_POLL_INTERVAL_MS))
+
+    const token = await getToken()
+    if (!token) {
+      throw new Error("Unauthorized")
+    }
 
     const response = await fetch(
       `${API_URL}/documents/${encodeURIComponent(documentId)}/status`,
@@ -63,6 +68,10 @@ async function pollDocumentParseStatus(documentId, token) {
         },
       }
     )
+
+    if (response.status === 401 || response.status === 403) {
+      throw new Error("Unauthorized")
+    }
 
     if (!response.ok) {
       throw new Error("Failed to check processing status")
@@ -85,8 +94,19 @@ async function pollDocumentParseStatus(documentId, token) {
   throw new Error("Processing timed out. Try again in a few minutes.")
 }
 
-function doUpload(file, token, setUploadState, navigate) {
-  setUploadState((state) => ({ ...state, phase: "uploading", progress: 0 }))
+function doUpload(file, getToken, setUploadState, navigate) {
+  return (async () => {
+    const token = await getToken()
+    if (!token) {
+      setUploadState((state) => ({
+        ...state,
+        phase: "error",
+        errorMessage: "Unauthorized",
+      }))
+      return
+    }
+
+    setUploadState((state) => ({ ...state, phase: "uploading", progress: 0 }))
 
   return new Promise((resolve) => {
     const xhr = new XMLHttpRequest()
@@ -116,7 +136,7 @@ function doUpload(file, token, setUploadState, navigate) {
             }))
 
             try {
-              await pollDocumentParseStatus(documentId, token)
+              await pollDocumentParseStatus(documentId, getToken)
               setUploadState((state) => ({ ...state, phase: "done" }))
               setTimeout(() => navigate("/library"), 600)
             } catch (pollError) {
@@ -179,6 +199,7 @@ function doUpload(file, token, setUploadState, navigate) {
     xhr.setRequestHeader("Authorization", `Bearer ${token}`)
     xhr.send(formData)
   })
+  })()
 }
 
 export default function Home() {
@@ -231,7 +252,7 @@ export default function Home() {
       clearTimeout(wakeTimer)
     }
 
-    await doUpload(selectedFile, token, setUploadState, navigate)
+    await doUpload(selectedFile, getToken, setUploadState, navigate)
   }, [getToken, navigate])
 
   const handleInvalidFile = useCallback(() => {

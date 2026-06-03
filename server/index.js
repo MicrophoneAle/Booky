@@ -11,8 +11,8 @@ import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
 const PARSER_VERSION = 22
 
-const MAX_PROSE_BLOCK_WORDS = 120
-const MAX_PROSE_BLOCK_CHARS = 700
+const MAX_PROSE_BLOCK_WORDS = 80
+const MAX_PROSE_BLOCK_CHARS = 500
 
 const PARSE_STATUS = {
   PENDING: "pending",
@@ -563,9 +563,6 @@ function joinSplitWordFragments(text) {
         return match
       }
       if (left.length <= 6 && SPLIT_SYLLABLE_SUFFIX.test(right)) {
-        return `${left}${right}`
-      }
-      if (left.length <= 5 && !/[aeiouy]$/i.test(left)) {
         return `${left}${right}`
       }
       return match
@@ -1758,11 +1755,30 @@ function buildBlocksFromLines(pageData, headingStrings) {
       continue
     }
 
-    previous.text = `${previous.text} ${proseText}`.replace(/\s+/g, " ").trim()
-    if (line.indented) {
-      previous.isIndented = true
+    const previousWordCount = (previous.text ?? "").split(/\s+/).filter(Boolean).length
+    const previousCharCount = (previous.text ?? "").length
+    const proseWordCount = proseText.split(/\s+/).filter(Boolean).length
+    if (
+      previousWordCount >= MAX_PROSE_BLOCK_WORDS ||
+      previousCharCount >= MAX_PROSE_BLOCK_CHARS ||
+      previousWordCount + proseWordCount > MAX_PROSE_BLOCK_WORDS ||
+      previousCharCount + proseText.length + 1 > MAX_PROSE_BLOCK_CHARS
+    ) {
+      const proseBlock = {
+        text: proseText,
+        isHeading: false,
+        fontSize: 12,
+        chapterId: null,
+      }
+      applyProseBlockDefaults(proseBlock, line, proseText)
+      blocks.push(proseBlock)
+    } else {
+      previous.text = `${previous.text} ${proseText}`.replace(/\s+/g, " ").trim()
+      if (line.indented) {
+        previous.isIndented = true
+      }
+      applyProseFormattingToBlock(previous, line)
     }
-    applyProseFormattingToBlock(previous, line)
     index += 1
   }
 

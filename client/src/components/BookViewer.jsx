@@ -2321,7 +2321,7 @@ export default function BookViewer({
       const fitScale = Math.min(availW / naturalW, availH / naturalH)
       const fillScale = Math.max(availW / naturalW, availH / naturalH)
       const next =
-        isMobile && isMobileFullscreen ? fillScale : fitScale
+        isFullscreen || (isMobile && isMobileFullscreen) ? fillScale : fitScale
       setScale(next > 0 && Number.isFinite(next) ? next : 1)
     }
 
@@ -2332,7 +2332,7 @@ export default function BookViewer({
       window.removeEventListener("resize", recomputeScale)
       document.removeEventListener("fullscreenchange", recomputeScale)
     }
-  }, [showSpreadLayout, isMobile, isMobileFullscreen, activePageHeight, pages.length, isPaginating])
+  }, [showSpreadLayout, isMobile, isMobileFullscreen, isFullscreen, activePageHeight, pages.length, isPaginating])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)")
