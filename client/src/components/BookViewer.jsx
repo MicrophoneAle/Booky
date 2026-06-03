@@ -20,7 +20,6 @@ const PAGE_HEIGHT_PX = 600
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const SPINE_PX = 1
 const PAGE_NUMBER_RESERVED_PX = 20
-const BODY_DESCENDER_PAD_PX = 4
 const MOBILE_BROWSER_UI_PX = 40
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
 const MOBILE_PAGE_NUMBER_RESERVED_PX =
@@ -1991,7 +1990,7 @@ export default function BookViewer({
       measureElements.page.style.paddingLeft = pagePad.paddingLeft ?? "0"
       measureElements.page.style.paddingBottom = pagePad.paddingBottom ?? "0"
       measureElements.body.style.padding = "0"
-      measureElements.body.style.paddingBottom = `${BODY_DESCENDER_PAD_PX}px`
+      measureElements.body.style.paddingBottom = `${PAGE_NUMBER_RESERVED_PX}px`
       measureElements.footer.style.height = `${pageNumberReservedPx}px`
 
       const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
