@@ -1078,24 +1078,8 @@ function splitProseAcrossPages(proseItem, bodyEl, pageLayout, alreadyOnPage) {
     return null
   }
 
-  const { maxLines } = getPageTextCapacity(
-    pageLayout.contentMaxHeight,
-    pageLayout.font,
-    pageLayout.line
-  )
-  const wordsPerLineHint = Math.max(8, Math.ceil(words.length / Math.max(1, maxLines)))
-  const estimatedSplit = Math.min(
-    words.length,
-    Math.max(1, maxLines * wordsPerLineHint)
-  )
-
   let low = 1
-  let high = estimatedSplit
-  if (words.length > 80) {
-    low = Math.max(1, estimatedSplit - 30)
-    high = Math.min(words.length, estimatedSplit + 30)
-  }
-
+  let high = words.length
   let best = 0
 
   while (low <= high) {
