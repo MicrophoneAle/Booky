@@ -1624,15 +1624,14 @@ function BookPageContent({
   )
 }
 
-function isMeaningfulChapterTitle(title) {
-  const trimmed = (title ?? "").trim()
-  if (trimmed.length < 4) {
-    return false
-  }
-  if (/^(and|or|but|the|a|an)$/i.test(trimmed)) {
-    return false
-  }
-  return true
+function spreadHasChapterId(pages, pageIndices) {
+  return pageIndices.some((pageIndex) => {
+    const page = pages[pageIndex]
+    if (!page) {
+      return false
+    }
+    return (page.visualItems ?? []).some((item) => item.chapterId != null)
+  })
 }
 
 function collectChapterTitlesForPage(page) {
@@ -1655,16 +1654,15 @@ function collectChapterTitlesForPage(page) {
   return []
 }
 
-function formatNavChapterTitle(pages, currentPage, isSpreadView, validChapterTitles = null) {
-  // No chapters detected at all — never fall back to arbitrary heading text.
-  if (validChapterTitles && validChapterTitles.size === 0) {
-    return ""
-  }
-
+function formatNavChapterTitle(pages, currentPage, isSpreadView) {
   const pageIndices = [currentPage - 1]
 
   if (isSpreadView && currentPage < pages.length) {
     pageIndices.push(currentPage)
+  }
+
+  if (!spreadHasChapterId(pages, pageIndices)) {
+    return ""
   }
 
   const titles = []
@@ -1674,20 +1672,24 @@ function formatNavChapterTitle(pages, currentPage, isSpreadView, validChapterTit
     const pageTitles = collectChapterTitlesForPage(page)
 
     for (const title of pageTitles) {
-      if (!title || titles.includes(title)) {
-        continue
+      if (title && !titles.includes(title)) {
+        titles.push(title)
       }
-      if (!isMeaningfulChapterTitle(title)) {
-        continue
-      }
-      if (validChapterTitles && !validChapterTitles.has(title)) {
-        continue
-      }
-      titles.push(title)
     }
   }
 
-  return titles.join(" · ")
+  const result = titles.join(" · ").trim()
+  if (!result) {
+    return ""
+  }
+  if (/^(and|or|but|the|a|an)$/i.test(result)) {
+    return ""
+  }
+  if (!result.includes("·") && result.length < 4) {
+    return ""
+  }
+
+  return result
 }
 
 function PageCounterControl({
@@ -2141,23 +2143,7 @@ export default function BookViewer({
   const isFinalOddSpreadSingle =
     isSpreadView && totalPages % 2 === 1 && Boolean(leftPage) && !rightPage
   const showSpreadLayout = isSpreadView && !isFinalOddSpreadSingle
-  const validChapterTitles = useMemo(() => {
-    const titles = new Set()
-    for (const chapter of bookDocument?.chapters ?? []) {
-      const title = (chapter?.title ?? "").trim()
-      if (title) {
-        titles.add(title)
-      }
-    }
-    return titles
-  }, [bookDocument?.chapters])
-
-  const navChapterTitle = formatNavChapterTitle(
-    pages,
-    currentPage,
-    showSpreadLayout,
-    validChapterTitles
-  )
+  const navChapterTitle = formatNavChapterTitle(pages, currentPage, showSpreadLayout)
   const progressPercent = totalPages > 0 ? (currentPage / totalPages) * 100 : 0
 
   const jumpToPage = useCallback(

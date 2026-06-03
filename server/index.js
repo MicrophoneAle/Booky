@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 3
+const PARSER_VERSION = 4
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -246,17 +246,25 @@ function getItemX(item) {
   return Number.isFinite(matrix[4]) ? matrix[4] : 0
 }
 
-const Y_LINE_BREAK_DELTA = 2
-const Y_SAME_LINE_TOLERANCE = 2
-
-const PAGE_NUMBER_DECORATOR_REGEX = /^-\s*\d+\s*-$/
-const INLINE_TOC_HEADER_REGEX = /^-\s*\d+\s*-\s*.+$/
-const PURE_URL_LINE_REGEX = /^(https?:\/\/\S+|www\.\S+)$/i
+const Y_LINE_GROUP_TOLERANCE_PX = 3
+const INDENT_THRESHOLD_PX = 12
 const RUNNING_HEADER_MIN_PAGES = 3
-const INDENT_THRESHOLD_PX = 15
 
 const INLINE_PAGE_DECORATOR_REGEX = /\s*-\s*\d+\s*-\s*/g
 const FOOTNOTE_REFERENCE_REGEX = /\[\d+\]/g
+
+const STANDALONE_PAGE_NUMBER_REGEX = /^-?\s*\d+\s*-?\s*$/
+const TOC_HEADER_LINE_REGEX = /^-\s*\d+\s*-\s*.+$/
+
+const PROSE_BLOCKLIST_WORD_REGEX = /^(and|or|but|the|a|an|to|by)$/i
+
+function medianValue(values) {
+  if (values.length === 0) {
+    return 0
+  }
+  const sorted = [...values].sort((a, b) => a - b)
+  return sorted[Math.floor(sorted.length / 2)]
+}
 
 function stripInlineArtifacts(text) {
   if (!text) {
@@ -270,145 +278,132 @@ function stripInlineArtifacts(text) {
     .trim()
 }
 
-function normalizePdfLine(line) {
-  if (line && typeof line === "object" && "text" in line) {
-    return {
-      text: (line.text ?? "").trim(),
-      indented: Boolean(line.indented),
-    }
-  }
-
-  const text = typeof line === "string" ? line : String(line ?? "")
-  const trimmed = text.trim()
-  const indented = /^[\s\t]{2,}/.test(text) || text.startsWith("\t")
-
-  return { text: trimmed, indented }
-}
-
-function lineText(line) {
-  return normalizePdfLine(line).text
-}
-
-function lineIndented(line) {
-  return normalizePdfLine(line).indented
-}
-
-function isPageNumberDecoratorLine(text) {
-  return PAGE_NUMBER_DECORATOR_REGEX.test((text ?? "").trim())
-}
-
-function isInlineTocHeaderLine(text) {
-  return INLINE_TOC_HEADER_REGEX.test((text ?? "").trim())
-}
-
-function isPureUrlLine(text) {
-  return PURE_URL_LINE_REGEX.test((text ?? "").trim())
-}
-
 function shouldDropExtractedLine(text, occurrenceCount) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
     return true
   }
-  if (isPageNumberDecoratorLine(trimmed)) {
+  if (STANDALONE_PAGE_NUMBER_REGEX.test(trimmed)) {
     return true
   }
-  if (isInlineTocHeaderLine(trimmed)) {
-    return true
-  }
-  if (isPureUrlLine(trimmed)) {
+  if (TOC_HEADER_LINE_REGEX.test(trimmed)) {
     return true
   }
   if (occurrenceCount >= RUNNING_HEADER_MIN_PAGES) {
     return true
   }
+  if (/^https?:\/\//i.test(trimmed)) {
+    return true
+  }
+  if (/^www\./i.test(trimmed)) {
+    return true
+  }
   return false
 }
 
-function medianValue(values) {
-  if (values.length === 0) {
-    return 0
+function groupTextItemsIntoLines(items) {
+  const lineGroups = []
+
+  for (const item of items) {
+    let matchedGroup = null
+
+    for (const group of lineGroups) {
+      if (Math.abs(group.y - item.y) <= Y_LINE_GROUP_TOLERANCE_PX) {
+        matchedGroup = group
+        break
+      }
+    }
+
+    if (!matchedGroup) {
+      matchedGroup = { y: item.y, items: [] }
+      lineGroups.push(matchedGroup)
+    }
+
+    matchedGroup.items.push(item)
+    const itemCount = matchedGroup.items.length
+    matchedGroup.y =
+      matchedGroup.items.reduce((sum, entry) => sum + entry.y, 0) / itemCount
   }
-  const sorted = [...values].sort((a, b) => a - b)
-  return sorted[Math.floor(sorted.length / 2)]
+
+  const lines = []
+
+  for (const group of lineGroups) {
+    group.items.sort((a, b) => a.x - b.x)
+    const leftmost = group.items[0]
+    const text = group.items
+      .map((entry) => entry.str)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim()
+
+    if (!text) {
+      continue
+    }
+
+    const fontSize = Math.max(...group.items.map((entry) => entry.fontSize))
+
+    lines.push({
+      text,
+      x: leftmost.x,
+      y: group.y,
+      fontSize,
+    })
+  }
+
+  lines.sort((a, b) => b.y - a.y)
+
+  return lines
 }
 
 async function extractLinesByPosition(buffer) {
-  const sameLineTolerance = 0.5
   const loadingTask = getDocument({ data: new Uint8Array(buffer) })
   const pdf = await loadingTask.promise
-  const pageLineArrays = []
+  const pagesBeforeFilter = []
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber)
     const textContent = await page.getTextContent()
-
-    const pageLines = []
-    let currentLine = ""
-    let currentStartX = null
-    let previousY = null
-
-    const flushLine = () => {
-      const trimmed = currentLine.trim()
-      if (trimmed) {
-        pageLines.push({ text: trimmed, startX: currentStartX ?? 0 })
-      }
-      currentLine = ""
-      currentStartX = null
-    }
+    const items = []
 
     for (const item of textContent.items) {
-      const fragment = item.str ?? ""
-      if (!fragment) {
+      const str = (item.str ?? "").trim()
+      if (!str) {
         continue
       }
 
-      const currentY = getItemY(item)
-      const itemX = getItemX(item)
-
-      if (previousY !== null) {
-        const yDelta = currentY - previousY
-
-        if (yDelta < -Y_LINE_BREAK_DELTA) {
-          flushLine()
-          currentLine = fragment
-          currentStartX = itemX
-        } else {
-          currentLine = currentLine ? `${currentLine} ${fragment}` : fragment
-          if (currentStartX === null) {
-            currentStartX = itemX
-          }
-        }
-      } else {
-        currentLine = fragment
-        currentStartX = itemX
-      }
-
-      previousY = currentY
+      items.push({
+        str,
+        x: getItemX(item),
+        y: getItemY(item),
+        fontSize: getItemFontSize(item),
+      })
     }
 
-    flushLine()
+    const rawLines = groupTextItemsIntoLines(items)
+    const medianX = medianValue(rawLines.map((line) => line.x))
 
-    const medianStartX = medianValue(pageLines.map((line) => line.startX))
-    for (const line of pageLines) {
-      line.indented = line.startX > medianStartX + INDENT_THRESHOLD_PX
+    for (const line of rawLines) {
+      line.indented = line.x > medianX + INDENT_THRESHOLD_PX
     }
 
-    pageLineArrays.push(pageLines)
+    pagesBeforeFilter.push({ lines: rawLines })
   }
 
-  const lineOccurrences = new Map()
-  for (const pageLines of pageLineArrays) {
-    for (const line of pageLines) {
-      lineOccurrences.set(line.text, (lineOccurrences.get(line.text) ?? 0) + 1)
+  const lineFrequency = new Map()
+  for (const page of pagesBeforeFilter) {
+    for (const line of page.lines) {
+      lineFrequency.set(line.text, (lineFrequency.get(line.text) ?? 0) + 1)
     }
   }
 
-  const filteredLines = []
-  for (const pageLines of pageLineArrays) {
-    for (const line of pageLines) {
-      const count = lineOccurrences.get(line.text) ?? 0
-      if (shouldDropExtractedLine(line.text, count)) {
+  const pageData = []
+
+  for (const page of pagesBeforeFilter) {
+    const lines = []
+
+    for (const line of page.lines) {
+      const occurrenceCount = lineFrequency.get(line.text) ?? 0
+      if (shouldDropExtractedLine(line.text, occurrenceCount)) {
         continue
       }
 
@@ -417,11 +412,19 @@ async function extractLinesByPosition(buffer) {
         continue
       }
 
-      filteredLines.push({ text: cleanedText, indented: Boolean(line.indented) })
+      lines.push({
+        text: cleanedText,
+        indented: Boolean(line.indented),
+        fontSize: line.fontSize,
+        x: line.x,
+        y: line.y,
+      })
     }
+
+    pageData.push({ lines })
   }
 
-  return filteredLines
+  return pageData
 }
 
 async function extractHeadingLines(buffer) {
@@ -448,21 +451,14 @@ async function extractHeadingLines(buffer) {
   return headingStrings
 }
 
-const CHAPTER_TITLE_BLOCKLIST = new Set([
-  "and",
-  "or",
-  "but",
-  "the",
-  "a",
-  "an",
-  "to",
-  "by",
-])
-
 function isChapterHeading(block) {
+  const blocklist = ["and", "or", "but", "the", "a", "an", "to", "by", "and."]
+  if (blocklist.includes(block.text.trim().toLowerCase())) {
+    return false
+  }
+
   const text = block.text.trim()
 
-  if (CHAPTER_TITLE_BLOCKLIST.has(text.toLowerCase())) return false
   if (block.isHeading && block.fontSize === 13) return false
   if (/^To\s+[A-Z]/.test(text)) return false
   if (/^(by|written by|translated by)\s+/i.test(text)) return false
@@ -509,163 +505,132 @@ function detectChapters(content) {
   return { chapters, content: updatedContent }
 }
 
-function linesFromPdfText(input) {
-  if (Array.isArray(input)) {
-    return input.map(normalizePdfLine)
-  }
-
-  return (input ?? "")
-    .split("\n")
-    .map((line) => normalizePdfLine(line))
-    .filter((line) => line.text)
-}
-
-function isStructuralLine(text, index, allLines) {
-  const trimmed = text.trim()
-  if (!trimmed) return false
-
-  const nonEmptyLines = allLines
-    .map((line) => lineText(line))
-    .filter((line) => line)
-
-  const docPosition = nonEmptyLines.findIndex((line) => line === trimmed)
-
-  // Dedication lines near the start of the book (e.g. "To Charlie Shribner...")
-  if (docPosition >= 0 && docPosition < 15 && /^To\s+[A-Z]/.test(trimmed)) {
+function isStructuralLine(text, nonEmptyLineIndex) {
+  if (/^(by|written by|translated by)\s+[A-Z]/i.test(text)) {
     return true
   }
 
-  // "by Author Name" / "written by" / "translated by"
-  if (/^(by|written by|translated by)\s+[A-Z]/i.test(trimmed)) return true
-
-  // "A Novel in..." / "A Story of..." etc
-  if (/^A (Novel|Story|Tale|Memoir|Chronicle|History|Collection|Journey|Record)\b/i.test(trimmed)) {
+  if (nonEmptyLineIndex < 20 && /^To\s+[A-Z]/.test(text)) {
     return true
   }
 
-  // Chapter subtitle: short line immediately after a bare chapter label
-  const prevNonEmpty = nonEmptyLines
-    .slice(0, docPosition >= 0 ? docPosition : nonEmptyLines.length)
-    .slice(-1)[0] ?? ""
-  const isAfterChapterLabel =
-    /^(Chapter|Part|Section|Prologue|Epilogue)\s+(\d+|[IVXLCDM]+|[A-Za-z]+)$/i.test(
-      prevNonEmpty
-    )
-  if (isAfterChapterLabel && trimmed.length > 3 && trimmed.length < 80) return true
-
-  // Short line near top of document (positions 1-5 among non-empty lines) = title page subtitle
-  if (
-    docPosition >= 1 &&
-    docPosition <= 5 &&
-    trimmed.length >= 8 &&
-    trimmed.length <= 70 &&
-    !/^(Chapter|Part|Section|Prologue|Epilogue)/i.test(trimmed) &&
-    !/^https?:\/\//.test(trimmed) &&
-    !/^[•·—*\d]/.test(trimmed)
-  ) {
+  if (/^A (Novel|Story|Tale|Memoir)\b/i.test(text)) {
     return true
   }
 
   return false
 }
 
-function buildBlocksFromLines(lines, headingStrings) {
+function isHeadingLine(text, line, headingStrings) {
+  if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
+    return false
+  }
+
+  if (headingStrings.has(text)) {
+    return true
+  }
+
+  if (CHAPTER_PATTERN.test(text)) {
+    return true
+  }
+
+  if (text.length < 60 && line.fontSize >= 14) {
+    return true
+  }
+
+  return false
+}
+
+function shouldStartNewProseBlock(line, previousBlock) {
+  if (line.indented) {
+    return true
+  }
+
+  if (!previousBlock) {
+    return true
+  }
+
+  if (previousBlock.isHeading) {
+    return true
+  }
+
+  const text = line.text.trim()
+  const prevTrim = (previousBlock.text ?? "").trim()
+
+  if (/^[A-Z]/.test(text) && /[.!?]$/.test(prevTrim)) {
+    return true
+  }
+
+  if (/^["“”'']\s*[A-Z]/.test(text)) {
+    return true
+  }
+
+  return false
+}
+
+function buildBlocksFromLines(pageData, headingStrings) {
   const blocks = []
-  const bulletCharsRegex = /^([•·])\s*$/
-  const inlineBulletRegex = /^([•·])\s*(.*)$/
-  const subBulletLineRegex = /^[o*]\s+/i
+  let nonEmptyLineIndex = 0
 
-  for (let index = 0; index < lines.length; index += 1) {
-    const normalizedLine = normalizePdfLine(lines[index])
-    const trimmedLine = stripInlineArtifacts(normalizedLine.text)
-    const isIndented = normalizedLine.indented
-
-    if (!trimmedLine) {
-      blocks.push({ text: "", isHeading: false, fontSize: 12, chapterId: null })
-      continue
-    }
-
-    // 1. Structural line (subtitle, author, dedication) — before font-size headings
-    if (isStructuralLine(trimmedLine, index, lines)) {
-      blocks.push({ text: trimmedLine, isHeading: true, fontSize: 13, chapterId: null })
-      continue
-    }
-
-    // 2. Known heading by font size
-    if (headingStrings.has(trimmedLine)) {
-      blocks.push({ text: trimmedLine, isHeading: true, fontSize: 16, chapterId: null })
-      continue
-    }
-
-    // 3. Lone bullet char — merge with next line
-    if (bulletCharsRegex.test(trimmedLine) && index + 1 < lines.length) {
-      let nextText = lineText(lines[index + 1])
-      if (inlineBulletRegex.test(nextText)) {
-        nextText = nextText.replace(inlineBulletRegex, "$2").trim()
-      }
-      blocks.push({
-        text: `${trimmedLine} ${nextText}`.replace(/\s+/g, " ").trim(),
-        isHeading: false,
-        fontSize: 12,
-        chapterId: null,
-      })
-      index += 1
-      continue
-    }
-
-    // 4. Inline bullet
-    if (inlineBulletRegex.test(trimmedLine)) {
-      const marker = trimmedLine.match(inlineBulletRegex)[1]
-      const restOfText = trimmedLine.match(inlineBulletRegex)[2].trim()
-      blocks.push({
-        text: `${marker} ${restOfText}`,
-        isHeading: false,
-        fontSize: 12,
-        chapterId: null,
-      })
-      continue
-    }
-
-    // 5. Merge continuation lines (wrapped lines of the same paragraph)
-    if (blocks.length > 0 && !isIndented) {
-      const previousBlock = blocks[blocks.length - 1]
-      const prevText = previousBlock?.text ?? ""
-      const prevTrim = prevText.trim()
-
-      const startsCapital = /^[A-Z]/.test(trimmedLine)
-      const prevEndsSentence = /[.!?]["”'']?$/.test(prevTrim)
-      const startsQuoteCapital = /^["“'']\s*[A-Z]/.test(trimmedLine)
-
-      const shouldMerge =
-        previousBlock &&
-        !previousBlock.isHeading &&
-        !previousBlock.isIndented &&
-        !prevText.includes("http://") &&
-        !prevText.includes("https://") &&
-        !/[:\)\/]$/.test(prevTrim) &&
-        !/^[•·]\s/.test(trimmedLine) &&
-        !subBulletLineRegex.test(trimmedLine) &&
-        !/^\d+[\.\)]/.test(trimmedLine) &&
-        !/^[a-z][\.\)]/i.test(trimmedLine) &&
-        !trimmedLine.endsWith(":") &&
-        !(startsCapital && prevEndsSentence) &&
-        !startsQuoteCapital &&
-        trimmedLine.length > 0
-
-      if (shouldMerge) {
-        previousBlock.text = (prevText + " " + trimmedLine).replace(/\s+/g, " ").trim()
+  for (const page of pageData) {
+    for (const line of page.lines ?? []) {
+      const text = (line.text ?? "").trim()
+      if (!text) {
         continue
       }
-    }
 
-    // 6. Plain block
-    blocks.push({
-      text: trimmedLine,
-      isHeading: false,
-      fontSize: 12,
-      chapterId: null,
-      ...(isIndented ? { isIndented: true } : {}),
-    })
+      const lineIndex = nonEmptyLineIndex
+      nonEmptyLineIndex += 1
+
+      if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
+        blocks.push({
+          text,
+          isHeading: false,
+          fontSize: 12,
+          chapterId: null,
+        })
+        continue
+      }
+
+      if (isStructuralLine(text, lineIndex)) {
+        blocks.push({
+          text,
+          isHeading: true,
+          fontSize: 13,
+          chapterId: null,
+        })
+        continue
+      }
+
+      if (isHeadingLine(text, line, headingStrings)) {
+        blocks.push({
+          text,
+          isHeading: true,
+          fontSize: Math.max(14, Math.round(line.fontSize ?? 16)),
+          chapterId: null,
+        })
+        continue
+      }
+
+      const previousBlock = blocks.length > 0 ? blocks[blocks.length - 1] : null
+
+      if (shouldStartNewProseBlock(line, previousBlock)) {
+        const proseBlock = {
+          text,
+          isHeading: false,
+          fontSize: 12,
+          chapterId: null,
+        }
+        if (line.indented) {
+          proseBlock.isIndented = true
+        }
+        blocks.push(proseBlock)
+        continue
+      }
+
+      const previous = blocks[blocks.length - 1]
+      previous.text = `${previous.text} ${text}`.replace(/\s+/g, " ").trim()
+    }
   }
 
   return blocks
@@ -750,64 +715,48 @@ function blocksToContent(blocks, blocksPerPage = 40) {
   return content
 }
 
-function hasDetectedTitleBlock(blocks) {
-  return blocks.slice(0, 20).some((block) => block.isHeading && (block.fontSize ?? 0) > 14)
-}
-
-function titleFromFilename(fileName) {
-  if (!fileName || typeof fileName !== "string") {
-    return ""
-  }
-
-  return fileName
-    .replace(/\.pdf$/i, "")
-    .replace(/[-_]+/g, " ")
-    .trim()
-}
-
-function prependSyntheticTitleBlocks(blocks, parsedText, fileName) {
-  if (hasDetectedTitleBlock(blocks)) {
-    return blocks
-  }
-
-  let titleText = (parsedText?.info?.Title ?? "").trim()
-  let authorText = (parsedText?.info?.Author ?? "").trim()
-
-  if (!titleText) {
-    titleText = titleFromFilename(fileName)
-  }
-
-  if (!titleText) {
-    return blocks
-  }
-
-  const synthetic = [
-    { text: titleText, isHeading: true, fontSize: 20, chapterId: null },
-  ]
-
-  if (authorText) {
-    const authorLine = /^by\s/i.test(authorText) ? authorText : `By ${authorText}`
-    synthetic.push({
-      text: authorLine,
-      isHeading: true,
-      fontSize: 13,
-      chapterId: null,
-    })
-  }
-
-  return [...synthetic, ...blocks]
-}
-
 async function parsePdfBuffer(buffer, fileName = "") {
-  const [parsedText, headingStrings, positionedLines] = await Promise.all([
+  const [parsedText, headingStrings, pageData] = await Promise.all([
     pdfParse(buffer),
     extractHeadingLines(buffer),
     extractLinesByPosition(buffer),
   ])
 
-  const lines = linesFromPdfText(positionedLines)
-  let blocks = buildBlocksFromLines(lines, headingStrings)
-  blocks = prependSyntheticTitleBlocks(blocks, parsedText, fileName)
+  let blocks = buildBlocksFromLines(pageData, headingStrings)
+
+  const hasTitleHeading = blocks
+    .slice(0, 10)
+    .some((block) => block.isHeading && (block.fontSize ?? 0) > 14)
+
+  if (!hasTitleHeading) {
+    const titleText = (parsedText?.info?.Title ?? "").trim()
+    const authorText = (parsedText?.info?.Author ?? "").trim()
+    const synthetic = []
+
+    if (titleText) {
+      synthetic.push({
+        text: titleText,
+        isHeading: true,
+        fontSize: 20,
+        chapterId: null,
+      })
+    }
+
+    if (authorText) {
+      const authorLine = /^by\s/i.test(authorText) ? authorText : `By ${authorText}`
+      synthetic.push({
+        text: authorLine,
+        isHeading: true,
+        fontSize: 13,
+        chapterId: null,
+      })
+    }
+
+    if (synthetic.length > 0) {
+      blocks = [...synthetic, ...blocks]
+    }
+  }
+
   const content = blocksToContent(blocks)
   const { chapters, content: contentWithChapters } = detectChapters(content)
   const wordCount = Math.max(
