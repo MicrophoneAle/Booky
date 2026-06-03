@@ -7,6 +7,7 @@ import {
   flattenDocument,
   groupFrontMatterPlacementUnits,
   inferBlockIsChapterStart,
+  isChapterBoundaryText,
   isFrontMatterVisualType,
   isTitlePageVisualItems,
   resolveHeadingVisualType,
@@ -136,7 +137,11 @@ function isHeadingVisualItem(item) {
 }
 
 function isChapterBoundaryItem(item) {
-  return item?.type === "chapter" || Boolean(item?.isChapterStart)
+  return (
+    item?.type === "chapter" ||
+    Boolean(item?.isChapterStart) ||
+    isChapterBoundaryText(item?.text)
+  )
 }
 
 function proseParagraphClassName(previousItem, proseItem = null) {
@@ -560,23 +565,38 @@ function groupBlocksForDisplay(blocks) {
 
     if (block.isHeading) {
       const headingFontSize = block.fontSize ?? 16
-      const headingType = resolveHeadingVisualType(headingFontSize, text)
+      const isChapterStart = inferBlockIsChapterStart(block)
       let headingText = text
       const nextBlock = expandedBlocks[index + 1]
       const nextText = (nextBlock?.text ?? "").trim()
 
       if (
-        (headingType === "heading" || headingType === "title") &&
-        nextBlock?.isHeading &&
-        nextText &&
-        CHAPTER_LABEL_REGEX.test(text)
+        !isChapterStart &&
+        !isChapterBoundaryText(text) &&
+        !isChapterBoundaryText(nextText)
       ) {
-        headingText = `${text}: ${nextText}`
-        index += 1
+        const headingType = resolveHeadingVisualType(headingFontSize, text)
+        const nextLooksLikeSplitLabel =
+          nextBlock?.isHeading &&
+          nextText &&
+          (/^chapter$/i.test(text) && /^(\d+|[ivxlcdm]+|one|two|three|four|five|six)$/i.test(nextText))
+
+        if (
+          (headingType === "heading" || headingType === "title") &&
+          nextBlock?.isHeading &&
+          nextText &&
+          (CHAPTER_LABEL_REGEX.test(text) || nextLooksLikeSplitLabel)
+        ) {
+          headingText = nextLooksLikeSplitLabel
+            ? `${text} ${nextText}`
+            : `${text}: ${nextText}`
+          index += 1
+        }
       }
 
-      const isChapterStart = inferBlockIsChapterStart(block)
-      const itemType = isChapterStart ? "chapter" : headingType
+      const itemType = isChapterStart
+        ? "chapter"
+        : resolveHeadingVisualType(headingFontSize, headingText)
 
       visualItems.push({
         type: itemType,

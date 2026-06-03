@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 9
+const PARSER_VERSION = 10
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -274,6 +274,19 @@ function medianValue(values) {
   return sorted[Math.floor(sorted.length / 2)]
 }
 
+function normalizeExtractedText(text) {
+  if (!text) {
+    return ""
+  }
+
+  return stripInlineArtifacts(
+    text
+      .replace(/\u00AD/g, "")
+      .replace(/\bfi\s+(?=[a-z])/gi, "fi")
+      .replace(/\bfl\s+(?=[a-z])/gi, "fl")
+  )
+}
+
 function stripInlineArtifacts(text) {
   if (!text) {
     return ""
@@ -284,6 +297,14 @@ function stripInlineArtifacts(text) {
     .replace(FOOTNOTE_REFERENCE_REGEX, "")
     .replace(/\s+/g, " ")
     .trim()
+}
+
+function isNarrativeBoundaryLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || isTocChapterListingLine(trimmed)) {
+    return false
+  }
+  return CHAPTER_PATTERN.test(trimmed)
 }
 
 function shouldDropExtractedLine(text, occurrenceCount) {
@@ -415,7 +436,7 @@ async function extractLinesByPosition(buffer) {
         continue
       }
 
-      const cleanedText = stripInlineArtifacts(line.text)
+      const cleanedText = normalizeExtractedText(line.text)
       if (!cleanedText) {
         continue
       }
@@ -490,13 +511,17 @@ function buildRepeatedChapterBoundaryKeys(allLines) {
       continue
     }
     const key = trimmed.toLowerCase()
-    if (CHAPTER_PATTERN.test(trimmed) || /^\d{1,2}\.?$/.test(trimmed)) {
+    if (/^\d{1,2}\.?$/.test(trimmed)) {
+      freq.set(key, (freq.get(key) ?? 0) + 1)
+      continue
+    }
+    if (/^chapter\s+\d{1,2}\.?$/i.test(trimmed)) {
       freq.set(key, (freq.get(key) ?? 0) + 1)
     }
   }
 
   return new Set(
-    [...freq.entries()].filter(([, count]) => count >= 2).map(([key]) => key)
+    [...freq.entries()].filter(([, count]) => count >= 3).map(([key]) => key)
   )
 }
 
@@ -509,12 +534,19 @@ function isChapterHeading(block, repeatedBoundaryKeys) {
   const text = block.text.trim()
   const boundaryKey = text.toLowerCase()
 
-  if (repeatedBoundaryKeys?.has(boundaryKey)) {
+  if (block.isChapterStart) {
+    return true
+  }
+
+  if (/^\d{1,2}\.?$/.test(text) && repeatedBoundaryKeys?.has(boundaryKey)) {
     return false
   }
 
-  if (block.isChapterStart) {
-    return true
+  if (
+    /^chapter\s+\d{1,2}\.?$/i.test(text) &&
+    repeatedBoundaryKeys?.has(boundaryKey)
+  ) {
+    return false
   }
 
   if (block.isHeading && block.fontSize === 13) return false
@@ -589,7 +621,10 @@ function detectChapters(content, bookTitle = "", repeatedBoundaryKeys = new Set(
         if (PART_HEADING_PATTERN.test(title)) {
           currentPartId = id
           currentPartTitle = title
-        } else if (currentPartId && /^\d{1,2}\.?$/.test(title)) {
+        } else if (
+          currentPartId &&
+          (/^\d{1,2}\.?$/.test(title) || /^chapter\s+/i.test(title))
+        ) {
           id = `${currentPartId}-${slugify(title)}`
           chapterTitle = `${currentPartTitle ?? currentPartId} — ${title}`
         }
@@ -851,6 +886,26 @@ function buildBlocksFromLines(pageData, headingStrings) {
       continue
     }
 
+    if (isNarrativeBoundaryLine(text)) {
+      const boundaryKey = text.trim().toLowerCase()
+      const isRepeatedChapterNumber =
+        /^chapter\s+\d{1,2}\.?$/i.test(text.trim()) &&
+        repeatedBoundaryKeys.has(boundaryKey)
+
+      if (!isRepeatedChapterNumber || PART_HEADING_PATTERN.test(text.trim())) {
+        pendingConnective = null
+        blocks.push({
+          text: text.trim(),
+          isHeading: true,
+          fontSize: 15,
+          isChapterStart: true,
+          chapterId: null,
+        })
+        index += 1
+        continue
+      }
+    }
+
     if (isTocHeadingCandidate(text, line, headingStrings, lineIndex)) {
       const { run, nextIndex } = collectConsecutiveTocHeadingRun(
         allLines,
@@ -871,14 +926,16 @@ function buildBlocksFromLines(pageData, headingStrings) {
       pendingConnective = null
       for (let runIndex = 0; runIndex < run.length; runIndex += 1) {
         const runEntry = run[runIndex]
-        const isListing = isTocChapterListingLine(runEntry.text)
+        const runText = runEntry.text.trim()
+        const isListing = isTocChapterListingLine(runText)
+        const isBoundary = isNarrativeBoundaryLine(runText)
         blocks.push({
-          text: runEntry.text,
+          text: runText,
           isHeading: true,
-          fontSize: isListing
+          fontSize: isListing || isBoundary
             ? 15
             : Math.max(14, Math.round(runEntry.line.fontSize ?? 16)),
-          isChapterStart: isListing,
+          isChapterStart: isListing || isBoundary,
           chapterId: null,
         })
       }

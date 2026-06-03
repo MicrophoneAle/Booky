@@ -29,13 +29,17 @@ export function buildChapterPageMap(measuredPages, apiChapters) {
         continue
       }
 
-      if (
-        page.isChapterStart &&
-        (page.chapterTitle === chapter.title ||
-          page.activeChapterTitle === chapter.title)
-      ) {
-        map[chapter.id] = page.pageNumber
-        continue
+      if (page.isChapterStart) {
+        const titles = [
+          page.chapterTitle,
+          page.activeChapterTitle,
+          ...(page.chaptersOnPage ?? []),
+        ].filter(Boolean)
+
+        if (titles.includes(chapter.title)) {
+          map[chapter.id] = page.pageNumber
+          continue
+        }
       }
 
       for (const item of page.visualItems ?? []) {
@@ -61,6 +65,10 @@ export function isTocChapterListingText(text) {
   return TOC_CHAPTER_LISTING_REGEX.test((text ?? "").trim())
 }
 
+export function isChapterBoundaryText(text) {
+  return CHAPTER_BOUNDARY_REGEX.test((text ?? "").trim())
+}
+
 export function inferBlockIsChapterStart(block) {
   if (block?.isChapterStart === true) {
     return true
@@ -78,10 +86,7 @@ export function inferBlockIsChapterStart(block) {
     return false
   }
 
-  if (CHAPTER_BOUNDARY_REGEX.test(text)) {
-    return true
-  }
-  if (isTocChapterListingText(text)) {
+  if (isChapterBoundaryText(text)) {
     return true
   }
   if (/^\d{1,2}\.?$/.test(text) && (block.fontSize ?? 0) >= 13) {
@@ -130,6 +135,9 @@ export function isFrontMatterVisualType(type) {
 function qualifiesAsFrontMatterPlaceable(placeable) {
   const item = placeable.item
   if (isTocChapterListingText(item?.text)) {
+    return false
+  }
+  if (isChapterBoundaryText(item?.text) || item?.type === "chapter") {
     return false
   }
   return (
@@ -191,18 +199,17 @@ export function isChapterContentBoundaryItem(item) {
     return true
   }
 
+  const text = (item.text ?? "").trim()
+  if (isChapterBoundaryText(text)) {
+    return true
+  }
+
   if (item.type === "prose" && item.chapterId) {
     return true
   }
 
-  if (item.type === "heading" && item.chapterId) {
-    const text = (item.text ?? "").trim()
-    if (
-      item.isChapterStart ||
-      /^(Chapter|Part|Section|Prologue|Epilogue)\s+(\d+|[IVXLCDM]+|[A-Za-z]+)$/i.test(text)
-    ) {
-      return true
-    }
+  if (item.isChapterStart) {
+    return true
   }
 
   return false
@@ -294,10 +301,7 @@ export function flattenDocument(document) {
         fontSize: block.fontSize,
         chapterId,
         chapterTitle: chapterId ? chapterTitleById[chapterId] ?? null : null,
-        isChapterStart: inferBlockIsChapterStart({
-          ...block,
-          isHeading: Boolean(block.isHeading),
-        }),
+        isChapterStart: inferBlockIsChapterStart(block),
         ...(block.isIndented ? { isIndented: true } : {}),
       })
     }
