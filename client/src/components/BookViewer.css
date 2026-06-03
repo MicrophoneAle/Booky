@@ -440,7 +440,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  --page-footer-reserve: 10px;
+  --page-footer-reserve: 12px;
 }
 
 .book-page::after {
@@ -1167,7 +1167,7 @@ ol.book-page__list {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 3px;
+  bottom: 8px;
   z-index: 2;
   margin: 0;
   padding: 0;
@@ -1181,11 +1181,11 @@ ol.book-page__list {
 
 @media (max-width: 767px) {
   .book-page__number {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 43px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 48px);
   }
 
   .book-page__body:not(.book-page__body--title-spread) {
-    max-height: calc(100% - 53px - env(safe-area-inset-bottom, 0px));
+    max-height: calc(100% - 55px - env(safe-area-inset-bottom, 0px));
     padding-bottom: 0;
   }
 
