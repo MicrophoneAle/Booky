@@ -19,7 +19,7 @@ const PAGE_WIDTH_PX = 400
 const PAGE_HEIGHT_PX = 600
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const SPINE_PX = 1
-const PAGE_NUMBER_RESERVED_PX = 32
+const PAGE_NUMBER_RESERVED_PX = 20
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 8
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 const GREEDY_PAGE_SAFETY_MARGIN_PX = 10
@@ -455,7 +455,6 @@ function expandBlocksForEmbeddedListMarkers(blocks) {
 function groupBlocksForDisplay(blocks) {
   const expandedBlocks = expandBlocksForEmbeddedListMarkers(blocks)
   const visualItems = []
-  let pendingListItems = []
 
   const shouldMergeWithPreviousProse = (newText, isIndented = false) => {
     if (isIndented) return false
@@ -487,40 +486,15 @@ function groupBlocksForDisplay(blocks) {
     }
   }
 
-  const flushPendingList = () => {
-    if (pendingListItems.length === 0) return
-
-    visualItems.push({
-      type: "list",
-      items: buildNestedListTree(pendingListItems),
-    })
-    pendingListItems = []
-  }
-
-  const pushListItem = (listItem) => {
-    const trimmed = listItem.text?.trim()
-    if (trimmed) {
-      pendingListItems.push({
-        text: trimmed,
-        level: listItem.level ?? 0,
-        marker: listItem.marker ?? "",
-        hasBullet: Boolean(listItem.hasBullet),
-      })
-    }
-  }
-
   for (let index = 0; index < expandedBlocks.length; index += 1) {
     const block = expandedBlocks[index]
     const text = (block.text ?? "").trim()
 
     if (!text) {
-      flushPendingList()
       continue
     }
 
     if (block.isHeading) {
-      flushPendingList()
-
       const headingFontSize = block.fontSize ?? 16
       const headingType = resolveHeadingVisualType(headingFontSize, text)
       let headingText = text
@@ -549,73 +523,12 @@ function groupBlocksForDisplay(blocks) {
     }
 
     if (isStandaloneUrl(text)) {
-      if (pendingListItems.length > 0) {
-        const lastListItem = pendingListItems[pendingListItems.length - 1]
-        lastListItem.text = `${lastListItem.text} ${text}`.replace(/\s+/g, " ").trim()
-        continue
-      }
-
-      flushPendingList()
       pushProse(text)
       continue
     }
 
-    const loneMarker = parseLoneMarker(text, pendingListItems)
-    if (loneMarker) {
-      const nextBlock = expandedBlocks[index + 1]
-      const nextText = (nextBlock?.text ?? "").trim()
-      const canConsumeNextLine =
-        nextBlock &&
-        !nextBlock.isHeading &&
-        nextText &&
-        !isListMarkerLine(nextText, pendingListItems)
-
-      if (canConsumeNextLine) {
-        const parsedNext = parseListLine(nextText, pendingListItems)
-        if (parsedNext && !parsedNext.markerOnly) {
-          pushListItem(toFlatListItem(parsedNext))
-        } else if (!parsedNext) {
-          pushListItem({
-            text: nextText,
-            level: loneMarker.level,
-            marker: "",
-            hasBullet: false,
-          })
-        }
-        index += 1
-      }
-
-      continue
-    }
-
-    const parsedList = parseListLine(text, pendingListItems)
-    if (parsedList && !parsedList.markerOnly) {
-      pushListItem(toFlatListItem(parsedList))
-      continue
-    }
-
-    if (isImpliedListLine(text) && pendingListItems.length > 0) {
-      const previousItem = pendingListItems[pendingListItems.length - 1]
-      pushListItem({
-        text,
-        level: previousItem.level,
-        marker: "",
-        hasBullet: false,
-      })
-      continue
-    }
-
-    if (pendingListItems.length > 0) {
-      const lastListItem = pendingListItems[pendingListItems.length - 1]
-      lastListItem.text = `${lastListItem.text} ${text}`.replace(/\s+/g, " ").trim()
-      continue
-    }
-
-    flushPendingList()
     pushProse(text, Boolean(block.isIndented))
   }
-
-  flushPendingList()
 
   return visualItems
 }

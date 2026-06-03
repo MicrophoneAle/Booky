@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
-const PARSER_VERSION = 4
+const PARSER_VERSION = 5
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -459,9 +459,17 @@ function isChapterHeading(block) {
 
   const text = block.text.trim()
 
+  if (!text.includes(" ") && text.length < 5) {
+    return false
+  }
+
   if (block.isHeading && block.fontSize === 13) return false
   if (/^To\s+[A-Z]/.test(text)) return false
   if (/^(by|written by|translated by)\s+/i.test(text)) return false
+
+  if (/^[A-Z][a-z]+\s+[A-Z][a-z]+,\s+(Writer|Author|Novelist)$/.test(text)) {
+    return true
+  }
 
   if (CHAPTER_PATTERN.test(text)) return true
   if (text.length < 60 && block.fontSize > 13 && /^\d+[\.\)]\s/.test(text)) {
@@ -471,7 +479,42 @@ function isChapterHeading(block) {
   return false
 }
 
-function detectChapters(content) {
+function contentHasChapterHeadings(content) {
+  for (const page of content) {
+    for (const block of page.blocks ?? []) {
+      if (isChapterHeading(block)) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
+function detectChapters(content, bookTitle = "") {
+  const trimmedBookTitle = (bookTitle ?? "").trim()
+
+  if (!contentHasChapterHeadings(content) && trimmedBookTitle) {
+    const id = slugify(trimmedBookTitle)
+    const chapters = [
+      {
+        id,
+        title: trimmedBookTitle,
+        pageIndex: 0,
+        blockIndex: 0,
+      },
+    ]
+
+    const updatedContent = content.map((page) => ({
+      ...page,
+      blocks: page.blocks.map((block) => ({
+        ...block,
+        chapterId: id,
+      })),
+    }))
+
+    return { chapters, content: updatedContent }
+  }
+
   const chapters = []
   let currentChapterId = null
 
@@ -505,8 +548,21 @@ function detectChapters(content) {
   return { chapters, content: updatedContent }
 }
 
+function isAuthorStructuralLine(text) {
+  if (!/^(by|written by|translated by)\s+[A-Z]/i.test(text)) {
+    return false
+  }
+  if (text.length >= 50) {
+    return false
+  }
+  if (/[.!?]/.test(text)) {
+    return false
+  }
+  return true
+}
+
 function isStructuralLine(text, nonEmptyLineIndex) {
-  if (/^(by|written by|translated by)\s+[A-Z]/i.test(text)) {
+  if (isAuthorStructuralLine(text)) {
     return true
   }
 
@@ -523,6 +579,10 @@ function isStructuralLine(text, nonEmptyLineIndex) {
 
 function isHeadingLine(text, line, headingStrings) {
   if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
+    return false
+  }
+
+  if (!text.includes(" ") && text.length < 5) {
     return false
   }
 
@@ -758,7 +818,13 @@ async function parsePdfBuffer(buffer, fileName = "") {
   }
 
   const content = blocksToContent(blocks)
-  const { chapters, content: contentWithChapters } = detectChapters(content)
+
+  let bookTitle = (parsedText?.info?.Title ?? "").trim()
+  if (!bookTitle && fileName) {
+    bookTitle = fileName.replace(/\.pdf$/i, "").replace(/[-_]+/g, " ").trim()
+  }
+
+  const { chapters, content: contentWithChapters } = detectChapters(content, bookTitle)
   const wordCount = Math.max(
     countWordsInPlainText(parsedText.text),
     countWordsFromBlocks(blocks),
