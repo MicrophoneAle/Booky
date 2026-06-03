@@ -7,7 +7,6 @@ import multer from "multer"
 import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
-import pdfParse from "pdf-parse/lib/pdf-parse.js"
 
 const PARSER_VERSION = 22
 
@@ -1084,9 +1083,28 @@ function annotateLinesCentered(lines) {
   }
 }
 
-async function extractLinesByPosition(buffer) {
-  const loadingTask = getDocument({ data: new Uint8Array(buffer) })
+async function readPdfInfo(pdf) {
+  try {
+    const metadata = await pdf.getMetadata()
+    const metaInfo = metadata?.info ?? {}
+    return {
+      Title: (metaInfo.Title ?? "").trim(),
+      Author: (metaInfo.Author ?? "").trim(),
+    }
+  } catch {
+    return { Title: "", Author: "" }
+  }
+}
+
+async function extractPdfStructure(buffer) {
+  const loadingTask = getDocument({
+    data: new Uint8Array(buffer),
+    disableFontFace: true,
+  })
   const pdf = await loadingTask.promise
+  const headingStrings = new Set()
+  const pdfInfo = await readPdfInfo(pdf)
+
   const pagesBeforeFilter = []
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
@@ -1100,11 +1118,16 @@ async function extractLinesByPosition(buffer) {
         continue
       }
 
+      const fontSize = getItemFontSize(item)
+      if (fontSize > 14) {
+        headingStrings.add(str)
+      }
+
       items.push({
         str,
         x: getItemX(item),
         y: getItemY(item),
-        fontSize: getItemFontSize(item),
+        fontSize,
         fontName: item.fontName ?? "",
         transform: item.transform,
       })
@@ -1120,6 +1143,10 @@ async function extractLinesByPosition(buffer) {
     annotateLinesCentered(rawLines)
     const filteredLines = dropMarginCalloutLines(rawLines)
     pagesBeforeFilter.push({ lines: filteredLines })
+
+    if (typeof page.cleanup === "function") {
+      page.cleanup()
+    }
   }
 
   const lineDistinctPages = new Map()
@@ -1172,39 +1199,23 @@ async function extractLinesByPosition(buffer) {
         centered: Boolean(line.centered),
         fontSize: line.fontSize,
         runs: line.runs ?? [],
-        x: line.x,
-        y: line.y,
       })
     }
 
     pageData.push({ lines })
   }
 
-  return pageData
+  return {
+    pageData,
+    headingStrings,
+    numPages: pdf.numPages,
+    pdfInfo,
+  }
 }
 
-async function extractHeadingLines(buffer) {
-  const headingStrings = new Set()
-  const loadingTask = getDocument({ data: new Uint8Array(buffer) })
-  const pdf = await loadingTask.promise
-
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    const page = await pdf.getPage(pageNumber)
-    const textContent = await page.getTextContent()
-
-    for (const item of textContent.items) {
-      const fontSize = getItemFontSize(item)
-
-      if (fontSize > 14) {
-        const trimmed = (item.str ?? "").trim()
-        if (trimmed) {
-          headingStrings.add(trimmed)
-        }
-      }
-    }
-  }
-
-  return headingStrings
+async function extractLinesByPosition(buffer) {
+  const { pageData } = await extractPdfStructure(buffer)
+  return pageData
 }
 
 function isStandaloneChapterNumber(text, block) {
@@ -1859,9 +1870,15 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
 
   backgroundParseInFlight.add(documentId)
 
+  const parseStartedAt = Date.now()
+
   try {
     const { parsedText, chapters, contentWithChapters, wordCount } =
       await parsePdfBuffer(buffer, fileName)
+
+    console.log(
+      `Background parse finished for ${documentId} (${parsedText.numpages} PDF pages, ${wordCount.toLocaleString()} words) in ${((Date.now() - parseStartedAt) / 1000).toFixed(1)}s`
+    )
 
     const { error: updateError } = await supabase
       .from("documents")
@@ -1909,11 +1926,14 @@ function blocksToContent(blocks, blocksPerPage = 40) {
 }
 
 async function parsePdfBuffer(buffer, fileName = "") {
-  const [parsedText, headingStrings, pageData] = await Promise.all([
-    pdfParse(buffer),
-    extractHeadingLines(buffer),
-    extractLinesByPosition(buffer),
-  ])
+  const { pageData, headingStrings, numPages, pdfInfo } =
+    await extractPdfStructure(buffer)
+
+  const parsedText = {
+    numpages: numPages,
+    info: pdfInfo,
+    text: "",
+  }
 
   let blocks = buildBlocksFromLines(pageData, headingStrings)
 
@@ -1959,7 +1979,6 @@ async function parsePdfBuffer(buffer, fileName = "") {
 
   const { chapters, content: contentWithChapters } = detectChapters(content, bookTitle)
   const wordCount = Math.max(
-    countWordsInPlainText(parsedText.text),
     countWordsFromBlocks(blocks),
     countWordsFromContent(contentWithChapters)
   )
@@ -2206,7 +2225,7 @@ app.post("/admin/reparse", async (req, res) => {
   }
 })
 
-export { parsePdfBuffer, PARSER_VERSION }
+export { parsePdfBuffer, extractLinesByPosition, PARSER_VERSION }
 
 const isServerEntryPoint =
   process.argv[1] &&
