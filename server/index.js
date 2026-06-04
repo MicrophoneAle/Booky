@@ -8,7 +8,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 34
+const PARSER_VERSION = 35
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
@@ -1545,8 +1545,16 @@ function dropMarginCalloutLines(lines) {
   const bodyLeftX = medianValue(bodyXs)
 
   return entries
-    .filter((entry) => {
+    .filter((entry, entryIndex) => {
       const { text, line } = entry
+      const previousText = entryIndex > 0 ? entries[entryIndex - 1].text : ""
+
+      if (
+        /^Chapter\s+\d+\.?\s*$/i.test(previousText) &&
+        isLikelyChapterSubtitleText(text)
+      ) {
+        return true
+      }
 
       if (line.centered) {
         return true
@@ -1589,6 +1597,9 @@ function dropMarginCalloutLines(lines) {
       // A short fragment fully contained inside a longer line on the same page
       // (e.g. a running header echoed within body text) is a duplicate artifact.
       if (isShortLineSubstringOfLongerLine(text, longTextsOnPage)) {
+        if (isLikelyChapterSubtitleText(text)) {
+          return true
+        }
         return false
       }
 
@@ -1870,6 +1881,9 @@ function shouldDropExtractedLine(
   }
   if (isScannerWatermarkLine(trimmed)) {
     return true
+  }
+  if (isLikelyChapterSubtitleText(trimmed)) {
+    return false
   }
   if (TOC_HEADER_LINE_REGEX.test(trimmed)) {
     return true
@@ -2393,35 +2407,38 @@ function parseChapterOnlyHeading(text) {
   return { kind: match[1], number: match[2] }
 }
 
-function isLikelyChapterSubtitleBlock(block) {
-  const text = (block?.text ?? "").trim()
-  if (!text || block?.isHeading) {
+function isLikelyChapterSubtitleText(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
     return false
   }
-  if (CHAPTER_PATTERN.test(text) || CHAPTER_ONLY_HEADING_REGEX.test(text)) {
+  if (CHAPTER_PATTERN.test(trimmed) || CHAPTER_ONLY_HEADING_REGEX.test(trimmed)) {
     return false
   }
-  if (isScannerWatermarkLine(text) || isAuthorStructuralLine(text)) {
+  if (CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed)) {
     return false
   }
-  if (/^["'\u201c]/.test(text) || /^[a-z]/.test(text)) {
+  if (isScannerWatermarkLine(trimmed) || isAuthorStructuralLine(trimmed)) {
     return false
   }
-  if (text.length > 72) {
+  if (/^["'\u201c]/.test(trimmed) || /^[a-z]/.test(trimmed)) {
+    return false
+  }
+  if (trimmed.length > 72) {
     return false
   }
 
-  const words = text.split(/\s+/).filter(Boolean)
+  const words = trimmed.split(/\s+/).filter(Boolean)
   if (words.length < 1 || words.length > 12) {
     return false
   }
-  if ((text.match(/[.!?]/g) ?? []).length > 1) {
+  if ((trimmed.match(/[.!?]/g) ?? []).length > 1) {
     return false
   }
-  if (text.length > 45 && /,\s/.test(text)) {
+  if (trimmed.length > 45 && /,\s/.test(trimmed)) {
     return false
   }
-  if (/;\s/.test(text)) {
+  if (/;\s/.test(trimmed)) {
     return false
   }
 
@@ -2431,19 +2448,32 @@ function isLikelyChapterSubtitleBlock(block) {
       BOOK_TITLE_MINOR_WORDS.has(word.toLowerCase()) ||
       /^[—–-]$/.test(word)
   )
-  const centered = block.textAlign === "center"
 
-  if (centered && titleCaseLike) {
-    return true
-  }
-  if (centered && words.length <= 8 && text.length <= 55) {
-    return true
-  }
-  if (titleCaseLike && words.length <= 6 && text.length <= 48) {
+  if (titleCaseLike && words.length <= 8 && trimmed.length <= 55) {
     return true
   }
 
   return false
+}
+
+function isLikelyChapterSubtitleBlock(block) {
+  const text = (block?.text ?? "").trim()
+  if (!text) {
+    return false
+  }
+  if (block?.isHeading && !isLikelyChapterSubtitleText(text)) {
+    return false
+  }
+  if (!isLikelyChapterSubtitleText(text)) {
+    return false
+  }
+
+  const centered = block.textAlign === "center"
+  if (centered) {
+    return true
+  }
+
+  return (block?.text ?? "").length <= 48
 }
 
 function mergeChapterSubtitleBlocks(blocks) {

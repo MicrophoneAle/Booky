@@ -52,12 +52,21 @@ export default {
       },
     ],
     [
-      "chapter 3 without spurious period",
+      "chapter 3 with subtitle",
       (ctx) => {
         const chapter = ctx.blocks.find((block) =>
-          /^Chapter\s+3$/i.test((block.text ?? "").trim())
+          /^Chapter\s+3\s*-\s*The Catalans$/i.test((block.text ?? "").trim())
         )
-        return chapter?.isHeading === true
+        return chapter?.isHeading === true && chapter?.isChapterStart === true
+      },
+    ],
+    [
+      "chapter 7 with subtitle from PDF",
+      (ctx) => {
+        const chapter = ctx.blocks.find((block) =>
+          /^Chapter\s+7\s*-\s*The Examination$/i.test((block.text ?? "").trim())
+        )
+        return chapter?.isHeading === true && chapter?.isChapterStart === true
       },
     ],
     [

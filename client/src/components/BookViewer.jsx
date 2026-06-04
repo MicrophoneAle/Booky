@@ -49,7 +49,9 @@ const PAGINATION_DEBOUNCE_MS = 400
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 34
+const PARSER_VERSION = 35
+/** Bump only when client pagination/measurement logic changes (not server parser). */
+const PAGINATION_MEASUREMENT_VERSION = 1
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 const PAGINATION_CACHE_MAX_ENTRIES = 3
@@ -109,6 +111,7 @@ function buildPaginationCacheKey(
     "booky-pages",
     bookId,
     parserVersion,
+    PAGINATION_MEASUREMENT_VERSION,
     layoutSettings.fontSize,
     layoutSettings.fontStyle,
     layoutSettings.lineSpacing,
@@ -127,7 +130,11 @@ function getPaginationPageHeight(mobileViewport, mobileFullscreen) {
 
 function resolvePaginationCacheContext(bookId, parserVersionFromDoc, settings, viewport) {
   const layoutSettings = getLayoutPaginationSettings(settings)
-  const parserVersion = Number(parserVersionFromDoc) || PARSER_VERSION
+  const docParserVersion = Number(parserVersionFromDoc)
+  const parserVersion =
+    Number.isFinite(docParserVersion) && docParserVersion > 0
+      ? docParserVersion
+      : PARSER_VERSION
   const pageHeight = getPaginationPageHeight(viewport.mobile, viewport.mobileFullscreen)
 
   return {
@@ -203,7 +210,22 @@ function readPaginationCache(cacheKey, parserVersion) {
       return null
     }
 
-    if (Number(parsed.parserVersion) !== Number(parserVersion)) {
+    const cachedParserVersion = Number(parsed.parserVersion)
+    const expectedParserVersion = Number(parserVersion)
+    if (
+      Number.isFinite(cachedParserVersion) &&
+      Number.isFinite(expectedParserVersion) &&
+      cachedParserVersion !== expectedParserVersion
+    ) {
+      deletePaginationCacheEntry(cacheKey)
+      return null
+    }
+
+    const cachedMeasurementVersion = Number(parsed.measurementVersion)
+    if (
+      Number.isFinite(cachedMeasurementVersion) &&
+      cachedMeasurementVersion !== PAGINATION_MEASUREMENT_VERSION
+    ) {
       deletePaginationCacheEntry(cacheKey)
       return null
     }
@@ -2920,6 +2942,7 @@ export default function BookViewer({
       )
       const payload = {
         parserVersion: writeContext.parserVersion,
+        measurementVersion: PAGINATION_MEASUREMENT_VERSION,
         settings: writeContext.layoutSettings,
         pages: finalPages,
         cachedAt: Date.now(),
@@ -3282,9 +3305,7 @@ export default function BookViewer({
         : PAGE_WIDTH_PX
       const naturalH = activePageHeight
       const fitScale = Math.min(availW / naturalW, availH / naturalH)
-      const fillScale = Math.max(availW / naturalW, availH / naturalH)
-      const next =
-        isFullscreen || (isMobile && isMobileFullscreen) ? fillScale : fitScale
+      const next = fitScale
       setScale(next > 0 && Number.isFinite(next) ? next : 1)
     }
 
