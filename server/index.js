@@ -21,7 +21,24 @@ const PARSE_STATUS = {
 }
 
 const backgroundParseInFlight = new Set()
+const documentParseProgress = new Map()
 const PDF_PAGE_EXTRACTION_CONCURRENCY = 6
+
+const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 70
+const PARSE_PROGRESS_STRUCTURE_PERCENT = 85
+const PARSE_PROGRESS_SAVE_PERCENT = 95
+
+function setDocumentParseProgress(documentId, progress) {
+  documentParseProgress.set(documentId, progress)
+}
+
+function getDocumentParseProgress(documentId) {
+  return documentParseProgress.get(documentId) ?? null
+}
+
+function clearDocumentParseProgress(documentId) {
+  documentParseProgress.delete(documentId)
+}
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -78,10 +95,18 @@ app.get("/documents/:id/status", requireAuth, async (req, res) => {
       return
     }
 
+    const parseStatus = data.parse_status ?? PARSE_STATUS.READY
+    const liveProgress = getDocumentParseProgress(data.id)
+
     res.json({
       success: true,
       id: data.id,
-      parse_status: data.parse_status ?? PARSE_STATUS.READY,
+      parse_status: parseStatus,
+      parse_progress: liveProgress,
+      parse_percent:
+        parseStatus === PARSE_STATUS.READY
+          ? 100
+          : (liveProgress?.percent ?? 0),
     })
   } catch {
     res.status(500).json({ success: false, error: "Failed to fetch document status" })
@@ -2424,6 +2449,12 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
   }
 
   backgroundParseInFlight.add(documentId)
+  setDocumentParseProgress(documentId, {
+    phase: "starting",
+    current: 0,
+    total: 0,
+    percent: 0,
+  })
 
   const parseStartedAt = Date.now()
 
@@ -2437,7 +2468,17 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
             )
           }
         },
+        onProgress(progress) {
+          setDocumentParseProgress(documentId, progress)
+        },
       })
+
+    setDocumentParseProgress(documentId, {
+      phase: "saving",
+      current: 0,
+      total: 0,
+      percent: PARSE_PROGRESS_SAVE_PERCENT,
+    })
 
     console.log(
       `Background parse finished for ${documentId} (${parsedText.numpages} PDF pages, ${wordCount.toLocaleString()} words) in ${((Date.now() - parseStartedAt) / 1000).toFixed(1)}s`
@@ -2462,6 +2503,8 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
     if (updateError) {
       throw new Error("Failed to save parsed document")
     }
+
+    clearDocumentParseProgress(documentId)
   } catch (error) {
     console.error(
       `Background parse failed for document ${documentId}:`,
@@ -2475,6 +2518,7 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
       .eq("user_id", userId)
   } finally {
     backgroundParseInFlight.delete(documentId)
+    clearDocumentParseProgress(documentId)
   }
 }
 
@@ -2491,9 +2535,42 @@ function blocksToContent(blocks, blocksPerPage = 40) {
   return content
 }
 
-async function parsePdfBuffer(buffer, fileName = "", { onPageProcessed } = {}) {
+async function parsePdfBuffer(
+  buffer,
+  fileName = "",
+  { onPageProcessed, onProgress } = {}
+) {
+  const reportProgress = (progress) => {
+    onProgress?.(progress)
+  }
+
+  reportProgress({
+    phase: "extracting",
+    current: 0,
+    total: 0,
+    percent: 0,
+  })
+
   const { pageData, headingStrings, numPages, pdfInfo } =
-    await extractPdfStructure(buffer, { onPageProcessed })
+    await extractPdfStructure(buffer, {
+      onPageProcessed(pageNumber, totalPages) {
+        onPageProcessed?.(pageNumber, totalPages)
+
+        const extractPercent =
+          totalPages > 0
+            ? Math.round(
+                (pageNumber / totalPages) * PARSE_PROGRESS_EXTRACT_MAX_PERCENT
+              )
+            : 0
+
+        reportProgress({
+          phase: "extracting",
+          current: pageNumber,
+          total: totalPages,
+          percent: extractPercent,
+        })
+      },
+    })
 
   const parsedText = {
     numpages: numPages,
@@ -2501,7 +2578,21 @@ async function parsePdfBuffer(buffer, fileName = "", { onPageProcessed } = {}) {
     text: "",
   }
 
+  reportProgress({
+    phase: "structuring",
+    current: 0,
+    total: 0,
+    percent: PARSE_PROGRESS_EXTRACT_MAX_PERCENT + 2,
+  })
+
   let blocks = splitDialogueHeavyBlocks(buildBlocksFromLines(pageData, headingStrings))
+
+  reportProgress({
+    phase: "structuring",
+    current: 0,
+    total: 0,
+    percent: PARSE_PROGRESS_STRUCTURE_PERCENT,
+  })
 
   const hasTitleHeading = blocks
     .slice(0, 10)
@@ -2545,6 +2636,13 @@ async function parsePdfBuffer(buffer, fileName = "", { onPageProcessed } = {}) {
 
   const { chapters, content: contentWithChapters } = detectChapters(content, bookTitle)
   const wordCount = countWordsFromBlocks(blocks)
+
+  reportProgress({
+    phase: "finalizing",
+    current: 0,
+    total: 0,
+    percent: PARSE_PROGRESS_SAVE_PERCENT - 2,
+  })
 
   return {
     parsedText,

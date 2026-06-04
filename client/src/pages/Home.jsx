@@ -14,8 +14,9 @@ import "./Home.css"
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 
 const LARGE_FILE_BYTES = 15 * 1024 * 1024
-const PARSE_POLL_INTERVAL_MS = 3000
+const PARSE_POLL_INTERVAL_MS = 1000
 const PARSE_POLL_TIMEOUT_MS = 5 * 60 * 1000
+const UPLOAD_PROGRESS_WEIGHT = 0.12
 
 const EMPTY_UPLOAD_STATE = {
   phase: "idle", // idle | waking | uploading | processing | done | error
@@ -25,6 +26,7 @@ const EMPTY_UPLOAD_STATE = {
   errorMessage: null,
   slowWake: false,
   documentId: null,
+  parseProgress: null,
 }
 
 const PHASE_LABELS = {
@@ -37,8 +39,52 @@ const PHASE_LABELS = {
 const PHASE_SUBLABELS = {
   waking: "Server is waking up, this takes ~15 seconds after a period of inactivity",
   uploading: null,
-  processing: "Extracting text, detecting chapters and headings — large books may take a few minutes",
+  processing: null,
   done: null,
+}
+
+function formatProcessingSublabel(parseProgress) {
+  if (!parseProgress) {
+    return "Extracting text, detecting chapters and headings — large books may take a few minutes"
+  }
+
+  if (parseProgress.phase === "extracting" && parseProgress.total > 0) {
+    return `Extracting page ${parseProgress.current} of ${parseProgress.total}`
+  }
+
+  if (parseProgress.phase === "structuring") {
+    return "Structuring chapters and paragraphs"
+  }
+
+  if (parseProgress.phase === "finalizing" || parseProgress.phase === "saving") {
+    return "Saving your book"
+  }
+
+  if (parseProgress.phase === "starting") {
+    return "Opening PDF"
+  }
+
+  return "Processing your book"
+}
+
+function overallUploadProgress(phase, uploadPercent, parseProgress) {
+  if (phase === "uploading") {
+    return Math.round(uploadPercent * UPLOAD_PROGRESS_WEIGHT)
+  }
+
+  if (phase === "processing") {
+    const parsePercent = parseProgress?.percent ?? 0
+    const processingShare = 1 - UPLOAD_PROGRESS_WEIGHT
+    return Math.round(
+      100 * UPLOAD_PROGRESS_WEIGHT + parsePercent * processingShare
+    )
+  }
+
+  if (phase === "done") {
+    return 100
+  }
+
+  return 0
 }
 
 function isPdfFile(file) {
@@ -48,12 +94,10 @@ function isPdfFile(file) {
   return hasPdfMime || hasPdfExtension
 }
 
-async function pollDocumentParseStatus(documentId, getToken) {
+async function pollDocumentParseStatus(documentId, getToken, onProgress) {
   const startedAt = Date.now()
 
   while (Date.now() - startedAt < PARSE_POLL_TIMEOUT_MS) {
-    await new Promise((resolve) => setTimeout(resolve, PARSE_POLL_INTERVAL_MS))
-
     const token = await getToken()
     if (!token) {
       throw new Error("Unauthorized")
@@ -82,13 +126,27 @@ async function pollDocumentParseStatus(documentId, getToken) {
       throw new Error(data.error ?? "Failed to check processing status")
     }
 
+    if (data.parse_progress) {
+      onProgress(data.parse_progress)
+    } else if (typeof data.parse_percent === "number") {
+      onProgress({
+        phase: "processing",
+        current: 0,
+        total: 0,
+        percent: data.parse_percent,
+      })
+    }
+
     if (data.parse_status === "ready") {
-      return
+      onProgress({ phase: "ready", current: 0, total: 0, percent: 100 })
+      return documentId
     }
 
     if (data.parse_status === "error") {
       throw new Error("Processing failed. Try uploading again.")
     }
+
+    await new Promise((resolve) => setTimeout(resolve, PARSE_POLL_INTERVAL_MS))
   }
 
   throw new Error("Processing timed out. Try again in a few minutes.")
@@ -131,26 +189,47 @@ function doUpload(file, getToken, setUploadState, navigate) {
             setUploadState((state) => ({
               ...state,
               phase: "processing",
-              progress: 100,
+              progress: Math.round(100 * UPLOAD_PROGRESS_WEIGHT),
               documentId,
+              parseProgress: {
+                phase: "starting",
+                current: 0,
+                total: 0,
+                percent: 0,
+              },
             }))
 
-            navigate("/library")
-
-            void pollDocumentParseStatus(documentId, getToken)
-              .then(() => {
-                setUploadState((state) => ({ ...state, phase: "done" }))
-              })
-              .catch((pollError) => {
+            try {
+              await pollDocumentParseStatus(documentId, getToken, (parseProgress) => {
                 setUploadState((state) => ({
                   ...state,
-                  phase: "error",
-                  errorMessage:
-                    pollError instanceof Error
-                      ? pollError.message
-                      : "Processing failed",
+                  phase: "processing",
+                  parseProgress,
+                  progress: overallUploadProgress(
+                    "processing",
+                    100,
+                    parseProgress
+                  ),
                 }))
               })
+
+              setUploadState((state) => ({
+                ...state,
+                phase: "done",
+                progress: 100,
+                parseProgress: { phase: "ready", current: 0, total: 0, percent: 100 },
+              }))
+              setTimeout(() => navigate(`/read/${documentId}`), 600)
+            } catch (pollError) {
+              setUploadState((state) => ({
+                ...state,
+                phase: "error",
+                errorMessage:
+                  pollError instanceof Error
+                    ? pollError.message
+                    : "Processing failed",
+              }))
+            }
 
             resolve()
             return
@@ -225,6 +304,7 @@ export default function Home() {
       fileSize: selectedFile.size,
       errorMessage: null,
       slowWake: false,
+      parseProgress: null,
     })
 
     const wakeTimer = setTimeout(() => {
@@ -393,7 +473,9 @@ export default function Home() {
               <div className="home__upload-progress">
                 <p className="home__upload-phase">{PHASE_LABELS[uploadState.phase]}</p>
 
-                {uploadState.phase === "uploading" && (
+                {(uploadState.phase === "uploading" ||
+                  uploadState.phase === "processing" ||
+                  uploadState.phase === "done") && (
                   <div className="home__progress-bar-wrap">
                     <div
                       className="home__progress-bar-fill"
@@ -402,18 +484,30 @@ export default function Home() {
                   </div>
                 )}
 
-                {(uploadState.phase === "processing" ||
-                  uploadState.phase === "waking") && (
+                {uploadState.phase === "waking" && (
                   <div className="home__progress-bar-wrap">
                     <div className="home__progress-bar-fill home__progress-bar-fill--indeterminate" />
                   </div>
                 )}
 
-                {PHASE_SUBLABELS[uploadState.phase] && (
+                {uploadState.phase === "processing" ? (
                   <p className="home__upload-sublabel">
-                    {PHASE_SUBLABELS[uploadState.phase]}
+                    {formatProcessingSublabel(uploadState.parseProgress)}
                   </p>
+                ) : (
+                  PHASE_SUBLABELS[uploadState.phase] && (
+                    <p className="home__upload-sublabel">
+                      {PHASE_SUBLABELS[uploadState.phase]}
+                    </p>
+                  )
                 )}
+
+                {uploadState.phase === "processing" &&
+                  uploadState.parseProgress?.percent > 0 && (
+                    <p className="home__upload-percent">
+                      {uploadState.parseProgress.percent}%
+                    </p>
+                  )}
 
                 {uploadState.fileName && (
                   <p className="home__upload-filename">{uploadState.fileName}</p>
