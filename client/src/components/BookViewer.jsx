@@ -49,7 +49,7 @@ const PAGINATION_DEBOUNCE_MS = 400
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 29
+const PARSER_VERSION = 31
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 const PAGINATION_CACHE_MAX_ENTRIES = 3
@@ -116,6 +116,32 @@ function buildPaginationCacheKey(
     pageWidth,
     pageHeight,
   ].join("|")
+}
+
+/** Single source of truth for cache key — same inputs at read and write. */
+function getPaginationPageHeight(mobileViewport, mobileFullscreen) {
+  return mobileViewport && mobileFullscreen
+    ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
+    : PAGE_HEIGHT_PX
+}
+
+function resolvePaginationCacheContext(bookId, parserVersionFromDoc, settings, viewport) {
+  const layoutSettings = getLayoutPaginationSettings(settings)
+  const parserVersion = Number(parserVersionFromDoc) || PARSER_VERSION
+  const pageHeight = getPaginationPageHeight(viewport.mobile, viewport.mobileFullscreen)
+
+  return {
+    cacheKey: buildPaginationCacheKey(
+      bookId,
+      parserVersion,
+      layoutSettings,
+      PAGE_WIDTH_PX,
+      pageHeight
+    ),
+    parserVersion,
+    layoutSettings,
+    pageHeight,
+  }
 }
 
 function readStoredProgressPage(progressKey, initialPage) {
@@ -2507,7 +2533,9 @@ export default function BookViewer({
     pageTextMapBuildIdRef.current += 1
     maxLoadingProgressRef.current = 0
     setPaginationLoadingMode("opening")
-    setProgressHydrated(false)
+    setPages([])
+    // progressHydrated is owned by useLayoutEffect (bookmark read). Do not clear it here —
+    // this effect runs after layout and was leaving progressHydrated false forever.
     setIsPaginating(true)
     setLoadingProgress(0)
     setLoadingProgressLabel("Preparing pages...")
@@ -2585,57 +2613,21 @@ export default function BookViewer({
       return undefined
     }
 
-    const previousPaginationSettings = prevPaginationSettingsRef.current
-    if (
-      previousPaginationSettings &&
-      isThemeOnlyPaginationChange(previousPaginationSettings, paginationSettings)
-    ) {
-      prevPaginationSettingsRef.current = paginationSettings
-      if (isPaginating && paginationLoadingMode === "typesetting") {
-        setIsPaginating(false)
-      }
-      return undefined
+    const viewport = {
+      mobile: window.matchMedia("(max-width: 767px)").matches,
+      mobileFullscreen: isMobileFullscreen,
     }
+    isMobileLayoutRef.current = viewport.mobile
+    isMobileFullscreenLayoutRef.current = viewport.mobileFullscreen
 
-    // Skip redundant re-pagination after the book is already open (debounced settings sync).
-    // Must NOT run during initial open: an earlier effect pass can set prevPaginationSettingsRef
-    // before progressHydrated flips true, which would otherwise block runFullPagination forever.
-    if (
-      previousPaginationSettings &&
-      hasDisplayedBookRef.current &&
-      layoutPaginationSettingsEqual(previousPaginationSettings, paginationSettings)
-    ) {
-      prevPaginationSettingsRef.current = paginationSettings
-      if (isPaginating && paginationLoadingMode === "typesetting") {
-        setIsPaginating(false)
-      }
-      return undefined
-    }
-
-    prevPaginationSettingsRef.current = paginationSettings
-
-    const layoutSettings = getLayoutPaginationSettings(paginationSettings)
-    const parserVersion = Number(bookDocument.parserVersion) || PARSER_VERSION
-    const pageHeight =
-      isMobileLayoutRef.current && isMobileFullscreenLayoutRef.current
-        ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
-        : PAGE_HEIGHT_PX
-    const cacheKey = buildPaginationCacheKey(
+    const { cacheKey, parserVersion, layoutSettings } = resolvePaginationCacheContext(
       bookDocument.id,
-      parserVersion,
-      layoutSettings,
-      PAGE_WIDTH_PX,
-      pageHeight
+      bookDocument.parserVersion,
+      paginationSettings,
+      viewport
     )
 
-    const isSpreadViewForTarget =
-      !isMobileLayoutRef.current && layoutMode === "spread"
-
-    const isSettingsRepagination =
-      hasDisplayedBookRef.current && displayedPagesCountRef.current > 0
-
-    let measureRoot = null
-    paginationCancelRef.current = false
+    const isSpreadViewForTarget = !viewport.mobile && layoutMode === "spread"
 
     const applyMeasuredPages = (
       measuredPages,
@@ -2700,6 +2692,82 @@ export default function BookViewer({
     const resolveOpeningBookmarkPage = () =>
       bookmarkPageRef.current ??
       (Number.isFinite(initialPage) && initialPage > 0 ? initialPage : 1)
+
+    const previousPaginationSettingsForCache = prevPaginationSettingsRef.current
+    const layoutRepaginationNeeded =
+      hasDisplayedBookRef.current &&
+      displayedPagesCountRef.current > 0 &&
+      previousPaginationSettingsForCache !== null &&
+      !layoutPaginationSettingsEqual(
+        previousPaginationSettingsForCache,
+        paginationSettings
+      )
+
+    // Opening cache read FIRST — before theme/layout guards (cache is optional).
+    const tryApplyOpeningCache = () => {
+      let cacheRaw = null
+      try {
+        console.log("[cache READ] looking for:", cacheKey)
+        cacheRaw = localStorage.getItem(cacheKey)
+        console.log("[cache READ] found:", cacheRaw ? "YES" : "NO")
+      } catch (readError) {
+        console.log("[cache READ] found:", "NO (read error)", readError)
+        return false
+      }
+
+      const cached = readPaginationCache(cacheKey, parserVersion)
+      if (!cached?.pages?.length) {
+        return false
+      }
+
+      openingPaginationStartedRef.current = true
+      applyMeasuredPages(cached.pages, {
+        isFinal: true,
+        preservePage: resolveOpeningBookmarkPage(),
+      })
+      setIsPaginating(false)
+      hasDisplayedBookRef.current = true
+      maxLoadingProgressRef.current = 100
+      prevPaginationSettingsRef.current = paginationSettings
+      return true
+    }
+
+    if (!openingPaginationInFlightRef.current && !layoutRepaginationNeeded) {
+      if (tryApplyOpeningCache()) {
+        return undefined
+      }
+    }
+
+    const previousPaginationSettings = prevPaginationSettingsRef.current
+    if (
+      previousPaginationSettings &&
+      isThemeOnlyPaginationChange(previousPaginationSettings, paginationSettings)
+    ) {
+      prevPaginationSettingsRef.current = paginationSettings
+      if (isPaginating && paginationLoadingMode === "typesetting") {
+        setIsPaginating(false)
+      }
+      return undefined
+    }
+
+    if (
+      previousPaginationSettings &&
+      hasDisplayedBookRef.current &&
+      layoutPaginationSettingsEqual(previousPaginationSettings, paginationSettings)
+    ) {
+      prevPaginationSettingsRef.current = paginationSettings
+      if (isPaginating && paginationLoadingMode === "typesetting") {
+        setIsPaginating(false)
+      }
+      return undefined
+    }
+
+    prevPaginationSettingsRef.current = paginationSettings
+
+    const isSettingsRepagination = layoutRepaginationNeeded
+
+    let measureRoot = null
+    paginationCancelRef.current = false
 
     const updatePaginationLoadingUi = (
       donePages,
@@ -2814,9 +2882,19 @@ export default function BookViewer({
     }
 
     const persistPaginationCache = (finalPages) => {
-      writePaginationCache(cacheKey, bookDocument.id, {
-        parserVersion,
-        settings: layoutSettings,
+      const writeContext = resolvePaginationCacheContext(
+        bookDocument.id,
+        bookDocument.parserVersion,
+        paginationSettings,
+        {
+          mobile: isMobileLayoutRef.current,
+          mobileFullscreen: isMobileFullscreenLayoutRef.current,
+        }
+      )
+      console.log("[cache WRITE]", writeContext.cacheKey, "pages:", finalPages.length)
+      writePaginationCache(writeContext.cacheKey, bookDocument.id, {
+        parserVersion: writeContext.parserVersion,
+        settings: writeContext.layoutSettings,
         pages: finalPages,
         cachedAt: Date.now(),
       })
@@ -3052,22 +3130,6 @@ export default function BookViewer({
         return undefined
       }
 
-      const cached = readPaginationCache(cacheKey, parserVersion)
-
-      if (cached?.pages?.length) {
-        openingPaginationStartedRef.current = true
-        applyMeasuredPages(cached.pages, {
-          isFinal: true,
-          preservePage: resolveOpeningBookmarkPage(),
-        })
-        setIsPaginating(false)
-        hasDisplayedBookRef.current = true
-        maxLoadingProgressRef.current = 100
-        return undefined
-      }
-
-      isMobileLayoutRef.current = window.matchMedia("(max-width: 767px)").matches
-      isMobileFullscreenLayoutRef.current = isMobileFullscreen
       openingPaginationStartedRef.current = true
       openingPaginationInFlightRef.current = true
       beginPaginationLoadingScreen("opening")
@@ -3248,56 +3310,7 @@ export default function BookViewer({
     bookmarkPageRef.current = savedPage
     setBookmarkPage(savedPage)
     setProgressHydrated(true)
-
-    if (hasDisplayedBookRef.current || openingPaginationStartedRef.current) {
-      return
-    }
-
-    const layoutSettings = getLayoutPaginationSettings(paginationSettings)
-    const parserVersion = Number(bookDocument.parserVersion) || PARSER_VERSION
-    const mobileNow = window.matchMedia("(max-width: 767px)").matches
-    const spreadView = !mobileNow && layoutMode === "spread"
-    const pageHeight =
-      mobileNow && isMobileFullscreen
-        ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
-        : PAGE_HEIGHT_PX
-    const cacheKey = buildPaginationCacheKey(
-      bookDocument.id,
-      parserVersion,
-      layoutSettings,
-      PAGE_WIDTH_PX,
-      pageHeight
-    )
-    const cached = readPaginationCache(cacheKey, parserVersion)
-    if (!cached?.pages?.length) {
-      return
-    }
-
-    openingPaginationStartedRef.current = true
-    setPages(cached.pages)
-    setChapterPageMap(buildChapterPageMap(cached.pages, bookDocument.chapters ?? []))
-    schedulePageTextMapBuild(cached.pages, pageTextMapBuildIdRef, setPageTextMap)
-    setCurrentPage(
-      normalizeBookmarkPage(
-        bookmarkPageRef.current ?? 1,
-        cached.pages.length,
-        spreadView
-      )
-    )
-    setIsPaginating(false)
-    hasDisplayedBookRef.current = true
-    maxLoadingProgressRef.current = 100
-  }, [
-    bookDocument?.id,
-    bookDocument?.chapters,
-    bookDocument?.parserVersion,
-    initialPage,
-    progressKey,
-    paginationSettings,
-    layoutMode,
-    isMobileFullscreen,
-    normalizeBookmarkPage,
-  ])
+  }, [bookDocument?.id, initialPage, progressKey])
 
   useEffect(() => {
     if (isPaginating || totalPages === 0) return
@@ -3485,34 +3498,72 @@ export default function BookViewer({
   }, [bookDocument?.id])
 
   useEffect(() => {
-    const updateBookmarkPosition = () => {
-      if (bookmarkHidden) return
+    if (isPaginating || pages.length === 0 || !bookmarkPage) {
+      return undefined
+    }
+
+    let frameId = 0
+    let innerFrameId = 0
+    let outerFrameId = 0
+
+    const measureBookmarkPosition = () => {
+      if (bookmarkHidden) {
+        setBookmarkPosition(null)
+        return
+      }
+
       const anchorElement =
         leftPage?.pageNumber === bookmarkPage
           ? leftPageFaceRef.current
           : rightPage?.pageNumber === bookmarkPage
             ? rightPageFaceRef.current
             : null
+
       if (!anchorElement) {
         setBookmarkPosition(null)
         return
       }
 
       const rect = anchorElement.getBoundingClientRect()
+      if (rect.width <= 0 || rect.height <= 0) {
+        setBookmarkPosition(null)
+        return
+      }
+
       setBookmarkPosition({
         top: rect.top - 1,
         left: rect.right - 14 - 20,
       })
     }
 
-    updateBookmarkPosition()
-    window.addEventListener("resize", updateBookmarkPosition)
-    window.addEventListener("scroll", updateBookmarkPosition, true)
-    return () => {
-      window.removeEventListener("resize", updateBookmarkPosition)
-      window.removeEventListener("scroll", updateBookmarkPosition, true)
+    const scheduleMeasure = () => {
+      cancelAnimationFrame(innerFrameId)
+      innerFrameId = requestAnimationFrame(measureBookmarkPosition)
     }
-  }, [bookmarkPage, bookmarkHidden, leftPage?.pageNumber, rightPage?.pageNumber, pages.length, scale])
+
+    outerFrameId = requestAnimationFrame(() => {
+      frameId = requestAnimationFrame(scheduleMeasure)
+    })
+    window.addEventListener("resize", scheduleMeasure)
+    window.addEventListener("scroll", scheduleMeasure, true)
+
+    return () => {
+      cancelAnimationFrame(outerFrameId)
+      cancelAnimationFrame(frameId)
+      cancelAnimationFrame(innerFrameId)
+      window.removeEventListener("resize", scheduleMeasure)
+      window.removeEventListener("scroll", scheduleMeasure, true)
+    }
+  }, [
+    bookmarkPage,
+    bookmarkHidden,
+    isPaginating,
+    currentPage,
+    leftPage?.pageNumber,
+    rightPage?.pageNumber,
+    pages.length,
+    scale,
+  ])
 
   const handleDismissBookmark = useCallback(() => {
     if (bookmarkDismissed || bookmarkHidden) return

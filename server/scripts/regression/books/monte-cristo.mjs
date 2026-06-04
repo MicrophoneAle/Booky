@@ -60,6 +60,14 @@ export default {
       (ctx) => ctx.chapters.length >= 100,
     ],
     [
+      '"three." wrap fragment is not a heading',
+      (ctx) =>
+        !ctx.blocks.some(
+          (block) =>
+            block.isHeading && /^three\.?$/i.test((block.text ?? "").trim())
+        ),
+    ],
+    [
       "No heading ends with a preposition",
       (ctx) =>
         !ctx.blocks

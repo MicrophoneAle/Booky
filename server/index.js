@@ -8,7 +8,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 29
+const PARSER_VERSION = 31
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
@@ -1824,10 +1824,71 @@ function isStandaloneChapterNumber(text, block) {
   return (block.fontSize ?? 0) >= CHAPTER_HEADING_MIN_FONT_SIZE
 }
 
+function qualifiesAsEmittedHeading(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  if (/^[a-z(\u201c]/.test(trimmed)) {
+    return false
+  }
+
+  const core = trimmed.replace(/[.!?]+$/, "")
+  const wordCount = trimmed.split(/\s+/).filter(Boolean).length
+  if (
+    wordCount === 1 &&
+    core.length < 6 &&
+    !CHAPTER_PATTERN.test(trimmed) &&
+    !STRUCTURAL_HEADING_PREFIX_REGEX.test(trimmed)
+  ) {
+    return false
+  }
+
+  return true
+}
+
+function logHeadingPromotion(text, reasonLabel) {
+  if (process.env.BOOKY_HEADING_DEBUG === "1") {
+    console.log("[heading]", JSON.stringify(text), "via", reasonLabel)
+  }
+}
+
+function pushHeadingBlock(blocks, payload, reasonLabel) {
+  const text = (payload.text ?? "").trim()
+  if (!qualifiesAsEmittedHeading(text)) {
+    return false
+  }
+
+  logHeadingPromotion(text, reasonLabel)
+  blocks.push(payload)
+  return true
+}
+
 function isLikelyChapterNumberLine(text, line) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  // Wrapped title fragments (e.g. "three." from "Chapter Forty-three.") are not headings.
+  if (/^[a-z]/.test(trimmed)) {
+    return false
+  }
+
+  const core = trimmed.replace(/[.!?]+$/, "")
+  const wordCount = trimmed.split(/\s+/).filter(Boolean).length
+  if (
+    wordCount === 1 &&
+    core.length < 6 &&
+    !CHAPTER_PATTERN.test(trimmed) &&
+    !STRUCTURAL_HEADING_PREFIX_REGEX.test(trimmed)
+  ) {
+    return false
+  }
+
   const chapterNumberRegex =
     /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
-  const trimmed = (text ?? "").trim()
   if (!chapterNumberRegex.test(trimmed)) {
     return false
   }
@@ -2277,12 +2338,16 @@ function buildBlocksFromLines(pageData, headingStrings) {
           index += 1
           continue
         }
-        blocks.push({
-          text,
-          isHeading: true,
-          fontSize: 13,
-          chapterId: null,
-        })
+        pushHeadingBlock(
+          blocks,
+          {
+            text,
+            isHeading: true,
+            fontSize: 13,
+            chapterId: null,
+          },
+          "dedicationConnective"
+        )
         index += 1
         continue
       }
@@ -2294,12 +2359,16 @@ function buildBlocksFromLines(pageData, headingStrings) {
 
     if (isStructuralLine(text, lineIndex)) {
       pendingConnective = null
-      blocks.push({
-        text,
-        isHeading: true,
-        fontSize: 13,
-        chapterId: null,
-      })
+      pushHeadingBlock(
+        blocks,
+        {
+          text,
+          isHeading: true,
+          fontSize: 13,
+          chapterId: null,
+        },
+        "structuralLine"
+      )
       index += 1
       continue
     }
@@ -2322,28 +2391,59 @@ function buildBlocksFromLines(pageData, headingStrings) {
 
     if (lineIndex >= EARLY_TOC_SCAN_LINE_LIMIT && isTocChapterListingLine(text)) {
       pendingConnective = null
-      blocks.push({
-        text,
-        isHeading: true,
-        fontSize: 15,
-        isChapterStart: true,
-        chapterId: null,
-      })
+      pushHeadingBlock(
+        blocks,
+        {
+          text,
+          isHeading: true,
+          fontSize: 15,
+          isChapterStart: true,
+          chapterId: null,
+        },
+        "tocChapterListing"
+      )
       index += 1
       continue
     }
 
+    const blockBeforeHeading = blocks.length > 0 ? blocks[blocks.length - 1] : null
+    const trimmedContinuation = text.trim()
+    const isWrappedTitleFragment =
+      /^[a-z]/.test(trimmedContinuation) &&
+      trimmedContinuation.split(/\s+/).filter(Boolean).length <= 3
+    if (blockBeforeHeading?.isHeading && isWrappedTitleFragment) {
+      const previousText = blockBeforeHeading.text.trim()
+      const shouldMergeIntoHeading =
+        isHeadingIncompleteEnding(previousText) ||
+        /-\s*$/.test(previousText) ||
+        /(?:chapter|part|section|book|volume)\s+/i.test(previousText)
+
+      if (shouldMergeIntoHeading) {
+        pendingConnective = null
+        blockBeforeHeading.text = joinWrappedText(blockBeforeHeading.text, text)
+        index += 1
+        continue
+      }
+    }
+
     if (isLikelyChapterNumberLine(text, line)) {
       pendingConnective = null
-      blocks.push({
-        text: text.trim(),
-        isHeading: true,
-        fontSize: 15,
-        isChapterStart: true,
-        chapterId: null,
-      })
-      index += 1
-      continue
+      if (
+        pushHeadingBlock(
+          blocks,
+          {
+            text: text.trim(),
+            isHeading: true,
+            fontSize: 15,
+            isChapterStart: true,
+            chapterId: null,
+          },
+          "likelyChapterNumber"
+        )
+      ) {
+        index += 1
+        continue
+      }
     }
 
     if (isNarrativeBoundaryLine(text, line)) {
@@ -2354,13 +2454,17 @@ function buildBlocksFromLines(pageData, headingStrings) {
         continue
       }
 
-      blocks.push({
-        text: canonical,
-        isHeading: true,
-        fontSize: 15,
-        isChapterStart: true,
-        chapterId: null,
-      })
+      pushHeadingBlock(
+        blocks,
+        {
+          text: canonical,
+          isHeading: true,
+          fontSize: 15,
+          isChapterStart: true,
+          chapterId: null,
+        },
+        "narrativeBoundary"
+      )
       index += 1
       continue
     }
@@ -2409,15 +2513,23 @@ function buildBlocksFromLines(pageData, headingStrings) {
           runText,
           runEntry.line
         )
-        blocks.push({
-          text: canonical,
-          isHeading: true,
-          fontSize: isListing || isBoundary
-            ? 15
-            : Math.max(14, Math.round(runEntry.line.fontSize ?? 16)),
-          isChapterStart: isStructuralStart,
-          chapterId: null,
-        })
+        pushHeadingBlock(
+          blocks,
+          {
+            text: canonical,
+            isHeading: true,
+            fontSize: isListing || isBoundary
+              ? 15
+              : Math.max(14, Math.round(runEntry.line.fontSize ?? 16)),
+            isChapterStart: isStructuralStart,
+            chapterId: null,
+          },
+          isListing
+            ? "tocHeadingRunListing"
+            : isBoundary
+              ? "tocHeadingRunBoundary"
+              : "tocHeadingRun"
+        )
       }
       nonEmptyLineIndex += run.length - 1
       index = nextIndex
