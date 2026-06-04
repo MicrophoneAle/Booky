@@ -30,6 +30,42 @@ export const CHAPTER_HEADING_MIN_FONT_SIZE = 12.5
 /**
  * Maps API chapter ids to first reader page numbers from measured layout pages.
  */
+function extractChapterNumberLabel(text) {
+  const match = (text ?? "").trim().match(/\bchapter\s+(\d{1,3})\b/i)
+  return match ? match[1] : null
+}
+
+/** Keeps volume/chapter labels on one line in the narrow TOC sidebar. */
+export function formatTocChapterTitle(title) {
+  return (title ?? "")
+    .trim()
+    .replace(/\s*—\s*/g, "\u00a0—\u00a0")
+    .replace(/\b(Chapter)\s+(\d{1,3})\b/gi, "$1\u00a0$2")
+    .replace(/(\d{1,3})\s*-\s*/g, "$1\u00a0-\u00a0")
+}
+
+export function chapterTitlesReferToSameChapter(apiTitle, candidateTitle) {
+  const api = (apiTitle ?? "").trim()
+  const candidate = (candidateTitle ?? "").trim()
+  if (!api || !candidate) {
+    return false
+  }
+  if (api === candidate) {
+    return true
+  }
+  if (candidate.includes(api) || api.includes(candidate)) {
+    return true
+  }
+
+  const apiNumber = extractChapterNumberLabel(api)
+  const candidateNumber = extractChapterNumberLabel(candidate)
+  if (!apiNumber || !candidateNumber || apiNumber !== candidateNumber) {
+    return false
+  }
+
+  return /\bchapter\s+\d/i.test(api) && /\bchapter\s+\d/i.test(candidate)
+}
+
 export function buildChapterPageMap(measuredPages, apiChapters) {
   const map = {}
 
@@ -50,7 +86,7 @@ export function buildChapterPageMap(measuredPages, apiChapters) {
           ...(page.chaptersOnPage ?? []),
         ].filter(Boolean)
 
-        if (titles.includes(chapter.title)) {
+        if (titles.some((title) => chapterTitlesReferToSameChapter(chapter.title, title))) {
           map[chapter.id] = page.pageNumber
           continue
         }
@@ -67,6 +103,23 @@ export function buildChapterPageMap(measuredPages, apiChapters) {
         ) {
           map[chapter.id] = page.pageNumber
           break
+        }
+      }
+
+      if (map[chapter.id] === undefined) {
+        const pageTitles = [
+          page.chapterTitle,
+          page.activeChapterTitle,
+          ...(page.chaptersOnPage ?? []),
+          ...(page.visualItems ?? []).map((item) => item.chapterTitle ?? item.text),
+        ].filter(Boolean)
+
+        if (
+          pageTitles.some((title) =>
+            chapterTitlesReferToSameChapter(chapter.title, title)
+          )
+        ) {
+          map[chapter.id] = page.pageNumber
         }
       }
     }
@@ -459,7 +512,9 @@ export function flattenDocument(document) {
         isHeading: Boolean(block.isHeading),
         fontSize: block.fontSize,
         chapterId,
-        chapterTitle: chapterId ? chapterTitleById[chapterId] ?? null : null,
+        chapterTitle: chapterId
+          ? block.chapterTitle ?? chapterTitleById[chapterId] ?? null
+          : null,
         isChapterStart: inferBlockIsChapterStart(block),
         ...(block.isIndented ? { isIndented: true } : {}),
         ...(block.textAlign === "center" ? { textAlign: "center" } : {}),

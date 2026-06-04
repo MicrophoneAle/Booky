@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom"
 import {
   buildChapterPageMap,
   buildFrontMatterPack,
+  formatTocChapterTitle,
   flattenDocument,
   groupFrontMatterPlacementUnits,
   inferBlockIsChapterStart,
@@ -49,7 +50,7 @@ const PAGINATION_DEBOUNCE_MS = 400
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 35
+const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 1
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -4175,7 +4176,9 @@ export default function BookViewer({
                     setTocOpen(false)
                   }}
                 >
-                  <span className="book-viewer__toc-title">{chapter.title}</span>
+                  <span className="book-viewer__toc-title">
+                    {formatTocChapterTitle(chapter.title)}
+                  </span>
                   {pageNum && (
                     <span className="book-viewer__toc-page">p. {pageNum}</span>
                   )}

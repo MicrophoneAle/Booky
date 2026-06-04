@@ -70,6 +70,42 @@ export default {
       },
     ],
     [
+      "chapter 6 with French subtitle",
+      (ctx) => {
+        const chapter = ctx.chapters.find((entry) =>
+          /Chapter\s+6\s*-\s*The Deputy Procureur du Roi/i.test(entry.title ?? "")
+        )
+        return Boolean(chapter)
+      },
+    ],
+    [
+      "chapter 53 Robert le Diable",
+      (ctx) => {
+        const chapter = ctx.chapters.find((entry) =>
+          /Chapter\s+53\s*-\s*Robert le Diable/i.test(entry.title ?? "")
+        )
+        return Boolean(chapter)
+      },
+    ],
+    [
+      "chapter 8 Château d'If",
+      (ctx) => {
+        const chapter = ctx.chapters.find((entry) =>
+          /Chapter\s+8\s*-\s*The Château d/i.test(entry.title ?? "")
+        )
+        return Boolean(chapter)
+      },
+    ],
+    [
+      "chapter 58 Noirtier de Villefort",
+      (ctx) => {
+        const chapter = ctx.chapters.find((entry) =>
+          /Chapter\s+58\s*-\s*M\.?\s*Noirtier de Villefort/i.test(entry.title ?? "")
+        )
+        return Boolean(chapter)
+      },
+    ],
+    [
       "Word count above 400000",
       (ctx) => ctx.wordCount > 400000,
     ],

@@ -8,7 +8,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 35
+const PARSER_VERSION = 37
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
@@ -2407,6 +2407,55 @@ function parseChapterOnlyHeading(text) {
   return { kind: match[1], number: match[2] }
 }
 
+const CHAPTER_SUBTITLE_MINOR_WORDS = new Set([
+  ...BOOK_TITLE_MINOR_WORDS,
+  "de",
+  "du",
+  "des",
+  "la",
+  "le",
+  "les",
+  "van",
+  "von",
+  "der",
+  "den",
+  "di",
+  "da",
+  "el",
+  "al",
+  "del",
+  "della",
+])
+
+const CHAPTER_SUBTITLE_APOSTROPHE_REGEX = /['\u2018\u2019\u201a\u02bc`]/g
+
+function isChapterSubtitleWord(word) {
+  const trimmed = (word ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  const lower = trimmed.toLowerCase().replace(CHAPTER_SUBTITLE_APOSTROPHE_REGEX, "")
+  if (CHAPTER_SUBTITLE_MINOR_WORDS.has(lower)) {
+    return true
+  }
+  if (/^M\.?$/i.test(trimmed)) {
+    return true
+  }
+  if (/^[dl]['\u2018\u2019]?\p{Lu}[\p{L}\p{M}]*/u.test(trimmed)) {
+    return true
+  }
+  if (/^[A-Z]{2,}$/.test(trimmed)) {
+    return true
+  }
+  if (/^[\p{Lu}][\p{Ll}\p{M}]*/u.test(trimmed)) {
+    return true
+  }
+  if (/^[A-Z\d]/.test(trimmed)) {
+    return true
+  }
+  return /^[—–-]$/.test(trimmed)
+}
+
 function isLikelyChapterSubtitleText(text) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
@@ -2421,7 +2470,10 @@ function isLikelyChapterSubtitleText(text) {
   if (isScannerWatermarkLine(trimmed) || isAuthorStructuralLine(trimmed)) {
     return false
   }
-  if (/^["'\u201c]/.test(trimmed) || /^[a-z]/.test(trimmed)) {
+  if (/^["'\u201c]/.test(trimmed)) {
+    return false
+  }
+  if (/^[a-z]/.test(trimmed) && !/^e\.?\s/i.test(trimmed)) {
     return false
   }
   if (trimmed.length > 72) {
@@ -2442,18 +2494,11 @@ function isLikelyChapterSubtitleText(text) {
     return false
   }
 
-  const titleCaseLike = words.every(
-    (word) =>
-      /^[A-Z\d]/.test(word) ||
-      BOOK_TITLE_MINOR_WORDS.has(word.toLowerCase()) ||
-      /^[—–-]$/.test(word)
-  )
-
-  if (titleCaseLike && words.length <= 8 && trimmed.length <= 55) {
-    return true
+  if (!words.every(isChapterSubtitleWord)) {
+    return false
   }
 
-  return false
+  return words.length <= 10 && trimmed.length <= 60
 }
 
 function isLikelyChapterSubtitleBlock(block) {
@@ -2624,7 +2669,8 @@ function detectChapters(content, bookTitle = "") {
             /^(chapter|letter)\s+/i.test(canonicalTitle))
         ) {
           id = `${currentPartId}-${slugify(canonicalTitle)}`
-          chapterTitle = `${currentPartTitle ?? currentPartId} — ${canonicalTitle}`
+          const chapterLabel = block.chapterTitle ?? rawTitle
+          chapterTitle = `${currentPartTitle ?? currentPartId} — ${chapterLabel}`
         }
 
         if (!seenChapterIds.has(id)) {
