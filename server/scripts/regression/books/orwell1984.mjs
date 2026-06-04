@@ -39,6 +39,14 @@ export default {
   file: "orwell1984.pdf",
   assertions: [
     [
+      "title is not a filename slug",
+      (ctx) =>
+        !ctx.blocks.some(
+          (block) =>
+            block.isHeading && /^orwell\s*1984$/i.test((block.text ?? "").trim())
+        ),
+    ],
+    [
       "Part chapter numbering complete",
       (ctx) => {
         const partGroups = partChapterGroups(ctx.chapters)

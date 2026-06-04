@@ -47,12 +47,10 @@ export default {
       },
     ],
     [
-      "dedication and",
+      "dedication lines present",
       (ctx) => {
-        const dedication = ctx.blocks.find((entry) =>
-          /^To Charlie Shribner And$/i.test((entry.text ?? "").trim())
-        )
-        return Boolean(dedication)
+        const joined = ctx.blocks.map((entry) => entry.text ?? "").join(" ")
+        return /To Charlie Shribner/i.test(joined) && /Max Perkins/i.test(joined)
       },
     ],
     [

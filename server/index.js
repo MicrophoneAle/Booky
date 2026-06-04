@@ -8,7 +8,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 31
+const PARSER_VERSION = 33
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
@@ -718,18 +718,367 @@ function buildRunsFromLineItems(items) {
   return runs
 }
 
+const EBOOK_WATERMARK_SITE_REGEX =
+  /\b(?:asiaing|e-?books?(?:directory|dictionary|archive)?)(?:\.(?:com|net|org|info))?\b/i
+
 function isScannerWatermarkLine(text) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
     return false
   }
-  if (/asiaing/i.test(trimmed)) {
+  if (EBOOK_WATERMARK_SITE_REGEX.test(trimmed)) {
+    return true
+  }
+  if (/^ebd$/i.test(trimmed)) {
     return true
   }
   if (/^www\.[a-z0-9.-]+\.(com|net|org|info)$/i.test(trimmed)) {
     return true
   }
+  if (/^[a-z0-9][a-z0-9.-]*\.(com|net|org|info)$/i.test(trimmed)) {
+    return true
+  }
+  if (/^(?:presented|brought)\s+(?:to\s+you\s+)?by\b/i.test(trimmed)) {
+    return true
+  }
+  if (/^free\s+(?:e-?book|download)\b/i.test(trimmed)) {
+    return true
+  }
   return false
+}
+
+function stripWatermarkPhrasesFromText(text) {
+  return (text ?? "")
+    .replace(/\s*asiaing\.com\s*/gi, " ")
+    .replace(/\s*e-booksdirectory\.com\s*/gi, " ")
+    .replace(/\s*e-booksdictionary\.com\s*/gi, " ")
+    .replace(EBOOK_WATERMARK_SITE_REGEX, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function formatInferredTitleText(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return ""
+  }
+
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (
+    letters.length >= 4 &&
+    letters === letters.toUpperCase() &&
+    /[A-Z]/.test(letters)
+  ) {
+    return applyBookTitleCasing(trimmed.toLowerCase())
+  }
+
+  return applyBookTitleCasing(trimmed)
+}
+
+function looksLikeFilenameSlug(title) {
+  const trimmed = (title ?? "").trim()
+  if (!trimmed) {
+    return true
+  }
+  if (/^[A-Z][a-z]+,\s*.+\s*-\s*.+/i.test(trimmed)) {
+    return true
+  }
+  if (/\s/.test(trimmed)) {
+    return false
+  }
+  if (/^\d{1,4}$/.test(trimmed)) {
+    return false
+  }
+  if (/[a-z][A-Z]/.test(trimmed)) {
+    return true
+  }
+  if (/^[A-Za-z]+\d+[A-Za-z0-9]*$/.test(trimmed)) {
+    return true
+  }
+  return /^[a-z0-9_-]+$/i.test(trimmed)
+}
+
+function sanitizePdfTitle(title) {
+  let trimmed = stripWatermarkPhrasesFromText(title)
+  if (!trimmed || isScannerWatermarkLine(trimmed)) {
+    return ""
+  }
+
+  const catalogMatch = trimmed.match(/^[A-Z][^\n-]{0,80}?,\s*[^-]{1,80}?\s*-\s*(.+)$/i)
+  if (catalogMatch) {
+    const extracted = stripWatermarkPhrasesFromText(catalogMatch[1])
+    if (extracted && !isScannerWatermarkLine(extracted)) {
+      return formatInferredTitleText(extracted)
+    }
+  }
+
+  return formatInferredTitleText(trimmed)
+}
+
+function extractTrailingYearTitleFromFileName(fileName) {
+  const stem = (fileName ?? "").replace(/\.pdf$/i, "").trim()
+  const match = stem.match(/([A-Za-z]+)(\d{4})$/)
+  if (!match) {
+    return ""
+  }
+
+  const prefix = match[1]
+  if (prefix.length > 24) {
+    return ""
+  }
+
+  return match[2]
+}
+
+function inferBookTitleFromEarlyBlocks(blocks) {
+  const candidates = []
+  const scan = blocks.slice(0, 40)
+
+  for (const block of scan) {
+    const text = (block.text ?? "").trim()
+    if (!text || isScannerWatermarkLine(text)) {
+      continue
+    }
+    if (CHAPTER_PATTERN.test(text)) {
+      continue
+    }
+    if (isAuthorBylineHeadingText(text) || /^by\s+/i.test(text)) {
+      continue
+    }
+    if (/^to\s+[A-Z]/i.test(text) && text.length < 90) {
+      continue
+    }
+
+    const words = text.split(/\s+/).filter(Boolean)
+    if (words.length < 2 || words.length > 14) {
+      continue
+    }
+    if (text.length > 90 && /[.!?]/.test(text)) {
+      continue
+    }
+
+    const letters = text.replace(/[^A-Za-z]/g, "")
+    if (
+      letters.length >= 8 &&
+      letters === letters.toUpperCase() &&
+      /[A-Z]/.test(letters)
+    ) {
+      candidates.push({
+        text: formatInferredTitleText(text),
+        score: 92,
+      })
+      continue
+    }
+
+    const looksLikeTitleCase = words.every(
+      (word) =>
+        /^[A-Z][a-z]+(?:['-][A-Z][a-z]+)?$/.test(word) ||
+        BOOK_TITLE_MINOR_WORDS.has(word.toLowerCase())
+    )
+
+    if (block.isHeading && looksLikeTitleCase && !isAuthorStructuralLine(text)) {
+      candidates.push({
+        text: formatInferredTitleText(text),
+        score: (block.fontSize ?? 0) >= 16 ? 88 : 75,
+      })
+      continue
+    }
+
+    if (
+      !block.isHeading &&
+      looksLikeTitleCase &&
+      words.length <= 10 &&
+      !/["\u201c\u201d]/.test(text)
+    ) {
+      candidates.push({
+        text: formatInferredTitleText(text),
+        score: 68,
+      })
+    }
+  }
+
+  if (candidates.length === 0) {
+    return ""
+  }
+
+  candidates.sort((left, right) => right.score - left.score)
+  return candidates[0].text
+}
+
+const BOOK_TITLE_MINOR_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "as",
+  "at",
+  "but",
+  "by",
+  "for",
+  "in",
+  "nor",
+  "of",
+  "on",
+  "or",
+  "so",
+  "the",
+  "to",
+  "up",
+  "yet",
+])
+
+function capitalizeTitleWord(word, forceMajor = false) {
+  const lower = word.toLowerCase()
+  if (!forceMajor && BOOK_TITLE_MINOR_WORDS.has(lower)) {
+    return lower
+  }
+  if (/^[ivxlcdm]+$/i.test(word)) {
+    return word.toUpperCase()
+  }
+  return lower.charAt(0).toUpperCase() + lower.slice(1)
+}
+
+function applyBookTitleCasing(title) {
+  const words = title.split(/\s+/).filter(Boolean)
+  if (words.length === 0) {
+    return ""
+  }
+
+  return words
+    .map((word, index) => {
+      const isMinor =
+        index > 0 && index < words.length - 1 && !word.includes("-")
+
+      if (word.includes("-")) {
+        const parts = word.split("-")
+        return parts
+          .map((part, partIndex) =>
+            capitalizeTitleWord(
+              part,
+              partIndex === 0 || index === 0 || index === words.length - 1
+            )
+          )
+          .join("-")
+      }
+
+      if (isMinor && BOOK_TITLE_MINOR_WORDS.has(word.toLowerCase())) {
+        return word.toLowerCase()
+      }
+
+      return capitalizeTitleWord(word, index === 0 || index === words.length - 1)
+    })
+    .join(" ")
+}
+
+function humanizeBookTitleFromFileName(fileName) {
+  const stem = (fileName ?? "").replace(/\.pdf$/i, "").trim()
+  if (!stem) {
+    return ""
+  }
+
+  let title = stem.replace(/[-_]+/g, " ")
+  title = title.replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+  title = title.replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+  return applyBookTitleCasing(title.replace(/\s+/g, " ").trim())
+}
+
+function resolveBookTitle(parsedText, fileName = "", blocks = []) {
+  const fromMeta = sanitizePdfTitle(parsedText?.info?.Title ?? "")
+  if (fromMeta && !looksLikeFilenameSlug(fromMeta)) {
+    return fromMeta
+  }
+
+  const fromBlocks = inferBookTitleFromEarlyBlocks(blocks)
+  if (fromBlocks && !looksLikeFilenameSlug(fromBlocks)) {
+    return fromBlocks
+  }
+
+  const fromFile = humanizeBookTitleFromFileName(fileName)
+  if (fromFile && !looksLikeFilenameSlug(fromFile)) {
+    return fromFile
+  }
+
+  const yearFromFile = extractTrailingYearTitleFromFileName(fileName)
+  if (yearFromFile) {
+    return yearFromFile
+  }
+
+  return fromBlocks || fromMeta || fromFile || ""
+}
+
+function sanitizePdfAuthor(author) {
+  const trimmed = stripWatermarkPhrasesFromText(author)
+  if (!trimmed || isScannerWatermarkLine(trimmed)) {
+    return ""
+  }
+  if (EBOOK_WATERMARK_SITE_REGEX.test(trimmed)) {
+    return ""
+  }
+  return trimmed
+}
+
+function isAuthorBylineHeadingText(text) {
+  return /^by\s+/i.test((text ?? "").trim())
+}
+
+function contentStartsWithBookTitle(blocks, bookTitle) {
+  const normalizedBook = normalizeHeadingCandidate(bookTitle).toLowerCase()
+  if (!normalizedBook) {
+    return false
+  }
+
+  for (const block of blocks.slice(0, 20)) {
+    if (!block?.isHeading) {
+      continue
+    }
+
+    const normalizedBlock = normalizeHeadingCandidate(block.text ?? "").toLowerCase()
+    if (!normalizedBlock || isAuthorBylineHeadingText(normalizedBlock)) {
+      continue
+    }
+    if (CHAPTER_PATTERN.test(normalizedBlock)) {
+      continue
+    }
+
+    if (
+      normalizedBlock === normalizedBook ||
+      normalizedBlock.includes(normalizedBook) ||
+      normalizedBook.includes(normalizedBlock)
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function isDialogueAttributionFragment(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 40) {
+    return false
+  }
+
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (
+    letters.length >= 4 &&
+    letters === letters.toUpperCase() &&
+    /[A-Z]/.test(letters)
+  ) {
+    return false
+  }
+
+  if (/^(?:the|an?)\s+end\.?$/i.test(trimmed)) {
+    return false
+  }
+
+  if (
+    /^(?:Mr\.|Mrs\.|Miss|Ms\.|Dr\.|Sir|Lady|Colonel|Captain|Professor)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?[.!?]?[\u201c\u201d"']?\s*$/i.test(
+      trimmed
+    )
+  ) {
+    return true
+  }
+
+  return /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?[.!?]?[\u201c\u201d"']?\s*$/.test(trimmed)
 }
 
 function applyProseFormattingToBlock(block, line) {
@@ -931,6 +1280,42 @@ function isLineIsolatedOnPage(line, gapThreshold) {
   return above > gapThreshold && below > gapThreshold
 }
 
+function isProminentDisplayTitleLine(text, line, entry = null) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || isScannerWatermarkLine(trimmed)) {
+    return false
+  }
+  if (CHAPTER_PATTERN.test(trimmed) || isAuthorStructuralLine(trimmed)) {
+    return false
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 2 || words.length > 12) {
+    return false
+  }
+  if (/[.!?][\u201d"\u2019']?\s*$/.test(trimmed)) {
+    return false
+  }
+
+  const metrics = entry?.pageMetrics ?? line?.pageMetrics
+  const bodyFontSize = metrics?.bodyFontSize ?? line?.fontSize ?? 0
+  const lineFontSize = line?.fontSize ?? 0
+  if (
+    bodyFontSize > 0 &&
+    lineFontSize < bodyFontSize * HEADING_FONT_BODY_RATIO &&
+    lineFontSize < HEADING_STRING_MIN_FONT_SIZE
+  ) {
+    return false
+  }
+
+  const gapThreshold = metrics?.gapThreshold ?? 0
+  if (!isLineIsolatedOnPage(line, gapThreshold)) {
+    return false
+  }
+
+  return /^[A-Z]/.test(trimmed)
+}
+
 function passesVisualHeadingGuards(text, line, entry = null) {
   if (isCleanStructuralHeadingText(text, line)) {
     return true
@@ -1070,6 +1455,9 @@ function isShortDialogueLine(text) {
   if (!trimmed || trimmed.length > 48) {
     return false
   }
+  if (isDialogueAttributionFragment(trimmed)) {
+    return true
+  }
   if (/^[''\u2018\u201c][^''""]{0,40}[''\u2019\u201d]?\.?$/.test(trimmed)) {
     return true
   }
@@ -1179,6 +1567,13 @@ function dropMarginCalloutLines(lines) {
       const isShort =
         text.length <= MARGIN_CALLOUT_MAX_CHARS &&
         words.length <= MARGIN_CALLOUT_MAX_WORDS
+
+      if (
+        words.length >= 2 &&
+        (line.fontSize ?? 0) >= HEADING_STRING_MIN_FONT_SIZE
+      ) {
+        return true
+      }
 
       // Body-length lines are always content.
       if (!isShort) {
@@ -1622,7 +2017,7 @@ function annotateLinesCentered(lines) {
 
   for (const line of lines) {
     const trimmed = (line.text ?? "").trim()
-    if (isShortDialogueLine(trimmed)) {
+    if (isShortDialogueLine(trimmed) || isDialogueAttributionFragment(trimmed)) {
       line.centered = false
       continue
     }
@@ -1654,7 +2049,8 @@ function annotateLinesCentered(lines) {
       isNarrowLine &&
       trimmed.length > 0 &&
       trimmed.length <= CENTERED_REPEATED_LINE_MAX_CHARS &&
-      (lineCountsOnPage.get(trimmed) ?? 0) >= CENTERED_REPEATED_LINE_MIN_COUNT
+      (lineCountsOnPage.get(trimmed) ?? 0) >= CENTERED_REPEATED_LINE_MIN_COUNT &&
+      !isDialogueAttributionFragment(trimmed)
 
     line.centered = symmetricMargins || nearColumnCenter || repeatedDisplayLine
   }
@@ -1665,8 +2061,8 @@ async function readPdfInfo(pdf) {
     const metadata = await pdf.getMetadata()
     const metaInfo = metadata?.info ?? {}
     return {
-      Title: (metaInfo.Title ?? "").trim(),
-      Author: (metaInfo.Author ?? "").trim(),
+      Title: sanitizePdfTitle(metaInfo.Title ?? ""),
+      Author: sanitizePdfAuthor(metaInfo.Author ?? ""),
     }
   } catch {
     return { Title: "", Author: "" }
@@ -2115,6 +2511,10 @@ function isNarrativeSentenceLine(text) {
 function isHeadingLine(text, line, headingStrings, entry = null) {
   if (isScannerWatermarkLine(text)) {
     return false
+  }
+
+  if (isProminentDisplayTitleLine(text, line, entry)) {
+    return true
   }
 
   if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
@@ -2790,7 +3190,7 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
   const parseStartedAt = Date.now()
 
   try {
-    const { parsedText, chapters, contentWithChapters, wordCount } =
+    const { parsedText, chapters, contentWithChapters, wordCount, bookTitle } =
       await parsePdfBuffer(buffer, fileName, {
         onPageProcessed(pageNumber, totalPages) {
           if (pageNumber % 100 === 0 || pageNumber === totalPages) {
@@ -2815,19 +3215,25 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
       `Background parse finished for ${documentId} (${parsedText.numpages} PDF pages, ${wordCount.toLocaleString()} words) in ${((Date.now() - parseStartedAt) / 1000).toFixed(1)}s`
     )
 
-    const parseResult = { parsedText, chapters, contentWithChapters, wordCount }
+    const parseResult = { parsedText, chapters, contentWithChapters, wordCount, bookTitle }
+
+    const documentUpdate = {
+      total_pages: parsedText.numpages,
+      chapters,
+      content: contentWithChapters,
+      word_count: wordCount,
+      parser_version: PARSER_VERSION,
+      parse_status: PARSE_STATUS.READY,
+      ...buildParsedCacheFields(),
+    }
+
+    if (bookTitle) {
+      documentUpdate.name = bookTitle
+    }
 
     const { error: updateError } = await supabase
       .from("documents")
-      .update({
-        total_pages: parsedText.numpages,
-        chapters,
-        content: contentWithChapters,
-        word_count: wordCount,
-        parser_version: PARSER_VERSION,
-        parse_status: PARSE_STATUS.READY,
-        ...buildParsedCacheFields(),
-      })
+      .update(documentUpdate)
       .eq("id", documentId)
       .eq("user_id", userId)
 
@@ -2925,25 +3331,22 @@ async function parsePdfBuffer(
     percent: PARSE_PROGRESS_STRUCTURE_PERCENT,
   })
 
-  const hasTitleHeading = blocks
-    .slice(0, 10)
-    .some((block) => block.isHeading && (block.fontSize ?? 0) > 14)
+  const bookTitle = resolveBookTitle(parsedText, fileName, blocks)
 
-  if (!hasTitleHeading) {
-    const titleText = (parsedText?.info?.Title ?? "").trim()
-    const authorText = (parsedText?.info?.Author ?? "").trim()
+  if (!contentStartsWithBookTitle(blocks, bookTitle)) {
+    const authorText = sanitizePdfAuthor(parsedText?.info?.Author ?? "")
     const synthetic = []
 
-    if (titleText) {
+    if (bookTitle && !looksLikeFilenameSlug(bookTitle)) {
       synthetic.push({
-        text: titleText,
+        text: bookTitle,
         isHeading: true,
         fontSize: 20,
         chapterId: null,
       })
     }
 
-    if (authorText && !isScannerWatermarkLine(authorText)) {
+    if (authorText) {
       const authorLine = /^by\s/i.test(authorText) ? authorText : `By ${authorText}`
       if (!isScannerWatermarkLine(authorLine)) {
         synthetic.push({
@@ -2962,11 +3365,6 @@ async function parsePdfBuffer(
 
   const content = blocksToContent(blocks)
 
-  let bookTitle = (parsedText?.info?.Title ?? "").trim()
-  if (!bookTitle && fileName) {
-    bookTitle = fileName.replace(/\.pdf$/i, "").replace(/[-_]+/g, " ").trim()
-  }
-
   const { chapters, content: contentWithChapters } = detectChapters(content, bookTitle)
   const wordCount = countWordsFromBlocks(blocks)
 
@@ -2982,6 +3380,7 @@ async function parsePdfBuffer(
     chapters,
     contentWithChapters,
     wordCount,
+    bookTitle,
   }
 }
 
@@ -2998,6 +3397,9 @@ function contentLooksStale(content) {
     for (const block of page.blocks ?? []) {
       const text = block.text ?? ""
       if (/Go to With a sort of military precision/i.test(text)) {
+        return true
+      }
+      if (isScannerWatermarkLine(text)) {
         return true
       }
       if (
@@ -3158,7 +3560,9 @@ app.post("/upload", requireAuth, (req, res) => {
         return
       }
 
-      const title = uploadedFile.originalname.replace(/\.pdf$/i, "")
+      const title =
+        humanizeBookTitleFromFileName(uploadedFile.originalname) ||
+        uploadedFile.originalname.replace(/\.pdf$/i, "")
       const storagePath = `${Date.now()}-${uploadedFile.originalname}`
       const { data: storageData, error: storageError } = await supabase.storage
         .from("pdfs")

@@ -48,7 +48,7 @@ const PAGINATION_DEBOUNCE_MS = 400
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 31
+const PARSER_VERSION = 33
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 const PAGINATION_CACHE_MAX_ENTRIES = 3

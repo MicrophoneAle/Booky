@@ -24,6 +24,7 @@ import {
 import oldman from "./books/oldman.mjs"
 import orwell1984 from "./books/orwell1984.mjs"
 import monteCristo from "./books/monte-cristo.mjs"
+import pridePrejudice from "./books/pride-prejudice.mjs"
 
 process.env.SUPABASE_URL ??= "https://example.supabase.co"
 process.env.SUPABASE_SERVICE_KEY ??= "test-service-key"
@@ -32,7 +33,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ASSETS_DIR = path.resolve(__dirname, "../../../client/src/assets")
 const SNAPSHOTS_DIR = path.resolve(__dirname, "snapshots")
 
-const BOOKS = [oldman, orwell1984, monteCristo]
+const BOOKS = [oldman, orwell1984, monteCristo, pridePrejudice]
 
 const MAX_FAILURE_LINES = 4
 const DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

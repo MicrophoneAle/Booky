@@ -12,6 +12,9 @@ const TERMINAL_PUNCTUATION_REGEX = /[.!?][\u201d"\u2019']?\s*$/
 
 const QUOTE_START_REGEX = /^[\u201c\u2018"']/
 
+const EBOOK_WATERMARK_SITE_REGEX =
+  /\b(?:asiaing|e-?books?(?:directory|dictionary|archive)?)(?:\.(?:com|net|org|info))?\b/i
+
 const MAX_FAILURES_PER_CHECK = 100
 
 function blockText(block) {
@@ -410,6 +413,61 @@ export function noEmptyBlocks(blocks) {
   return result(failures)
 }
 
+const DIALOGUE_ATTRIBUTION_CENTERED_REGEX =
+  /^(?:(?:Mr\.|Mrs\.|Miss|Ms\.|Dr\.|Sir|Lady|Colonel|Captain|Professor)\s+)?[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?[.!?]?$/
+
+function isMostlyAllCapsLine(text) {
+  const letters = text.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 4) {
+    return false
+  }
+  const upper = letters.replace(/[^A-Z]/g, "").length
+  return upper / letters.length >= 0.85
+}
+
+export function noScannerWatermarks(blocks) {
+  const failures = []
+
+  blocks.forEach((block, index) => {
+    const text = blockText(block)
+    if (!text) {
+      return
+    }
+    if (
+      EBOOK_WATERMARK_SITE_REGEX.test(text) ||
+      /^ebd$/i.test(text)
+    ) {
+      failures.push(`[block ${index}] Scanner watermark: '${truncate(text)}'`)
+    }
+  })
+
+  return result(failures)
+}
+
+export function noDialogueAttributionCentered(blocks) {
+  const failures = []
+
+  blocks.forEach((block, index) => {
+    const text = blockText(block)
+    if (!text || text.length > 40) {
+      return
+    }
+    if (isMostlyAllCapsLine(text)) {
+      return
+    }
+    if (!DIALOGUE_ATTRIBUTION_CENTERED_REGEX.test(text)) {
+      return
+    }
+    if (block.textAlign === "center" || block.centered === true) {
+      failures.push(
+        `[block ${index}] Dialogue attribution centered: '${truncate(text)}'`
+      )
+    }
+  })
+
+  return result(failures)
+}
+
 export function dialogueSplitCheck(blocks) {
   const failures = []
 
@@ -451,6 +509,12 @@ export function dialogueSplitCheck(blocks) {
 /** Ordered registry for the runner. */
 export const GENERAL_CHECKS = [
   { id: "noMidSentenceHeadings", label: "No mid-sentence headings", run: noMidSentenceHeadings },
+  { id: "noScannerWatermarks", label: "No scanner watermarks", run: noScannerWatermarks },
+  {
+    id: "noDialogueAttributionCentered",
+    label: "Dialogue attribution not centered",
+    run: noDialogueAttributionCentered,
+  },
   { id: "noOrphanedFragments", label: "No orphaned fragments", run: noOrphanedFragments },
   {
     id: "paragraphContinuity",
