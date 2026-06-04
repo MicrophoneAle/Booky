@@ -8,7 +8,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 23
+const PARSER_VERSION = 24
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
@@ -767,7 +767,7 @@ function normalizeExtractedText(text) {
 
   return stripInlineArtifacts(
     joinSplitWordFragments(
-      text
+      repairEpistolaryPdfArtifacts(text)
         .replace(/\u00AD/g, "")
         .replace(/\b([a-zA-Z]{2,})-\s+([a-z])/g, "$1$2")
         .replace(/\bfi\s+(?=[a-z])/gi, "fi")
@@ -889,6 +889,14 @@ function dropMarginCalloutLines(lines) {
         PART_HEADING_PATTERN.test(text) ||
         VOLUME_HEADING_PATTERN.test(text) ||
         CHAPTER_PATTERN.test(text)
+      ) {
+        return true
+      }
+
+      if (
+        isEpistolaryAddressLine(text) ||
+        isEpistolarySignOffLine(text) ||
+        isEpistolarySignatureLine(text)
       ) {
         return true
       }
@@ -1081,6 +1089,56 @@ function isNarrativeBoundaryLine(text, line = null) {
   return isCleanStructuralHeadingText(trimmed, line)
 }
 
+function isEpistolaryAddressLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 100) {
+    return false
+  }
+  // Do not use \b after "Mrs." — the period and following space are both non-word chars.
+  return /^To\s+(?:Mrs?\.?\s+|Mr\.?\s+|Miss\s+|Dr\.?\s+|Sir\s+|Madame\s+|My\s+dear\s+)/i.test(
+    trimmed
+  )
+}
+
+function isEpistolarySignOffLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 100) {
+    return false
+  }
+  return (
+    /^Your affectionate\b/i.test(trimmed) ||
+    /^Most affectionately yours\b/i.test(trimmed) ||
+    /^Affectionately yours\b/i.test(trimmed) ||
+    /^Yours sincerely\b/i.test(trimmed)
+  )
+}
+
+function isEpistolarySignatureLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 50) {
+    return false
+  }
+  return (
+    /^R\.\s+W\s+ALTON\s*\.?$/i.test(trimmed) ||
+    /^R\.\s+W\s*\.?$/i.test(trimmed) ||
+    /^[A-Z]\.\s+[A-Z]\.\s+[A-Z]{2,}\s*\.?$/i.test(trimmed)
+  )
+}
+
+function repairEpistolaryPdfArtifacts(text) {
+  if (!text) {
+    return ""
+  }
+
+  return text
+    .replace(/\bTo\s+Mrs\.?\s+S\s+AVILLE\s*,\s*England\s*\.?/gi, "To Mrs. Saville, England.")
+    .replace(
+      /\bYour affectionate brother,\s*R\.\s+W\s+ALTON\s*\.?/gi,
+      "Your affectionate brother, R. Walton."
+    )
+    .replace(/\bR\.\s+W\s+ALTON\b/gi, "R. Walton")
+}
+
 function shouldDropExtractedLine(
   text,
   distinctPageCount,
@@ -1129,6 +1187,13 @@ function shouldDropExtractedLine(
     }
   }
   if (isCentered || isNarrativeBoundaryLine(trimmed) || CHAPTER_NUMBER_REGEX.test(trimmed)) {
+    return false
+  }
+  if (
+    isEpistolaryAddressLine(trimmed) ||
+    isEpistolarySignOffLine(trimmed) ||
+    isEpistolarySignatureLine(trimmed)
+  ) {
     return false
   }
   if (

@@ -38,3 +38,22 @@ for (const page of contentWithChapters) {
   }
 }
 console.log("\nInline letter artifacts:", hits)
+
+const joined = contentWithChapters
+  .flatMap((page) => page.blocks ?? [])
+  .map((block) => block.text ?? "")
+  .join(" ")
+const salutationOk =
+  /to mrs\.?\s+saville/i.test(joined) && /england/i.test(joined)
+const signatureOk = /r\.?\s*walton/i.test(joined)
+console.log(
+  salutationOk
+    ? "\nLetter salutation (To Mrs. Saville, England): OK"
+    : "\nLetter salutation (To Mrs. Saville, England): FAIL"
+)
+console.log(
+  signatureOk
+    ? "Letter signature (R. Walton): OK"
+    : "Letter signature (R. Walton): FAIL"
+)
+process.exitCode = hits > 0 || !salutationOk || !signatureOk ? 1 : 0
