@@ -405,7 +405,9 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
 
     const { data, error } = await supabase
       .from("documents")
-      .select("id, name, total_pages, chapters, content, parser_version, parse_status")
+      .select(
+        "id, name, total_pages, chapters, content, parser_version, parse_status, parsed_cache, parsed_cache_version, storage_path"
+      )
       .eq("id", id)
       .eq("user_id", req.userId)
       .single()
@@ -434,6 +436,55 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
         success: false,
         error: "Document processing failed. Try uploading again.",
         parse_status: parseStatus,
+      })
+      return
+    }
+
+    const cached = readParsedCache(data)
+    if (cached) {
+      res.json({
+        success: true,
+        document: buildOpenDocumentPayload(data, cached),
+      })
+      return
+    }
+
+    if (documentNeedsReparse(data)) {
+      await reparseDocumentIfOutdated(data)
+
+      const { data: refreshed, error: refreshError } = await supabase
+        .from("documents")
+        .select(
+          "id, name, total_pages, chapters, content, parser_version, parsed_cache, parsed_cache_version"
+        )
+        .eq("id", id)
+        .eq("user_id", req.userId)
+        .single()
+
+      if (refreshError || !refreshed) {
+        res.status(500).json({ success: false, error: "Failed to load document." })
+        return
+      }
+
+      const refreshedCache = readParsedCache(refreshed)
+      if (refreshedCache) {
+        res.json({
+          success: true,
+          document: buildOpenDocumentPayload(refreshed, refreshedCache),
+        })
+        return
+      }
+
+      res.json({
+        success: true,
+        document: {
+          id: refreshed.id,
+          name: refreshed.name,
+          total_pages: refreshed.total_pages,
+          chapters: refreshed.chapters,
+          content: refreshed.content,
+          parser_version: refreshed.parser_version ?? PARSER_VERSION,
+        },
       })
       return
     }
@@ -2154,6 +2205,55 @@ function toPublicDocument(documentRow, wordCount) {
   }
 }
 
+function hasValidParsedCache(documentRow) {
+  return (
+    documentRow?.parsed_cache &&
+    Number(documentRow.parsed_cache_version) === PARSER_VERSION
+  )
+}
+
+function readParsedCache(documentRow) {
+  if (!hasValidParsedCache(documentRow)) {
+    return null
+  }
+
+  try {
+    const cached =
+      typeof documentRow.parsed_cache === "string"
+        ? JSON.parse(documentRow.parsed_cache)
+        : documentRow.parsed_cache
+    if (!cached || !Array.isArray(cached.contentWithChapters)) {
+      return null
+    }
+    return cached
+  } catch {
+    return null
+  }
+}
+
+function buildParsedCacheFields(parseResult) {
+  return {
+    parsed_cache: JSON.stringify({
+      parsedText: parseResult.parsedText,
+      chapters: parseResult.chapters,
+      contentWithChapters: parseResult.contentWithChapters,
+      wordCount: parseResult.wordCount,
+    }),
+    parsed_cache_version: PARSER_VERSION,
+  }
+}
+
+function buildOpenDocumentPayload(documentRow, cached) {
+  return {
+    id: documentRow.id,
+    name: documentRow.name,
+    total_pages: cached.parsedText?.numpages ?? documentRow.total_pages,
+    chapters: cached.chapters,
+    content: cached.contentWithChapters,
+    parser_version: PARSER_VERSION,
+  }
+}
+
 async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
   if (backgroundParseInFlight.has(documentId)) {
     return
@@ -2179,6 +2279,8 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
       `Background parse finished for ${documentId} (${parsedText.numpages} PDF pages, ${wordCount.toLocaleString()} words) in ${((Date.now() - parseStartedAt) / 1000).toFixed(1)}s`
     )
 
+    const parseResult = { parsedText, chapters, contentWithChapters, wordCount }
+
     const { error: updateError } = await supabase
       .from("documents")
       .update({
@@ -2188,6 +2290,7 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
         word_count: wordCount,
         parser_version: PARSER_VERSION,
         parse_status: PARSE_STATUS.READY,
+        ...buildParsedCacheFields(parseResult),
       })
       .eq("id", documentId)
       .eq("user_id", userId)
@@ -2344,8 +2447,8 @@ async function reparseDocumentIfOutdated(documentRow, options = {}) {
   }
 
   const fileBuffer = Buffer.from(await storageFile.arrayBuffer())
-  const { parsedText, chapters, contentWithChapters, wordCount } =
-    await parsePdfBuffer(fileBuffer, documentRow.name ?? "")
+  const parseResult = await parsePdfBuffer(fileBuffer, documentRow.name ?? "")
+  const { parsedText, chapters, contentWithChapters, wordCount } = parseResult
 
   const { error: updateError } = await supabase
     .from("documents")
@@ -2356,6 +2459,7 @@ async function reparseDocumentIfOutdated(documentRow, options = {}) {
       word_count: wordCount,
       parser_version: PARSER_VERSION,
       parse_status: PARSE_STATUS.READY,
+      ...buildParsedCacheFields(parseResult),
     })
     .eq("id", documentRow.id)
 
