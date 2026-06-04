@@ -8,7 +8,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 28
+const PARSER_VERSION = 29
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
@@ -1313,8 +1313,25 @@ function isCleanStructuralHeadingText(text, line = null) {
     return true
   }
   if (STRUCTURAL_HEADING_PREFIX_REGEX.test(trimmed)) {
+    if (/[;,]/.test(trimmed)) {
+      return false
+    }
+
+    const afterPrefix = trimmed.replace(STRUCTURAL_HEADING_PREFIX_REGEX, "").trim()
+    if (
+      /^(?:and|or|but|the|a|an|without|with|from|in|on|at|to|by|as|if)\b/i.test(
+        afterPrefix
+      )
+    ) {
+      return false
+    }
+
+    if (/^[a-z]/.test(trimmed)) {
+      return false
+    }
+
     const fontSize = line?.fontSize ?? 0
-    if (fontSize >= CHAPTER_HEADING_MIN_FONT_SIZE || words.length <= 4) {
+    if (words.length <= 4 && fontSize >= CHAPTER_HEADING_MIN_FONT_SIZE) {
       return true
     }
   }
@@ -1327,6 +1344,9 @@ function isNarrativeBoundaryLine(text, line = null) {
     return false
   }
   if (isScannerWatermarkLine(trimmed)) {
+    return false
+  }
+  if (isNarrativeSentenceLine(trimmed)) {
     return false
   }
   return isCleanStructuralHeadingText(trimmed, line)

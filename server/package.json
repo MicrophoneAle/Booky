@@ -8,7 +8,9 @@
     "dev": "node --watch index.js",
     "start": "node index.js",
     "diff-pdf": "node scripts/diff-pdf-parsed.mjs",
-    "diff-pdf:all": "node scripts/diff-pdf-parsed.mjs --all"
+    "diff-pdf:all": "node scripts/diff-pdf-parsed.mjs --all",
+    "regression": "node scripts/regression/run.mjs",
+    "regression:update": "node scripts/regression/run.mjs --update-snapshots"
   },
   "keywords": [],
   "author": "",
