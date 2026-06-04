@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import { flushSync } from "react-dom"
 import { useNavigate } from "react-router-dom"
 import {
   buildChapterPageMap,
@@ -328,33 +329,39 @@ function resolvePageAfterRepagination({
   return 1
 }
 
-function computeOpeningLoadingProgress(
+function buildPaginationLoadingLabel(percent, isComplete) {
+  if (isComplete || percent >= 100) {
+    return "Ready"
+  }
+  if (percent >= 90) {
+    return "Almost there..."
+  }
+  if (percent <= 0) {
+    return "Preparing pages..."
+  }
+  return `Preparing pages… ${percent}%`
+}
+
+function computeOpeningLoadingPercent(
   donePages,
   estimatedTotal,
   isComplete,
   placeableProgress = null
 ) {
   if (isComplete) {
-    return { percent: 100, label: "Ready" }
+    return 100
   }
+
+  let percent = 0
 
   if (placeableProgress != null) {
-    const percent = Math.max(5, Math.min(95, Math.round(placeableProgress * 95)))
-    const label =
-      percent >= 90 ? "Almost there..." : `Preparing pages… ${percent}%`
-    return { percent, label }
+    percent = Math.round(placeableProgress * 100)
+  } else if (donePages > 0) {
+    const safeTotal = Math.max(donePages, estimatedTotal || donePages)
+    percent = Math.round((donePages / safeTotal) * 100)
   }
 
-  if (donePages <= 0) {
-    return { percent: 0, label: "Preparing pages..." }
-  }
-
-  const safeTotal = Math.max(donePages, estimatedTotal || donePages)
-  const rawPercent = Math.round((donePages / safeTotal) * 90)
-  const percent = Math.max(10, Math.min(95, rawPercent))
-  const label = percent >= 90 ? "Almost there..." : `Preparing pages… ${percent}%`
-
-  return { percent, label }
+  return Math.max(0, Math.min(99, percent))
 }
 
 function buildPageTextMap(measuredPages) {
@@ -2677,7 +2684,7 @@ export default function BookViewer({
         resume?.remainderLength > 0
           ? Math.min(1, (resume.placeableIndex ?? 0) / resume.remainderLength)
           : null
-      const { percent, label } = computeOpeningLoadingProgress(
+      const percent = computeOpeningLoadingPercent(
         donePages,
         estimatedTotal,
         isComplete,
@@ -2687,8 +2694,12 @@ export default function BookViewer({
         ? 100
         : Math.max(maxLoadingProgressRef.current, percent)
       maxLoadingProgressRef.current = monotonicPercent
-      setLoadingProgress(monotonicPercent)
-      setLoadingProgressLabel(label)
+      const label = buildPaginationLoadingLabel(monotonicPercent, isComplete)
+
+      flushSync(() => {
+        setLoadingProgress(monotonicPercent)
+        setLoadingProgressLabel(label)
+      })
     }
 
     const beginPaginationLoadingScreen = (mode) => {
@@ -3523,13 +3534,24 @@ export default function BookViewer({
         <div className="reader-screen__content">
           <p className="reader-screen__logo">BOOKY</p>
           <p className="reader-screen__subtext">{loadingSubtext}</p>
-          <div className="reader-screen__progress-track">
+          <div
+            className="reader-screen__progress-track"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={loadingProgress}
+            aria-label={loadingProgressLabel}
+          >
             <div
               className="reader-screen__progress-fill"
-              style={{ width: `${loadingProgress}%` }}
+              style={{
+                "--reader-progress": String(Math.max(0, Math.min(100, loadingProgress)) / 100),
+              }}
             />
           </div>
-          <p className="reader-screen__progress-label">{loadingProgressLabel}</p>
+          <p className="reader-screen__progress-label">
+            {buildPaginationLoadingLabel(loadingProgress, loadingProgress >= 100)}
+          </p>
         </div>
       </div>
     )

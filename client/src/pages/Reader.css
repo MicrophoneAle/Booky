@@ -61,10 +61,15 @@
 }
 
 .reader-screen__progress-fill {
+  display: block;
+  width: 100%;
   height: 100%;
   background: #d4af37;
   border-radius: 999px;
-  transition: width 0.3s ease;
+  transform: scaleX(var(--reader-progress, 0));
+  transform-origin: left center;
+  transition: transform 0.25s ease;
+  will-change: transform;
 }
 
 .reader-screen__progress-label {
