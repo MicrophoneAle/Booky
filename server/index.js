@@ -8,10 +8,11 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 24
+const PARSER_VERSION = 26
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
+const SHORT_PROSE_CONTINUATION_MAX_WORDS = 20
 
 const PARSE_STATUS = {
   PENDING: "pending",
@@ -659,6 +660,20 @@ function buildRunsFromLineItems(items) {
   return runs
 }
 
+function isScannerWatermarkLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (/asiaing\.com/i.test(trimmed)) {
+    return true
+  }
+  if (/^www\.[a-z0-9.-]+\.(com|net|org|info)$/i.test(trimmed)) {
+    return true
+  }
+  return false
+}
+
 function applyProseFormattingToBlock(block, line) {
   const lineText = (line.text ?? block.text ?? "").trim()
   if (line.centered && !isShortDialogueLine(lineText)) {
@@ -672,16 +687,6 @@ function applyProseFormattingToBlock(block, line) {
       ...(run.bold ? { bold: true } : {}),
       ...(run.italic ? { italic: true } : {}),
     }))
-    return
-  }
-
-  if (runs.length === 1) {
-    if (runs[0].bold) {
-      block.bold = true
-    }
-    if (runs[0].italic) {
-      block.italic = true
-    }
   }
 }
 
@@ -692,21 +697,38 @@ function proseFormattingDiffers(line, previousBlock) {
 
   const lineCentered = Boolean(line.centered)
   const prevCentered = previousBlock.textAlign === "center"
-  if (lineCentered !== prevCentered) {
+  return lineCentered !== prevCentered
+}
+
+function isProseLineContinuation(text, previousBlock) {
+  const trimmed = (text ?? "").trim()
+  const prevTrim = (previousBlock?.text ?? "").trim()
+  if (!trimmed || !prevTrim || previousBlock?.isHeading) {
+    return false
+  }
+  if (previousBlock.textAlign === "center") {
+    return false
+  }
+  if (isAllCapsCalloutLine(trimmed)) {
+    return false
+  }
+  if (/[.!?]["'\u201d]?\s*$/.test(prevTrim)) {
+    return false
+  }
+  if (/^[a-z(\u201c]/.test(trimmed)) {
     return true
   }
-
-  const lineRuns = line.runs ?? []
-  const prevRuns = previousBlock.runs ?? []
-
-  if (lineRuns.length > 1 || prevRuns.length > 1) {
+  if (/^(and|but|or|then|who|which|that|as|if|like|sea)\s/i.test(trimmed)) {
     return true
   }
+  return false
+}
 
-  const lineBold = lineRuns.length === 1 ? Boolean(lineRuns[0].bold) : false
-  const lineItalic = lineRuns.length === 1 ? Boolean(lineRuns[0].italic) : false
-
-  return lineBold !== Boolean(previousBlock.bold) || lineItalic !== Boolean(previousBlock.italic)
+function isShortProseContinuation(text, previousBlock) {
+  return (
+    isProseLineContinuation(text, previousBlock) &&
+    countWordsInText(text) <= SHORT_PROSE_CONTINUATION_MAX_WORDS
+  )
 }
 
 const Y_LINE_GROUP_TOLERANCE_PX = 3
@@ -1039,6 +1061,12 @@ function isRunningHeaderMergedLine(text) {
   if (!trimmed) {
     return false
   }
+  if (isScannerWatermarkLine(trimmed)) {
+    return true
+  }
+  if (/asiaing\.com/i.test(trimmed)) {
+    return true
+  }
   if (isTocPageReferenceLine(trimmed)) {
     return true
   }
@@ -1221,6 +1249,9 @@ function shouldDropExtractedLine(
     return true
   }
   if (isRunningHeaderMergedLine(trimmed)) {
+    return true
+  }
+  if (isScannerWatermarkLine(trimmed)) {
     return true
   }
   if (TOC_HEADER_LINE_REGEX.test(trimmed)) {
@@ -1452,7 +1483,7 @@ async function extractPdfStructure(buffer, { onPageProcessed } = {}) {
         }
 
         const fontSize = getItemFontSize(item)
-        if (fontSize > 14) {
+        if (fontSize > 14 && !isScannerWatermarkLine(str)) {
           headingStrings.add(str)
         }
 
@@ -1745,6 +1776,10 @@ function isHeadingLine(text, line, headingStrings) {
     return false
   }
 
+  if (/^[a-z(\u201c]/.test((text ?? "").trim())) {
+    return false
+  }
+
   if (!text.includes(" ") && text.length < 5) {
     return false
   }
@@ -1779,11 +1814,14 @@ function isHeadingLine(text, line, headingStrings) {
 }
 
 function shouldStartNewProseBlock(line, previousBlock) {
-  if (line.indented) {
+  const text = line.text.trim()
+  const prevTrim = (previousBlock?.text ?? "").trim()
+
+  if (line.centered) {
     return true
   }
 
-  if (line.centered) {
+  if (line.indented && !/^[a-z(\u201c]/.test(text)) {
     return true
   }
 
@@ -1795,14 +1833,19 @@ function shouldStartNewProseBlock(line, previousBlock) {
     return true
   }
 
+  if (isProseLineContinuation(text, previousBlock)) {
+    return false
+  }
+
   if (proseFormattingDiffers(line, previousBlock)) {
     return true
   }
 
-  const text = line.text.trim()
-  const prevTrim = (previousBlock.text ?? "").trim()
-
   if (/^[A-Z]/.test(text) && /[.!?]$/.test(prevTrim)) {
+    return true
+  }
+
+  if (/^["\u201c]/.test(text) && /["\u201d]?\s*$/.test(prevTrim)) {
     return true
   }
 
@@ -1902,6 +1945,33 @@ function collectConsecutiveTocHeadingRun(
   return { run, nextIndex: index }
 }
 
+function splitDialogueHeavyBlocks(blocks) {
+  const result = []
+
+  for (const block of blocks) {
+    const text = (block.text ?? "").trim()
+    if (block.isHeading || !text || !/["\u201c\u201d]/.test(text)) {
+      result.push(block)
+      continue
+    }
+
+    const parts = text.split(/(?<=[.!?][\u201d"]?)\s+(?=[\u201c"])/)
+    if (parts.length <= 1) {
+      result.push(block)
+      continue
+    }
+
+    for (const part of parts) {
+      const piece = part.trim()
+      if (piece) {
+        result.push({ ...block, text: piece })
+      }
+    }
+  }
+
+  return result
+}
+
 function buildBlocksFromLines(pageData, headingStrings) {
   const blocks = []
   const allLines = []
@@ -1926,10 +1996,20 @@ function buildBlocksFromLines(pageData, headingStrings) {
     const lineIndex = nonEmptyLineIndex
     nonEmptyLineIndex += 1
 
+    if (isScannerWatermarkLine(text)) {
+      index += 1
+      continue
+    }
+
     if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
       const previousBlock = blocks[blocks.length - 1] ?? null
 
       if (isDedicationStructuralBlock(previousBlock)) {
+        if (/^and$/i.test(text)) {
+          previousBlock.text = `${previousBlock.text} ${text}`.trim()
+          index += 1
+          continue
+        }
         blocks.push({
           text,
           isHeading: true,
@@ -2018,7 +2098,16 @@ function buildBlocksFromLines(pageData, headingStrings) {
       continue
     }
 
-    if (isTocHeadingCandidate(text, line, headingStrings, lineIndex)) {
+    const headingPreviousBlock = blocks.length > 0 ? blocks[blocks.length - 1] : null
+    const skipHeadingForProseContinuation =
+      headingPreviousBlock &&
+      !headingPreviousBlock.isHeading &&
+      isProseLineContinuation(text, headingPreviousBlock)
+
+    if (
+      !skipHeadingForProseContinuation &&
+      isTocHeadingCandidate(text, line, headingStrings, lineIndex)
+    ) {
       const { run, nextIndex } = collectConsecutiveTocHeadingRun(
         allLines,
         index,
@@ -2080,7 +2169,8 @@ function buildBlocksFromLines(pageData, headingStrings) {
     const forceNewProseBlock =
       previous &&
       !previous.isHeading &&
-      proseBlockExceedsMergeLimit(previous)
+      proseBlockExceedsMergeLimit(previous) &&
+      !isShortProseContinuation(proseText, previous)
 
     if (shouldStartNewProseBlock(line, previousBlock) || forceNewProseBlock) {
       const proseBlock = {
@@ -2095,7 +2185,10 @@ function buildBlocksFromLines(pageData, headingStrings) {
       continue
     }
 
-    if (proseFormattingDiffers(line, previous)) {
+    if (
+      proseFormattingDiffers(line, previous) &&
+      !isProseLineContinuation(proseText, previous)
+    ) {
       const splitBlock = {
         text: proseText,
         isHeading: false,
@@ -2112,10 +2205,11 @@ function buildBlocksFromLines(pageData, headingStrings) {
     const previousCharCount = (previous.text ?? "").length
     const proseWordCount = proseText.split(/\s+/).filter(Boolean).length
     if (
-      previousWordCount >= MAX_PROSE_BLOCK_WORDS ||
-      previousCharCount >= MAX_PROSE_BLOCK_CHARS ||
-      previousWordCount + proseWordCount > MAX_PROSE_BLOCK_WORDS ||
-      previousCharCount + proseText.length + 1 > MAX_PROSE_BLOCK_CHARS
+      !isShortProseContinuation(proseText, previous) &&
+      (previousWordCount >= MAX_PROSE_BLOCK_WORDS ||
+        previousCharCount >= MAX_PROSE_BLOCK_CHARS ||
+        previousWordCount + proseWordCount > MAX_PROSE_BLOCK_WORDS ||
+        previousCharCount + proseText.length + 1 > MAX_PROSE_BLOCK_CHARS)
     ) {
       const proseBlock = {
         text: proseText,
@@ -2337,7 +2431,7 @@ async function parsePdfBuffer(buffer, fileName = "", { onPageProcessed } = {}) {
     text: "",
   }
 
-  let blocks = buildBlocksFromLines(pageData, headingStrings)
+  let blocks = splitDialogueHeavyBlocks(buildBlocksFromLines(pageData, headingStrings))
 
   const hasTitleHeading = blocks
     .slice(0, 10)
