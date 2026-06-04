@@ -39,6 +39,13 @@ const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 const PAGINATION_DEBOUNCE_MS = 400
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
+/** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
+const PARSER_VERSION = 29
+const PAGINATION_CACHE_PREFIX = "booky-pages|"
+const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
+const PAGINATION_CACHE_MAX_BOOKS = 3
+const READING_ANCHOR_PREFIX_LENGTH = 40
+const LOADING_READY_DISMISS_MS = 150
 
 function layoutPaginationSettingsEqual(previous, next) {
   if (!previous || !next) {
@@ -68,6 +75,285 @@ function estimateTotalPages(donePages, placeableIndex, remainderLength) {
     donePages,
     Math.ceil((remainderLength / placeableIndex) * donePages)
   )
+}
+
+function getLayoutPaginationSettings(settings) {
+  return {
+    fontSize: settings?.fontSize ?? DEFAULT_SETTINGS.fontSize,
+    fontStyle: settings?.fontStyle ?? DEFAULT_SETTINGS.fontStyle,
+    lineSpacing: settings?.lineSpacing ?? DEFAULT_SETTINGS.lineSpacing,
+    margins: settings?.margins ?? DEFAULT_SETTINGS.margins,
+  }
+}
+
+function buildPaginationCacheKey(
+  bookId,
+  parserVersion,
+  layoutSettings,
+  pageWidth,
+  pageHeight,
+  viewportKey
+) {
+  return [
+    PAGINATION_CACHE_PREFIX.slice(0, -1),
+    bookId,
+    parserVersion,
+    layoutSettings.fontSize,
+    layoutSettings.fontStyle,
+    layoutSettings.lineSpacing,
+    layoutSettings.margins,
+    pageWidth,
+    pageHeight,
+    viewportKey,
+  ].join("|")
+}
+
+function listPaginationCacheBookIds() {
+  const bookIds = []
+  try {
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index)
+      if (!key?.startsWith(PAGINATION_CACHE_TS_PREFIX)) {
+        continue
+      }
+      bookIds.push(key.slice(PAGINATION_CACHE_TS_PREFIX.length))
+    }
+  } catch {
+    return []
+  }
+  return bookIds
+}
+
+function evictPaginationCacheIfNeeded(currentBookId) {
+  const bookIds = listPaginationCacheBookIds().filter((id) => id !== currentBookId)
+  if (bookIds.length < PAGINATION_CACHE_MAX_BOOKS) {
+    return
+  }
+
+  const ranked = bookIds
+    .map((bookId) => {
+      try {
+        const timestamp = Number(localStorage.getItem(`${PAGINATION_CACHE_TS_PREFIX}${bookId}`))
+        return { bookId, timestamp: Number.isFinite(timestamp) ? timestamp : 0 }
+      } catch {
+        return { bookId, timestamp: 0 }
+      }
+    })
+    .sort((a, b) => a.timestamp - b.timestamp)
+
+  const toRemove = ranked.slice(0, ranked.length - PAGINATION_CACHE_MAX_BOOKS + 1)
+  for (const entry of toRemove) {
+    try {
+      localStorage.removeItem(`${PAGINATION_CACHE_TS_PREFIX}${entry.bookId}`)
+      for (const layoutKey of Object.keys(localStorage)) {
+        if (layoutKey.startsWith(`${PAGINATION_CACHE_PREFIX}${entry.bookId}|`)) {
+          localStorage.removeItem(layoutKey)
+        }
+      }
+    } catch {
+      // Ignore eviction errors.
+    }
+  }
+}
+
+function readPaginationCache(cacheKey, layoutSettings, pageDimensions, parserVersion) {
+  try {
+    const raw = localStorage.getItem(cacheKey)
+    if (!raw) {
+      return null
+    }
+
+    const parsed = JSON.parse(raw)
+    if (!parsed?.pages?.length) {
+      return null
+    }
+
+    const cachedLayout = parsed.settings ?? {}
+    const cachedDimensions = parsed.pageDimensions ?? {}
+    const layoutMatches =
+      cachedLayout.fontSize === layoutSettings.fontSize &&
+      cachedLayout.fontStyle === layoutSettings.fontStyle &&
+      cachedLayout.lineSpacing === layoutSettings.lineSpacing &&
+      cachedLayout.margins === layoutSettings.margins
+    const dimensionMatches =
+      cachedDimensions.width === pageDimensions.width &&
+      cachedDimensions.height === pageDimensions.height
+
+    if (
+      !layoutMatches ||
+      !dimensionMatches ||
+      Number(parsed.parserVersion) !== Number(parserVersion)
+    ) {
+      return null
+    }
+
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function writePaginationCache(cacheKey, bookId, payload) {
+  try {
+    evictPaginationCacheIfNeeded(bookId)
+    localStorage.setItem(cacheKey, JSON.stringify(payload))
+    localStorage.setItem(`${PAGINATION_CACHE_TS_PREFIX}${bookId}`, String(Date.now()))
+  } catch (error) {
+    if (error?.name !== "QuotaExceededError") {
+      return
+    }
+    try {
+      const bookIds = listPaginationCacheBookIds()
+      for (const staleBookId of bookIds) {
+        if (staleBookId === bookId) {
+          continue
+        }
+        localStorage.removeItem(`${PAGINATION_CACHE_TS_PREFIX}${staleBookId}`)
+        for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+          const key = localStorage.key(index)
+          if (key?.startsWith(`${PAGINATION_CACHE_PREFIX}${staleBookId}|`)) {
+            localStorage.removeItem(key)
+          }
+        }
+      }
+      localStorage.setItem(cacheKey, JSON.stringify(payload))
+      localStorage.setItem(`${PAGINATION_CACHE_TS_PREFIX}${bookId}`, String(Date.now()))
+    } catch {
+      // Skip caching when storage is unavailable.
+    }
+  }
+}
+
+function visualItemPlainText(item) {
+  if (!item) {
+    return ""
+  }
+  if (
+    item.type === "prose" ||
+    item.type === "heading" ||
+    item.type === "chapter" ||
+    item.type === "title" ||
+    item.type === "subtitle" ||
+    item.type === "author"
+  ) {
+    return item.text ?? ""
+  }
+  if (item.type === "list") {
+    return flattenListText(item.items).join(" ")
+  }
+  return ""
+}
+
+function getReadingAnchorPrefix(pages, currentPage, isSpreadView) {
+  const pageIndices = isSpreadView
+    ? [currentPage - 1, currentPage]
+    : [currentPage - 1]
+
+  for (const pageIndex of pageIndices) {
+    const page = pages[pageIndex]
+    if (!page) {
+      continue
+    }
+
+    for (const item of page.visualItems ?? []) {
+      const text = visualItemPlainText(item).trim()
+      if (text) {
+        return text.slice(0, READING_ANCHOR_PREFIX_LENGTH)
+      }
+    }
+  }
+
+  return null
+}
+
+function findPageIndexWithAnchorPrefix(pages, anchorPrefix) {
+  if (!anchorPrefix) {
+    return null
+  }
+
+  const normalizedAnchor = anchorPrefix.trim().toLowerCase()
+  if (!normalizedAnchor) {
+    return null
+  }
+
+  for (const page of pages) {
+    const pageText = (page.visualItems ?? [])
+      .map((item) => visualItemPlainText(item))
+      .join(" ")
+      .trim()
+      .toLowerCase()
+
+    if (pageText.startsWith(normalizedAnchor) || pageText.includes(normalizedAnchor)) {
+      return page.pageNumber
+    }
+  }
+
+  return null
+}
+
+function resolvePageAfterRepagination({
+  newPages,
+  anchorPrefix,
+  oldPage,
+  oldTotal,
+  isSpreadView,
+  normalizeBookmarkPage,
+}) {
+  const matched = findPageIndexWithAnchorPrefix(newPages, anchorPrefix)
+  if (matched) {
+    return normalizeBookmarkPage(matched, newPages.length, isSpreadView)
+  }
+
+  if (oldTotal > 0 && newPages.length > 0) {
+    const proportional = Math.round((oldPage / oldTotal) * newPages.length)
+    return normalizeBookmarkPage(proportional, newPages.length, isSpreadView)
+  }
+
+  return 1
+}
+
+function canRenderReadingPosition(pageCount, targetPage, isSpreadView) {
+  if (pageCount < 1 || targetPage < 1) {
+    return false
+  }
+
+  if (!isSpreadView) {
+    return pageCount >= targetPage
+  }
+
+  if (pageCount < targetPage) {
+    return false
+  }
+
+  if (targetPage % 2 === 0) {
+    return pageCount >= targetPage
+  }
+
+  if (targetPage === pageCount) {
+    return true
+  }
+
+  return pageCount >= targetPage + 1
+}
+
+function computeOpeningLoadingProgress(donePages, estimatedTotal, isComplete) {
+  if (isComplete) {
+    return { percent: 100, label: "Ready" }
+  }
+
+  if (donePages <= 0) {
+    return { percent: 0, label: "Preparing pages..." }
+  }
+
+  const safeTotal = Math.max(donePages, estimatedTotal || donePages)
+  const rawPercent = Math.round((donePages / safeTotal) * 90)
+  const percent = Math.max(10, Math.min(95, rawPercent))
+  const label =
+    percent >= 90
+      ? "Almost there..."
+      : `${donePages} page${donePages === 1 ? "" : "s"} ready...`
+
+  return { percent, label }
 }
 
 function buildPageTextMap(measuredPages) {
@@ -1920,8 +2206,9 @@ function PageCounterControl({
   onJump,
   disabled = false,
   paginatingProgress = null,
+  showBackgroundPaginateLabel = false,
 }) {
-  if (paginatingProgress) {
+  if (showBackgroundPaginateLabel && paginatingProgress) {
     const totalLabel = paginatingProgress.total
       ? ` ${paginatingProgress.done} / ${paginatingProgress.total}`
       : ` ${paginatingProgress.done}…`
@@ -2141,6 +2428,11 @@ export default function BookViewer({
   const progressKey = `booky-progress-${bookDocument?.id ?? ""}`
   const [pages, setPages] = useState([])
   const [isPaginating, setIsPaginating] = useState(true)
+  const [isBackgroundPaginating, setIsBackgroundPaginating] = useState(false)
+  const [backgroundPaginateIndeterminate, setBackgroundPaginateIndeterminate] =
+    useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [loadingProgressLabel, setLoadingProgressLabel] = useState("Preparing pages...")
   const [currentPage, setCurrentPage] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
   const [layoutMode, setLayoutMode] = useState("spread")
@@ -2168,6 +2460,9 @@ export default function BookViewer({
   const [paginatingProgress, setPaginatingProgress] = useState(null)
   const prevPaginationSettingsRef = useRef(null)
   const paginationCancelRef = useRef(false)
+  const hasDisplayedBookRef = useRef(false)
+  const displayedPagesCountRef = useRef(0)
+  const loadingDismissTimerRef = useRef(null)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
@@ -2205,7 +2500,16 @@ export default function BookViewer({
   }, [currentPage])
 
   useEffect(() => {
+    displayedPagesCountRef.current = pages.length
+  }, [pages.length])
+
+  useEffect(() => {
     prevPaginationSettingsRef.current = null
+    hasDisplayedBookRef.current = false
+    setIsBackgroundPaginating(false)
+    setBackgroundPaginateIndeterminate(false)
+    setLoadingProgress(0)
+    setLoadingProgressLabel("Preparing pages...")
   }, [bookDocument?.id])
 
   useEffect(() => {
@@ -2259,6 +2563,8 @@ export default function BookViewer({
     if (!bookDocument) {
       setPages([])
       setIsPaginating(false)
+      setIsBackgroundPaginating(false)
+      setBackgroundPaginateIndeterminate(false)
       setPaginatingProgress(null)
       return undefined
     }
@@ -2274,14 +2580,50 @@ export default function BookViewer({
 
     prevPaginationSettingsRef.current = paginationSettings
 
+    const layoutSettings = getLayoutPaginationSettings(paginationSettings)
+    const parserVersion = Number(bookDocument.parserVersion) || PARSER_VERSION
+    const viewportKey = `${isMobile ? "mobile" : "desktop"}:${
+      isMobile && isMobileFullscreen ? "fs" : "std"
+    }`
+    const pageDimensions = {
+      width: PAGE_WIDTH_PX,
+      height:
+        isMobile && isMobileFullscreen
+          ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
+          : PAGE_HEIGHT_PX,
+    }
+    const cacheKey = buildPaginationCacheKey(
+      bookDocument.id,
+      parserVersion,
+      layoutSettings,
+      pageDimensions.width,
+      pageDimensions.height,
+      viewportKey
+    )
+
+    const isSpreadViewForTarget = !isMobile && layoutMode === "spread"
+    const targetReadingPage = normalizeBookmarkPage(
+      bookmarkPage ?? initialPage ?? 1,
+      Number.MAX_SAFE_INTEGER,
+      isSpreadViewForTarget
+    )
+
+    const isSettingsRepagination =
+      hasDisplayedBookRef.current && displayedPagesCountRef.current > 0
+
     let measureRoot = null
     paginationCancelRef.current = false
 
-    setIsPaginating(true)
-    setPaginatingProgress(null)
-    setPages([])
-
-    const applyMeasuredPages = (measuredPages, { isFinal = false } = {}) => {
+    const applyMeasuredPages = (
+      measuredPages,
+      {
+        isFinal = false,
+        preservePage = null,
+        anchorPrefix = null,
+        oldPage = null,
+        oldTotal = null,
+      } = {}
+    ) => {
       const totalMeasuredPages = measuredPages.length
       const chapterMap = buildChapterPageMap(
         measuredPages,
@@ -2296,6 +2638,22 @@ export default function BookViewer({
         if (totalMeasuredPages === 0) {
           return 1
         }
+
+        if (preservePage !== null && preservePage !== undefined) {
+          return normalizeBookmarkPage(preservePage, maxPage, isSpreadViewForTarget)
+        }
+
+        if (anchorPrefix && oldPage && oldTotal) {
+          return resolvePageAfterRepagination({
+            newPages: measuredPages,
+            anchorPrefix,
+            oldPage,
+            oldTotal,
+            isSpreadView: isSpreadViewForTarget,
+            normalizeBookmarkPage,
+          })
+        }
+
         const target =
           bookmarkPage !== null && bookmarkPage !== undefined
             ? bookmarkPage
@@ -2312,6 +2670,16 @@ export default function BookViewer({
         setRestoredPage(bookmarkPage)
         hasShownResumeToastRef.current = true
       }
+    }
+
+    const updateOpeningLoadingUi = (donePages, estimatedTotal, isComplete) => {
+      const { percent, label } = computeOpeningLoadingProgress(
+        donePages,
+        estimatedTotal,
+        isComplete
+      )
+      setLoadingProgress(percent)
+      setLoadingProgressLabel(label)
     }
 
     const createMeasurementContext = () => {
@@ -2383,8 +2751,49 @@ export default function BookViewer({
       return result
     }
 
-    const runMeasurement = async () => {
+    const persistPaginationCache = (finalPages) => {
+      writePaginationCache(cacheKey, bookDocument.id, {
+        parserVersion,
+        settings: layoutSettings,
+        pageDimensions,
+        pages: finalPages,
+        cachedAt: Date.now(),
+      })
+    }
+
+    const finishMeasurement = (finalPages, measureElements, pageLayout, options = {}) => {
+      const cleanedPages = cleanupPages(
+        finalPages,
+        measureElements.body,
+        pageLayout
+      )
+      applyMeasuredPages(cleanedPages, options)
+      return cleanedPages
+    }
+
+    const runFullPagination = async ({
+      openingLoad = false,
+      settingsRepagination = false,
+      anchorPrefix = null,
+      oldPage = null,
+      oldTotal = null,
+    } = {}) => {
       const { flatBlocks, measureElements, pageLayout } = createMeasurementContext()
+      let phase1Complete = false
+
+      const estimateFromResult = (pagesDone, resume, isComplete) => {
+        if (isComplete) {
+          return pagesDone
+        }
+        if (pagesDone < 10) {
+          return Math.max(pagesDone, PAGINATION_INITIAL_PAGES)
+        }
+        return estimateTotalPages(
+          pagesDone,
+          resume?.placeableIndex ?? 0,
+          resume?.remainderLength ?? 1
+        )
+      }
 
       let result = normalizePaginationResult(
         paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout, {
@@ -2398,34 +2807,127 @@ export default function BookViewer({
         return
       }
 
-      applyMeasuredPages(result.pages)
-      setIsPaginating(false)
+      phase1Complete = true
+      let cumulativePages = result.pages
+      let resume = result.resume
+      let estimatedTotal = estimateFromResult(
+        cumulativePages.length,
+        resume,
+        result.complete
+      )
 
-      if (result.complete) {
-        const finalPages = cleanupPages(
-          result.pages,
-          measureElements.body,
-          pageLayout
+      if (openingLoad) {
+        updateOpeningLoadingUi(cumulativePages.length, estimatedTotal, false)
+      }
+
+      const canShowReadingPosition = () =>
+        canRenderReadingPosition(
+          cumulativePages.length,
+          targetReadingPage,
+          isSpreadViewForTarget
         )
-        applyMeasuredPages(finalPages, { isFinal: true })
+
+      if (openingLoad && phase1Complete && !canShowReadingPosition() && !result.complete) {
+        while (!result.complete && resume) {
+          await new Promise((resolve) => requestAnimationFrame(resolve))
+
+          if (paginationCancelRef.current) {
+            measureRoot?.remove()
+            measureRoot = null
+            return
+          }
+
+          const nextMaxPages = cumulativePages.length + PAGINATION_BATCH_PAGES
+          result = normalizePaginationResult(
+            paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout, {
+              maxPages: nextMaxPages,
+              resume,
+            })
+          )
+
+          if (paginationCancelRef.current) {
+            measureRoot?.remove()
+            measureRoot = null
+            return
+          }
+
+          cumulativePages = result.pages
+          resume = result.resume
+          estimatedTotal = estimateFromResult(
+            cumulativePages.length,
+            resume,
+            result.complete
+          )
+          updateOpeningLoadingUi(cumulativePages.length, estimatedTotal, false)
+
+          if (canShowReadingPosition() || result.complete) {
+            break
+          }
+        }
+      }
+
+      if (openingLoad) {
+        updateOpeningLoadingUi(cumulativePages.length, estimatedTotal, result.complete)
+
+        await new Promise((resolve) => {
+          loadingDismissTimerRef.current = setTimeout(resolve, LOADING_READY_DISMISS_MS)
+        })
+
+        if (paginationCancelRef.current) {
+          measureRoot?.remove()
+          measureRoot = null
+          return
+        }
+
+        if (result.complete) {
+          const finalPages = finishMeasurement(cumulativePages, measureElements, pageLayout, {
+            isFinal: true,
+          })
+          persistPaginationCache(finalPages)
+        } else {
+          applyMeasuredPages(cumulativePages)
+        }
+
+        setIsPaginating(false)
+        hasDisplayedBookRef.current = true
+        setLoadingProgress(100)
+        setLoadingProgressLabel("Ready")
+
+        if (result.complete) {
+          setIsBackgroundPaginating(false)
+          setBackgroundPaginateIndeterminate(false)
+          setPaginatingProgress(null)
+          measureRoot?.remove()
+          measureRoot = null
+          return
+        }
+      } else if (settingsRepagination && result.complete) {
+        const finalPages = finishMeasurement(cumulativePages, measureElements, pageLayout, {
+          isFinal: true,
+          anchorPrefix,
+          oldPage,
+          oldTotal,
+        })
+        persistPaginationCache(finalPages)
+        setIsBackgroundPaginating(false)
+        setBackgroundPaginateIndeterminate(false)
         setPaginatingProgress(null)
         measureRoot?.remove()
         measureRoot = null
         return
       }
 
-      const estimatedTotal = estimateTotalPages(
-        result.pages.length,
-        result.resume?.placeableIndex ?? 0,
-        result.resume?.remainderLength ?? 1
-      )
-      setPaginatingProgress({
-        done: result.pages.length,
-        total: estimatedTotal,
-      })
-
-      let resume = result.resume
-      let cumulativePages = result.pages
+      setIsBackgroundPaginating(true)
+      if (settingsRepagination) {
+        setBackgroundPaginateIndeterminate(true)
+        setPaginatingProgress(null)
+      } else {
+        setBackgroundPaginateIndeterminate(false)
+        setPaginatingProgress({
+          done: cumulativePages.length,
+          total: estimatedTotal,
+        })
+      }
 
       while (!result.complete && resume) {
         await new Promise((resolve) => requestAnimationFrame(resolve))
@@ -2451,36 +2953,115 @@ export default function BookViewer({
         }
 
         cumulativePages = result.pages
-        applyMeasuredPages(cumulativePages)
-
-        if (result.complete) {
-          const finalPages = cleanupPages(
-            cumulativePages,
-            measureElements.body,
-            pageLayout
-          )
-          applyMeasuredPages(finalPages, { isFinal: true })
-          setPaginatingProgress(null)
-          break
-        }
-
         resume = result.resume
-        setPaginatingProgress({
-          done: cumulativePages.length,
-          total: estimateTotalPages(
-            cumulativePages.length,
-            resume?.placeableIndex ?? 0,
-            resume?.remainderLength ?? 1
-          ),
-        })
+        estimatedTotal = estimateFromResult(
+          cumulativePages.length,
+          resume,
+          result.complete
+        )
+
+        if (settingsRepagination) {
+          if (result.complete) {
+            const finalPages = finishMeasurement(
+              cumulativePages,
+              measureElements,
+              pageLayout,
+              {
+                isFinal: true,
+                anchorPrefix,
+                oldPage,
+                oldTotal,
+              }
+            )
+            persistPaginationCache(finalPages)
+            break
+          }
+        } else {
+          applyMeasuredPages(cumulativePages)
+          setPaginatingProgress({
+            done: cumulativePages.length,
+            total: estimatedTotal,
+          })
+        }
       }
 
+      if (!settingsRepagination && result.complete && !paginationCancelRef.current) {
+        const finalPages = finishMeasurement(
+          cumulativePages,
+          measureElements,
+          pageLayout,
+          {}
+        )
+        persistPaginationCache(finalPages)
+      }
+
+      setIsBackgroundPaginating(false)
+      setBackgroundPaginateIndeterminate(false)
+      setPaginatingProgress(null)
       measureRoot?.remove()
       measureRoot = null
     }
 
+    if (!isSettingsRepagination) {
+      const cached = readPaginationCache(
+        cacheKey,
+        layoutSettings,
+        pageDimensions,
+        parserVersion
+      )
+
+      if (cached?.pages?.length) {
+        applyMeasuredPages(cached.pages, { isFinal: true })
+        setIsPaginating(false)
+        setIsBackgroundPaginating(false)
+        setBackgroundPaginateIndeterminate(false)
+        setPaginatingProgress(null)
+        hasDisplayedBookRef.current = true
+        return undefined
+      }
+
+      setIsPaginating(true)
+      setIsBackgroundPaginating(false)
+      setBackgroundPaginateIndeterminate(false)
+      setPaginatingProgress(null)
+      setPages([])
+      setLoadingProgress(0)
+      setLoadingProgressLabel("Preparing pages...")
+
+      requestAnimationFrame(() => {
+        void runFullPagination({ openingLoad: true })
+      })
+
+      return () => {
+        paginationCancelRef.current = true
+        if (loadingDismissTimerRef.current) {
+          clearTimeout(loadingDismissTimerRef.current)
+          loadingDismissTimerRef.current = null
+        }
+        measureRoot?.remove()
+      }
+    }
+
+    const pagesSnapshot = pages
+    const anchorPrefix = getReadingAnchorPrefix(
+      pagesSnapshot,
+      currentPageRef.current,
+      isSpreadViewForTarget
+    )
+    const oldPage = currentPageRef.current
+    const oldTotal = pagesSnapshot.length
+
+    setIsBackgroundPaginating(true)
+    setBackgroundPaginateIndeterminate(true)
+    setPaginatingProgress(null)
+
     requestAnimationFrame(() => {
-      void runMeasurement()
+      void runFullPagination({
+        settingsRepagination: true,
+        anchorPrefix,
+        oldPage,
+        oldTotal,
+      })
     })
 
     return () => {
@@ -2492,6 +3073,7 @@ export default function BookViewer({
     initialPage,
     isMobileFullscreen,
     isMobile,
+    layoutMode,
     paginationSettings,
     bookmarkPage,
     normalizeBookmarkPage,
@@ -2977,6 +3559,13 @@ export default function BookViewer({
         <div className="reader-screen__content">
           <p className="reader-screen__logo">BOOKY</p>
           <p className="reader-screen__subtext">Opening your book...</p>
+          <div className="reader-screen__progress-track">
+            <div
+              className="reader-screen__progress-fill"
+              style={{ width: `${loadingProgress}%` }}
+            />
+          </div>
+          <p className="reader-screen__progress-label">{loadingProgressLabel}</p>
         </div>
       </div>
     )
@@ -3052,6 +3641,9 @@ export default function BookViewer({
             onJump={jumpToPage}
             disabled={isPaginating || totalPages === 0}
             paginatingProgress={paginatingProgress}
+            showBackgroundPaginateLabel={
+              isBackgroundPaginating && !backgroundPaginateIndeterminate
+            }
           />
           {!isMobile && (
             <button
@@ -3098,8 +3690,16 @@ export default function BookViewer({
         </div>
         <div className="book-viewer__progress-bar">
           <div
-            className="book-viewer__progress-fill"
-            style={{ width: `${progressPercent}%` }}
+            className={`book-viewer__progress-fill${
+              isBackgroundPaginating && backgroundPaginateIndeterminate
+                ? " book-viewer__progress-fill--indeterminate"
+                : ""
+            }`}
+            style={
+              isBackgroundPaginating && backgroundPaginateIndeterminate
+                ? undefined
+                : { width: `${progressPercent}%` }
+            }
           />
         </div>
       </header>

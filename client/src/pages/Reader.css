@@ -50,3 +50,29 @@
   text-decoration: underline;
   opacity: 0.9;
 }
+
+.reader-screen__progress-track {
+  width: 200px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  margin: 1.25rem auto 0.5rem;
+  overflow: hidden;
+}
+
+.reader-screen__progress-fill {
+  height: 100%;
+  background: #d4af37;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.reader-screen__progress-label {
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0;
+  text-align: center;
+}

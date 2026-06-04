@@ -219,6 +219,20 @@
   transition: width 0.3s ease;
 }
 
+.book-viewer__progress-fill--indeterminate {
+  width: 30% !important;
+  animation: progressIndeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes progressIndeterminate {
+  0% {
+    margin-left: -30%;
+  }
+  100% {
+    margin-left: 100%;
+  }
+}
+
 .book-viewer__layout-toggle {
   display: inline-flex;
   align-items: center;
