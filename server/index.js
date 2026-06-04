@@ -8,7 +8,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 27
+const PARSER_VERSION = 28
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
@@ -691,7 +691,7 @@ function isScannerWatermarkLine(text) {
   if (!trimmed) {
     return false
   }
-  if (/asiaing\.com/i.test(trimmed)) {
+  if (/asiaing/i.test(trimmed)) {
     return true
   }
   if (/^www\.[a-z0-9.-]+\.(com|net|org|info)$/i.test(trimmed)) {
@@ -759,6 +759,13 @@ function isShortProseContinuation(text, previousBlock) {
 
 const Y_LINE_GROUP_TOLERANCE_PX = 3
 const INDENT_THRESHOLD_PX = 12
+const PARAGRAPH_GAP_MULTIPLIER = 1.25
+const HEADING_FONT_BODY_RATIO = 1.15
+const INTER_LINE_GAP_MAX_FOR_MEDIAN_PX = 20
+const HEADING_STRING_MIN_FONT_SIZE = 16
+
+const HEADING_DANGLING_ENDING_REGEX =
+  /\b(?:of|the|a|an|and|but|or|nor|for|yet|so|left|fell|was|be|on|in|at|to|by|with|from|into|that|which|who|as|if|their|his|her|its|our|your|had|has|have|not|are|were|is)\s*$/i
 const RUNNING_HEADER_MIN_PAGES = 3
 const CENTERED_LINE_LEFT_GAP_MIN_PX = 20
 const CENTERED_LINE_CENTER_TOLERANCE_PX = 25
@@ -798,6 +805,123 @@ function medianValue(values) {
   }
   const sorted = [...values].sort((a, b) => a - b)
   return sorted[Math.floor(sorted.length / 2)]
+}
+
+function computePageLineMetrics(pageLines) {
+  const fontSizes = pageLines
+    .map((line) => line.fontSize)
+    .filter((value) => Number.isFinite(value) && value > 0)
+
+  const bodyFontSize = fontSizes.length > 0 ? medianValue(fontSizes) : 12
+
+  const sortedByY = [...pageLines].sort((a, b) => (b.y ?? 0) - (a.y ?? 0))
+  const interLineGaps = []
+
+  for (let index = 1; index < sortedByY.length; index += 1) {
+    const gap = (sortedByY[index - 1].y ?? 0) - (sortedByY[index].y ?? 0)
+    if (gap > 0 && gap < INTER_LINE_GAP_MAX_FOR_MEDIAN_PX) {
+      interLineGaps.push(gap)
+    }
+  }
+
+  const dominantLineHeight =
+    interLineGaps.length > 0 ? medianValue(interLineGaps) : bodyFontSize * 1.2
+
+  return {
+    bodyFontSize,
+    dominantLineHeight,
+    gapThreshold: dominantLineHeight * PARAGRAPH_GAP_MULTIPLIER,
+  }
+}
+
+function annotatePageLineGaps(pageLines, pageMetrics) {
+  const sortedByY = [...pageLines].sort((a, b) => (b.y ?? 0) - (a.y ?? 0))
+
+  for (let index = 0; index < sortedByY.length; index += 1) {
+    const line = sortedByY[index]
+    const gapAboveOnPage =
+      index > 0 ? (sortedByY[index - 1].y ?? 0) - (line.y ?? 0) : null
+    const gapBelowOnPage =
+      index < sortedByY.length - 1
+        ? (line.y ?? 0) - (sortedByY[index + 1].y ?? 0)
+        : null
+
+    line.gapAboveOnPage = gapAboveOnPage
+    line.gapBelowOnPage = gapBelowOnPage
+    line.pageMetrics = pageMetrics
+  }
+
+  return pageLines
+}
+
+function isHeadingIncompleteEnding(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  if (/[,;:\u2014\u2013-]\s*$/.test(trimmed)) {
+    return true
+  }
+
+  return HEADING_DANGLING_ENDING_REGEX.test(trimmed)
+}
+
+function isHeadingTerminalOrStructural(text, line = null) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  if (isCleanStructuralHeadingText(trimmed, line)) {
+    return true
+  }
+
+  if (isHeadingIncompleteEnding(trimmed)) {
+    return false
+  }
+
+  return /[.!?][\u201d"\u2019']?\s*$/.test(trimmed)
+}
+
+function isLineIsolatedOnPage(line, gapThreshold) {
+  if (!line || gapThreshold <= 0) {
+    return false
+  }
+
+  const above = line.gapAboveOnPage
+  const below = line.gapBelowOnPage
+
+  if (above == null || below == null) {
+    return false
+  }
+
+  return above > gapThreshold && below > gapThreshold
+}
+
+function passesVisualHeadingGuards(text, line, entry = null) {
+  if (isCleanStructuralHeadingText(text, line)) {
+    return true
+  }
+
+  if (!isHeadingTerminalOrStructural(text, line)) {
+    return false
+  }
+
+  const metrics = entry?.pageMetrics ?? line?.pageMetrics
+  const bodyFontSize = metrics?.bodyFontSize ?? line?.fontSize ?? 0
+  const lineFontSize = line?.fontSize ?? 0
+
+  if (bodyFontSize > 0 && lineFontSize < bodyFontSize * HEADING_FONT_BODY_RATIO) {
+    return false
+  }
+
+  const gapThreshold = metrics?.gapThreshold ?? 0
+  if (!isLineIsolatedOnPage(line, gapThreshold)) {
+    return false
+  }
+
+  return true
 }
 
 const SPLIT_WORD_STOPWORDS =
@@ -1149,6 +1273,9 @@ function isCleanStructuralHeadingText(text, line = null) {
   if (!raw) {
     return false
   }
+  if (isScannerWatermarkLine(raw)) {
+    return false
+  }
   if (/^contents$/i.test(raw)) {
     return false
   }
@@ -1197,6 +1324,9 @@ function isCleanStructuralHeadingText(text, line = null) {
 function isNarrativeBoundaryLine(text, line = null) {
   const trimmed = (text ?? "").trim()
   if (!trimmed || isTocChapterListingLine(trimmed)) {
+    return false
+  }
+  if (isScannerWatermarkLine(trimmed)) {
     return false
   }
   return isCleanStructuralHeadingText(trimmed, line)
@@ -1504,7 +1634,11 @@ async function extractPdfPageLines(pdf, pageNumber, headingStrings) {
       }
 
       const fontSize = getItemFontSize(item)
-      if (fontSize > 14 && !isScannerWatermarkLine(str)) {
+      if (
+        fontSize >= HEADING_STRING_MIN_FONT_SIZE &&
+        !isScannerWatermarkLine(str) &&
+        isCleanStructuralHeadingText(str, { fontSize })
+      ) {
         headingStrings.add(str)
       }
 
@@ -1633,6 +1767,7 @@ async function extractPdfStructure(buffer, { onPageProcessed } = {}) {
         indented: Boolean(line.indented),
         centered: Boolean(line.centered),
         fontSize: line.fontSize,
+        y: line.y,
         runs: line.runs ?? [],
       })
     }
@@ -1801,6 +1936,10 @@ function detectChapters(content, bookTitle = "") {
 }
 
 function isAuthorStructuralLine(text) {
+  if (isScannerWatermarkLine(text)) {
+    return false
+  }
+
   if (!/^(by|written by|translated by)\s+[A-Z]/i.test(text)) {
     return false
   }
@@ -1860,7 +1999,11 @@ function isNarrativeSentenceLine(text) {
   return true
 }
 
-function isHeadingLine(text, line, headingStrings) {
+function isHeadingLine(text, line, headingStrings, entry = null) {
+  if (isScannerWatermarkLine(text)) {
+    return false
+  }
+
   if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
     return false
   }
@@ -1877,29 +2020,29 @@ function isHeadingLine(text, line, headingStrings) {
     return false
   }
 
-  if (headingStrings.has(text)) {
-    return true
+  if (isTocDenseListingLine(text) || isRunningHeaderMergedLine(text)) {
+    return false
   }
 
   if (isCleanStructuralHeadingText(text, line)) {
     return true
   }
 
-  if (
-    text.length < 60 &&
-    (line.fontSize ?? 0) > 14 &&
-    !isTocDenseListingLine(text) &&
-    !isRunningHeaderMergedLine(text)
-  ) {
+  if (headingStrings.has(text)) {
+    return passesVisualHeadingGuards(text, line, entry)
+  }
+
+  if (text.length < 60 && passesVisualHeadingGuards(text, line, entry)) {
     return true
   }
 
   return false
 }
 
-function shouldStartNewProseBlock(line, previousBlock) {
-  const text = line.text.trim()
+function shouldStartNewProseBlock(line, previousBlock, entry = null, previousEntry = null) {
+  const text = (line.text ?? entry?.line?.text ?? "").trim()
   const prevTrim = (previousBlock?.text ?? "").trim()
+  const metrics = entry?.pageMetrics ?? line.pageMetrics
 
   if (line.centered) {
     return true
@@ -1919,6 +2062,22 @@ function shouldStartNewProseBlock(line, previousBlock) {
 
   if (isProseLineContinuation(text, previousBlock)) {
     return false
+  }
+
+  if (
+    entry &&
+    previousEntry &&
+    entry.pageIndex === previousEntry.pageIndex &&
+    entry.line.gapAboveOnPage != null &&
+    metrics?.gapThreshold
+  ) {
+    if (entry.line.gapAboveOnPage <= metrics.gapThreshold) {
+      return false
+    }
+
+    if (entry.line.gapAboveOnPage > metrics.gapThreshold) {
+      return true
+    }
   }
 
   if (proseFormattingDiffers(line, previousBlock)) {
@@ -1962,7 +2121,7 @@ function isDedicationStructuralBlock(block) {
   )
 }
 
-function isTocHeadingCandidate(text, line, headingStrings, lineIndex) {
+function isTocHeadingCandidate(text, line, headingStrings, lineIndex, entry = null) {
   if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
     return false
   }
@@ -1975,7 +2134,7 @@ function isTocHeadingCandidate(text, line, headingStrings, lineIndex) {
   if (isTocChapterListingLine(text)) {
     return true
   }
-  return isHeadingLine(text, line, headingStrings)
+  return isHeadingLine(text, line, headingStrings, entry)
 }
 
 function consumeRepeatedSectionLabel(text, sectionLabelState) {
@@ -2018,7 +2177,7 @@ function collectConsecutiveTocHeadingRun(
     const entry = allLines[index]
     const lineIndex = baseLineIndex + run.length
 
-    if (!isTocHeadingCandidate(entry.text, entry.line, headingStrings, lineIndex)) {
+    if (!isTocHeadingCandidate(entry.text, entry.line, headingStrings, lineIndex, entry)) {
       break
     }
 
@@ -2060,11 +2219,15 @@ function buildBlocksFromLines(pageData, headingStrings) {
   const blocks = []
   const allLines = []
 
-  for (const page of pageData) {
-    for (const line of page.lines ?? []) {
+  for (let pageIndex = 0; pageIndex < pageData.length; pageIndex += 1) {
+    const pageLines = pageData[pageIndex].lines ?? []
+    const pageMetrics = computePageLineMetrics(pageLines)
+    annotatePageLineGaps(pageLines, pageMetrics)
+
+    for (const line of pageLines) {
       const text = (line.text ?? "").trim()
       if (text) {
-        allLines.push({ line, text })
+        allLines.push({ line, text, pageIndex, pageMetrics })
       }
     }
   }
@@ -2190,7 +2353,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
 
     if (
       !skipHeadingForProseContinuation &&
-      isTocHeadingCandidate(text, line, headingStrings, lineIndex)
+      isTocHeadingCandidate(text, line, headingStrings, lineIndex, entry)
     ) {
       const { run, nextIndex } = collectConsecutiveTocHeadingRun(
         allLines,
@@ -2248,6 +2411,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
     }
 
     const previousBlock = blocks.length > 0 ? blocks[blocks.length - 1] : null
+    const previousEntry = index > 0 ? allLines[index - 1] : null
 
     const previous = blocks[blocks.length - 1]
     const forceNewProseBlock =
@@ -2256,7 +2420,10 @@ function buildBlocksFromLines(pageData, headingStrings) {
       proseBlockExceedsMergeLimit(previous) &&
       !isShortProseContinuation(proseText, previous)
 
-    if (shouldStartNewProseBlock(line, previousBlock) || forceNewProseBlock) {
+    if (
+      shouldStartNewProseBlock(line, previousBlock, entry, previousEntry) ||
+      forceNewProseBlock
+    ) {
       const proseBlock = {
         text: proseText,
         isHeading: false,
@@ -2612,14 +2779,16 @@ async function parsePdfBuffer(
       })
     }
 
-    if (authorText) {
+    if (authorText && !isScannerWatermarkLine(authorText)) {
       const authorLine = /^by\s/i.test(authorText) ? authorText : `By ${authorText}`
-      synthetic.push({
-        text: authorLine,
-        isHeading: true,
-        fontSize: 13,
-        chapterId: null,
-      })
+      if (!isScannerWatermarkLine(authorLine)) {
+        synthetic.push({
+          text: authorLine,
+          isHeading: true,
+          fontSize: 13,
+          chapterId: null,
+        })
+      }
     }
 
     if (synthetic.length > 0) {
