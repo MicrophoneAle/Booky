@@ -34,19 +34,28 @@ export default {
         ),
     ],
     [
-      "chapter 2 heading",
+      "chapter 2 heading with subtitle",
       (ctx) => {
         const chapter = ctx.blocks.find((block) =>
-          /Chapter\s+2/i.test(block.text ?? "")
+          /^Chapter\s+2\s*-\s*Father and Son$/i.test((block.text ?? "").trim())
+        )
+        return chapter?.isHeading === true && chapter?.isChapterStart === true
+      },
+    ],
+    [
+      "chapter 1 heading with subtitle",
+      (ctx) => {
+        const chapter = ctx.blocks.find((block) =>
+          /^Chapter\s+1\s*-\s*Marseilles/i.test((block.text ?? "").trim())
         )
         return chapter?.isHeading === true
       },
     ],
     [
-      "Chapter 2 is correctly a heading",
+      "chapter 3 without spurious period",
       (ctx) => {
         const chapter = ctx.blocks.find((block) =>
-          /Chapter\s+2/i.test(block.text ?? "")
+          /^Chapter\s+3$/i.test((block.text ?? "").trim())
         )
         return chapter?.isHeading === true
       },

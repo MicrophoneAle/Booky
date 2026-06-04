@@ -8,7 +8,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 33
+const PARSER_VERSION = 34
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
@@ -789,6 +789,9 @@ function looksLikeFilenameSlug(title) {
   if (/^\d{1,4}$/.test(trimmed)) {
     return false
   }
+  if (/^[A-Z][a-z]{3,}$/.test(trimmed)) {
+    return false
+  }
   if (/[a-z][A-Z]/.test(trimmed)) {
     return true
   }
@@ -840,6 +843,9 @@ function inferBookTitleFromEarlyBlocks(blocks) {
       continue
     }
     if (CHAPTER_PATTERN.test(text)) {
+      continue
+    }
+    if (/\bcontents\b/i.test(text)) {
       continue
     }
     if (isAuthorBylineHeadingText(text) || /^by\s+/i.test(text)) {
@@ -2326,6 +2332,10 @@ function isLikelyChapterNumberLine(text, line) {
 function isChapterHeading(block) {
   const text = block.text.trim()
 
+  if (CHAPTER_WITH_SUBTITLE_REGEX.test(text)) {
+    return true
+  }
+
   if (isCleanStructuralHeadingText(text, { fontSize: block.fontSize ?? 0 })) {
     return true
   }
@@ -2356,6 +2366,175 @@ function contentHasChapterHeadings(content) {
     }
   }
   return false
+}
+
+const CHAPTER_ONLY_HEADING_REGEX =
+  /^(chapter|letter)\s+(\d{1,3}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?\s*$/i
+
+const CHAPTER_WITH_SUBTITLE_REGEX =
+  /^(chapter|letter)\s+(\d{1,3}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\s*-\s+\S/i
+
+function formatChapterLabel(kind, number, subtitle = "") {
+  const label = kind.charAt(0).toUpperCase() + kind.slice(1).toLowerCase()
+  const base = `${label} ${number}`
+  const trimmedSubtitle = (subtitle ?? "").trim()
+  if (trimmedSubtitle) {
+    return `${base} - ${trimmedSubtitle}`
+  }
+  return base
+}
+
+function parseChapterOnlyHeading(text) {
+  const trimmed = (text ?? "").trim()
+  const match = trimmed.match(CHAPTER_ONLY_HEADING_REGEX)
+  if (!match) {
+    return null
+  }
+  return { kind: match[1], number: match[2] }
+}
+
+function isLikelyChapterSubtitleBlock(block) {
+  const text = (block?.text ?? "").trim()
+  if (!text || block?.isHeading) {
+    return false
+  }
+  if (CHAPTER_PATTERN.test(text) || CHAPTER_ONLY_HEADING_REGEX.test(text)) {
+    return false
+  }
+  if (isScannerWatermarkLine(text) || isAuthorStructuralLine(text)) {
+    return false
+  }
+  if (/^["'\u201c]/.test(text) || /^[a-z]/.test(text)) {
+    return false
+  }
+  if (text.length > 72) {
+    return false
+  }
+
+  const words = text.split(/\s+/).filter(Boolean)
+  if (words.length < 1 || words.length > 12) {
+    return false
+  }
+  if ((text.match(/[.!?]/g) ?? []).length > 1) {
+    return false
+  }
+  if (text.length > 45 && /,\s/.test(text)) {
+    return false
+  }
+  if (/;\s/.test(text)) {
+    return false
+  }
+
+  const titleCaseLike = words.every(
+    (word) =>
+      /^[A-Z\d]/.test(word) ||
+      BOOK_TITLE_MINOR_WORDS.has(word.toLowerCase()) ||
+      /^[—–-]$/.test(word)
+  )
+  const centered = block.textAlign === "center"
+
+  if (centered && titleCaseLike) {
+    return true
+  }
+  if (centered && words.length <= 8 && text.length <= 55) {
+    return true
+  }
+  if (titleCaseLike && words.length <= 6 && text.length <= 48) {
+    return true
+  }
+
+  return false
+}
+
+function mergeChapterSubtitleBlocks(blocks) {
+  const merged = []
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    const text = (block.text ?? "").trim()
+    const parts = block.isHeading ? parseChapterOnlyHeading(text) : null
+
+    if (parts && index + 1 < blocks.length) {
+      const nextBlock = blocks[index + 1]
+      if (isLikelyChapterSubtitleBlock(nextBlock)) {
+        const displayTitle = formatChapterLabel(
+          parts.kind,
+          parts.number,
+          nextBlock.text ?? ""
+        )
+        merged.push({
+          ...block,
+          text: displayTitle,
+          chapterTitle: displayTitle,
+        })
+        index += 1
+        continue
+      }
+
+      const displayTitle = formatChapterLabel(parts.kind, parts.number)
+      merged.push({
+        ...block,
+        text: displayTitle,
+        chapterTitle: displayTitle,
+      })
+      continue
+    }
+
+    merged.push(block)
+  }
+
+  return merged
+}
+
+function normalizeTitleComparisonKey(text) {
+  return (text ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+    .trim()
+}
+
+function dedupeFrontMatterTitleBlocks(blocks, bookTitle) {
+  const bookKey = normalizeTitleComparisonKey(bookTitle)
+  if (!bookKey) {
+    return blocks
+  }
+
+  let keptTitleBlock = false
+
+  return blocks.filter((block, index) => {
+    if (index >= 20) {
+      return true
+    }
+
+    const blockKey = normalizeTitleComparisonKey(block.text)
+    if (!blockKey || blockKey.length < 4) {
+      return true
+    }
+
+    const matchesBook =
+      blockKey === bookKey ||
+      blockKey.includes(bookKey) ||
+      bookKey.includes(blockKey)
+
+    if (!matchesBook) {
+      return true
+    }
+
+    if (CHAPTER_PATTERN.test((block.text ?? "").trim())) {
+      return true
+    }
+
+    if (!keptTitleBlock && block.isHeading) {
+      keptTitleBlock = true
+      return true
+    }
+
+    if (index < 12 && !block.isHeading) {
+      return false
+    }
+
+    return true
+  })
 }
 
 function detectChapters(content, bookTitle = "") {
@@ -2395,12 +2574,13 @@ function detectChapters(content, bookTitle = "") {
     blocks: page.blocks.map((block, blockIndex) => {
       let chapterId = currentChapterId
       let isChapterStart = false
+      let displayChapterTitle = block.chapterTitle ?? null
 
       if (isChapterHeading(block)) {
-        const rawTitle = block.text.trim()
+        const rawTitle = (block.chapterTitle ?? block.text ?? "").trim()
         const canonicalTitle = normalizeHeadingCandidate(rawTitle) || rawTitle
         let id = slugify(canonicalTitle)
-        let chapterTitle = canonicalTitle
+        let chapterTitle = block.chapterTitle ?? rawTitle
 
         if (
           PART_HEADING_PATTERN.test(canonicalTitle) ||
@@ -2428,6 +2608,7 @@ function detectChapters(content, bookTitle = "") {
           currentChapterId = id
           chapterId = id
           isChapterStart = true
+          displayChapterTitle = chapterTitle
         } else {
           chapterId = currentChapterId
         }
@@ -2437,6 +2618,9 @@ function detectChapters(content, bookTitle = "") {
         ...block,
         chapterId,
         isChapterStart,
+        ...(isChapterStart && displayChapterTitle
+          ? { chapterTitle: displayChapterTitle }
+          : {}),
       }
     }),
   }))
@@ -3323,6 +3507,7 @@ async function parsePdfBuffer(
   })
 
   let blocks = splitDialogueHeavyBlocks(buildBlocksFromLines(pageData, headingStrings))
+  blocks = mergeChapterSubtitleBlocks(blocks)
 
   reportProgress({
     phase: "structuring",
@@ -3362,6 +3547,8 @@ async function parsePdfBuffer(
       blocks = [...synthetic, ...blocks]
     }
   }
+
+  blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle)
 
   const content = blocksToContent(blocks)
 

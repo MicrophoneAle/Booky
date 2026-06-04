@@ -16,6 +16,7 @@ import {
   groupFrontMatterPlacementUnits,
   inferBlockIsChapterStart,
   isChapterBoundaryText,
+  CHAPTER_WITH_SUBTITLE_REGEX,
   isFrontMatterVisualType,
   isTitlePageVisualItems,
   resolveHeadingVisualType,
@@ -48,7 +49,7 @@ const PAGINATION_DEBOUNCE_MS = 400
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 33
+const PARSER_VERSION = 34
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 const PAGINATION_CACHE_MAX_ENTRIES = 3
@@ -1017,6 +1018,28 @@ function groupBlocksForDisplay(blocks) {
       const nextBlock = expandedBlocks[index + 1]
       const nextText = (nextBlock?.text ?? "").trim()
 
+      const nextIsChapterSubtitle =
+        isChapterStart &&
+        nextText &&
+        !nextBlock?.isHeading &&
+        !CHAPTER_WITH_SUBTITLE_REGEX.test(text) &&
+        nextBlock?.textAlign === "center" &&
+        nextText.length <= 72 &&
+        !/^["'\u201c]/.test(nextText) &&
+        !/^[a-z]/.test(nextText) &&
+        !(nextText.length > 45 && /,\s/.test(nextText))
+
+      if (nextIsChapterSubtitle) {
+        const parts = text.match(
+          /^(chapter|letter)\s+(\d{1,3}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?\s*$/i
+        )
+        if (parts) {
+          const label = parts[1].charAt(0).toUpperCase() + parts[1].slice(1).toLowerCase()
+          headingText = `${label} ${parts[2]} - ${nextText}`
+          index += 1
+        }
+      }
+
       if (
         !isChapterStart &&
         !isChapterBoundaryText(text) &&
@@ -1041,9 +1064,10 @@ function groupBlocksForDisplay(blocks) {
         }
       }
 
-      const itemType = isChapterStart
-        ? "chapter"
-        : resolveHeadingVisualType(headingFontSize, headingText)
+      const itemType =
+        isChapterStart || CHAPTER_WITH_SUBTITLE_REGEX.test(headingText)
+          ? "chapter"
+          : resolveHeadingVisualType(headingFontSize, headingText)
 
       visualItems.push({
         type: itemType,

@@ -22,6 +22,9 @@ const STRUCTURAL_HEADING_MAX_WORDS = 12
 export const CHAPTER_NUMBER_REGEX =
   /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
 
+export const CHAPTER_WITH_SUBTITLE_REGEX =
+  /^(chapter|letter)\s+(\d{1,3}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\s*-\s+\S/i
+
 export const CHAPTER_HEADING_MIN_FONT_SIZE = 12.5
 
 /**
@@ -208,6 +211,10 @@ export function isCleanStructuralHeadingText(text, block = null) {
 }
 
 export function isChapterBoundaryText(text) {
+  const trimmed = (text ?? "").trim()
+  if (CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed)) {
+    return true
+  }
   return isCleanStructuralHeadingText(text)
 }
 
@@ -226,6 +233,10 @@ export function inferBlockIsChapterStart(block) {
 
   if (!block.chapterId && isTocChapterListingText(text)) {
     return false
+  }
+
+  if (CHAPTER_WITH_SUBTITLE_REGEX.test(text)) {
+    return true
   }
 
   if (isCleanStructuralHeadingText(text, block)) {
