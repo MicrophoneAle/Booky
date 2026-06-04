@@ -477,6 +477,38 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
     }
 
     if (documentNeedsReparse(data)) {
+      const cachedWhileStale = readParsedCache(data)
+      const hasServingContent =
+        Boolean(cachedWhileStale) ||
+        (Array.isArray(data.content) && data.content.length > 0)
+
+      // Do not block the open request on a full PDF re-parse (Monte Cristo can take minutes).
+      // Return existing content immediately and refresh parser output in the background.
+      if (hasServingContent) {
+        void reparseDocumentInBackgroundFromRow(data)
+
+        if (cachedWhileStale) {
+          res.json({
+            success: true,
+            document: buildOpenDocumentPayload(data, cachedWhileStale),
+          })
+          return
+        }
+
+        res.json({
+          success: true,
+          document: {
+            id: data.id,
+            name: data.name,
+            total_pages: data.total_pages,
+            chapters: data.chapters,
+            content: data.content,
+            parser_version: data.parser_version ?? PARSER_VERSION,
+          },
+        })
+        return
+      }
+
       await reparseDocumentIfOutdated(data)
 
       const { data: refreshed, error: refreshError } = await supabase
@@ -2991,6 +3023,22 @@ function documentNeedsReparse(documentRow, { force = false } = {}) {
     return true
   }
   return contentLooksStale(documentRow.content)
+}
+
+async function reparseDocumentInBackgroundFromRow(documentRow) {
+  const documentId = documentRow?.id
+  if (!documentId || backgroundParseInFlight.has(documentId)) {
+    return
+  }
+
+  backgroundParseInFlight.add(documentId)
+  try {
+    await reparseDocumentIfOutdated(documentRow)
+  } catch (error) {
+    console.error(`Background re-parse failed for ${documentId}:`, error)
+  } finally {
+    backgroundParseInFlight.delete(documentId)
+  }
 }
 
 async function reparseDocumentIfOutdated(documentRow, options = {}) {

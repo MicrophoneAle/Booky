@@ -8,7 +8,6 @@ import {
   useState,
 } from "react"
 import { createPortal } from "react-dom"
-import { flushSync } from "react-dom"
 import { useNavigate } from "react-router-dom"
 import {
   buildChapterPageMap,
@@ -2707,11 +2706,17 @@ export default function BookViewer({
     const tryApplyOpeningCache = () => {
       let cacheRaw = null
       try {
-        console.log("[cache READ] looking for:", cacheKey)
+        if (import.meta.env.DEV) {
+          console.log("[cache READ] looking for:", cacheKey)
+        }
         cacheRaw = localStorage.getItem(cacheKey)
-        console.log("[cache READ] found:", cacheRaw ? "YES" : "NO")
+        if (import.meta.env.DEV) {
+          console.log("[cache READ] found:", cacheRaw ? "YES" : "NO")
+        }
       } catch (readError) {
-        console.log("[cache READ] found:", "NO (read error)", readError)
+        if (import.meta.env.DEV) {
+          console.log("[cache READ] found:", "NO (read error)", readError)
+        }
         return false
       }
 
@@ -2792,10 +2797,8 @@ export default function BookViewer({
       maxLoadingProgressRef.current = monotonicPercent
       const label = buildPaginationLoadingLabel(monotonicPercent, isComplete)
 
-      flushSync(() => {
-        setLoadingProgress(monotonicPercent)
-        setLoadingProgressLabel(label)
-      })
+      setLoadingProgress(monotonicPercent)
+      setLoadingProgressLabel(label)
     }
 
     const beginPaginationLoadingScreen = (mode) => {
@@ -2891,13 +2894,25 @@ export default function BookViewer({
           mobileFullscreen: isMobileFullscreenLayoutRef.current,
         }
       )
-      console.log("[cache WRITE]", writeContext.cacheKey, "pages:", finalPages.length)
-      writePaginationCache(writeContext.cacheKey, bookDocument.id, {
+      const payload = {
         parserVersion: writeContext.parserVersion,
         settings: writeContext.layoutSettings,
         pages: finalPages,
         cachedAt: Date.now(),
-      })
+      }
+
+      const persist = () => {
+        if (import.meta.env.DEV) {
+          console.log("[cache WRITE]", writeContext.cacheKey, "pages:", finalPages.length)
+        }
+        writePaginationCache(writeContext.cacheKey, bookDocument.id, payload)
+      }
+
+      if (typeof requestIdleCallback === "function") {
+        requestIdleCallback(persist, { timeout: 5000 })
+      } else {
+        setTimeout(persist, 0)
+      }
     }
 
     const finishMeasurement = (finalPages, measureElements, pageLayout, options = {}) => {
@@ -2971,22 +2986,6 @@ export default function BookViewer({
         )
       }
 
-      const estimatedPlaceableCount = flattenVisualItemsToPlaceables(
-        groupBlocksForDisplay(flatBlocks)
-      ).length
-
-      updatePaginationLoadingUi(0, PAGINATION_INITIAL_PAGES, false, {
-        placeableIndex: 0,
-        remainderLength: Math.max(1, estimatedPlaceableCount),
-      })
-
-      await new Promise((resolve) => requestAnimationFrame(resolve))
-
-      if (!isActiveRun()) {
-        abortRun()
-        return
-      }
-
       let result = normalizePaginationResult(
         runPaginationChunkWithProgress(() =>
           paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout, {
@@ -3014,6 +3013,8 @@ export default function BookViewer({
         false,
         resume
       )
+
+      await new Promise((resolve) => requestAnimationFrame(resolve))
 
       while (!result.complete) {
         await new Promise((resolve) => requestAnimationFrame(resolve))
