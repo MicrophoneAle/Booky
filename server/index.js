@@ -8,7 +8,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 26
+const PARSER_VERSION = 27
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
@@ -1771,12 +1771,43 @@ function isTocChapterListingLine(text) {
   return TOC_CHAPTER_LISTING_REGEX.test((text ?? "").trim())
 }
 
+function isNarrativeSentenceLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > STRUCTURAL_HEADING_MAX_CHARS) {
+    return false
+  }
+
+  if (isCleanStructuralHeadingText(trimmed)) {
+    return false
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 4) {
+    return false
+  }
+
+  if (!/[.!?][\u201d"\u2019']?\s*$/.test(trimmed)) {
+    return false
+  }
+
+  const punctuationCount = (trimmed.match(/[.!?]/g) ?? []).length
+  if (punctuationCount >= 2) {
+    return words.length >= 6 && /[a-z]/.test(trimmed)
+  }
+
+  return true
+}
+
 function isHeadingLine(text, line, headingStrings) {
   if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
     return false
   }
 
   if (/^[a-z(\u201c]/.test((text ?? "").trim())) {
+    return false
+  }
+
+  if (isNarrativeSentenceLine(text)) {
     return false
   }
 
@@ -1793,17 +1824,8 @@ function isHeadingLine(text, line, headingStrings) {
   }
 
   if (
-    headingStrings.has(text) &&
     text.length < 60 &&
-    !isTocDenseListingLine(text) &&
-    !isRunningHeaderMergedLine(text)
-  ) {
-    return true
-  }
-
-  if (
-    text.length < 60 &&
-    line.fontSize >= CHAPTER_HEADING_MIN_FONT_SIZE &&
+    (line.fontSize ?? 0) > 14 &&
     !isTocDenseListingLine(text) &&
     !isRunningHeaderMergedLine(text)
   ) {

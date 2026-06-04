@@ -63,6 +63,17 @@ const checks = [
       return Boolean(dedication)
     },
   ],
+  [
+    "no false narrative headings",
+    () =>
+      !blocks.some(
+        (entry) =>
+          entry.isHeading &&
+          /Terrace and asked for a can of coffee|Finally the old man woke|sun was hot now although the breeze|Not in the absolute dark\. But almost|heavy brisa have we|How much did you suffer/.test(
+            entry.text ?? ""
+          )
+      ),
+  ],
 ]
 
 console.log(`Parser version: ${PARSER_VERSION}`)
