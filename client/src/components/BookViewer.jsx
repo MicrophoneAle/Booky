@@ -2432,7 +2432,11 @@ export default function BookViewer({
   const bookmarkPageRef = useRef(null)
   const paginationRunIdRef = useRef(0)
   const openingPaginationStartedRef = useRef(false)
+  const openingPaginationInFlightRef = useRef(false)
   const pageTextMapBuildIdRef = useRef(0)
+  const isMobileLayoutRef = useRef(false)
+  const isMobileFullscreenLayoutRef = useRef(false)
+  const [viewportRevision, setViewportRevision] = useState(0)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
@@ -2478,6 +2482,7 @@ export default function BookViewer({
     prevPaginationSettingsRef.current = null
     hasDisplayedBookRef.current = false
     openingPaginationStartedRef.current = false
+    openingPaginationInFlightRef.current = false
     pageTextMapBuildIdRef.current += 1
     maxLoadingProgressRef.current = 0
     setPaginationLoadingMode("opening")
@@ -2582,7 +2587,7 @@ export default function BookViewer({
     const layoutSettings = getLayoutPaginationSettings(paginationSettings)
     const parserVersion = Number(bookDocument.parserVersion) || PARSER_VERSION
     const pageHeight =
-      isMobile && isMobileFullscreen
+      isMobileLayoutRef.current && isMobileFullscreenLayoutRef.current
         ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
         : PAGE_HEIGHT_PX
     const cacheKey = buildPaginationCacheKey(
@@ -2593,7 +2598,8 @@ export default function BookViewer({
       pageHeight
     )
 
-    const isSpreadViewForTarget = !isMobile && layoutMode === "spread"
+    const isSpreadViewForTarget =
+      !isMobileLayoutRef.current && layoutMode === "spread"
 
     const isSettingsRepagination =
       hasDisplayedBookRef.current && displayedPagesCountRef.current > 0
@@ -2708,9 +2714,10 @@ export default function BookViewer({
 
     const createMeasurementContext = () => {
       const flatBlocks = flattenDocument(bookDocument)
-      const mobileFS = isMobile && isMobileFullscreen
+      const mobileViewport = isMobileLayoutRef.current
+      const mobileFS = mobileViewport && isMobileFullscreenLayoutRef.current
       const pageHeightToUse = mobileFS ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : undefined
-      const pageNumberReservedPx = getPageNumberReservedPx(isMobile)
+      const pageNumberReservedPx = getPageNumberReservedPx(mobileViewport)
       const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(
         pageHeightToUse,
         paginationSettings.margins,
@@ -2803,6 +2810,7 @@ export default function BookViewer({
     } = {}) => {
       const { flatBlocks, measureElements, pageLayout } = createMeasurementContext()
       const isTypesettingReload = loadingMode === "typesetting"
+      const isOpeningRun = loadingMode === "opening"
 
       const isActiveRun = () =>
         !paginationCancelRef.current && runId === paginationRunIdRef.current
@@ -2810,6 +2818,32 @@ export default function BookViewer({
       const abortRun = () => {
         measureRoot?.remove()
         measureRoot = null
+        if (isOpeningRun) {
+          openingPaginationInFlightRef.current = false
+        }
+      }
+
+      const runPaginationChunkWithProgress = (runChunk) => {
+        const heartbeat = setInterval(() => {
+          if (!isActiveRun()) {
+            return
+          }
+
+          const bumped = Math.min(94, maxLoadingProgressRef.current + 1)
+          if (bumped === maxLoadingProgressRef.current) {
+            return
+          }
+
+          maxLoadingProgressRef.current = bumped
+          setLoadingProgress(bumped)
+          setLoadingProgressLabel(buildPaginationLoadingLabel(bumped, false))
+        }, 120)
+
+        try {
+          return runChunk()
+        } finally {
+          clearInterval(heartbeat)
+        }
       }
 
       const estimateFromResult = (pagesDone, resume, isComplete) => {
@@ -2826,10 +2860,28 @@ export default function BookViewer({
         )
       }
 
+      const estimatedPlaceableCount = flattenVisualItemsToPlaceables(
+        groupBlocksForDisplay(flatBlocks)
+      ).length
+
+      updatePaginationLoadingUi(0, PAGINATION_INITIAL_PAGES, false, {
+        placeableIndex: 0,
+        remainderLength: Math.max(1, estimatedPlaceableCount),
+      })
+
+      await new Promise((resolve) => requestAnimationFrame(resolve))
+
+      if (!isActiveRun()) {
+        abortRun()
+        return
+      }
+
       let result = normalizePaginationResult(
-        paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout, {
-          maxPages: PAGINATION_INITIAL_PAGES,
-        })
+        runPaginationChunkWithProgress(() =>
+          paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout, {
+            maxPages: PAGINATION_INITIAL_PAGES,
+          })
+        )
       )
 
       if (!isActiveRun()) {
@@ -2862,7 +2914,9 @@ export default function BookViewer({
 
         if (!resume) {
           result = normalizePaginationResult(
-            paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout)
+            runPaginationChunkWithProgress(() =>
+              paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout)
+            )
           )
           cumulativePages = result.pages
           resume = result.resume
@@ -2871,10 +2925,12 @@ export default function BookViewer({
 
         const nextMaxPages = cumulativePages.length + PAGINATION_BATCH_PAGES
         result = normalizePaginationResult(
-          paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout, {
-            maxPages: nextMaxPages,
-            resume,
-          })
+          runPaginationChunkWithProgress(() =>
+            paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout, {
+              maxPages: nextMaxPages,
+              resume,
+            })
+          )
         )
 
         if (!isActiveRun()) {
@@ -2899,7 +2955,9 @@ export default function BookViewer({
 
       if (!result.complete) {
         result = normalizePaginationResult(
-          paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout)
+          runPaginationChunkWithProgress(() =>
+            paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout)
+          )
         )
         cumulativePages = result.pages
       }
@@ -2952,6 +3010,10 @@ export default function BookViewer({
         return undefined
       }
 
+      if (openingPaginationInFlightRef.current) {
+        return undefined
+      }
+
       if (hasDisplayedBookRef.current && openingPaginationStartedRef.current) {
         return undefined
       }
@@ -2970,7 +3032,10 @@ export default function BookViewer({
         return undefined
       }
 
+      isMobileLayoutRef.current = window.matchMedia("(max-width: 767px)").matches
+      isMobileFullscreenLayoutRef.current = isMobileFullscreen
       openingPaginationStartedRef.current = true
+      openingPaginationInFlightRef.current = true
       beginPaginationLoadingScreen("opening")
       setPages([])
 
@@ -2984,6 +3049,7 @@ export default function BookViewer({
       return () => {
         paginationCancelRef.current = true
         paginationRunIdRef.current += 1
+        openingPaginationInFlightRef.current = false
         if (loadingDismissTimerRef.current) {
           clearTimeout(loadingDismissTimerRef.current)
           loadingDismissTimerRef.current = null
@@ -3028,11 +3094,9 @@ export default function BookViewer({
   }, [
     bookDocument,
     initialPage,
-    isMobileFullscreen,
-    isMobile,
-    layoutMode,
     paginationSettings,
     progressHydrated,
+    viewportRevision,
     normalizeBookmarkPage,
   ])
 
@@ -3111,6 +3175,23 @@ export default function BookViewer({
       document.removeEventListener("fullscreenchange", recomputeScale)
     }
   }, [showSpreadLayout, isMobile, isMobileFullscreen, isFullscreen, activePageHeight, pages.length, isPaginating])
+
+  useEffect(() => {
+    isMobileLayoutRef.current = isMobile
+  }, [isMobile])
+
+  useEffect(() => {
+    isMobileFullscreenLayoutRef.current = isMobileFullscreen
+  }, [isMobileFullscreen])
+
+  useEffect(() => {
+    if (!hasDisplayedBookRef.current || displayedPagesCountRef.current === 0) {
+      return undefined
+    }
+
+    setViewportRevision((revision) => revision + 1)
+    return undefined
+  }, [isMobile, isMobileFullscreen])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)")
