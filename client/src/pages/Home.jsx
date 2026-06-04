@@ -135,20 +135,23 @@ function doUpload(file, getToken, setUploadState, navigate) {
               documentId,
             }))
 
-            try {
-              await pollDocumentParseStatus(documentId, getToken)
-              setUploadState((state) => ({ ...state, phase: "done" }))
-              setTimeout(() => navigate("/library"), 600)
-            } catch (pollError) {
-              setUploadState((state) => ({
-                ...state,
-                phase: "error",
-                errorMessage:
-                  pollError instanceof Error
-                    ? pollError.message
-                    : "Processing failed",
-              }))
-            }
+            navigate("/library")
+
+            void pollDocumentParseStatus(documentId, getToken)
+              .then(() => {
+                setUploadState((state) => ({ ...state, phase: "done" }))
+              })
+              .catch((pollError) => {
+                setUploadState((state) => ({
+                  ...state,
+                  phase: "error",
+                  errorMessage:
+                    pollError instanceof Error
+                      ? pollError.message
+                      : "Processing failed",
+                }))
+              })
+
             resolve()
             return
           }

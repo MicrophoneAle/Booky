@@ -21,6 +21,7 @@ const PARSE_STATUS = {
 }
 
 const backgroundParseInFlight = new Set()
+const PDF_PAGE_EXTRACTION_CONCURRENCY = 6
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -926,6 +927,21 @@ function stripInlineArtifacts(text) {
     .trim()
 }
 
+function isShortLineSubstringOfLongerLine(shortText, longTexts) {
+  const minParentLength = shortText.length + MARGIN_CALLOUT_SUBSTRING_PARENT_GAP
+
+  for (const other of longTexts) {
+    if (other === shortText || other.length < minParentLength) {
+      continue
+    }
+    if (other.includes(shortText)) {
+      return true
+    }
+  }
+
+  return false
+}
+
 function dropMarginCalloutLines(lines) {
   const entries = lines
     .map((line) => ({ line, text: (line.text ?? "").trim() }))
@@ -936,7 +952,11 @@ function dropMarginCalloutLines(lines) {
   }
 
   const texts = entries.map((entry) => entry.text)
-  const textsByLength = [...texts].sort((a, b) => b.length - a.length)
+  const longTextsOnPage = texts.filter(
+    (candidate) =>
+      candidate.length >
+      MARGIN_CALLOUT_MAX_CHARS + MARGIN_CALLOUT_SUBSTRING_PARENT_GAP
+  )
 
   // Body column left edge. A genuine margin callout/side note sits outside this
   // column; prose that merely ends a paragraph on a short line is aligned to
@@ -986,19 +1006,8 @@ function dropMarginCalloutLines(lines) {
 
       // A short fragment fully contained inside a longer line on the same page
       // (e.g. a running header echoed within body text) is a duplicate artifact.
-      for (const other of textsByLength) {
-        if (other.length <= text.length) {
-          break
-        }
-        if (other === text) {
-          continue
-        }
-        if (
-          other.includes(text) &&
-          other.length - text.length >= MARGIN_CALLOUT_SUBSTRING_PARENT_GAP
-        ) {
-          return false
-        }
+      if (isShortLineSubstringOfLongerLine(text, longTextsOnPage)) {
+        return false
       }
 
       const x = Number.isFinite(line.x) ? line.x : bodyLeftX
@@ -1457,6 +1466,49 @@ async function readPdfInfo(pdf) {
   }
 }
 
+async function extractPdfPageLines(pdf, pageNumber, headingStrings) {
+  const page = await pdf.getPage(pageNumber)
+  const textContent = await page.getTextContent()
+  const pageItems = []
+
+  try {
+    for (const item of textContent.items) {
+      const str = (item.str ?? "").trim()
+      if (!str) {
+        continue
+      }
+
+      const fontSize = getItemFontSize(item)
+      if (fontSize > 14 && !isScannerWatermarkLine(str)) {
+        headingStrings.add(str)
+      }
+
+      pageItems.push({
+        str,
+        x: getItemX(item),
+        y: getItemY(item),
+        fontSize,
+        fontName: item.fontName ?? "",
+        transform: item.transform,
+      })
+    }
+
+    const rawLines = groupTextItemsIntoLines(pageItems)
+    const medianX = medianValue(rawLines.map((line) => line.x))
+
+    for (const line of rawLines) {
+      line.indented = line.x > medianX + INDENT_THRESHOLD_PX
+    }
+
+    annotateLinesCentered(rawLines)
+    return dropMarginCalloutLines(rawLines)
+  } finally {
+    if (typeof page.cleanup === "function") {
+      page.cleanup()
+    }
+  }
+}
+
 async function extractPdfStructure(buffer, { onPageProcessed } = {}) {
   const loadingTask = getDocument({
     data: new Uint8Array(buffer),
@@ -1468,52 +1520,37 @@ async function extractPdfStructure(buffer, { onPageProcessed } = {}) {
   const pdfInfo = await readPdfInfo(pdf)
   const totalPages = pdf.numPages
 
-  const pagesBeforeFilter = []
+  const pagesBeforeFilter = new Array(totalPages)
 
   try {
-    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
-      const page = await pdf.getPage(pageNumber)
-      const textContent = await page.getTextContent()
-      const pageItems = []
+    for (
+      let batchStart = 1;
+      batchStart <= totalPages;
+      batchStart += PDF_PAGE_EXTRACTION_CONCURRENCY
+    ) {
+      const batchEnd = Math.min(
+        batchStart + PDF_PAGE_EXTRACTION_CONCURRENCY - 1,
+        totalPages
+      )
+      const batchPageNumbers = []
 
-      for (const item of textContent.items) {
-        const str = (item.str ?? "").trim()
-        if (!str) {
-          continue
+      for (let pageNumber = batchStart; pageNumber <= batchEnd; pageNumber += 1) {
+        batchPageNumbers.push(pageNumber)
+      }
+
+      const batchLines = await Promise.all(
+        batchPageNumbers.map((pageNumber) =>
+          extractPdfPageLines(pdf, pageNumber, headingStrings)
+        )
+      )
+
+      for (let index = 0; index < batchPageNumbers.length; index += 1) {
+        const pageNumber = batchPageNumbers[index]
+        pagesBeforeFilter[pageNumber - 1] = { lines: batchLines[index] }
+
+        if (onPageProcessed) {
+          onPageProcessed(pageNumber, totalPages)
         }
-
-        const fontSize = getItemFontSize(item)
-        if (fontSize > 14 && !isScannerWatermarkLine(str)) {
-          headingStrings.add(str)
-        }
-
-        pageItems.push({
-          str,
-          x: getItemX(item),
-          y: getItemY(item),
-          fontSize,
-          fontName: item.fontName ?? "",
-          transform: item.transform,
-        })
-      }
-
-      const rawLines = groupTextItemsIntoLines(pageItems)
-      const medianX = medianValue(rawLines.map((line) => line.x))
-
-      for (const line of rawLines) {
-        line.indented = line.x > medianX + INDENT_THRESHOLD_PX
-      }
-
-      annotateLinesCentered(rawLines)
-      const filteredLines = dropMarginCalloutLines(rawLines)
-      pagesBeforeFilter.push({ lines: filteredLines })
-
-      if (typeof page.cleanup === "function") {
-        page.cleanup()
-      }
-
-      if (onPageProcessed) {
-        onPageProcessed(pageNumber, totalPages)
       }
     }
   } finally {
@@ -2322,15 +2359,31 @@ function toPublicDocument(documentRow, wordCount) {
 }
 
 function hasValidParsedCache(documentRow) {
-  return (
-    documentRow?.parsed_cache &&
-    Number(documentRow.parsed_cache_version) === PARSER_VERSION
-  )
+  if (Number(documentRow?.parsed_cache_version) !== PARSER_VERSION) {
+    return false
+  }
+
+  if (Array.isArray(documentRow?.content) && documentRow.content.length > 0) {
+    return true
+  }
+
+  return Boolean(documentRow?.parsed_cache)
 }
 
 function readParsedCache(documentRow) {
   if (!hasValidParsedCache(documentRow)) {
     return null
+  }
+
+  if (Array.isArray(documentRow.content) && documentRow.content.length > 0) {
+    return {
+      parsedText: {
+        numpages: documentRow.total_pages ?? documentRow.content.length,
+      },
+      chapters: documentRow.chapters ?? [],
+      contentWithChapters: documentRow.content,
+      wordCount: documentRow.word_count ?? 0,
+    }
   }
 
   try {
@@ -2347,14 +2400,9 @@ function readParsedCache(documentRow) {
   }
 }
 
-function buildParsedCacheFields(parseResult) {
+function buildParsedCacheFields() {
   return {
-    parsed_cache: JSON.stringify({
-      parsedText: parseResult.parsedText,
-      chapters: parseResult.chapters,
-      contentWithChapters: parseResult.contentWithChapters,
-      wordCount: parseResult.wordCount,
-    }),
+    parsed_cache: null,
     parsed_cache_version: PARSER_VERSION,
   }
 }
@@ -2406,7 +2454,7 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
         word_count: wordCount,
         parser_version: PARSER_VERSION,
         parse_status: PARSE_STATUS.READY,
-        ...buildParsedCacheFields(parseResult),
+        ...buildParsedCacheFields(),
       })
       .eq("id", documentId)
       .eq("user_id", userId)
@@ -2496,10 +2544,7 @@ async function parsePdfBuffer(buffer, fileName = "", { onPageProcessed } = {}) {
   }
 
   const { chapters, content: contentWithChapters } = detectChapters(content, bookTitle)
-  const wordCount = Math.max(
-    countWordsFromBlocks(blocks),
-    countWordsFromContent(contentWithChapters)
-  )
+  const wordCount = countWordsFromBlocks(blocks)
 
   return {
     parsedText,
@@ -2575,7 +2620,7 @@ async function reparseDocumentIfOutdated(documentRow, options = {}) {
       word_count: wordCount,
       parser_version: PARSER_VERSION,
       parse_status: PARSE_STATUS.READY,
-      ...buildParsedCacheFields(parseResult),
+      ...buildParsedCacheFields(),
     })
     .eq("id", documentRow.id)
 
@@ -2700,7 +2745,7 @@ app.post("/upload", requireAuth, (req, res) => {
         return
       }
 
-      const pdfBuffer = Buffer.from(uploadedFile.buffer)
+      const pdfBuffer = uploadedFile.buffer
       const documentId = insertedDocument.id
       const userId = req.userId
       const originalName = uploadedFile.originalname
