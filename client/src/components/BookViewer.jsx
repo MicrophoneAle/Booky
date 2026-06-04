@@ -80,10 +80,13 @@ function estimateTotalPages(donePages, placeableIndex, remainderLength) {
     return donePages
   }
 
-  return Math.max(
+  const safeRemainder = Math.max(1, remainderLength)
+  const estimated = Math.max(
     donePages,
-    Math.ceil((remainderLength / placeableIndex) * donePages)
+    Math.ceil((safeRemainder / placeableIndex) * donePages)
   )
+
+  return Number.isFinite(estimated) ? estimated : donePages
 }
 
 function getLayoutPaginationSettings(settings) {
@@ -154,6 +157,14 @@ function evictPaginationCacheIfNeeded() {
   }
 }
 
+function deletePaginationCacheEntry(cacheKey) {
+  try {
+    localStorage.removeItem(cacheKey)
+  } catch {
+    // Ignore storage errors.
+  }
+}
+
 function readPaginationCache(cacheKey, parserVersion) {
   try {
     const raw = localStorage.getItem(cacheKey)
@@ -162,12 +173,18 @@ function readPaginationCache(cacheKey, parserVersion) {
     }
 
     const parsed = JSON.parse(raw)
-    if (!parsed?.pages?.length || Number(parsed.parserVersion) !== Number(parserVersion)) {
+    if (!parsed?.pages?.length) {
+      return null
+    }
+
+    if (Number(parsed.parserVersion) !== Number(parserVersion)) {
+      deletePaginationCacheEntry(cacheKey)
       return null
     }
 
     return parsed
   } catch {
+    deletePaginationCacheEntry(cacheKey)
     return null
   }
 }
@@ -312,8 +329,12 @@ function computeOpeningLoadingPercent(
   if (placeableProgress != null) {
     percent = Math.round(placeableProgress * 100)
   } else if (donePages > 0) {
-    const safeTotal = Math.max(donePages, estimatedTotal || donePages)
+    const safeTotal = Math.max(donePages, estimatedTotal || donePages, 1)
     percent = Math.round((donePages / safeTotal) * 100)
+  }
+
+  if (!Number.isFinite(percent)) {
+    percent = 0
   }
 
   return Math.max(0, Math.min(99, percent))
@@ -2559,6 +2580,11 @@ export default function BookViewer({
       return undefined
     }
 
+    // Wait for bookmark hydration before any pagination/cache work.
+    if (!progressHydrated) {
+      return undefined
+    }
+
     const previousPaginationSettings = prevPaginationSettingsRef.current
     if (
       previousPaginationSettings &&
@@ -2571,8 +2597,12 @@ export default function BookViewer({
       return undefined
     }
 
+    // Skip redundant re-pagination after the book is already open (debounced settings sync).
+    // Must NOT run during initial open: an earlier effect pass can set prevPaginationSettingsRef
+    // before progressHydrated flips true, which would otherwise block runFullPagination forever.
     if (
       previousPaginationSettings &&
+      hasDisplayedBookRef.current &&
       layoutPaginationSettingsEqual(previousPaginationSettings, paginationSettings)
     ) {
       prevPaginationSettingsRef.current = paginationSettings
@@ -2687,9 +2717,10 @@ export default function BookViewer({
         isComplete,
         placeableProgress
       )
+      const safePercent = Number.isFinite(percent) ? percent : 0
       const monotonicPercent = isComplete
         ? 100
-        : Math.max(maxLoadingProgressRef.current, percent)
+        : Math.max(maxLoadingProgressRef.current, safePercent)
       maxLoadingProgressRef.current = monotonicPercent
       const label = buildPaginationLoadingLabel(monotonicPercent, isComplete)
 
@@ -2808,7 +2839,6 @@ export default function BookViewer({
       oldTotal = null,
       runId = 0,
     } = {}) => {
-      const { flatBlocks, measureElements, pageLayout } = createMeasurementContext()
       const isTypesettingReload = loadingMode === "typesetting"
       const isOpeningRun = loadingMode === "opening"
 
@@ -2822,6 +2852,9 @@ export default function BookViewer({
           openingPaginationInFlightRef.current = false
         }
       }
+
+      try {
+      const { flatBlocks, measureElements, pageLayout } = createMeasurementContext()
 
       const runPaginationChunkWithProgress = (runChunk) => {
         const heartbeat = setInterval(() => {
@@ -3003,13 +3036,14 @@ export default function BookViewer({
       setLoadingProgressLabel("Ready")
 
       abortRun()
+      } catch (error) {
+        console.error("[BookViewer] runFullPagination failed:", error)
+        setIsPaginating(false)
+        abortRun()
+      }
     }
 
     if (!isSettingsRepagination) {
-      if (!progressHydrated) {
-        return undefined
-      }
-
       if (openingPaginationInFlightRef.current) {
         return undefined
       }
