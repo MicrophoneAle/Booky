@@ -312,30 +312,6 @@ function resolvePageAfterRepagination({
   return 1
 }
 
-function canRenderReadingPosition(pageCount, targetPage, isSpreadView) {
-  if (pageCount < 1 || targetPage < 1) {
-    return false
-  }
-
-  if (!isSpreadView) {
-    return pageCount >= targetPage
-  }
-
-  if (pageCount < targetPage) {
-    return false
-  }
-
-  if (targetPage % 2 === 0) {
-    return pageCount >= targetPage
-  }
-
-  if (targetPage === pageCount) {
-    return true
-  }
-
-  return pageCount >= targetPage + 1
-}
-
 function computeOpeningLoadingProgress(donePages, estimatedTotal, isComplete) {
   if (isComplete) {
     return { percent: 100, label: "Ready" }
@@ -2205,20 +2181,7 @@ function PageCounterControl({
   isSpreadView,
   onJump,
   disabled = false,
-  paginatingProgress = null,
-  showBackgroundPaginateLabel = false,
 }) {
-  if (showBackgroundPaginateLabel && paginatingProgress) {
-    const totalLabel = paginatingProgress.total
-      ? ` ${paginatingProgress.done} / ${paginatingProgress.total}`
-      : ` ${paginatingProgress.done}…`
-
-    return (
-      <p className="book-viewer__counter" aria-live="polite">
-        Loading…{totalLabel}
-      </p>
-    )
-  }
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState("")
   const inputRef = useRef(null)
@@ -2428,9 +2391,7 @@ export default function BookViewer({
   const progressKey = `booky-progress-${bookDocument?.id ?? ""}`
   const [pages, setPages] = useState([])
   const [isPaginating, setIsPaginating] = useState(true)
-  const [isBackgroundPaginating, setIsBackgroundPaginating] = useState(false)
-  const [backgroundPaginateIndeterminate, setBackgroundPaginateIndeterminate] =
-    useState(false)
+  const [paginationLoadingMode, setPaginationLoadingMode] = useState("opening")
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [loadingProgressLabel, setLoadingProgressLabel] = useState("Preparing pages...")
   const [currentPage, setCurrentPage] = useState(1)
@@ -2457,12 +2418,12 @@ export default function BookViewer({
 
   const [uiSettings, setUiSettings] = useState(loadSavedSettings)
   const [paginationSettings, setPaginationSettings] = useState(loadSavedSettings)
-  const [paginatingProgress, setPaginatingProgress] = useState(null)
   const prevPaginationSettingsRef = useRef(null)
   const paginationCancelRef = useRef(false)
   const hasDisplayedBookRef = useRef(false)
   const displayedPagesCountRef = useRef(0)
   const loadingDismissTimerRef = useRef(null)
+  const maxLoadingProgressRef = useRef(0)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
@@ -2506,8 +2467,8 @@ export default function BookViewer({
   useEffect(() => {
     prevPaginationSettingsRef.current = null
     hasDisplayedBookRef.current = false
-    setIsBackgroundPaginating(false)
-    setBackgroundPaginateIndeterminate(false)
+    maxLoadingProgressRef.current = 0
+    setPaginationLoadingMode("opening")
     setLoadingProgress(0)
     setLoadingProgressLabel("Preparing pages...")
   }, [bookDocument?.id])
@@ -2563,9 +2524,6 @@ export default function BookViewer({
     if (!bookDocument) {
       setPages([])
       setIsPaginating(false)
-      setIsBackgroundPaginating(false)
-      setBackgroundPaginateIndeterminate(false)
-      setPaginatingProgress(null)
       return undefined
     }
 
@@ -2602,11 +2560,6 @@ export default function BookViewer({
     )
 
     const isSpreadViewForTarget = !isMobile && layoutMode === "spread"
-    const targetReadingPage = normalizeBookmarkPage(
-      bookmarkPage ?? initialPage ?? 1,
-      Number.MAX_SAFE_INTEGER,
-      isSpreadViewForTarget
-    )
 
     const isSettingsRepagination =
       hasDisplayedBookRef.current && displayedPagesCountRef.current > 0
@@ -2672,14 +2625,31 @@ export default function BookViewer({
       }
     }
 
-    const updateOpeningLoadingUi = (donePages, estimatedTotal, isComplete) => {
+    const updatePaginationLoadingUi = (donePages, estimatedTotal, isComplete) => {
       const { percent, label } = computeOpeningLoadingProgress(
         donePages,
         estimatedTotal,
         isComplete
       )
-      setLoadingProgress(percent)
+      const monotonicPercent = isComplete
+        ? 100
+        : Math.max(maxLoadingProgressRef.current, percent)
+      maxLoadingProgressRef.current = monotonicPercent
+      setLoadingProgress(monotonicPercent)
       setLoadingProgressLabel(label)
+    }
+
+    const beginPaginationLoadingScreen = (mode) => {
+      maxLoadingProgressRef.current = 0
+      setPaginationLoadingMode(mode)
+      setIsPaginating(true)
+      setLoadingProgress(0)
+      setLoadingProgressLabel("Preparing pages...")
+      if (mode === "typesetting") {
+        setSettingsOpen(false)
+        setTocOpen(false)
+        setSearchOpen(false)
+      }
     }
 
     const createMeasurementContext = () => {
@@ -2772,14 +2742,13 @@ export default function BookViewer({
     }
 
     const runFullPagination = async ({
-      openingLoad = false,
-      settingsRepagination = false,
+      loadingMode = "opening",
       anchorPrefix = null,
       oldPage = null,
       oldTotal = null,
     } = {}) => {
       const { flatBlocks, measureElements, pageLayout } = createMeasurementContext()
-      let phase1Complete = false
+      const isTypesettingReload = loadingMode === "typesetting"
 
       const estimateFromResult = (pagesDone, resume, isComplete) => {
         if (isComplete) {
@@ -2807,7 +2776,6 @@ export default function BookViewer({
         return
       }
 
-      phase1Complete = true
       let cumulativePages = result.pages
       let resume = result.resume
       let estimatedTotal = estimateFromResult(
@@ -2816,118 +2784,7 @@ export default function BookViewer({
         result.complete
       )
 
-      if (openingLoad) {
-        updateOpeningLoadingUi(cumulativePages.length, estimatedTotal, false)
-      }
-
-      const canShowReadingPosition = () =>
-        canRenderReadingPosition(
-          cumulativePages.length,
-          targetReadingPage,
-          isSpreadViewForTarget
-        )
-
-      if (openingLoad && phase1Complete && !canShowReadingPosition() && !result.complete) {
-        while (!result.complete && resume) {
-          await new Promise((resolve) => requestAnimationFrame(resolve))
-
-          if (paginationCancelRef.current) {
-            measureRoot?.remove()
-            measureRoot = null
-            return
-          }
-
-          const nextMaxPages = cumulativePages.length + PAGINATION_BATCH_PAGES
-          result = normalizePaginationResult(
-            paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout, {
-              maxPages: nextMaxPages,
-              resume,
-            })
-          )
-
-          if (paginationCancelRef.current) {
-            measureRoot?.remove()
-            measureRoot = null
-            return
-          }
-
-          cumulativePages = result.pages
-          resume = result.resume
-          estimatedTotal = estimateFromResult(
-            cumulativePages.length,
-            resume,
-            result.complete
-          )
-          updateOpeningLoadingUi(cumulativePages.length, estimatedTotal, false)
-
-          if (canShowReadingPosition() || result.complete) {
-            break
-          }
-        }
-      }
-
-      if (openingLoad) {
-        updateOpeningLoadingUi(cumulativePages.length, estimatedTotal, result.complete)
-
-        await new Promise((resolve) => {
-          loadingDismissTimerRef.current = setTimeout(resolve, LOADING_READY_DISMISS_MS)
-        })
-
-        if (paginationCancelRef.current) {
-          measureRoot?.remove()
-          measureRoot = null
-          return
-        }
-
-        if (result.complete) {
-          const finalPages = finishMeasurement(cumulativePages, measureElements, pageLayout, {
-            isFinal: true,
-          })
-          persistPaginationCache(finalPages)
-        } else {
-          applyMeasuredPages(cumulativePages)
-        }
-
-        setIsPaginating(false)
-        hasDisplayedBookRef.current = true
-        setLoadingProgress(100)
-        setLoadingProgressLabel("Ready")
-
-        if (result.complete) {
-          setIsBackgroundPaginating(false)
-          setBackgroundPaginateIndeterminate(false)
-          setPaginatingProgress(null)
-          measureRoot?.remove()
-          measureRoot = null
-          return
-        }
-      } else if (settingsRepagination && result.complete) {
-        const finalPages = finishMeasurement(cumulativePages, measureElements, pageLayout, {
-          isFinal: true,
-          anchorPrefix,
-          oldPage,
-          oldTotal,
-        })
-        persistPaginationCache(finalPages)
-        setIsBackgroundPaginating(false)
-        setBackgroundPaginateIndeterminate(false)
-        setPaginatingProgress(null)
-        measureRoot?.remove()
-        measureRoot = null
-        return
-      }
-
-      setIsBackgroundPaginating(true)
-      if (settingsRepagination) {
-        setBackgroundPaginateIndeterminate(true)
-        setPaginatingProgress(null)
-      } else {
-        setBackgroundPaginateIndeterminate(false)
-        setPaginatingProgress({
-          done: cumulativePages.length,
-          total: estimatedTotal,
-        })
-      }
+      updatePaginationLoadingUi(cumulativePages.length, estimatedTotal, false)
 
       while (!result.complete && resume) {
         await new Promise((resolve) => requestAnimationFrame(resolve))
@@ -2959,45 +2816,43 @@ export default function BookViewer({
           resume,
           result.complete
         )
-
-        if (settingsRepagination) {
-          if (result.complete) {
-            const finalPages = finishMeasurement(
-              cumulativePages,
-              measureElements,
-              pageLayout,
-              {
-                isFinal: true,
-                anchorPrefix,
-                oldPage,
-                oldTotal,
-              }
-            )
-            persistPaginationCache(finalPages)
-            break
-          }
-        } else {
-          applyMeasuredPages(cumulativePages)
-          setPaginatingProgress({
-            done: cumulativePages.length,
-            total: estimatedTotal,
-          })
-        }
+        updatePaginationLoadingUi(cumulativePages.length, estimatedTotal, false)
       }
 
-      if (!settingsRepagination && result.complete && !paginationCancelRef.current) {
-        const finalPages = finishMeasurement(
-          cumulativePages,
-          measureElements,
-          pageLayout,
-          {}
-        )
-        persistPaginationCache(finalPages)
+      if (paginationCancelRef.current) {
+        measureRoot?.remove()
+        measureRoot = null
+        return
       }
 
-      setIsBackgroundPaginating(false)
-      setBackgroundPaginateIndeterminate(false)
-      setPaginatingProgress(null)
+      updatePaginationLoadingUi(cumulativePages.length, estimatedTotal, true)
+
+      await new Promise((resolve) => {
+        loadingDismissTimerRef.current = setTimeout(resolve, LOADING_READY_DISMISS_MS)
+      })
+
+      if (paginationCancelRef.current) {
+        measureRoot?.remove()
+        measureRoot = null
+        return
+      }
+
+      const applyOptions = isTypesettingReload
+        ? { isFinal: true, anchorPrefix, oldPage, oldTotal }
+        : { isFinal: true }
+
+      const finalPages = finishMeasurement(
+        cumulativePages,
+        measureElements,
+        pageLayout,
+        applyOptions
+      )
+      persistPaginationCache(finalPages)
+
+      setIsPaginating(false)
+      hasDisplayedBookRef.current = true
+      setLoadingProgress(100)
+      setLoadingProgressLabel("Ready")
       measureRoot?.remove()
       measureRoot = null
     }
@@ -3013,23 +2868,16 @@ export default function BookViewer({
       if (cached?.pages?.length) {
         applyMeasuredPages(cached.pages, { isFinal: true })
         setIsPaginating(false)
-        setIsBackgroundPaginating(false)
-        setBackgroundPaginateIndeterminate(false)
-        setPaginatingProgress(null)
         hasDisplayedBookRef.current = true
+        maxLoadingProgressRef.current = 100
         return undefined
       }
 
-      setIsPaginating(true)
-      setIsBackgroundPaginating(false)
-      setBackgroundPaginateIndeterminate(false)
-      setPaginatingProgress(null)
+      beginPaginationLoadingScreen("opening")
       setPages([])
-      setLoadingProgress(0)
-      setLoadingProgressLabel("Preparing pages...")
 
       requestAnimationFrame(() => {
-        void runFullPagination({ openingLoad: true })
+        void runFullPagination({ loadingMode: "opening" })
       })
 
       return () => {
@@ -3051,13 +2899,11 @@ export default function BookViewer({
     const oldPage = currentPageRef.current
     const oldTotal = pagesSnapshot.length
 
-    setIsBackgroundPaginating(true)
-    setBackgroundPaginateIndeterminate(true)
-    setPaginatingProgress(null)
+    beginPaginationLoadingScreen("typesetting")
 
     requestAnimationFrame(() => {
       void runFullPagination({
-        settingsRepagination: true,
+        loadingMode: "typesetting",
         anchorPrefix,
         oldPage,
         oldTotal,
@@ -3066,6 +2912,10 @@ export default function BookViewer({
 
     return () => {
       paginationCancelRef.current = true
+      if (loadingDismissTimerRef.current) {
+        clearTimeout(loadingDismissTimerRef.current)
+        loadingDismissTimerRef.current = null
+      }
       measureRoot?.remove()
     }
   }, [
@@ -3554,11 +3404,16 @@ export default function BookViewer({
   ])
 
   if (isPaginating) {
+    const loadingSubtext =
+      paginationLoadingMode === "typesetting"
+        ? "Applying typesetting..."
+        : "Opening your book..."
+
     return (
       <div className="reader-screen">
         <div className="reader-screen__content">
           <p className="reader-screen__logo">BOOKY</p>
-          <p className="reader-screen__subtext">Opening your book...</p>
+          <p className="reader-screen__subtext">{loadingSubtext}</p>
           <div className="reader-screen__progress-track">
             <div
               className="reader-screen__progress-fill"
@@ -3640,10 +3495,6 @@ export default function BookViewer({
             isSpreadView={showSpreadLayout}
             onJump={jumpToPage}
             disabled={isPaginating || totalPages === 0}
-            paginatingProgress={paginatingProgress}
-            showBackgroundPaginateLabel={
-              isBackgroundPaginating && !backgroundPaginateIndeterminate
-            }
           />
           {!isMobile && (
             <button
@@ -3688,18 +3539,10 @@ export default function BookViewer({
             </button>
           )}
         </div>
-        <div className="book-viewer__progress-bar">
+        <div className="book-viewer__progress-bar" aria-hidden="true">
           <div
-            className={`book-viewer__progress-fill${
-              isBackgroundPaginating && backgroundPaginateIndeterminate
-                ? " book-viewer__progress-fill--indeterminate"
-                : ""
-            }`}
-            style={
-              isBackgroundPaginating && backgroundPaginateIndeterminate
-                ? undefined
-                : { width: `${progressPercent}%` }
-            }
+            className="book-viewer__progress-fill"
+            style={{ width: `${progressPercent}%` }}
           />
         </div>
       </header>
