@@ -2459,7 +2459,12 @@ app.post("/admin/reparse", async (req, res) => {
   }
 })
 
-export { parsePdfBuffer, extractLinesByPosition, PARSER_VERSION }
+export {
+  parsePdfBuffer,
+  extractLinesByPosition,
+  normalizeExtractedText,
+  PARSER_VERSION,
+}
 
 const isServerEntryPoint =
   process.argv[1] &&
