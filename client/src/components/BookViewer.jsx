@@ -36,6 +36,69 @@ const MOBILE_PAGE_NUMBER_RESERVED_PX =
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
 const BODY_BOTTOM_PADDING_PX = 3
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
+const PAGINATION_DEBOUNCE_MS = 400
+const PAGINATION_INITIAL_PAGES = 80
+const PAGINATION_BATCH_PAGES = 80
+
+function layoutPaginationSettingsEqual(previous, next) {
+  if (!previous || !next) {
+    return false
+  }
+
+  return (
+    previous.fontSize === next.fontSize &&
+    previous.fontStyle === next.fontStyle &&
+    previous.lineSpacing === next.lineSpacing &&
+    previous.margins === next.margins
+  )
+}
+
+function isThemeOnlyPaginationChange(previous, next) {
+  return (
+    layoutPaginationSettingsEqual(previous, next) && previous.theme !== next.theme
+  )
+}
+
+function estimateTotalPages(donePages, placeableIndex, remainderLength) {
+  if (!placeableIndex || placeableIndex >= remainderLength) {
+    return donePages
+  }
+
+  return Math.max(
+    donePages,
+    Math.ceil((remainderLength / placeableIndex) * donePages)
+  )
+}
+
+function buildPageTextMap(measuredPages) {
+  const textMap = {}
+
+  for (const page of measuredPages) {
+    const pageText = (page.visualItems ?? [])
+      .map((item) => {
+        if (
+          item.type === "prose" ||
+          item.type === "heading" ||
+          item.type === "chapter" ||
+          item.type === "title" ||
+          item.type === "subtitle" ||
+          item.type === "author"
+        ) {
+          return item.text
+        }
+        if (item.type === "list") {
+          return flattenListText(item.items).join(" ")
+        }
+        return ""
+      })
+      .filter(Boolean)
+      .join(" ")
+
+    textMap[page.pageNumber] = pageText.toLowerCase()
+  }
+
+  return textMap
+}
 
 /**
  * Text area budget from typesetting: available height, line height, and max prose lines.
@@ -1117,18 +1180,26 @@ function splitProseAcrossPages(proseItem, bodyEl, pageLayout, alreadyOnPage) {
   }
 }
 
-function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout) {
+function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout, incrementalOpts = null) {
   const { contentMaxHeight } = pageLayout
   const visualItems = groupBlocksForDisplay(flatBlocks)
   const placeables = flattenVisualItemsToPlaceables(visualItems)
-  const pages = []
-  let currentPagePlaceables = []
-  let currentActiveChapter = null
-  let chapterAtPageStart = null
-  const chapterState = {
-    pageChapterTitle: null,
-    pageIsChapterStart: false,
-  }
+  const { frontMatterPack, remainder } = buildFrontMatterPack(placeables)
+  const maxPages = incrementalOpts?.maxPages ?? null
+  const resume = incrementalOpts?.resume ?? null
+
+  let hitPageLimit = false
+  let pages = resume ? resume.pages.map((page) => ({ ...page })) : []
+  let currentPagePlaceables = resume ? [...resume.currentPagePlaceables] : []
+  let currentActiveChapter = resume?.currentActiveChapter ?? null
+  let chapterAtPageStart = resume?.chapterAtPageStart ?? null
+  const chapterState = resume?.chapterState
+    ? { ...resume.chapterState }
+    : {
+        pageChapterTitle: null,
+        pageIsChapterStart: false,
+      }
+  let placeableIndex = resume?.placeableIndex ?? 0
 
   const updateCurrentActiveChapter = (item) => {
     if (!isHeadingVisualItem(item)) {
@@ -1211,7 +1282,21 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout) {
     chapterAtPageStart = null
     chapterState.pageChapterTitle = null
     chapterState.pageIsChapterStart = false
+
+    if (maxPages !== null && pages.length >= maxPages) {
+      hitPageLimit = true
+    }
   }
+
+  const buildResumeSnapshot = (nextPlaceableIndex) => ({
+    pages: pages.map((page) => ({ ...page })),
+    currentPagePlaceables: [...currentPagePlaceables],
+    currentActiveChapter,
+    chapterAtPageStart,
+    chapterState: { ...chapterState },
+    placeableIndex: nextPlaceableIndex,
+    remainderLength: remainder.length,
+  })
 
   const tryAddPlaceables = (toAdd) => {
     const trialPlaceables = [...currentPagePlaceables, ...toAdd]
@@ -1386,15 +1471,19 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout) {
     }
   }
 
-  const { frontMatterPack, remainder } = buildFrontMatterPack(placeables)
+  if (!resume) {
+    placeFrontMatterPack(frontMatterPack)
 
-  placeFrontMatterPack(frontMatterPack)
-
-  if (currentPagePlaceables.length > 0) {
-    flushPage()
+    if (currentPagePlaceables.length > 0) {
+      flushPage()
+    }
   }
 
-  for (let placeableIndex = 0; placeableIndex < remainder.length; placeableIndex += 1) {
+  for (; placeableIndex < remainder.length; placeableIndex += 1) {
+    if (hitPageLimit) {
+      break
+    }
+
     const placeable = remainder[placeableIndex]
 
     if (isChapterBoundaryPlaceable(placeable)) {
@@ -1450,6 +1539,27 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout) {
     }
 
     placePlaceable(placeable)
+  }
+
+  const hasRemainingWork =
+    hitPageLimit ||
+    placeableIndex < remainder.length ||
+    currentPagePlaceables.length > 0
+
+  if (!hitPageLimit) {
+    if (currentPagePlaceables.length > 0) {
+      flushPage()
+    }
+
+    return cleanupPages(pages, bodyEl, pageLayout)
+  }
+
+  if (incrementalOpts && hasRemainingWork) {
+    return {
+      pages,
+      complete: false,
+      resume: buildResumeSnapshot(placeableIndex),
+    }
   }
 
   if (currentPagePlaceables.length > 0) {
@@ -1809,7 +1919,19 @@ function PageCounterControl({
   isSpreadView,
   onJump,
   disabled = false,
+  paginatingProgress = null,
 }) {
+  if (paginatingProgress) {
+    const totalLabel = paginatingProgress.total
+      ? ` ${paginatingProgress.done} / ${paginatingProgress.total}`
+      : ` ${paginatingProgress.done}…`
+
+    return (
+      <p className="book-viewer__counter" aria-live="polite">
+        Loading…{totalLabel}
+      </p>
+    )
+  }
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState("")
   const inputRef = useRef(null)
@@ -2030,7 +2152,7 @@ export default function BookViewer({
   const [scale, setScale] = useState(1)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  const [settings, setSettings] = useState(() => {
+  const loadSavedSettings = () => {
     try {
       const saved = localStorage.getItem("booky-settings")
       return saved
@@ -2039,7 +2161,13 @@ export default function BookViewer({
     } catch {
       return DEFAULT_SETTINGS
     }
-  })
+  }
+
+  const [uiSettings, setUiSettings] = useState(loadSavedSettings)
+  const [paginationSettings, setPaginationSettings] = useState(loadSavedSettings)
+  const [paginatingProgress, setPaginatingProgress] = useState(null)
+  const prevPaginationSettingsRef = useRef(null)
+  const paginationCancelRef = useRef(false)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
@@ -2077,12 +2205,24 @@ export default function BookViewer({
   }, [currentPage])
 
   useEffect(() => {
+    prevPaginationSettingsRef.current = null
+  }, [bookDocument?.id])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPaginationSettings(uiSettings)
+    }, PAGINATION_DEBOUNCE_MS)
+
+    return () => clearTimeout(timer)
+  }, [uiSettings])
+
+  useEffect(() => {
     try {
-      localStorage.setItem("booky-settings", JSON.stringify(settings))
+      localStorage.setItem("booky-settings", JSON.stringify(uiSettings))
     } catch {
       // Ignore storage write errors (private mode, quota, etc.)
     }
-  }, [settings])
+  }, [uiSettings])
 
   useEffect(() => {
     document.body.style.overflow = "hidden"
@@ -2119,23 +2259,69 @@ export default function BookViewer({
     if (!bookDocument) {
       setPages([])
       setIsPaginating(false)
-      return
+      setPaginatingProgress(null)
+      return undefined
     }
 
+    const previousPaginationSettings = prevPaginationSettingsRef.current
+    if (
+      previousPaginationSettings &&
+      isThemeOnlyPaginationChange(previousPaginationSettings, paginationSettings)
+    ) {
+      prevPaginationSettingsRef.current = paginationSettings
+      return undefined
+    }
+
+    prevPaginationSettingsRef.current = paginationSettings
+
     let measureRoot = null
-    let cancelled = false
+    paginationCancelRef.current = false
 
     setIsPaginating(true)
+    setPaginatingProgress(null)
     setPages([])
 
-    const runMeasurement = () => {
+    const applyMeasuredPages = (measuredPages, { isFinal = false } = {}) => {
+      const totalMeasuredPages = measuredPages.length
+      const chapterMap = buildChapterPageMap(
+        measuredPages,
+        bookDocument?.chapters ?? []
+      )
+
+      setPages(measuredPages)
+      setChapterPageMap(chapterMap)
+      setPageTextMap(buildPageTextMap(measuredPages))
+      setCurrentPage((previousPage) => {
+        const maxPage = Math.max(1, totalMeasuredPages)
+        if (totalMeasuredPages === 0) {
+          return 1
+        }
+        const target =
+          bookmarkPage !== null && bookmarkPage !== undefined
+            ? bookmarkPage
+            : previousPage
+        return normalizeBookmarkPage(target, maxPage, !isMobile)
+      })
+
+      if (
+        isFinal &&
+        !hasShownResumeToastRef.current &&
+        bookmarkPage &&
+        bookmarkPage > 1
+      ) {
+        setRestoredPage(bookmarkPage)
+        hasShownResumeToastRef.current = true
+      }
+    }
+
+    const createMeasurementContext = () => {
       const flatBlocks = flattenDocument(bookDocument)
       const mobileFS = isMobile && isMobileFullscreen
       const pageHeightToUse = mobileFS ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : undefined
       const pageNumberReservedPx = getPageNumberReservedPx(isMobile)
       const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(
         pageHeightToUse,
-        settings.margins,
+        paginationSettings.margins,
         pageNumberReservedPx
       )
       const measureElements = createMeasureElements()
@@ -2149,7 +2335,7 @@ export default function BookViewer({
         "--page-footer-reserve",
         `${PAGE_FOOTER_RESERVE_PX}px`
       )
-      const pagePad = getPagePaddingStyle(settings.margins)
+      const pagePad = getPagePaddingStyle(paginationSettings.margins)
       measureElements.page.style.paddingTop = pagePad.paddingTop ?? "0"
       measureElements.page.style.paddingRight = pagePad.paddingRight ?? "0"
       measureElements.page.style.paddingLeft = pagePad.paddingLeft ?? "0"
@@ -2162,9 +2348,11 @@ export default function BookViewer({
       measureElements.body.style.overflow = "hidden"
       measureElements.footer.style.display = "none"
 
-      const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
-      const line = LINE_HEIGHT_MAP[settings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
-      const family = FONT_FAMILY_MAP[settings.fontStyle] ?? FONT_FAMILY_MAP.lora
+      const font = FONT_SIZE_MAP[paginationSettings.fontSize] ?? FONT_SIZE_MAP.medium
+      const line =
+        LINE_HEIGHT_MAP[paginationSettings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
+      const family =
+        FONT_FAMILY_MAP[paginationSettings.fontStyle] ?? FONT_FAMILY_MAP.lora
       const pageLayout = {
         contentMaxHeight,
         font,
@@ -2180,70 +2368,123 @@ export default function BookViewer({
       measureElements.page.style.setProperty("--lh-body", line.body)
       measureElements.page.style.setProperty("--lh-heading", line.heading)
 
-      measureElements.page.classList.add(`book-page--theme-${settings.theme}`)
-
-      const measuredPages = paginateBlocksByDom(
-        flatBlocks,
-        measureElements.body,
-        pageLayout
+      measureElements.page.classList.add(
+        `book-page--theme-${paginationSettings.theme}`
       )
 
-      measureRoot.remove()
-      measureRoot = null
-
-      if (!cancelled) {
-        const totalMeasuredPages = measuredPages.length
-        const chapterMap = buildChapterPageMap(
-          measuredPages,
-          bookDocument?.chapters ?? []
-        )
-        const textMap = {}
-
-        for (const page of measuredPages) {
-          const pageText = (page.visualItems ?? [])
-            .map((item) => {
-              if (
-                item.type === "prose" ||
-                item.type === "heading" ||
-                item.type === "chapter" ||
-                item.type === "title" ||
-                item.type === "subtitle" ||
-                item.type === "author"
-              ) {
-                return item.text
-              }
-              if (item.type === "list") {
-                return flattenListText(item.items).join(" ")
-              }
-              return ""
-            })
-            .filter(Boolean)
-            .join(" ")
-
-          textMap[page.pageNumber] = pageText.toLowerCase()
-        }
-
-        setPages(measuredPages)
-        setChapterPageMap(chapterMap)
-        setPageTextMap(textMap)
-        setCurrentPage((previousPage) => {
-          const maxPage = Math.max(1, totalMeasuredPages)
-          if (totalMeasuredPages === 0) return 1
-          const target = bookmarkPage !== null && bookmarkPage !== undefined ? bookmarkPage : previousPage
-          return normalizeBookmarkPage(target, maxPage, !isMobile)
-        })
-        if (!hasShownResumeToastRef.current && bookmarkPage && bookmarkPage > 1) {
-          setRestoredPage(bookmarkPage)
-          hasShownResumeToastRef.current = true
-        }
-        setIsPaginating(false)
-      }
+      return { flatBlocks, measureElements, pageLayout }
     }
 
-    requestAnimationFrame(runMeasurement)
+    const normalizePaginationResult = (result) => {
+      if (Array.isArray(result)) {
+        return { pages: result, complete: true, resume: null }
+      }
+
+      return result
+    }
+
+    const runMeasurement = async () => {
+      const { flatBlocks, measureElements, pageLayout } = createMeasurementContext()
+
+      let result = normalizePaginationResult(
+        paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout, {
+          maxPages: PAGINATION_INITIAL_PAGES,
+        })
+      )
+
+      if (paginationCancelRef.current) {
+        measureRoot?.remove()
+        measureRoot = null
+        return
+      }
+
+      applyMeasuredPages(result.pages)
+      setIsPaginating(false)
+
+      if (result.complete) {
+        const finalPages = cleanupPages(
+          result.pages,
+          measureElements.body,
+          pageLayout
+        )
+        applyMeasuredPages(finalPages, { isFinal: true })
+        setPaginatingProgress(null)
+        measureRoot?.remove()
+        measureRoot = null
+        return
+      }
+
+      const estimatedTotal = estimateTotalPages(
+        result.pages.length,
+        result.resume?.placeableIndex ?? 0,
+        result.resume?.remainderLength ?? 1
+      )
+      setPaginatingProgress({
+        done: result.pages.length,
+        total: estimatedTotal,
+      })
+
+      let resume = result.resume
+      let cumulativePages = result.pages
+
+      while (!result.complete && resume) {
+        await new Promise((resolve) => requestAnimationFrame(resolve))
+
+        if (paginationCancelRef.current) {
+          measureRoot?.remove()
+          measureRoot = null
+          return
+        }
+
+        const nextMaxPages = cumulativePages.length + PAGINATION_BATCH_PAGES
+        result = normalizePaginationResult(
+          paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout, {
+            maxPages: nextMaxPages,
+            resume,
+          })
+        )
+
+        if (paginationCancelRef.current) {
+          measureRoot?.remove()
+          measureRoot = null
+          return
+        }
+
+        cumulativePages = result.pages
+        applyMeasuredPages(cumulativePages)
+
+        if (result.complete) {
+          const finalPages = cleanupPages(
+            cumulativePages,
+            measureElements.body,
+            pageLayout
+          )
+          applyMeasuredPages(finalPages, { isFinal: true })
+          setPaginatingProgress(null)
+          break
+        }
+
+        resume = result.resume
+        setPaginatingProgress({
+          done: cumulativePages.length,
+          total: estimateTotalPages(
+            cumulativePages.length,
+            resume?.placeableIndex ?? 0,
+            resume?.remainderLength ?? 1
+          ),
+        })
+      }
+
+      measureRoot?.remove()
+      measureRoot = null
+    }
+
+    requestAnimationFrame(() => {
+      void runMeasurement()
+    })
 
     return () => {
-      cancelled = true
+      paginationCancelRef.current = true
       measureRoot?.remove()
     }
   }, [
@@ -2251,7 +2492,7 @@ export default function BookViewer({
     initialPage,
     isMobileFullscreen,
     isMobile,
-    settings,
+    paginationSettings,
     bookmarkPage,
     normalizeBookmarkPage,
   ])
@@ -2268,9 +2509,9 @@ export default function BookViewer({
   const leftPage = pages[currentPage - 1] ?? null
   const rightPage = isSpreadView ? pages[currentPage] ?? null : null
 
-  const font = FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium
-  const family = FONT_FAMILY_MAP[settings.fontStyle] ?? FONT_FAMILY_MAP.lora
-  const line = LINE_HEIGHT_MAP[settings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
+  const font = FONT_SIZE_MAP[uiSettings.fontSize] ?? FONT_SIZE_MAP.medium
+  const family = FONT_FAMILY_MAP[uiSettings.fontStyle] ?? FONT_FAMILY_MAP.lora
+  const line = LINE_HEIGHT_MAP[uiSettings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
 
   const isFinalOddSpreadSingle =
     isSpreadView && totalPages % 2 === 1 && Boolean(leftPage) && !rightPage
@@ -2810,6 +3051,7 @@ export default function BookViewer({
             isSpreadView={showSpreadLayout}
             onJump={jumpToPage}
             disabled={isPaginating || totalPages === 0}
+            paginatingProgress={paginatingProgress}
           />
           {!isMobile && (
             <button
@@ -2930,7 +3172,7 @@ export default function BookViewer({
                 <BookPageContent
                   page={leftPage}
                   isMobileFullscreen={mobileFullscreenActive}
-                  settings={settings}
+                  settings={uiSettings}
                   searchQuery={searchOpen ? searchQuery : ""}
                   activeSearchOccurrence={
                     searchOpen &&
@@ -2955,7 +3197,7 @@ export default function BookViewer({
                       <BookPageContent
                         page={rightPage}
                         isMobileFullscreen={mobileFullscreenActive}
-                        settings={settings}
+                        settings={uiSettings}
                         searchQuery={searchOpen ? searchQuery : ""}
                         activeSearchOccurrence={
                           searchOpen &&
@@ -2968,7 +3210,7 @@ export default function BookViewer({
                       <BookPageContent
                         page={null}
                         isMobileFullscreen={mobileFullscreenActive}
-                        settings={settings}
+                        settings={uiSettings}
                         searchQuery={searchOpen ? searchQuery : ""}
                         activeSearchOccurrence={null}
                       />
@@ -3152,7 +3394,7 @@ export default function BookViewer({
                   key={theme.id}
                   type="button"
                   className={`book-viewer__theme-swatch ${
-                    settings.theme === theme.id
+                    uiSettings.theme === theme.id
                       ? "book-viewer__theme-swatch--active"
                       : ""
                   }`}
@@ -3160,14 +3402,14 @@ export default function BookViewer({
                     background: theme.bg,
                     color: theme.ink,
                     border:
-                      settings.theme === theme.id
+                      uiSettings.theme === theme.id
                         ? "2px solid #d4af37"
                         : "2px solid transparent",
                   }}
-                  onClick={() => setSettings((s) => ({ ...s, theme: theme.id }))}
+                  onClick={() => setUiSettings((s) => ({ ...s, theme: theme.id }))}
                   title={theme.label}
                   aria-label={theme.label}
-                  aria-pressed={settings.theme === theme.id}
+                  aria-pressed={uiSettings.theme === theme.id}
                 >
                   <span style={{ fontSize: 9, fontFamily: "Georgia, serif" }}>Aa</span>
                   <span style={{ fontSize: 8 }}>{theme.label}</span>
@@ -3184,12 +3426,12 @@ export default function BookViewer({
                   key={size}
                   type="button"
                   className={`book-viewer__settings-chip ${
-                    settings.fontSize === size
+                    uiSettings.fontSize === size
                       ? "book-viewer__settings-chip--active"
                       : ""
                   }`}
                   onClick={() =>
-                    setSettings((s) => ({
+                    setUiSettings((s) => ({
                       ...s,
                       fontSize: size,
                     }))
@@ -3216,12 +3458,12 @@ export default function BookViewer({
                   key={fontOption.id}
                   type="button"
                   className={`book-viewer__settings-chip ${
-                    settings.fontStyle === fontOption.id
+                    uiSettings.fontStyle === fontOption.id
                       ? "book-viewer__settings-chip--active"
                       : ""
                   }`}
                   onClick={() =>
-                    setSettings((s) => ({
+                    setUiSettings((s) => ({
                       ...s,
                       fontStyle: fontOption.id,
                     }))
@@ -3241,12 +3483,12 @@ export default function BookViewer({
                   key={sp}
                   type="button"
                   className={`book-viewer__settings-chip ${
-                    settings.lineSpacing === sp
+                    uiSettings.lineSpacing === sp
                       ? "book-viewer__settings-chip--active"
                       : ""
                   }`}
                   onClick={() =>
-                    setSettings((s) => ({
+                    setUiSettings((s) => ({
                       ...s,
                       lineSpacing: sp,
                     }))
@@ -3266,12 +3508,12 @@ export default function BookViewer({
                   key={m}
                   type="button"
                   className={`book-viewer__settings-chip ${
-                    settings.margins === m
+                    uiSettings.margins === m
                       ? "book-viewer__settings-chip--active"
                       : ""
                   }`}
                   onClick={() =>
-                    setSettings((s) => ({
+                    setUiSettings((s) => ({
                       ...s,
                       margins: m,
                     }))
@@ -3287,7 +3529,7 @@ export default function BookViewer({
             <button
               type="button"
               className="book-viewer__settings-reset"
-              onClick={() => setSettings(DEFAULT_SETTINGS)}
+              onClick={() => setUiSettings(DEFAULT_SETTINGS)}
             >
               Reset to defaults
             </button>
