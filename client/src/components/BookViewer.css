@@ -574,28 +574,48 @@
 }
 
 .book-viewer--mobile-fs {
-  background: #0d0b0a;
+  height: 100dvh;
+  max-height: 100dvh;
+}
+
+.book-viewer--mobile-fs.book-viewer--theme-parchment {
+  background: #ffffff;
+}
+
+.book-viewer--mobile-fs.book-viewer--theme-warm {
+  background: #f5ecd7;
+}
+
+.book-viewer--mobile-fs.book-viewer--theme-sepia {
+  background: #e8d5b0;
+}
+
+.book-viewer--mobile-fs.book-viewer--theme-dusk {
+  background: #2c2b3c;
+}
+
+.book-viewer--mobile-fs.book-viewer--theme-midnight {
+  background: #1a1a2e;
+}
+
+.book-viewer--mobile-fs.book-viewer--theme-obsidian {
+  background: #1c1917;
 }
 
 .book-viewer--mobile-fs .book-viewer__nav {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  min-height: 0;
-  height: 0;
-  padding: 0;
-  margin: 0;
-  border: none;
-  opacity: 0;
-  pointer-events: none;
-  overflow: hidden;
+  display: none;
 }
 
 .book-viewer--mobile-fs .book-viewer__stage {
   flex: 1;
   min-height: 0;
+  height: 100%;
   padding: 0;
+  overflow: hidden;
+}
+
+.book-viewer--mobile-fs .book-viewer__scale-wrapper {
+  overflow: hidden;
 }
 
 .book-viewer--mobile-fs .book-viewer__stage::before {
@@ -963,11 +983,7 @@
 .book-page--mobile-fs {
   border: none;
   border-radius: 0;
-  padding:
-    max(0px, env(safe-area-inset-top, 0px))
-    max(0px, env(safe-area-inset-right, 0px))
-    max(0px, env(safe-area-inset-bottom, 0px))
-    max(0px, env(safe-area-inset-left, 0px));
+  padding: 0;
 }
 
 .book-page--mobile-fs .book-page__number {

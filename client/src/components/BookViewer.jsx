@@ -140,13 +140,9 @@ function getMobileFullscreenPageHeightPx() {
   return Math.max(MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX, pageHeight)
 }
 
-function getMobileFullscreenDisplayScale(availW, availH, pageHeight) {
-  const widthScale = availW / PAGE_WIDTH_PX
-  const scaledHeight = pageHeight * widthScale
-  if (scaledHeight > availH + PAGE_FIT_OVERFLOW_TOLERANCE_PX) {
-    return availH / pageHeight
-  }
-  return widthScale
+/** Scale existing pages to cover the viewport (no letterboxing). */
+function getMobileFullscreenCoverScale(availW, availH, pageHeight = PAGE_HEIGHT_PX) {
+  return Math.max(availW / PAGE_WIDTH_PX, availH / pageHeight)
 }
 
 /** Single source of truth for cache key — same inputs at read and write. */
@@ -2795,19 +2791,11 @@ export default function BookViewer({
       displayedPagesCountRef.current > 0 &&
       viewportRevision !== lastPaginatedViewportRevisionRef.current
 
-    const mobileFullscreenLayoutChanged =
-      hasDisplayedBookRef.current &&
-      displayedPagesCountRef.current > 0 &&
-      lastPaginatedMobileFullscreenRef.current !== isMobileFullscreen
-
     const repaginationNeeded =
-      layoutRepaginationNeeded ||
-      viewportRepaginationNeeded ||
-      mobileFullscreenLayoutChanged
+      layoutRepaginationNeeded || viewportRepaginationNeeded
 
     const preserveReadingPageRepagination =
-      (viewportRepaginationNeeded || mobileFullscreenLayoutChanged) &&
-      !layoutRepaginationNeeded
+      viewportRepaginationNeeded && !layoutRepaginationNeeded
 
     // Opening cache read FIRST — before theme/layout guards (cache is optional).
     const tryApplyOpeningCache = () => {
@@ -3323,14 +3311,10 @@ export default function BookViewer({
     paginationSettings,
     progressHydrated,
     viewportRevision,
-    isMobileFullscreen,
     normalizeBookmarkPage,
   ])
 
-  const activePageHeight =
-    isMobile && isMobileFullscreen
-      ? getMobileFullscreenPageHeightPx()
-      : PAGE_HEIGHT_PX
+  const activePageHeight = PAGE_HEIGHT_PX
   const mobileFullscreenActive = isMobile && isMobileFullscreen
 
   const isSpreadView = !isMobile && layoutMode === "spread"
@@ -3392,7 +3376,7 @@ export default function BookViewer({
       const fitScale = Math.min(availW / naturalW, availH / naturalH)
       const next =
         isMobile && isMobileFullscreen
-          ? getMobileFullscreenDisplayScale(availW, availH, naturalH)
+          ? getMobileFullscreenCoverScale(availW, availH, naturalH)
           : fitScale
       setScale(next > 0 && Number.isFinite(next) ? next : 1)
     }
@@ -3417,6 +3401,7 @@ export default function BookViewer({
 
   useEffect(() => {
     isMobileFullscreenLayoutRef.current = isMobileFullscreen
+    lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
   }, [isMobileFullscreen])
 
   useEffect(() => {
@@ -3427,35 +3412,6 @@ export default function BookViewer({
     setViewportRevision((revision) => revision + 1)
     return undefined
   }, [isMobile])
-
-  useEffect(() => {
-    if (
-      !hasDisplayedBookRef.current ||
-      displayedPagesCountRef.current === 0 ||
-      !isMobile ||
-      !isMobileFullscreen
-    ) {
-      return undefined
-    }
-
-    let debounceTimer = null
-    const scheduleViewportRepagination = () => {
-      clearTimeout(debounceTimer)
-      debounceTimer = setTimeout(() => {
-        setViewportRevision((revision) => revision + 1)
-      }, 150)
-    }
-
-    const visualViewport = window.visualViewport
-    visualViewport?.addEventListener("resize", scheduleViewportRepagination)
-    window.addEventListener("orientationchange", scheduleViewportRepagination)
-
-    return () => {
-      clearTimeout(debounceTimer)
-      visualViewport?.removeEventListener("resize", scheduleViewportRepagination)
-      window.removeEventListener("orientationchange", scheduleViewportRepagination)
-    }
-  }, [isMobile, isMobileFullscreen])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)")
@@ -3933,9 +3889,9 @@ export default function BookViewer({
   return (
     <div
       ref={viewerRef}
-      className={`book-viewer${mobileFullscreenActive ? " book-viewer--mobile-fs" : ""}${
-        isRepaginating ? " book-viewer--repaginating" : ""
-      }`}
+      className={`book-viewer book-viewer--theme-${uiSettings.theme}${
+        mobileFullscreenActive ? " book-viewer--mobile-fs" : ""
+      }${isRepaginating ? " book-viewer--repaginating" : ""}`}
       tabIndex={-1}
     >
       {showFsTip && <div className="book-viewer__fs-tip">Triple tap to exit</div>}
