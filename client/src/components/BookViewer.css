@@ -265,6 +265,17 @@
   color: #d4af37;
 }
 
+.book-viewer__fullscreen--disabled,
+.book-viewer__fullscreen:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.book-viewer__fullscreen--disabled:hover,
+.book-viewer__fullscreen:disabled:hover {
+  color: #8b7355;
+}
+
 .book-viewer__typesetting-btn {
   display: flex;
   align-items: center;

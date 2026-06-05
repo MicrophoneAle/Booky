@@ -55,7 +55,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 6
+const PAGINATION_MEASUREMENT_VERSION = 8
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 const PAGINATION_CACHE_MAX_ENTRIES = 3
@@ -125,69 +125,21 @@ function buildPaginationCacheKey(
   ].join("|")
 }
 
-function getMobileFullscreenViewportSize() {
-  const visualViewport = window.visualViewport
-  return {
-    width: Math.max(1, visualViewport?.width ?? window.innerWidth),
-    height: Math.max(1, visualViewport?.height ?? window.innerHeight),
-  }
-}
-
-function getMobileFullscreenStageMetrics(stageEl) {
-  if (stageEl) {
-    const cs = getComputedStyle(stageEl)
-    const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)
-    const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
-    return {
-      availW: Math.max(1, stageEl.clientWidth - padX),
-      availH: Math.max(1, stageEl.clientHeight - padY),
-    }
-  }
-
-  const { width, height } = getMobileFullscreenViewportSize()
-  return { availW: width, availH: height }
-}
-
-/**
- * Paginate to the visible stage height (taller pages, no upscale).
- * Falls back to 059e9ea's 780px when the stage is not ready yet.
- */
-function getMobileFullscreenPageHeightPx(stageEl, { predictNavHidden = false } = {}) {
-  if (stageEl) {
-    const { availH } = getMobileFullscreenStageMetrics(stageEl)
-    const expandedHeight = predictNavHidden ? availH + NAVBAR_HEIGHT_PX : availH
-    return Math.max(MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX, Math.floor(expandedHeight))
-  }
-
-  const { height } = getMobileFullscreenViewportSize()
-  return Math.max(MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX, Math.floor(height))
-}
-
 /** Downscale only — never upscale (prevents left/right clipping from transform). */
 function getMobileFullscreenDownscale(availW) {
   return Math.min(1, availW / PAGE_WIDTH_PX)
 }
 
 /** Single source of truth for cache key — same inputs at read and write. */
-function getPaginationPageHeight(
-  mobileViewport,
-  mobileFullscreen,
-  stageEl,
-  predictNavHidden = false
-) {
-  return mobileViewport && mobileFullscreen
-    ? getMobileFullscreenPageHeightPx(stageEl, { predictNavHidden })
-    : PAGE_HEIGHT_PX
+function getPaginationPageHeight(mobileViewport, mobileFullscreen) {
+  if (mobileViewport && mobileFullscreen) {
+    return MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
+  }
+
+  return PAGE_HEIGHT_PX
 }
 
-function resolvePaginationCacheContext(
-  bookId,
-  parserVersionFromDoc,
-  settings,
-  viewport,
-  stageEl = null,
-  predictNavHidden = false
-) {
+function resolvePaginationCacheContext(bookId, parserVersionFromDoc, settings, viewport) {
   const layoutSettings = getLayoutPaginationSettings(settings)
   const docParserVersion = Number(parserVersionFromDoc)
   const parserVersion =
@@ -196,9 +148,7 @@ function resolvePaginationCacheContext(
       : PARSER_VERSION
   const pageHeight = getPaginationPageHeight(
     viewport.mobile,
-    viewport.mobileFullscreen,
-    stageEl,
-    predictNavHidden
+    viewport.mobileFullscreen
   )
 
   return {
@@ -1014,14 +964,10 @@ function setupMeasureElements(
   measureElements,
   paginationSettings,
   mobileViewport,
-  mobileFS,
-  stageEl,
-  predictNavHidden = false
+  mobileFS
 ) {
   const marginSetting = mobileFS ? "none" : paginationSettings.margins
-  const pageHeightToUse = mobileFS
-    ? getMobileFullscreenPageHeightPx(stageEl, { predictNavHidden })
-    : undefined
+  const pageHeightToUse = mobileFS ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : undefined
   const pageNumberReservedPx = getPageNumberReservedPx(mobileViewport, mobileFS)
   const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(
     pageHeightToUse,
@@ -1099,6 +1045,37 @@ function measureDocumentPages(flatBlocks, measureElements, pageLayout) {
   const result = paginateBlocksByDom(flatBlocks, measureElements.body, pageLayout)
   const pages = Array.isArray(result) ? result : result.pages
   return cleanupPages(pages, measureElements.body, pageLayout)
+}
+
+function computeMobileFullscreenPages(
+  bookDocument,
+  paginationSettings,
+  flatBlocksCache,
+  measurePoolRef
+) {
+  const flatBlocks = getCachedFlatBlocks(bookDocument, flatBlocksCache)
+  const measureElements = getOrCreateMeasurePool(measurePoolRef)
+  const pageLayout = setupMeasureElements(
+    measureElements,
+    paginationSettings,
+    true,
+    true
+  )
+  return measureDocumentPages(flatBlocks, measureElements, pageLayout)
+}
+
+function readMobileFullscreenCache(bookDocument, paginationSettings) {
+  const { cacheKey, parserVersion } = resolvePaginationCacheContext(
+    bookDocument.id,
+    bookDocument.parserVersion,
+    paginationSettings,
+    { mobile: true, mobileFullscreen: true }
+  )
+  return {
+    cacheKey,
+    parserVersion,
+    cached: readPaginationCache(cacheKey, parserVersion),
+  }
 }
 
 function splitTextAtEmbeddedListMarkers(text) {
@@ -2688,7 +2665,9 @@ export default function BookViewer({
   const [isMobile, setIsMobile] = useState(false)
   const [layoutMode, setLayoutMode] = useState("spread")
   const [isMobileFullscreen, setIsMobileFullscreen] = useState(false)
+  const [fullscreenCacheReady, setFullscreenCacheReady] = useState(false)
   const [showFsTip, setShowFsTip] = useState(false)
+  const [showFsPreparingToast, setShowFsPreparingToast] = useState(false)
   const stageRef = useRef(null)
   const tapCountRef = useRef(0)
   const tapTimerRef = useRef(null)
@@ -2750,10 +2729,12 @@ export default function BookViewer({
   const currentPageRef = useRef(currentPage)
   const hasShownResumeToastRef = useRef(false)
   const hasShownFsTipRef = useRef(false)
-  const pendingLayoutAnchorRef = useRef(null)
   const flatBlocksCacheRef = useRef({ bookId: null, blocks: null })
   const measurePoolRef = useRef(null)
-  const layoutCacheWarmupIdRef = useRef(0)
+  const fullscreenWarmupRunIdRef = useRef(0)
+  const fullscreenPagesRef = useRef(null)
+  const normalPagesSnapshotRef = useRef(null)
+  const fsPreparingToastTimerRef = useRef(null)
 
   const normalizeBookmarkPage = useCallback((page, total, desktopSpreadBehavior) => {
     if (!Number.isFinite(page)) return 1
@@ -2876,8 +2857,7 @@ export default function BookViewer({
       bookDocument.id,
       bookDocument.parserVersion,
       paginationSettings,
-      viewport,
-      stageRef.current
+      viewport
     )
 
     const isSpreadViewForTarget = !viewport.mobile && layoutMode === "spread"
@@ -2945,6 +2925,15 @@ export default function BookViewer({
         prevPaginationSettingsRef.current = paginationSettings
         lastPaginatedViewportRevisionRef.current = viewportRevision
         lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
+
+        if (!isMobileFullscreen) {
+          normalPagesSnapshotRef.current = measuredPages
+          setFullscreenCacheReady(false)
+          fullscreenPagesRef.current = null
+        } else {
+          fullscreenPagesRef.current = measuredPages
+          setFullscreenCacheReady(true)
+        }
       }
     }
 
@@ -2965,59 +2954,38 @@ export default function BookViewer({
     const viewportRepaginationNeeded =
       hasDisplayedBookRef.current &&
       displayedPagesCountRef.current > 0 &&
-      viewportRevision !== lastPaginatedViewportRevisionRef.current
+      viewportRevision !== lastPaginatedViewportRevisionRef.current &&
+      !(viewport.mobile && isMobileFullscreen)
 
     const mobileFullscreenLayoutChanged =
       hasDisplayedBookRef.current &&
       displayedPagesCountRef.current > 0 &&
       lastPaginatedMobileFullscreenRef.current !== isMobileFullscreen
 
+    if (
+      mobileFullscreenLayoutChanged &&
+      !layoutRepaginationNeeded &&
+      !viewportRepaginationNeeded
+    ) {
+      lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
+      return undefined
+    }
+
     const repaginationNeeded =
-      layoutRepaginationNeeded ||
-      viewportRepaginationNeeded ||
-      mobileFullscreenLayoutChanged
+      layoutRepaginationNeeded || viewportRepaginationNeeded
 
-    const isLayoutOnlyRepagination =
-      repaginationNeeded && !layoutRepaginationNeeded
-
-    const preserveReadingPageRepagination = isLayoutOnlyRepagination
+    const preserveReadingPageRepagination = viewportRepaginationNeeded
 
     const pagesSnapshotForAnchor = pages
-    const pendingAnchor = pendingLayoutAnchorRef.current
     const layoutAnchorPrefix = repaginationNeeded
-      ? pendingAnchor?.anchorPrefix ??
-        getReadingAnchorPrefix(
+      ? getReadingAnchorPrefix(
           pagesSnapshotForAnchor,
           currentPageRef.current,
           isSpreadViewForTarget
         )
       : null
-    const layoutOldPage = pendingAnchor?.oldPage ?? currentPageRef.current
-    const layoutOldTotal = pendingAnchor?.oldTotal ?? pagesSnapshotForAnchor.length
-    pendingLayoutAnchorRef.current = null
-
-    const tryApplyReadingLayoutCache = () => {
-      const cached = readPaginationCache(cacheKey, parserVersion)
-      if (!cached?.pages?.length) {
-        return false
-      }
-
-      applyMeasuredPages(cached.pages, {
-        isFinal: true,
-        anchorPrefix: layoutAnchorPrefix,
-        oldPage: layoutOldPage,
-        oldTotal: layoutOldTotal,
-      })
-      prevPaginationSettingsRef.current = paginationSettings
-      lastPaginatedViewportRevisionRef.current = viewportRevision
-      lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
-      setIsRepaginating(false)
-      return true
-    }
-
-    if (isLayoutOnlyRepagination && tryApplyReadingLayoutCache()) {
-      return undefined
-    }
+    const layoutOldPage = currentPageRef.current
+    const layoutOldTotal = pagesSnapshotForAnchor.length
 
     // Opening cache read FIRST — before theme/layout guards (cache is optional).
     const tryApplyOpeningCache = () => {
@@ -3136,7 +3104,7 @@ export default function BookViewer({
       }
     }
 
-    const createMeasurementContext = (predictNavHidden = false) => {
+    const createMeasurementContext = () => {
       const flatBlocks = getCachedFlatBlocks(
         bookDocument,
         flatBlocksCacheRef.current
@@ -3149,9 +3117,7 @@ export default function BookViewer({
         measureElements,
         paginationSettings,
         mobileViewport,
-        mobileFS,
-        stageRef.current,
-        predictNavHidden
+        mobileFS
       )
 
       return { flatBlocks, measureElements, pageLayout }
@@ -3173,8 +3139,7 @@ export default function BookViewer({
         {
           mobile: isMobileLayoutRef.current,
           mobileFullscreen: isMobileFullscreenLayoutRef.current,
-        },
-        stageRef.current
+        }
       )
       const payload = {
         parserVersion: writeContext.parserVersion,
@@ -3258,6 +3223,10 @@ export default function BookViewer({
         prevPaginationSettingsRef.current = paginationSettings
         lastPaginatedViewportRevisionRef.current = viewportRevision
         lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
+        if (isMobileFullscreenLayoutRef.current) {
+          fullscreenPagesRef.current = cleanedPages
+          setFullscreenCacheReady(true)
+        }
         persistPaginationCache(cleanedPages, { sync: true })
         setIsRepaginating(false)
         abortRun()
@@ -3543,7 +3512,7 @@ export default function BookViewer({
 
   const mobileFullscreenActive = isMobile && isMobileFullscreen
   const activePageHeight = mobileFullscreenActive
-    ? getMobileFullscreenPageHeightPx(stageRef.current)
+    ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
     : PAGE_HEIGHT_PX
 
   const isSpreadView = !isMobile && layoutMode === "spread"
@@ -3680,62 +3649,68 @@ export default function BookViewer({
   }, [isMobile, isMobileFullscreen])
 
   useEffect(() => {
-    if (
-      !isMobile ||
-      !bookDocument?.id ||
-      pages.length === 0 ||
-      isPaginating ||
-      isRepaginating
-    ) {
+    setFullscreenCacheReady(false)
+    fullscreenPagesRef.current = null
+  }, [
+    bookDocument?.id,
+    paginationSettings.fontSize,
+    paginationSettings.fontStyle,
+    paginationSettings.lineSpacing,
+    paginationSettings.margins,
+  ])
+
+  useEffect(() => {
+    if (!isMobile || !bookDocument?.id || isPaginating || isRepaginating) {
       return undefined
     }
 
-    if (!hasDisplayedBookRef.current) {
+    if (!hasDisplayedBookRef.current || pages.length === 0 || isMobileFullscreen) {
       return undefined
     }
 
-    const warmupFullscreen = !isMobileFullscreen
-    const warmupRunId = layoutCacheWarmupIdRef.current + 1
-    layoutCacheWarmupIdRef.current = warmupRunId
+    const { cacheKey, parserVersion, cached } = readMobileFullscreenCache(
+      bookDocument,
+      paginationSettings
+    )
+
+    if (cached?.pages?.length) {
+      fullscreenPagesRef.current = cached.pages
+      setFullscreenCacheReady(true)
+      return undefined
+    }
+
+    const warmupRunId = fullscreenWarmupRunIdRef.current + 1
+    fullscreenWarmupRunIdRef.current = warmupRunId
     let cancelled = false
 
-    const warmLayoutCache = () => {
-      if (cancelled || layoutCacheWarmupIdRef.current !== warmupRunId) {
+    const warmFullscreenCache = () => {
+      if (cancelled || fullscreenWarmupRunIdRef.current !== warmupRunId) {
         return
       }
 
-      const predictNavHidden = warmupFullscreen
-      const viewport = { mobile: true, mobileFullscreen: warmupFullscreen }
-      const { cacheKey, parserVersion, layoutSettings } = resolvePaginationCacheContext(
+      const existing = readPaginationCache(cacheKey, parserVersion)
+      if (existing?.pages?.length) {
+        fullscreenPagesRef.current = existing.pages
+        setFullscreenCacheReady(true)
+        return
+      }
+
+      const cleanedPages = computeMobileFullscreenPages(
+        bookDocument,
+        paginationSettings,
+        flatBlocksCacheRef.current,
+        measurePoolRef
+      )
+
+      if (cancelled || fullscreenWarmupRunIdRef.current !== warmupRunId) {
+        return
+      }
+
+      const { layoutSettings } = resolvePaginationCacheContext(
         bookDocument.id,
         bookDocument.parserVersion,
         paginationSettings,
-        viewport,
-        stageRef.current,
-        predictNavHidden
-      )
-
-      if (readPaginationCache(cacheKey, parserVersion)?.pages?.length) {
-        return
-      }
-
-      const flatBlocks = getCachedFlatBlocks(
-        bookDocument,
-        flatBlocksCacheRef.current
-      )
-      const measureElements = getOrCreateMeasurePool(measurePoolRef)
-      const pageLayout = setupMeasureElements(
-        measureElements,
-        paginationSettings,
-        true,
-        warmupFullscreen,
-        stageRef.current,
-        predictNavHidden
-      )
-      const cleanedPages = measureDocumentPages(
-        flatBlocks,
-        measureElements,
-        pageLayout
+        { mobile: true, mobileFullscreen: true }
       )
 
       writePaginationCache(cacheKey, bookDocument.id, {
@@ -3745,13 +3720,16 @@ export default function BookViewer({
         pages: cleanedPages,
         cachedAt: Date.now(),
       })
+
+      fullscreenPagesRef.current = cleanedPages
+      setFullscreenCacheReady(true)
     }
 
     let idleHandle = null
     if (typeof requestIdleCallback === "function") {
-      idleHandle = requestIdleCallback(warmLayoutCache, { timeout: 4000 })
+      idleHandle = requestIdleCallback(warmFullscreenCache, { timeout: 5000 })
     } else {
-      idleHandle = setTimeout(warmLayoutCache, 1200)
+      idleHandle = setTimeout(warmFullscreenCache, 1500)
     }
 
     return () => {
@@ -3826,8 +3804,105 @@ export default function BookViewer({
   }, [isMobile, isMobileFullscreen])
 
   useEffect(() => {
-    return () => clearTimeout(tapTimerRef.current)
+    return () => {
+      clearTimeout(tapTimerRef.current)
+      clearTimeout(fsPreparingToastTimerRef.current)
+    }
   }, [])
+
+  const swapReadingLayout = useCallback(
+    (newPages, anchorPrefix, oldPage, oldTotal) => {
+      if (!newPages?.length) {
+        return
+      }
+
+      const chapterMap = buildChapterPageMap(
+        newPages,
+        bookDocument?.chapters ?? []
+      )
+      setPages(newPages)
+      setChapterPageMap(chapterMap)
+      schedulePageTextMapBuild(newPages, pageTextMapBuildIdRef, setPageTextMap)
+
+      const targetPage = resolvePageAfterRepagination({
+        newPages,
+        anchorPrefix,
+        oldPage,
+        oldTotal,
+        isSpreadView: false,
+        normalizeBookmarkPage,
+      })
+      setCurrentPage(targetPage)
+      onPageChange?.(targetPage)
+    },
+    [bookDocument?.chapters, normalizeBookmarkPage, onPageChange]
+  )
+
+  const enterMobileFullscreen = useCallback(() => {
+    if (!isMobile || isMobileFullscreen || !fullscreenCacheReady) {
+      return
+    }
+
+    let fsPages = fullscreenPagesRef.current
+    if (!fsPages?.length) {
+      const { cached } = readMobileFullscreenCache(bookDocument, paginationSettings)
+      if (!cached?.pages?.length) {
+        return
+      }
+      fsPages = cached.pages
+      fullscreenPagesRef.current = fsPages
+    }
+
+    normalPagesSnapshotRef.current = pages
+    const anchorPrefix = getReadingAnchorPrefix(
+      pages,
+      currentPageRef.current,
+      false
+    )
+    swapReadingLayout(
+      fsPages,
+      anchorPrefix,
+      currentPageRef.current,
+      pages.length
+    )
+    isMobileFullscreenLayoutRef.current = true
+    lastPaginatedMobileFullscreenRef.current = true
+    setIsMobileFullscreen(true)
+  }, [
+    bookDocument,
+    fullscreenCacheReady,
+    isMobile,
+    isMobileFullscreen,
+    pages,
+    paginationSettings,
+    swapReadingLayout,
+  ])
+
+  const exitMobileFullscreen = useCallback(() => {
+    if (!isMobile || !isMobileFullscreen) {
+      return
+    }
+
+    const normalPages = normalPagesSnapshotRef.current
+    if (!normalPages?.length) {
+      return
+    }
+
+    const anchorPrefix = getReadingAnchorPrefix(
+      pages,
+      currentPageRef.current,
+      false
+    )
+    swapReadingLayout(
+      normalPages,
+      anchorPrefix,
+      currentPageRef.current,
+      pages.length
+    )
+    isMobileFullscreenLayoutRef.current = false
+    lastPaginatedMobileFullscreenRef.current = false
+    setIsMobileFullscreen(false)
+  }, [isMobile, isMobileFullscreen, pages, swapReadingLayout])
 
   const handleStageTap = useCallback(() => {
     if (!isMobile) return
@@ -3835,20 +3910,28 @@ export default function BookViewer({
     clearTimeout(tapTimerRef.current)
     tapTimerRef.current = setTimeout(() => {
       if (tapCountRef.current >= 3) {
-        pendingLayoutAnchorRef.current = {
-          anchorPrefix: getReadingAnchorPrefix(
-            pages,
-            currentPageRef.current,
-            false
-          ),
-          oldPage: currentPageRef.current,
-          oldTotal: pages.length,
+        if (isMobileFullscreen) {
+          exitMobileFullscreen()
+        } else if (fullscreenCacheReady) {
+          enterMobileFullscreen()
+        } else {
+          setShowFsPreparingToast(true)
+          clearTimeout(fsPreparingToastTimerRef.current)
+          fsPreparingToastTimerRef.current = setTimeout(
+            () => setShowFsPreparingToast(false),
+            2000
+          )
         }
-        setIsMobileFullscreen((previous) => !previous)
       }
       tapCountRef.current = 0
     }, 400)
-  }, [isMobile, pages])
+  }, [
+    enterMobileFullscreen,
+    exitMobileFullscreen,
+    fullscreenCacheReady,
+    isMobile,
+    isMobileFullscreen,
+  ])
 
   const toggleLayoutMode = useCallback(() => {
     setLayoutMode((mode) => (mode === "spread" ? "single" : "spread"))
@@ -4149,7 +4232,11 @@ export default function BookViewer({
             event.preventDefault()
             event.stopPropagation()
             if (isMobile) {
-              setIsMobileFullscreen((prev) => !prev)
+              if (isMobileFullscreen) {
+                exitMobileFullscreen()
+              } else if (fullscreenCacheReady) {
+                enterMobileFullscreen()
+              }
             } else {
               void toggleFullscreen()
             }
@@ -4166,7 +4253,7 @@ export default function BookViewer({
           } else if (settingsOpen) {
             setSettingsOpen(false)
           } else if (isMobileFullscreen) {
-            setIsMobileFullscreen(false)
+            exitMobileFullscreen()
           } else if (isFullscreen) {
             document.exitFullscreen().catch(() => {})
           }
@@ -4214,11 +4301,13 @@ export default function BookViewer({
     isFullscreen,
     isMobile,
     isMobileFullscreen,
+    fullscreenCacheReady,
+    enterMobileFullscreen,
+    exitMobileFullscreen,
     toggleFullscreen,
     setSearchOpen,
     setTocOpen,
     setSettingsOpen,
-    setIsMobileFullscreen,
     setSearchQuery,
     setSearchResults,
   ])
@@ -4263,6 +4352,9 @@ export default function BookViewer({
       tabIndex={-1}
     >
       {showFsTip && <div className="book-viewer__fs-tip">Triple tap to exit</div>}
+      {showFsPreparingToast && (
+        <div className="book-viewer__fs-tip">Preparing fullscreen…</div>
+      )}
       {resumeToast && (
         <div className={`book-viewer__toast${toastFading ? " book-viewer__toast--fading" : ""}`}>
           Resuming from Page {resumeToast}
@@ -4366,10 +4458,27 @@ export default function BookViewer({
           {!(isMobile && isMobileFullscreen) && (
             <button
               type="button"
-              className="book-viewer__fullscreen"
-              onClick={isMobile ? () => setIsMobileFullscreen(true) : toggleFullscreen}
-              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              className={`book-viewer__fullscreen${
+                isMobile && !fullscreenCacheReady
+                  ? " book-viewer__fullscreen--disabled"
+                  : ""
+              }`}
+              onClick={isMobile ? enterMobileFullscreen : toggleFullscreen}
+              disabled={isMobile && !fullscreenCacheReady}
+              title={
+                isMobile && !fullscreenCacheReady
+                  ? "Preparing fullscreen…"
+                  : isFullscreen
+                    ? "Exit fullscreen"
+                    : "Enter fullscreen"
+              }
+              aria-label={
+                isMobile && !fullscreenCacheReady
+                  ? "Preparing fullscreen"
+                  : isFullscreen
+                    ? "Exit fullscreen"
+                    : "Enter fullscreen"
+              }
             >
               <FullscreenIcon />
             </button>
