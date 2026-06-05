@@ -37,14 +37,14 @@ const PAGE_HEIGHT_PX = 600
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX = 600
 const SPINE_PX = 1
-const PAGE_FOOTER_RESERVE_PX = 12
+const PAGE_FOOTER_RESERVE_PX = 14
 const PAGE_NUMBER_RESERVED_PX = PAGE_FOOTER_RESERVE_PX
 const BODY_DESCENDER_PAD_PX = 6
 const PAGE_CONTENT_FIT_BUFFER_PX = 2
 const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 1
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
 /** Compact mobile footer reserve (page number line + small breathing room). */
-const MOBILE_PAGE_NUMBER_RESERVED_PX = 12
+const MOBILE_PAGE_NUMBER_RESERVED_PX = 14
 /** Gap above page number + number line in mobile fullscreen. */
 const MOBILE_FULLSCREEN_FOOTER_BLOCK_PX = 8
 /** Bottom inset so the page number sits near the Safari URL bar. */
@@ -54,7 +54,7 @@ const MOBILE_FULLSCREEN_TOP_INSET_PX = 8
 const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX =
   MOBILE_FULLSCREEN_FOOTER_BLOCK_PX
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
-const BODY_BOTTOM_PADDING_PX = 3
+const BODY_BOTTOM_PADDING_PX = 0
 /**
  * Exact body (text) height for a mobile-fullscreen page. Kept in lock-step with
  * the measurement math in getLayoutHeights so the displayed body is the same
@@ -73,7 +73,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 13
+const PAGINATION_MEASUREMENT_VERSION = 14
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 /**

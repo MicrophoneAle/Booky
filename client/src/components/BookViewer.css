@@ -474,7 +474,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  --page-footer-reserve: 12px;
+  --page-footer-reserve: 14px;
 }
 
 .book-page::after {
@@ -1047,7 +1047,13 @@
   flex-direction: column;
   gap: 0;
   box-sizing: border-box;
-  padding-bottom: 3px;
+  /* Footer spacing audit:
+     - Body reserves: max-height calc(100% - var(--page-footer-reserve))
+     - Body extra bottom padding: removed to avoid oversized top gap
+     - Number band: .book-page__number height var(--page-footer-reserve), bottom:0, flex centered
+     - Fade band: .book-page::after height var(--page-footer-reserve)
+     - Mobile default equivalents: same var(--page-footer-reserve) math in media query */
+  padding-bottom: 0;
   --lh-display: calc(var(--lh-body, 1.15) * 1.04);
 }
 
@@ -1312,7 +1318,7 @@ ol.book-page__list {
 
 @media (max-width: 767px) {
   .book-page:not(.book-page--mobile-fs) {
-    --page-footer-reserve: 12px;
+    --page-footer-reserve: 14px;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     box-sizing: border-box;
   }
@@ -1329,7 +1335,7 @@ ol.book-page__list {
   .book-page:not(.book-page--mobile-fs) .book-page__body--title-spread {
     flex: 1 1 auto;
     max-height: calc(100% - var(--page-footer-reserve));
-    padding-bottom: 0.1rem;
+    padding-bottom: 0;
   }
 
   .book-viewer__stage {
@@ -1428,6 +1434,6 @@ ol.book-page__list {
 
 .book-viewer__measure-footer {
   flex-shrink: 0;
-  height: 12px;
+  height: 14px;
   margin: 0;
 }
