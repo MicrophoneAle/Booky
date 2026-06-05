@@ -1001,7 +1001,7 @@
   padding:
     max(0.45rem, env(safe-area-inset-top, 0px))
     max(0px, env(safe-area-inset-right, 0px))
-    max(0px, env(safe-area-inset-bottom, 0px))
+    max(0.5rem, env(safe-area-inset-bottom, 0px))
     max(0px, env(safe-area-inset-left, 0px));
 }
 
@@ -1009,8 +1009,8 @@
   position: static;
   flex-shrink: 0;
   margin-top: auto;
-  padding-top: 0.35rem;
-  padding-bottom: max(1.3rem, env(safe-area-inset-bottom, 0px));
+  padding-top: 0.5rem;
+  padding-bottom: 0;
   margin-bottom: 0;
 }
 
@@ -1018,9 +1018,10 @@
 .book-page--mobile-fs .book-page__body--title-spread {
   flex: 1 1 auto;
   min-height: 0;
-  max-height: none;
+  max-height: calc(100% - var(--mobile-fs-footer-block, 28px));
+  overflow: hidden;
   padding-top: 0.2rem;
-  padding-bottom: 0;
+  padding-bottom: 0.25rem;
 }
 
 .book-page__body:not(.book-page__body--title-spread) {

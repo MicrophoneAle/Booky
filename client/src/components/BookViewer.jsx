@@ -45,8 +45,14 @@ const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 1
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
 /** Matches 059e9ea mobile footer reserve for non-fullscreen pagination. */
 const MOBILE_PAGE_NUMBER_RESERVED_PX = 52
-/** Matches 059e9ea measure footer — tight gap above the page number in mobile FS. */
-const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX = 20
+/** Gap above page number + number line in mobile fullscreen. */
+const MOBILE_FULLSCREEN_FOOTER_BLOCK_PX = 28
+/** Bottom inset so the page number sits near the Safari URL bar. */
+const MOBILE_FULLSCREEN_BOTTOM_CHROME_PX = 8
+/** Top inset matching .book-page--mobile-fs safe-area padding. */
+const MOBILE_FULLSCREEN_TOP_INSET_PX = 12
+const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX =
+  MOBILE_FULLSCREEN_FOOTER_BLOCK_PX
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
 const BODY_BOTTOM_PADDING_PX = 3
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
@@ -56,7 +62,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 8
+const PAGINATION_MEASUREMENT_VERSION = 9
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 const PAGINATION_CACHE_MAX_ENTRIES = 3
@@ -884,7 +890,8 @@ function createListElement(kind) {
 function getLayoutHeights(
   pageHeightOverride,
   marginSetting,
-  pageNumberReservedPx = PAGE_NUMBER_RESERVED_PX
+  pageNumberReservedPx = PAGE_NUMBER_RESERVED_PX,
+  { pageInsetTopPx = 0, pageInsetBottomPx = 0 } = {}
 ) {
   const remPx =
     parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
@@ -894,6 +901,8 @@ function getLayoutHeights(
   const contentMaxHeight =
     pageHeight -
     marginPx -
+    pageInsetTopPx -
+    pageInsetBottomPx -
     pageNumberReservedPx -
     BODY_BOTTOM_PADDING_PX -
     CONTENT_HEIGHT_SAFETY_BUFFER_PX
@@ -970,10 +979,13 @@ function setupMeasureElements(
   const marginSetting = mobileFS ? "none" : paginationSettings.margins
   const pageHeightToUse = mobileFS ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : undefined
   const pageNumberReservedPx = getPageNumberReservedPx(mobileViewport, mobileFS)
+  const pageInsetTopPx = mobileFS ? MOBILE_FULLSCREEN_TOP_INSET_PX : 0
+  const pageInsetBottomPx = mobileFS ? MOBILE_FULLSCREEN_BOTTOM_CHROME_PX : 0
   const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(
     pageHeightToUse,
     marginSetting,
-    pageNumberReservedPx
+    pageNumberReservedPx,
+    { pageInsetTopPx, pageInsetBottomPx }
   )
 
   const { page, body, footer } = measureElements
@@ -994,7 +1006,10 @@ function setupMeasureElements(
 
   if (mobileFS) {
     page.classList.add("book-page--mobile-fs")
-    page.style.padding = "0"
+    page.style.paddingTop = `${pageInsetTopPx}px`
+    page.style.paddingRight = "0"
+    page.style.paddingLeft = "0"
+    page.style.paddingBottom = `${pageInsetBottomPx}px`
   } else {
     const pagePad = getPagePaddingStyle(paginationSettings.margins)
     page.style.paddingTop = pagePad.paddingTop ?? "0"
@@ -2261,7 +2276,10 @@ function BookPageContent({
     .join(" ")
 
   const pageStyle = isMobileFullscreen
-    ? { "--page-footer-reserve": `${PAGE_FOOTER_RESERVE_PX}px` }
+    ? {
+        "--page-footer-reserve": `${MOBILE_FULLSCREEN_FOOTER_BLOCK_PX}px`,
+        "--mobile-fs-footer-block": `${MOBILE_FULLSCREEN_FOOTER_BLOCK_PX}px`,
+      }
     : {
         ...getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins),
         "--page-footer-reserve": `${PAGE_FOOTER_RESERVE_PX}px`,
