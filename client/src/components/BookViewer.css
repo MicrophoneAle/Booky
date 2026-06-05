@@ -997,15 +997,17 @@
 .book-page--mobile-fs .book-page__number {
   position: static;
   flex-shrink: 0;
-  margin-top: 0.15rem;
-  margin-bottom: max(0.65rem, env(safe-area-inset-bottom, 0px));
+  margin-top: auto;
+  padding-top: 0.2rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  margin-bottom: 0;
 }
 
 .book-page--mobile-fs .book-page__body:not(.book-page__body--title-spread),
 .book-page--mobile-fs .book-page__body--title-spread {
   flex: 1 1 auto;
   min-height: 0;
-  max-height: calc(100% - 2.25rem);
+  max-height: none;
   padding-bottom: 0;
 }
 
