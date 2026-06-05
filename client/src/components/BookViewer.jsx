@@ -554,13 +554,20 @@ function mapStrippedOffsetToPlain(plainText, strippedOffset) {
 
 /** Split prose into sentence spans with start/end indices in the source string. */
 function splitIntoSentenceSpans(text) {
+  const hasReadableChars = (value) => /[\p{L}\p{N}]/u.test(value)
+  const hasEnoughBody = (value) =>
+    value.replace(/^[\s"'`“”‘’()[\]{}<>-–—]+/, "").trim().length >= 2
+
   const sentences = []
-  const regex = /[^.!?…]+[.!?…]+(?:\s+|$)|[^.!?…]+$/g
+  // Prefer full sentences that end in terminal punctuation, while still allowing
+  // dialogue-style paragraph lines that are separated by line breaks.
+  const regex =
+    /[^.!?…\n]+[.!?…]+["'`“”‘’)\]]*(?=\s|$)|[^.!?…\n]+(?=\n|$)/g
   let match = regex.exec(text)
   while (match) {
     const raw = match[0]
     const trimmed = raw.trim()
-    if (trimmed) {
+    if (trimmed && hasReadableChars(trimmed) && hasEnoughBody(trimmed)) {
       const start = match.index + raw.indexOf(trimmed)
       sentences.push({
         text: trimmed,
@@ -622,7 +629,10 @@ function findResumeAnchorSentence(newPages, targetPageNumber, targetOffset) {
         if (nextFull) {
           return { itemIndex: i, sentenceText: nextFull.text }
         }
-        return null
+        // This item starts mid-sentence and has no later full sentence.
+        // Continue scanning the following items for the first complete one.
+        itemCumulative += strippedLen
+        continue
       }
 
       const containing = sentences.find(
