@@ -32,7 +32,8 @@ import "./BookViewer.css"
 const NAVBAR_HEIGHT_PX = 44
 const PAGE_WIDTH_PX = 400
 const PAGE_HEIGHT_PX = 600
-const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
+/** Minimum paginated page height in mobile fullscreen; actual height follows the viewport. */
+const MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX = 600
 const SPINE_PX = 1
 const PAGE_FOOTER_RESERVE_PX = 20
 const PAGE_NUMBER_RESERVED_PX = PAGE_FOOTER_RESERVE_PX
@@ -52,7 +53,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 1
+const PAGINATION_MEASUREMENT_VERSION = 2
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 const PAGINATION_CACHE_MAX_ENTRIES = 3
@@ -122,10 +123,18 @@ function buildPaginationCacheKey(
   ].join("|")
 }
 
+function getMobileFullscreenPageHeightPx() {
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+  return Math.max(
+    MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX,
+    Math.round(viewportHeight)
+  )
+}
+
 /** Single source of truth for cache key — same inputs at read and write. */
 function getPaginationPageHeight(mobileViewport, mobileFullscreen) {
   return mobileViewport && mobileFullscreen
-    ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
+    ? getMobileFullscreenPageHeightPx()
     : PAGE_HEIGHT_PX
 }
 
@@ -466,7 +475,10 @@ function bodyContentFitsPage(bodyEl, fitHeight) {
   return bottom <= limit
 }
 
-function getPageNumberReservedPx(isMobileViewport) {
+function getPageNumberReservedPx(isMobileViewport, mobileFullscreen = false) {
+  if (mobileFullscreen) {
+    return PAGE_NUMBER_RESERVED_PX + MOBILE_PAGE_NUMBER_GAP_PX
+  }
   return isMobileViewport ? MOBILE_PAGE_NUMBER_RESERVED_PX : PAGE_NUMBER_RESERVED_PX
 }
 
@@ -2865,8 +2877,8 @@ export default function BookViewer({
       const flatBlocks = flattenDocument(bookDocument)
       const mobileViewport = isMobileLayoutRef.current
       const mobileFS = mobileViewport && isMobileFullscreenLayoutRef.current
-      const pageHeightToUse = mobileFS ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : undefined
-      const pageNumberReservedPx = getPageNumberReservedPx(mobileViewport)
+      const pageHeightToUse = mobileFS ? getMobileFullscreenPageHeightPx() : undefined
+      const pageNumberReservedPx = getPageNumberReservedPx(mobileViewport, mobileFS)
       const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(
         pageHeightToUse,
         paginationSettings.margins,
@@ -3246,7 +3258,9 @@ export default function BookViewer({
   ])
 
   const activePageHeight =
-    isMobile && isMobileFullscreen ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : PAGE_HEIGHT_PX
+    isMobile && isMobileFullscreen
+      ? getMobileFullscreenPageHeightPx()
+      : PAGE_HEIGHT_PX
   const mobileFullscreenActive = isMobile && isMobileFullscreen
 
   const isSpreadView = !isMobile && layoutMode === "spread"
@@ -3306,16 +3320,25 @@ export default function BookViewer({
         : PAGE_WIDTH_PX
       const naturalH = activePageHeight
       const fitScale = Math.min(availW / naturalW, availH / naturalH)
-      const next = fitScale
+      const fillScale = Math.max(availW / naturalW, availH / naturalH)
+      const next =
+        isMobile && isMobileFullscreen
+          ? fillScale
+          : fitScale
       setScale(next > 0 && Number.isFinite(next) ? next : 1)
     }
 
     recomputeScale()
     window.addEventListener("resize", recomputeScale)
     document.addEventListener("fullscreenchange", recomputeScale)
+    const visualViewport = window.visualViewport
+    visualViewport?.addEventListener("resize", recomputeScale)
+    visualViewport?.addEventListener("scroll", recomputeScale)
     return () => {
       window.removeEventListener("resize", recomputeScale)
       document.removeEventListener("fullscreenchange", recomputeScale)
+      visualViewport?.removeEventListener("resize", recomputeScale)
+      visualViewport?.removeEventListener("scroll", recomputeScale)
     }
   }, [showSpreadLayout, isMobile, isMobileFullscreen, isFullscreen, activePageHeight, pages.length, isPaginating])
 

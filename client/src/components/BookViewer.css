@@ -564,6 +564,10 @@
   background: #1c1917;
 }
 
+.book-viewer--mobile-fs {
+  background: #0d0b0a;
+}
+
 .book-viewer--mobile-fs .book-viewer__nav {
   position: absolute;
   top: 0;
@@ -583,6 +587,10 @@
   flex: 1;
   min-height: 0;
   padding: 0;
+}
+
+.book-viewer--mobile-fs .book-viewer__stage::before {
+  display: none;
 }
 
 .book-viewer--mobile-fs .book-viewer__spread {
