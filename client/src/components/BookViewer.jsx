@@ -74,7 +74,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 20
+const PAGINATION_MEASUREMENT_VERSION = 21
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 /**
@@ -809,14 +809,13 @@ function getPageTextCapacity(contentMaxHeight, font, line) {
 
 function bodyContentFitsPage(bodyEl, fitHeight) {
   const limit = Math.floor(fitHeight) + PAGE_FIT_OVERFLOW_TOLERANCE_PX
-  const lastChild = bodyEl.lastElementChild
-
-  if (!lastChild) {
+  if (!bodyEl.lastElementChild) {
     return true
   }
 
-  const bottom = lastChild.offsetTop + lastChild.offsetHeight
-  return bottom <= limit
+  // scrollHeight tracks the full stacked content more reliably than the last
+  // child's offset box alone (which can leave several lines of slack per page).
+  return bodyEl.scrollHeight <= limit
 }
 
 function getPageNumberReservedPx(isMobileViewport, mobileFullscreen = false) {
@@ -1445,8 +1444,8 @@ function setupMeasureElements(
   } else {
     footer.style.display = "none"
     body.style.flex = "0 0 auto"
-    body.style.minHeight = `${contentMaxHeight}px`
-    body.style.height = `${contentMaxHeight}px`
+    body.style.minHeight = "0"
+    body.style.height = "auto"
     body.style.maxHeight = `${contentMaxHeight}px`
   }
 
@@ -2694,6 +2693,11 @@ function BookPageContent({
     .filter(Boolean)
     .join(" ")
 
+  const marginSetting = settings?.margins ?? DEFAULT_SETTINGS.margins
+  const pageContentHeightPx = isMobileFullscreen
+    ? MOBILE_FULLSCREEN_CONTENT_HEIGHT_PX
+    : getPageContentHeightPx(marginSetting, isMobileViewport)
+
   const pageStyle = isMobileFullscreen
     ? {
         "--page-footer-reserve": `${MOBILE_FULLSCREEN_FOOTER_BLOCK_PX}px`,
@@ -2704,10 +2708,12 @@ function BookPageContent({
         paddingTop: `${MOBILE_FULLSCREEN_TOP_INSET_PX}px`,
         paddingBottom: `${MOBILE_FULLSCREEN_BOTTOM_CHROME_PX}px`,
       }
-    : getPageChromeStyle(
-        settings?.margins ?? DEFAULT_SETTINGS.margins,
-        isMobileViewport
-      )
+    : getPageChromeStyle(marginSetting, isMobileViewport)
+
+  const bodyStyle =
+    !isMobileFullscreen && !page?.centerTitlePage
+      ? { maxHeight: `${pageContentHeightPx}px` }
+      : undefined
 
   if (!page) {
     return <div className={`${pageClassName} book-page--empty`} style={pageStyle} />
@@ -2724,6 +2730,7 @@ function BookPageContent({
             ? "book-page__body book-page__body--title-spread"
             : "book-page__body"
         }
+        style={bodyStyle}
       >
         {visualItems.map((item, index) => {
           const renderItemElement = () => {

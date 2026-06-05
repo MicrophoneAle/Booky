@@ -1038,11 +1038,12 @@
   line-height: 8px;
 }
 
-/* Non-fullscreen: fixed body height (same as pagination) flows from the top;
-   page number sits in a compact band directly below — no flex-grow dead zone. */
+/* Non-fullscreen: body shrink-wraps to content; margin-top:auto on the page
+   number pushes it to the page bottom so slack sits below the number, not
+   between the last line of text and the number. */
 .book-page:not(.book-page--mobile-fs) .book-page__body:not(.book-page__body--title-spread) {
   flex: 0 0 auto;
-  height: var(--page-content-h);
+  height: auto;
   max-height: var(--page-content-h);
   min-height: 0;
   overflow: hidden;
