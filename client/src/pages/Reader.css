@@ -72,6 +72,21 @@
   will-change: transform;
 }
 
+.reader-screen__progress-fill--indeterminate {
+  width: 40%;
+  transform: none;
+  animation: reader-progress-indeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes reader-progress-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
 .reader-screen__progress-label {
   font-family: system-ui, sans-serif;
   font-size: 11px;

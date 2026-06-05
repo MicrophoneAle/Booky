@@ -1,5 +1,6 @@
 import {
   Fragment,
+  startTransition,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -1075,6 +1076,14 @@ function readMobileFullscreenCache(bookDocument, paginationSettings) {
     cacheKey,
     parserVersion,
     cached: readPaginationCache(cacheKey, parserVersion),
+  }
+}
+
+function buildLayoutBundle(pages, chapters) {
+  return {
+    pages,
+    chapterMap: buildChapterPageMap(pages, chapters ?? []),
+    pageTextMap: buildPageTextMap(pages),
   }
 }
 
@@ -2667,7 +2676,6 @@ export default function BookViewer({
   const [isMobileFullscreen, setIsMobileFullscreen] = useState(false)
   const [fullscreenCacheReady, setFullscreenCacheReady] = useState(false)
   const [showFsTip, setShowFsTip] = useState(false)
-  const [showFsPreparingToast, setShowFsPreparingToast] = useState(false)
   const stageRef = useRef(null)
   const tapCountRef = useRef(0)
   const tapTimerRef = useRef(null)
@@ -2732,9 +2740,10 @@ export default function BookViewer({
   const flatBlocksCacheRef = useRef({ bookId: null, blocks: null })
   const measurePoolRef = useRef(null)
   const fullscreenWarmupRunIdRef = useRef(0)
-  const fullscreenPagesRef = useRef(null)
-  const normalPagesSnapshotRef = useRef(null)
-  const fsPreparingToastTimerRef = useRef(null)
+  const fullscreenLayoutBundleRef = useRef(null)
+  const normalLayoutBundleRef = useRef(null)
+  const normalLayoutAtEnterRef = useRef(null)
+  const initialFullscreenPrepareDoneRef = useRef(false)
 
   const normalizeBookmarkPage = useCallback((page, total, desktopSpreadBehavior) => {
     if (!Number.isFinite(page)) return 1
@@ -2832,6 +2841,10 @@ export default function BookViewer({
   useEffect(() => {
     flatBlocksCacheRef.current = { bookId: null, blocks: null }
     releaseMeasurePool(measurePoolRef)
+    initialFullscreenPrepareDoneRef.current = false
+    fullscreenLayoutBundleRef.current = null
+    normalLayoutBundleRef.current = null
+    normalLayoutAtEnterRef.current = null
   }, [bookDocument?.id])
 
   useEffect(() => {
@@ -2927,11 +2940,17 @@ export default function BookViewer({
         lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
 
         if (!isMobileFullscreen) {
-          normalPagesSnapshotRef.current = measuredPages
+          normalLayoutBundleRef.current = buildLayoutBundle(
+            measuredPages,
+            bookDocument?.chapters ?? []
+          )
           setFullscreenCacheReady(false)
-          fullscreenPagesRef.current = null
+          fullscreenLayoutBundleRef.current = null
         } else {
-          fullscreenPagesRef.current = measuredPages
+          fullscreenLayoutBundleRef.current = buildLayoutBundle(
+            measuredPages,
+            bookDocument?.chapters ?? []
+          )
           setFullscreenCacheReady(true)
         }
       }
@@ -3224,7 +3243,10 @@ export default function BookViewer({
         lastPaginatedViewportRevisionRef.current = viewportRevision
         lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
         if (isMobileFullscreenLayoutRef.current) {
-          fullscreenPagesRef.current = cleanedPages
+          fullscreenLayoutBundleRef.current = buildLayoutBundle(
+            cleanedPages,
+            bookDocument?.chapters ?? []
+          )
           setFullscreenCacheReady(true)
         }
         persistPaginationCache(cleanedPages, { sync: true })
@@ -3650,7 +3672,7 @@ export default function BookViewer({
 
   useEffect(() => {
     setFullscreenCacheReady(false)
-    fullscreenPagesRef.current = null
+    fullscreenLayoutBundleRef.current = null
   }, [
     bookDocument?.id,
     paginationSettings.fontSize,
@@ -3658,6 +3680,12 @@ export default function BookViewer({
     paginationSettings.lineSpacing,
     paginationSettings.margins,
   ])
+
+  useEffect(() => {
+    if (fullscreenCacheReady) {
+      initialFullscreenPrepareDoneRef.current = true
+    }
+  }, [fullscreenCacheReady])
 
   useEffect(() => {
     if (!isMobile || !bookDocument?.id || isPaginating || isRepaginating) {
@@ -3674,7 +3702,10 @@ export default function BookViewer({
     )
 
     if (cached?.pages?.length) {
-      fullscreenPagesRef.current = cached.pages
+      fullscreenLayoutBundleRef.current = buildLayoutBundle(
+        cached.pages,
+        bookDocument.chapters ?? []
+      )
       setFullscreenCacheReady(true)
       return undefined
     }
@@ -3690,7 +3721,10 @@ export default function BookViewer({
 
       const existing = readPaginationCache(cacheKey, parserVersion)
       if (existing?.pages?.length) {
-        fullscreenPagesRef.current = existing.pages
+        fullscreenLayoutBundleRef.current = buildLayoutBundle(
+          existing.pages,
+          bookDocument.chapters ?? []
+        )
         setFullscreenCacheReady(true)
         return
       }
@@ -3721,7 +3755,10 @@ export default function BookViewer({
         cachedAt: Date.now(),
       })
 
-      fullscreenPagesRef.current = cleanedPages
+      fullscreenLayoutBundleRef.current = buildLayoutBundle(
+        cleanedPages,
+        bookDocument.chapters ?? []
+      )
       setFullscreenCacheReady(true)
     }
 
@@ -3804,38 +3841,34 @@ export default function BookViewer({
   }, [isMobile, isMobileFullscreen])
 
   useEffect(() => {
-    return () => {
-      clearTimeout(tapTimerRef.current)
-      clearTimeout(fsPreparingToastTimerRef.current)
-    }
+    return () => clearTimeout(tapTimerRef.current)
   }, [])
 
   const swapReadingLayout = useCallback(
-    (newPages, anchorPrefix, oldPage, oldTotal) => {
-      if (!newPages?.length) {
+    (layoutBundle, anchorPrefix, oldPage, oldTotal, { afterSwap } = {}) => {
+      if (!layoutBundle?.pages?.length) {
         return
       }
 
-      const chapterMap = buildChapterPageMap(
-        newPages,
-        bookDocument?.chapters ?? []
-      )
-      setPages(newPages)
-      setChapterPageMap(chapterMap)
-      schedulePageTextMapBuild(newPages, pageTextMapBuildIdRef, setPageTextMap)
-
       const targetPage = resolvePageAfterRepagination({
-        newPages,
+        newPages: layoutBundle.pages,
         anchorPrefix,
         oldPage,
         oldTotal,
         isSpreadView: false,
         normalizeBookmarkPage,
       })
-      setCurrentPage(targetPage)
-      onPageChange?.(targetPage)
+
+      startTransition(() => {
+        setPages(layoutBundle.pages)
+        setChapterPageMap(layoutBundle.chapterMap)
+        setPageTextMap(layoutBundle.pageTextMap)
+        setCurrentPage(targetPage)
+        afterSwap?.()
+        onPageChange?.(targetPage)
+      })
     },
-    [bookDocument?.chapters, normalizeBookmarkPage, onPageChange]
+    [normalizeBookmarkPage, onPageChange]
   )
 
   const enterMobileFullscreen = useCallback(() => {
@@ -3843,31 +3876,31 @@ export default function BookViewer({
       return
     }
 
-    let fsPages = fullscreenPagesRef.current
-    if (!fsPages?.length) {
+    let fsBundle = fullscreenLayoutBundleRef.current
+    if (!fsBundle?.pages?.length) {
       const { cached } = readMobileFullscreenCache(bookDocument, paginationSettings)
       if (!cached?.pages?.length) {
         return
       }
-      fsPages = cached.pages
-      fullscreenPagesRef.current = fsPages
+      fsBundle = buildLayoutBundle(cached.pages, bookDocument?.chapters ?? [])
+      fullscreenLayoutBundleRef.current = fsBundle
     }
 
-    normalPagesSnapshotRef.current = pages
+    normalLayoutAtEnterRef.current = normalLayoutBundleRef.current
     const anchorPrefix = getReadingAnchorPrefix(
       pages,
       currentPageRef.current,
       false
     )
-    swapReadingLayout(
-      fsPages,
-      anchorPrefix,
-      currentPageRef.current,
-      pages.length
-    )
     isMobileFullscreenLayoutRef.current = true
     lastPaginatedMobileFullscreenRef.current = true
-    setIsMobileFullscreen(true)
+    swapReadingLayout(
+      fsBundle,
+      anchorPrefix,
+      currentPageRef.current,
+      pages.length,
+      { afterSwap: () => setIsMobileFullscreen(true) }
+    )
   }, [
     bookDocument,
     fullscreenCacheReady,
@@ -3883,8 +3916,9 @@ export default function BookViewer({
       return
     }
 
-    const normalPages = normalPagesSnapshotRef.current
-    if (!normalPages?.length) {
+    const normalBundle =
+      normalLayoutAtEnterRef.current ?? normalLayoutBundleRef.current
+    if (!normalBundle?.pages?.length) {
       return
     }
 
@@ -3893,15 +3927,15 @@ export default function BookViewer({
       currentPageRef.current,
       false
     )
-    swapReadingLayout(
-      normalPages,
-      anchorPrefix,
-      currentPageRef.current,
-      pages.length
-    )
     isMobileFullscreenLayoutRef.current = false
     lastPaginatedMobileFullscreenRef.current = false
-    setIsMobileFullscreen(false)
+    swapReadingLayout(
+      normalBundle,
+      anchorPrefix,
+      currentPageRef.current,
+      pages.length,
+      { afterSwap: () => setIsMobileFullscreen(false) }
+    )
   }, [isMobile, isMobileFullscreen, pages, swapReadingLayout])
 
   const handleStageTap = useCallback(() => {
@@ -3914,13 +3948,6 @@ export default function BookViewer({
           exitMobileFullscreen()
         } else if (fullscreenCacheReady) {
           enterMobileFullscreen()
-        } else {
-          setShowFsPreparingToast(true)
-          clearTimeout(fsPreparingToastTimerRef.current)
-          fsPreparingToastTimerRef.current = setTimeout(
-            () => setShowFsPreparingToast(false),
-            2000
-          )
         }
       }
       tapCountRef.current = 0
@@ -4312,8 +4339,26 @@ export default function BookViewer({
     setSearchResults,
   ])
 
-  if (isPaginating && paginationLoadingMode === "opening") {
-    const loadingSubtext = "Opening your book..."
+  const showFullscreenPrepareScreen =
+    isMobile &&
+    !isMobileFullscreen &&
+    !fullscreenCacheReady &&
+    !initialFullscreenPrepareDoneRef.current &&
+    pages.length > 0 &&
+    !isPaginating &&
+    !isRepaginating
+
+  if (
+    (isPaginating && paginationLoadingMode === "opening") ||
+    showFullscreenPrepareScreen
+  ) {
+    const loadingSubtext = showFullscreenPrepareScreen
+      ? "Preparing fullscreen…"
+      : "Opening your book..."
+    const progressValue = showFullscreenPrepareScreen ? 100 : loadingProgress
+    const progressLabel = showFullscreenPrepareScreen
+      ? "Preparing fullscreen…"
+      : buildPaginationLoadingLabel(loadingProgress, loadingProgress >= 100)
 
     return (
       <div className="reader-screen">
@@ -4325,19 +4370,23 @@ export default function BookViewer({
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-valuenow={loadingProgress}
-            aria-label={loadingProgressLabel}
+            aria-valuenow={progressValue}
+            aria-label={progressLabel}
           >
             <div
-              className="reader-screen__progress-fill"
+              className={`reader-screen__progress-fill${
+                showFullscreenPrepareScreen
+                  ? " reader-screen__progress-fill--indeterminate"
+                  : ""
+              }`}
               style={{
-                "--reader-progress": String(Math.max(0, Math.min(100, loadingProgress)) / 100),
+                "--reader-progress": String(
+                  Math.max(0, Math.min(100, progressValue)) / 100
+                ),
               }}
             />
           </div>
-          <p className="reader-screen__progress-label">
-            {buildPaginationLoadingLabel(loadingProgress, loadingProgress >= 100)}
-          </p>
+          <p className="reader-screen__progress-label">{progressLabel}</p>
         </div>
       </div>
     )
@@ -4352,9 +4401,6 @@ export default function BookViewer({
       tabIndex={-1}
     >
       {showFsTip && <div className="book-viewer__fs-tip">Triple tap to exit</div>}
-      {showFsPreparingToast && (
-        <div className="book-viewer__fs-tip">Preparing fullscreen…</div>
-      )}
       {resumeToast && (
         <div className={`book-viewer__toast${toastFading ? " book-viewer__toast--fading" : ""}`}>
           Resuming from Page {resumeToast}

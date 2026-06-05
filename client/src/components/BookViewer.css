@@ -999,7 +999,7 @@
   border: none;
   border-radius: 0;
   padding:
-    max(0px, env(safe-area-inset-top, 0px))
+    max(0.45rem, env(safe-area-inset-top, 0px))
     max(0px, env(safe-area-inset-right, 0px))
     max(0px, env(safe-area-inset-bottom, 0px))
     max(0px, env(safe-area-inset-left, 0px));
@@ -1009,8 +1009,8 @@
   position: static;
   flex-shrink: 0;
   margin-top: auto;
-  padding-top: 0.2rem;
-  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  padding-top: 0.35rem;
+  padding-bottom: max(1.3rem, env(safe-area-inset-bottom, 0px));
   margin-bottom: 0;
 }
 
@@ -1019,6 +1019,7 @@
   flex: 1 1 auto;
   min-height: 0;
   max-height: none;
+  padding-top: 0.2rem;
   padding-bottom: 0;
 }
 
