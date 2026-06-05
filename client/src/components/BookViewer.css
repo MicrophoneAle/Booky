@@ -1016,8 +1016,8 @@
 .book-page--mobile-fs .book-page__body:not(.book-page__body--title-spread),
 .book-page--mobile-fs .book-page__body--title-spread {
   flex: 0 0 auto;
-  height: var(--mobile-fs-content-h, 729px);
-  max-height: var(--mobile-fs-content-h, 729px);
+  height: var(--mobile-fs-content-h, 749px);
+  max-height: var(--mobile-fs-content-h, 749px);
   min-height: 0;
   overflow: hidden;
   box-sizing: border-box;
@@ -1028,12 +1028,12 @@
 .book-page--mobile-fs .book-page__number {
   position: static;
   flex: 0 0 auto;
-  height: var(--mobile-fs-footer-block, 28px);
+  height: var(--mobile-fs-footer-block, 16px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
   margin: 0;
-  padding: 0 0 4px;
+  padding: 0 0 2px;
 }
 
 .book-page__body:not(.book-page__body--title-spread) {

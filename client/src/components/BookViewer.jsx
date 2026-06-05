@@ -46,11 +46,11 @@ const MOBILE_PAGE_NUMBER_GAP_PX = 3
 /** Matches 059e9ea mobile footer reserve for non-fullscreen pagination. */
 const MOBILE_PAGE_NUMBER_RESERVED_PX = 52
 /** Gap above page number + number line in mobile fullscreen. */
-const MOBILE_FULLSCREEN_FOOTER_BLOCK_PX = 28
+const MOBILE_FULLSCREEN_FOOTER_BLOCK_PX = 16
 /** Bottom inset so the page number sits near the Safari URL bar. */
-const MOBILE_FULLSCREEN_BOTTOM_CHROME_PX = 8
+const MOBILE_FULLSCREEN_BOTTOM_CHROME_PX = 4
 /** Top inset matching .book-page--mobile-fs safe-area padding. */
-const MOBILE_FULLSCREEN_TOP_INSET_PX = 12
+const MOBILE_FULLSCREEN_TOP_INSET_PX = 8
 const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX =
   MOBILE_FULLSCREEN_FOOTER_BLOCK_PX
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
@@ -73,7 +73,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 9
+const PAGINATION_MEASUREMENT_VERSION = 10
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 /**
@@ -298,6 +298,9 @@ function readPaginationCache(cacheKey, parserVersion) {
 }
 
 function writePaginationCache(cacheKey, bookId, payload) {
+  // Always mirror to IndexedDB (large quota — handles big books that overflow
+  // localStorage). localStorage stays the fast synchronous path for small books.
+  void idbWritePaginationCache(cacheKey, payload)
   try {
     evictPaginationCacheIfNeeded(bookId)
     localStorage.setItem(cacheKey, JSON.stringify(payload))
@@ -319,8 +322,105 @@ function writePaginationCache(cacheKey, bookId, payload) {
       localStorage.setItem(cacheKey, JSON.stringify(payload))
       localStorage.setItem(`${PAGINATION_CACHE_TS_PREFIX}${bookId}`, String(Date.now()))
     } catch {
-      // QuotaExceededError — book still works without cache.
+      // localStorage is full (large book). IndexedDB mirror above still serves it.
     }
+  }
+}
+
+const PAGINATION_IDB_NAME = "booky-pagination-cache"
+const PAGINATION_IDB_STORE = "pages"
+let paginationDbPromise = null
+
+function openPaginationDb() {
+  if (paginationDbPromise) {
+    return paginationDbPromise
+  }
+  paginationDbPromise = new Promise((resolve) => {
+    try {
+      if (typeof indexedDB === "undefined") {
+        resolve(null)
+        return
+      }
+      const request = indexedDB.open(PAGINATION_IDB_NAME, 1)
+      request.onupgradeneeded = () => {
+        const db = request.result
+        if (!db.objectStoreNames.contains(PAGINATION_IDB_STORE)) {
+          db.createObjectStore(PAGINATION_IDB_STORE)
+        }
+      }
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => resolve(null)
+    } catch {
+      resolve(null)
+    }
+  })
+  return paginationDbPromise
+}
+
+async function idbWritePaginationCache(cacheKey, payload) {
+  try {
+    const db = await openPaginationDb()
+    if (!db) {
+      return
+    }
+    await new Promise((resolve) => {
+      try {
+        const tx = db.transaction(PAGINATION_IDB_STORE, "readwrite")
+        tx.objectStore(PAGINATION_IDB_STORE).put(payload, cacheKey)
+        tx.oncomplete = () => resolve()
+        tx.onerror = () => resolve()
+        tx.onabort = () => resolve()
+      } catch {
+        resolve()
+      }
+    })
+  } catch {
+    // IndexedDB unavailable — localStorage still covers small books.
+  }
+}
+
+async function idbReadPaginationCache(cacheKey, parserVersion) {
+  try {
+    const db = await openPaginationDb()
+    if (!db) {
+      return null
+    }
+    const parsed = await new Promise((resolve) => {
+      try {
+        const tx = db.transaction(PAGINATION_IDB_STORE, "readonly")
+        const request = tx.objectStore(PAGINATION_IDB_STORE).get(cacheKey)
+        request.onsuccess = () => resolve(request.result ?? null)
+        request.onerror = () => resolve(null)
+      } catch {
+        resolve(null)
+      }
+    })
+
+    if (!parsed?.pages?.length) {
+      return null
+    }
+
+    const cachedParserVersion = Number(parsed.parserVersion)
+    const expectedParserVersion = Number(parserVersion)
+    if (
+      Number.isFinite(cachedParserVersion) &&
+      Number.isFinite(expectedParserVersion) &&
+      cachedParserVersion !== expectedParserVersion
+    ) {
+      return null
+    }
+
+    const cachedMeasurementVersion = Number(parsed.measurementVersion)
+    if (
+      Number.isFinite(cachedMeasurementVersion) &&
+      cachedMeasurementVersion !== PAGINATION_MEASUREMENT_VERSION
+    ) {
+      return null
+    }
+
+    return parsed
+  } catch {
+    return null
   }
 }
 
@@ -397,18 +497,25 @@ function getPagePlainText(page) {
 }
 
 /**
- * Character offset (in the book's concatenated plain text) of the first character
- * shown on `currentPage`. This is robust to page-height changes because the total
- * text is identical regardless of where pages break.
+ * Whitespace-insensitive character count of a page's text. Whitespace is stripped
+ * so the cumulative offset of a given sentence is identical regardless of how many
+ * pages precede it (different page heights produce different page counts, and any
+ * per-page separator would otherwise drift the offset and misalign the swap).
+ */
+function getPageTextLength(page) {
+  return getPagePlainText(page).replace(/\s+/g, "").length
+}
+
+/**
+ * Character offset (in the book's whitespace-stripped text) of the first character
+ * shown on `currentPage`. Robust to page-height changes because the total text is
+ * identical regardless of where pages break.
  */
 function getReadingAnchorCharOffset(pages, currentPage) {
   const startIndex = Math.max(0, currentPage - 1)
   let offset = 0
   for (let i = 0; i < startIndex && i < pages.length; i += 1) {
-    const text = getPagePlainText(pages[i])
-    if (text) {
-      offset += text.length + 1
-    }
+    offset += getPageTextLength(pages[i])
   }
   return offset
 }
@@ -421,8 +528,7 @@ function resolvePageByCharOffset(newPages, targetOffset) {
 
   let cumulative = 0
   for (let i = 0; i < newPages.length; i += 1) {
-    const text = getPagePlainText(newPages[i])
-    const span = text ? text.length + 1 : 0
+    const span = getPageTextLength(newPages[i])
     if (targetOffset < cumulative + span) {
       return newPages[i].pageNumber
     }
@@ -3387,6 +3493,33 @@ export default function BookViewer({
       }
 
       try {
+      // Large books overflow localStorage, so the synchronous opening-cache read
+      // misses. Check IndexedDB before doing a full re-pagination.
+      if (isOpeningRun) {
+        const idbCached = await idbReadPaginationCache(cacheKey, parserVersion)
+        if (!isActiveRun()) {
+          abortRun()
+          return
+        }
+        if (idbCached?.pages?.length) {
+          openingPaginationStartedRef.current = true
+          applyMeasuredPages(idbCached.pages, {
+            isFinal: true,
+            preservePage: resolveOpeningBookmarkPage(),
+          })
+          setIsPaginating(false)
+          hasDisplayedBookRef.current = true
+          maxLoadingProgressRef.current = 100
+          setLoadingProgress(100)
+          setLoadingProgressLabel("Ready")
+          prevPaginationSettingsRef.current = paginationSettings
+          lastPaginatedViewportRevisionRef.current = viewportRevision
+          lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
+          abortRun()
+          return
+        }
+      }
+
       const { flatBlocks, measureElements, pageLayout } = createMeasurementContext()
 
       if (isLayoutReload) {
@@ -3713,6 +3846,24 @@ export default function BookViewer({
   const leftPage = pages[currentPage - 1] ?? null
   const rightPage = isSpreadView ? pages[currentPage] ?? null : null
 
+  // The bookmark is saved as a normal-layout page number. In mobile fullscreen the
+  // page numbering differs, so translate it to the current layout via char offset.
+  const bookmarkDisplayPage = useMemo(() => {
+    if (!bookmarkPage) {
+      return null
+    }
+    if (!mobileFullscreenActive) {
+      return bookmarkPage
+    }
+    const normalPages =
+      normalLayoutAtEnterRef.current?.pages ?? normalLayoutBundleRef.current?.pages
+    if (!normalPages?.length) {
+      return null
+    }
+    const offset = getReadingAnchorCharOffset(normalPages, bookmarkPage)
+    return resolvePageByCharOffset(pages, offset)
+  }, [bookmarkPage, mobileFullscreenActive, pages])
+
   const font = FONT_SIZE_MAP[uiSettings.fontSize] ?? FONT_SIZE_MAP.medium
   const family = FONT_FAMILY_MAP[uiSettings.fontStyle] ?? FONT_FAMILY_MAP.lora
   const line = LINE_HEIGHT_MAP[uiSettings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
@@ -3864,6 +4015,13 @@ export default function BookViewer({
       return undefined
     }
 
+    // Already warmed (e.g. after exiting fullscreen). Rebuilding the bundle here
+    // runs buildPageTextMap over the whole book synchronously and freezes the
+    // reader, so skip it when a valid bundle is in memory.
+    if (fullscreenCacheReady && fullscreenLayoutBundleRef.current?.pages?.length) {
+      return undefined
+    }
+
     const { cacheKey, parserVersion, cached } = readMobileFullscreenCache(
       bookDocument,
       paginationSettings
@@ -3882,7 +4040,7 @@ export default function BookViewer({
     fullscreenWarmupRunIdRef.current = warmupRunId
     let cancelled = false
 
-    const warmFullscreenCache = () => {
+    const warmFullscreenCache = async () => {
       if (cancelled || fullscreenWarmupRunIdRef.current !== warmupRunId) {
         return
       }
@@ -3891,6 +4049,19 @@ export default function BookViewer({
       if (existing?.pages?.length) {
         fullscreenLayoutBundleRef.current = buildLayoutBundle(
           existing.pages,
+          bookDocument.chapters ?? []
+        )
+        setFullscreenCacheReady(true)
+        return
+      }
+
+      const idbExisting = await idbReadPaginationCache(cacheKey, parserVersion)
+      if (cancelled || fullscreenWarmupRunIdRef.current !== warmupRunId) {
+        return
+      }
+      if (idbExisting?.pages?.length) {
+        fullscreenLayoutBundleRef.current = buildLayoutBundle(
+          idbExisting.pages,
           bookDocument.chapters ?? []
         )
         setFullscreenCacheReady(true)
@@ -3953,6 +4124,7 @@ export default function BookViewer({
     pages.length,
     isPaginating,
     isRepaginating,
+    fullscreenCacheReady,
   ])
 
   useEffect(() => {
@@ -4262,7 +4434,7 @@ export default function BookViewer({
   }, [bookDocument?.id])
 
   useEffect(() => {
-    if (isPaginating || pages.length === 0 || !bookmarkPage) {
+    if (isPaginating || pages.length === 0 || !bookmarkDisplayPage) {
       return undefined
     }
 
@@ -4273,8 +4445,8 @@ export default function BookViewer({
     let retriesLeft = 30
 
     const isOnBookmarkPage =
-      leftPage?.pageNumber === bookmarkPage ||
-      rightPage?.pageNumber === bookmarkPage
+      leftPage?.pageNumber === bookmarkDisplayPage ||
+      rightPage?.pageNumber === bookmarkDisplayPage
 
     const measureBookmarkPosition = () => {
       if (bookmarkHidden) {
@@ -4288,7 +4460,7 @@ export default function BookViewer({
       }
 
       const anchorElement =
-        leftPage?.pageNumber === bookmarkPage
+        leftPage?.pageNumber === bookmarkDisplayPage
           ? leftPageFaceRef.current
           : rightPageFaceRef.current
 
@@ -4333,6 +4505,7 @@ export default function BookViewer({
     }
   }, [
     bookmarkPage,
+    bookmarkDisplayPage,
     bookmarkHidden,
     isPaginating,
     isRepaginating,

@@ -483,7 +483,7 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
 
 export default function Library() {
   const navigate = useNavigate()
-  const { getToken, isSignedIn } = useAuth()
+  const { getToken, isSignedIn, userId } = useAuth()
   const { openSignIn } = useClerk()
   const [documents, setDocuments] = useState([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -493,35 +493,75 @@ export default function Library() {
   const getTokenRef = useRef(getToken)
   getTokenRef.current = getToken
 
-  const fetchDocuments = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+  const libraryCacheKey = userId ? `booky-library-${userId}` : null
 
+  const readCachedDocuments = useCallback(() => {
+    if (!libraryCacheKey) return null
     try {
-      const token = await getToken()
-      if (!token) throw new Error("Unauthorized")
-      const response = await fetch(`${API_URL}/documents`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      })
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || "Failed to fetch documents")
-      }
-
-      setDocuments(data.documents ?? [])
-    } catch (fetchError) {
-      setError(
-        fetchError instanceof Error ? fetchError.message : "Failed to fetch documents"
-      )
-      setDocuments([])
-    } finally {
-      setLoading(false)
+      const raw = localStorage.getItem(libraryCacheKey)
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : null
+    } catch {
+      return null
     }
-  }, [getToken])
+  }, [libraryCacheKey])
+
+  const writeCachedDocuments = useCallback(
+    (docs) => {
+      if (!libraryCacheKey) return
+      try {
+        localStorage.setItem(libraryCacheKey, JSON.stringify(docs))
+      } catch {
+        // Ignore storage write errors (quota, private mode, etc.).
+      }
+    },
+    [libraryCacheKey]
+  )
+
+  const fetchDocuments = useCallback(
+    async ({ background = false } = {}) => {
+      if (!background) {
+        setLoading(true)
+      }
+      setError(null)
+
+      try {
+        const token = await getToken()
+        if (!token) throw new Error("Unauthorized")
+        const response = await fetch(`${API_URL}/documents`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        })
+        const data = await response.json()
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || "Failed to fetch documents")
+        }
+
+        const docs = data.documents ?? []
+        setDocuments(docs)
+        writeCachedDocuments(docs)
+      } catch (fetchError) {
+        // Keep showing cached documents on a background refresh failure.
+        if (!background) {
+          setError(
+            fetchError instanceof Error
+              ? fetchError.message
+              : "Failed to fetch documents"
+          )
+          setDocuments([])
+        }
+      } finally {
+        if (!background) {
+          setLoading(false)
+        }
+      }
+    },
+    [getToken, writeCachedDocuments]
+  )
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -530,8 +570,17 @@ export default function Library() {
       setDocuments([])
       return
     }
-    fetchDocuments()
-  }, [fetchDocuments, isSignedIn, reloadKey])
+
+    // Show cached documents instantly (stale-while-revalidate), then refresh.
+    const cached = readCachedDocuments()
+    if (cached && cached.length > 0) {
+      setDocuments(cached)
+      setLoading(false)
+      fetchDocuments({ background: true })
+    } else {
+      fetchDocuments()
+    }
+  }, [fetchDocuments, isSignedIn, reloadKey, readCachedDocuments])
 
   const handleParseReady = useCallback((documentId) => {
     setReloadKey((key) => key + 1)
@@ -604,6 +653,14 @@ export default function Library() {
       current.map((doc) => (doc.id === documentId ? { ...doc, name: newName } : doc))
     )
   }, [])
+
+  // Keep the offline/instant cache in sync after local edits (delete, rename).
+  useEffect(() => {
+    if (!isSignedIn || loading || error) {
+      return
+    }
+    writeCachedDocuments(documents)
+  }, [documents, isSignedIn, loading, error, writeCachedDocuments])
 
   const filteredDocuments = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
