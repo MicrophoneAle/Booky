@@ -474,7 +474,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  --page-footer-reserve: 14px;
+  --page-footer-reserve: 22px;
 }
 
 .book-page::after {
@@ -1318,7 +1318,7 @@ ol.book-page__list {
 
 @media (max-width: 767px) {
   .book-page:not(.book-page--mobile-fs) {
-    --page-footer-reserve: 14px;
+    --page-footer-reserve: 22px;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     box-sizing: border-box;
   }
@@ -1434,6 +1434,6 @@ ol.book-page__list {
 
 .book-viewer__measure-footer {
   flex-shrink: 0;
-  height: 14px;
+  height: 22px;
   margin: 0;
 }
