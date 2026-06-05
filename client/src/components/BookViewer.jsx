@@ -40,10 +40,11 @@ const PAGE_NUMBER_RESERVED_PX = PAGE_FOOTER_RESERVE_PX
 const BODY_DESCENDER_PAD_PX = 6
 const PAGE_CONTENT_FIT_BUFFER_PX = 2
 const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 1
-const MOBILE_BROWSER_UI_PX = 40
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
-const MOBILE_PAGE_NUMBER_RESERVED_PX =
-  PAGE_NUMBER_RESERVED_PX + MOBILE_BROWSER_UI_PX + MOBILE_PAGE_NUMBER_GAP_PX
+/** Matches 059e9ea mobile footer reserve for non-fullscreen pagination. */
+const MOBILE_PAGE_NUMBER_RESERVED_PX = 52
+const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX =
+  PAGE_NUMBER_RESERVED_PX + MOBILE_PAGE_NUMBER_GAP_PX
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
 const BODY_BOTTOM_PADDING_PX = 3
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
@@ -53,7 +54,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 2
+const PAGINATION_MEASUREMENT_VERSION = 3
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 const PAGINATION_CACHE_MAX_ENTRIES = 3
@@ -123,12 +124,29 @@ function buildPaginationCacheKey(
   ].join("|")
 }
 
+function getMobileFullscreenViewportSize() {
+  const visualViewport = window.visualViewport
+  return {
+    width: Math.max(1, visualViewport?.width ?? window.innerWidth),
+    height: Math.max(1, visualViewport?.height ?? window.innerHeight),
+  }
+}
+
+/** Page height so width-first scaling fills the visual viewport without clipping. */
 function getMobileFullscreenPageHeightPx() {
-  const viewportHeight = window.visualViewport?.height ?? window.innerHeight
-  return Math.max(
-    MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX,
-    Math.round(viewportHeight)
-  )
+  const { width, height } = getMobileFullscreenViewportSize()
+  const widthScale = width / PAGE_WIDTH_PX
+  const pageHeight = Math.round(height / widthScale)
+  return Math.max(MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX, pageHeight)
+}
+
+function getMobileFullscreenDisplayScale(availW, availH, pageHeight) {
+  const widthScale = availW / PAGE_WIDTH_PX
+  const scaledHeight = pageHeight * widthScale
+  if (scaledHeight > availH + PAGE_FIT_OVERFLOW_TOLERANCE_PX) {
+    return availH / pageHeight
+  }
+  return widthScale
 }
 
 /** Single source of truth for cache key — same inputs at read and write. */
@@ -477,7 +495,7 @@ function bodyContentFitsPage(bodyEl, fitHeight) {
 
 function getPageNumberReservedPx(isMobileViewport, mobileFullscreen = false) {
   if (mobileFullscreen) {
-    return PAGE_NUMBER_RESERVED_PX + MOBILE_PAGE_NUMBER_GAP_PX
+    return MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX
   }
   return isMobileViewport ? MOBILE_PAGE_NUMBER_RESERVED_PX : PAGE_NUMBER_RESERVED_PX
 }
@@ -2544,6 +2562,7 @@ export default function BookViewer({
   const isMobileFullscreenLayoutRef = useRef(false)
   const [viewportRevision, setViewportRevision] = useState(0)
   const lastPaginatedViewportRevisionRef = useRef(0)
+  const lastPaginatedMobileFullscreenRef = useRef(false)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
@@ -2588,6 +2607,7 @@ export default function BookViewer({
   useEffect(() => {
     prevPaginationSettingsRef.current = null
     lastPaginatedViewportRevisionRef.current = 0
+    lastPaginatedMobileFullscreenRef.current = false
     hasDisplayedBookRef.current = false
     openingPaginationStartedRef.current = false
     openingPaginationInFlightRef.current = false
@@ -2752,6 +2772,7 @@ export default function BookViewer({
       if (isFinal) {
         prevPaginationSettingsRef.current = paginationSettings
         lastPaginatedViewportRevisionRef.current = viewportRevision
+        lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
       }
     }
 
@@ -2774,8 +2795,19 @@ export default function BookViewer({
       displayedPagesCountRef.current > 0 &&
       viewportRevision !== lastPaginatedViewportRevisionRef.current
 
+    const mobileFullscreenLayoutChanged =
+      hasDisplayedBookRef.current &&
+      displayedPagesCountRef.current > 0 &&
+      lastPaginatedMobileFullscreenRef.current !== isMobileFullscreen
+
     const repaginationNeeded =
-      layoutRepaginationNeeded || viewportRepaginationNeeded
+      layoutRepaginationNeeded ||
+      viewportRepaginationNeeded ||
+      mobileFullscreenLayoutChanged
+
+    const preserveReadingPageRepagination =
+      (viewportRepaginationNeeded || mobileFullscreenLayoutChanged) &&
+      !layoutRepaginationNeeded
 
     // Opening cache read FIRST — before theme/layout guards (cache is optional).
     const tryApplyOpeningCache = () => {
@@ -2810,6 +2842,7 @@ export default function BookViewer({
       maxLoadingProgressRef.current = 100
       prevPaginationSettingsRef.current = paginationSettings
       lastPaginatedViewportRevisionRef.current = viewportRevision
+      lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
       return true
     }
 
@@ -2825,6 +2858,7 @@ export default function BookViewer({
       isThemeOnlyPaginationChange(previousPaginationSettings, paginationSettings)
     ) {
       prevPaginationSettingsRef.current = paginationSettings
+      lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
       setIsRepaginating(false)
       return undefined
     }
@@ -2833,10 +2867,11 @@ export default function BookViewer({
       previousPaginationSettings &&
       hasDisplayedBookRef.current &&
       layoutPaginationSettingsEqual(previousPaginationSettings, paginationSettings) &&
-      !viewportRepaginationNeeded
+      !repaginationNeeded
     ) {
       prevPaginationSettingsRef.current = paginationSettings
       lastPaginatedViewportRevisionRef.current = viewportRevision
+      lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
       setIsRepaginating(false)
       return undefined
     }
@@ -2924,7 +2959,13 @@ export default function BookViewer({
       measureElements.body.style.maxHeight = `${contentMaxHeight}px`
       measureElements.body.style.minHeight = `${contentMaxHeight}px`
       measureElements.body.style.overflow = "hidden"
-      measureElements.footer.style.display = "none"
+      if (mobileViewport && !mobileFS) {
+        measureElements.footer.style.display = "block"
+        measureElements.footer.style.height = `${pageNumberReservedPx}px`
+        measureElements.footer.style.flexShrink = "0"
+      } else {
+        measureElements.footer.style.display = "none"
+      }
 
       const font = FONT_SIZE_MAP[paginationSettings.fontSize] ?? FONT_SIZE_MAP.medium
       const line =
@@ -3177,7 +3218,12 @@ export default function BookViewer({
 
       const applyOptions = isTypesettingReload
         ? { isFinal: true, anchorPrefix, oldPage, oldTotal }
-        : { isFinal: true, preservePage: resolveOpeningBookmarkPage() }
+        : preserveReadingPageRepagination
+          ? {
+              isFinal: true,
+              preservePage: currentPageRef.current,
+            }
+          : { isFinal: true, preservePage: resolveOpeningBookmarkPage() }
 
       const finalPages = finishMeasurement(
         cumulativePages,
@@ -3277,6 +3323,7 @@ export default function BookViewer({
     paginationSettings,
     progressHydrated,
     viewportRevision,
+    isMobileFullscreen,
     normalizeBookmarkPage,
   ])
 
@@ -3343,10 +3390,9 @@ export default function BookViewer({
         : PAGE_WIDTH_PX
       const naturalH = activePageHeight
       const fitScale = Math.min(availW / naturalW, availH / naturalH)
-      const fillScale = Math.max(availW / naturalW, availH / naturalH)
       const next =
         isMobile && isMobileFullscreen
-          ? fillScale
+          ? getMobileFullscreenDisplayScale(availW, availH, naturalH)
           : fitScale
       setScale(next > 0 && Number.isFinite(next) ? next : 1)
     }
@@ -3380,6 +3426,35 @@ export default function BookViewer({
 
     setViewportRevision((revision) => revision + 1)
     return undefined
+  }, [isMobile])
+
+  useEffect(() => {
+    if (
+      !hasDisplayedBookRef.current ||
+      displayedPagesCountRef.current === 0 ||
+      !isMobile ||
+      !isMobileFullscreen
+    ) {
+      return undefined
+    }
+
+    let debounceTimer = null
+    const scheduleViewportRepagination = () => {
+      clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(() => {
+        setViewportRevision((revision) => revision + 1)
+      }, 150)
+    }
+
+    const visualViewport = window.visualViewport
+    visualViewport?.addEventListener("resize", scheduleViewportRepagination)
+    window.addEventListener("orientationchange", scheduleViewportRepagination)
+
+    return () => {
+      clearTimeout(debounceTimer)
+      visualViewport?.removeEventListener("resize", scheduleViewportRepagination)
+      window.removeEventListener("orientationchange", scheduleViewportRepagination)
+    }
   }, [isMobile, isMobileFullscreen])
 
   useEffect(() => {
