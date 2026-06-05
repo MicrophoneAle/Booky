@@ -1,5 +1,6 @@
 import "dotenv/config"
 import path from "node:path"
+import zlib from "node:zlib"
 import { fileURLToPath } from "node:url"
 import express from "express"
 import cors from "cors"
@@ -8,7 +9,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 37
+const PARSER_VERSION = 38
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
@@ -641,6 +642,441 @@ const CHAPTER_NUMBER_REGEX =
   /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
 
 const CHAPTER_HEADING_MIN_FONT_SIZE = 12.5
+const CHAPTER_DISPLAY_FONT_SIZE = 15
+
+const PUA_PRIVATE_USE_START = 0xe000
+const PUA_PRIVATE_USE_END = 0xf8ff
+const PUA_DIGIT_BLOCK_START = 0xf643
+const PUA_LETTER_BLOCK_START = 0xf761
+const PUA_LETTER_BLOCK_END = 0xf77a
+const PRINTED_TOC_SCAN_LINE_LIMIT = 250
+const SCENE_BREAK_DIVIDER_TEXT = "* * *"
+const CHAPTER_TITLE_TAIL_WORD_REGEX = /^[A-Z][A-Z\-']{1,18}\.?$/
+
+const PUA_LIGATURE_FALLBACK_REPLACEMENTS = new Map([
+  [0xe002, "Th"],
+  [0xe053, "Th"],
+  [0xe076, "ct"],
+  [0xf653, "s"],
+])
+
+function isPuaCodePoint(codePoint) {
+  return codePoint >= PUA_PRIVATE_USE_START && codePoint <= PUA_PRIVATE_USE_END
+}
+
+function parseHexCodePoint(token) {
+  const value = Number.parseInt(String(token ?? "").replace(/[<>]/g, ""), 16)
+  return Number.isFinite(value) ? value : null
+}
+
+function parseToUnicodeCMapText(cmapText) {
+  const sourceToDestination = new Map()
+
+  const bfcharBlocks = cmapText.matchAll(
+    /(\d+)\s+beginbfchar([\s\S]*?)endbfchar/g
+  )
+  for (const block of bfcharBlocks) {
+    for (const line of block[2].split(/\r?\n/)) {
+      const match = line.trim().match(/^<([0-9A-Fa-f]+)>\s+<([0-9A-Fa-f]+)>$/)
+      if (!match) {
+        continue
+      }
+      const source = parseHexCodePoint(match[1])
+      const destination = parseHexCodePoint(match[2])
+      if (source != null && destination != null) {
+        sourceToDestination.set(source, destination)
+      }
+    }
+  }
+
+  const bfrangeBlocks = cmapText.matchAll(
+    /(\d+)\s+beginbfrange([\s\S]*?)endbfrange/g
+  )
+  for (const block of bfrangeBlocks) {
+    for (const line of block[2].split(/\r?\n/)) {
+      const match = line
+        .trim()
+        .match(/^<([0-9A-Fa-f]+)>\s+<([0-9A-Fa-f]+)>\s+<([0-9A-Fa-f]+)>$/)
+      if (!match) {
+        continue
+      }
+      const sourceStart = parseHexCodePoint(match[1])
+      const sourceEnd = parseHexCodePoint(match[2])
+      const destinationStart = parseHexCodePoint(match[3])
+      if (
+        sourceStart == null ||
+        sourceEnd == null ||
+        destinationStart == null
+      ) {
+        continue
+      }
+      const span = sourceEnd - sourceStart
+      for (let offset = 0; offset <= span; offset += 1) {
+        sourceToDestination.set(sourceStart + offset, destinationStart + offset)
+      }
+    }
+  }
+
+  return sourceToDestination
+}
+
+function extractToUnicodeCMapTextsFromPdfBuffer(buffer) {
+  const pdfText = Buffer.from(buffer).toString("latin1")
+  const cmapTexts = []
+  const streamRegex =
+    /(\d+) 0 obj\s*<<([\s\S]*?)>>\s*stream\r?\n([\s\S]*?)\r?\nendstream/g
+
+  for (const match of pdfText.matchAll(streamRegex)) {
+    const body = match[2]
+    const raw = Buffer.from(match[3], "latin1")
+    let decoded = raw
+    if (/\/Filter\s*\/FlateDecode/.test(body)) {
+      try {
+        decoded = zlib.inflateSync(raw)
+      } catch {
+        continue
+      }
+    }
+    const text = decoded.toString("utf8")
+    if (text.includes("begincmap")) {
+      cmapTexts.push(text)
+    }
+  }
+
+  return cmapTexts
+}
+
+function buildPuaReplacementMapFromCMaps(buffer) {
+  const replacementByPua = new Map()
+  const cmapTexts = extractToUnicodeCMapTextsFromPdfBuffer(buffer)
+
+  for (const cmapText of cmapTexts) {
+    const sourceToDestination = parseToUnicodeCMapText(cmapText)
+    for (const destination of sourceToDestination.values()) {
+      if (!isPuaCodePoint(destination)) {
+        continue
+      }
+
+      if (
+        destination >= PUA_DIGIT_BLOCK_START &&
+        destination <= PUA_DIGIT_BLOCK_START + 9
+      ) {
+        replacementByPua.set(
+          destination,
+          String(destination - PUA_DIGIT_BLOCK_START)
+        )
+        continue
+      }
+
+      if (
+        destination >= PUA_LETTER_BLOCK_START &&
+        destination <= PUA_LETTER_BLOCK_END
+      ) {
+        replacementByPua.set(
+          destination,
+          String.fromCharCode(
+            "a".charCodeAt(0) + (destination - PUA_LETTER_BLOCK_START)
+          )
+        )
+      }
+    }
+  }
+
+  return replacementByPua
+}
+
+function buildDefaultPuaReplacementMap(buffer = null) {
+  const replacementByPua = buffer
+    ? buildPuaReplacementMapFromCMaps(buffer)
+    : new Map()
+
+  for (let digit = 0; digit <= 9; digit += 1) {
+    replacementByPua.set(PUA_DIGIT_BLOCK_START + digit, String(digit))
+  }
+
+  for (let offset = 0; offset <= PUA_LETTER_BLOCK_END - PUA_LETTER_BLOCK_START; offset += 1) {
+    replacementByPua.set(
+      PUA_LETTER_BLOCK_START + offset,
+      String.fromCharCode("a".charCodeAt(0) + offset)
+    )
+  }
+
+  for (const [codePoint, replacement] of PUA_LIGATURE_FALLBACK_REPLACEMENTS) {
+    replacementByPua.set(codePoint, replacement)
+  }
+
+  return replacementByPua
+}
+
+function isSceneBreakOrnamentLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 24) {
+    return false
+  }
+
+  const tokens = trimmed.split(/\s+/).filter(Boolean)
+  if (tokens.length < 1 || tokens.length > 5) {
+    return false
+  }
+
+  const glyphs = tokens.flatMap((token) => [...token])
+  if (glyphs.length < 2 || glyphs.length > 5) {
+    return false
+  }
+
+  const codePoints = glyphs.map((glyph) => glyph.codePointAt(0))
+  if (!codePoints.every((codePoint) => isPuaCodePoint(codePoint))) {
+    return false
+  }
+
+  return new Set(codePoints).size === 1
+}
+
+function normalizePuaGlyphs(text, replacementByPua) {
+  if (!text) {
+    return ""
+  }
+
+  let normalized = ""
+  for (const glyph of text) {
+    const codePoint = glyph.codePointAt(0)
+    if (!isPuaCodePoint(codePoint)) {
+      normalized += glyph
+      continue
+    }
+
+    const replacement = replacementByPua.get(codePoint)
+    if (replacement != null) {
+      normalized += replacement
+      continue
+    }
+
+    // Drop unmapped PUA so it never renders as a tofu square.
+  }
+
+  return normalized
+}
+
+function isPrintedTocHeading(text) {
+  const trimmed = (text ?? "").trim()
+  return /^(?:contents|table of contents)$/i.test(trimmed)
+}
+
+function isPrintedTocEntryLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (isPrintedTocHeading(trimmed)) {
+    return true
+  }
+  if (isTocChapterListingLine(trimmed)) {
+    return true
+  }
+  if (isTocDenseListingLine(trimmed)) {
+    return true
+  }
+  if (isTocPageReferenceLine(trimmed)) {
+    return true
+  }
+
+  // Printed front-matter lists like "I. Loomings" / "XLII. The Chart 162".
+  if (
+    /^(?:[IVXLCDM]{1,4}|\d{1,3})\.\s+\S/.test(trimmed) &&
+    !/^chapter\b/i.test(trimmed)
+  ) {
+    return true
+  }
+
+  return false
+}
+
+function isWrappedChapterTitleFragment(block) {
+  const text = (block?.text ?? "").trim()
+  if (!text || !block?.isHeading) {
+    return false
+  }
+  if (parseChapterOnlyHeading(text)) {
+    return false
+  }
+  if (CHAPTER_WITH_SUBTITLE_REGEX.test(text)) {
+    return false
+  }
+  if (isPrintedTocEntryLine(text)) {
+    return false
+  }
+
+  const letters = text.replace(/[^A-Za-z]/g, "")
+  if (
+    letters.length >= 4 &&
+    letters === letters.toUpperCase() &&
+    !/[.!?]\s*$/.test(text)
+  ) {
+    return true
+  }
+
+  if ((block.fontSize ?? 0) >= HEADING_STRING_MIN_FONT_SIZE) {
+    const words = text.split(/\s+/).filter(Boolean)
+    if (words.length <= 24 && text.length <= 160 && !isNarrativeSentenceLine(text)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function mergeMultilineChapterTitleBlocks(blocks) {
+  const merged = []
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    const parts = parseChapterOnlyHeading(block.text)
+
+    if (!parts) {
+      merged.push(block)
+      continue
+    }
+
+    const titleFragments = []
+    let cursor = index + 1
+    while (cursor < blocks.length && isWrappedChapterTitleFragment(blocks[cursor])) {
+      titleFragments.push((blocks[cursor].text ?? "").trim())
+      cursor += 1
+    }
+
+    const rawSubtitle = titleFragments.join(" ").replace(/\s+/g, " ").trim()
+    const subtitle = rawSubtitle ? formatInferredTitleText(rawSubtitle) : ""
+    const displayTitle = formatChapterLabel(parts.kind, parts.number, subtitle)
+
+    merged.push({
+      ...block,
+      text: displayTitle,
+      chapterTitle: displayTitle,
+      fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+      isHeading: true,
+      isChapterStart: true,
+    })
+    index = cursor - 1
+  }
+
+  return merged
+}
+
+function isTrailingChapterTitleFragment(block) {
+  const text = (block?.text ?? "").trim()
+  if (!text || !block?.isHeading) {
+    return false
+  }
+  if (CHAPTER_WITH_SUBTITLE_REGEX.test(text) || parseChapterOnlyHeading(text)) {
+    return false
+  }
+
+  const letters = text.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 4) {
+    return false
+  }
+
+  return (
+    letters === letters.toUpperCase() &&
+    text.length <= 120 &&
+    !isNarrativeSentenceLine(text)
+  )
+}
+
+function parseChapterLabelWithOnPageTitle(text) {
+  const trimmed = (text ?? "").trim()
+  const match = trimmed.match(/^(chapter|letter)\s+([ivxlcdm\d]+)\.\s+(.+)$/i)
+  if (!match) {
+    return null
+  }
+  return { kind: match[1], number: match[2], title: match[3].trim() }
+}
+
+function mergeInlineChapterLabelTitles(blocks) {
+  const merged = []
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    const parts = parseChapterLabelWithOnPageTitle(block.text)
+
+    if (!block.isHeading || !parts) {
+      merged.push(block)
+      continue
+    }
+
+    const tailFragments = []
+    let cursor = index + 1
+    while (cursor < blocks.length && isTrailingChapterTitleFragment(blocks[cursor])) {
+      tailFragments.push((blocks[cursor].text ?? "").trim())
+      cursor += 1
+    }
+
+    const subtitle = formatInferredTitleText(
+      [parts.title, ...tailFragments].join(" ").replace(/\s+/g, " ").trim()
+    )
+    const displayTitle = formatChapterLabel(parts.kind, parts.number, subtitle)
+    merged.push({
+      ...block,
+      text: displayTitle,
+      chapterTitle: displayTitle,
+      fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+      isHeading: true,
+      isChapterStart: true,
+    })
+    index = cursor - 1
+  }
+
+  return merged
+}
+
+function mergeTrailingChapterTitleFragments(blocks) {
+  const merged = []
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    const text = (block.text ?? "").trim()
+
+    if (
+      block.isHeading &&
+      (CHAPTER_WITH_SUBTITLE_REGEX.test(text) || parseChapterOnlyHeading(text))
+    ) {
+      const tailFragments = []
+      let cursor = index + 1
+
+      while (cursor < blocks.length && isTrailingChapterTitleFragment(blocks[cursor])) {
+        tailFragments.push((blocks[cursor].text ?? "").trim())
+        cursor += 1
+      }
+
+      if (tailFragments.length > 0) {
+        const match = text.match(
+          /^(chapter|letter)\s+(\S+)\s*-\s*(.*)$/i
+        )
+        if (match) {
+          const label = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase()
+          const combinedSubtitle = formatInferredTitleText(
+            `${match[3]} ${tailFragments.join(" ")}`.replace(/\s+/g, " ").trim()
+          )
+          const displayTitle = `${label} ${match[2]} - ${combinedSubtitle}`
+          merged.push({
+            ...block,
+            text: displayTitle,
+            chapterTitle: displayTitle,
+            fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+            isHeading: true,
+            isChapterStart: true,
+          })
+          index = cursor - 1
+          continue
+        }
+      }
+    }
+
+    merged.push(block)
+  }
+
+  return merged
+}
 
 function slugify(text) {
   return text
@@ -1406,14 +1842,22 @@ function joinWrappedText(left, right) {
   return `${leftText} ${rightText}`.replace(/\s+/g, " ").trim()
 }
 
-function normalizeExtractedText(text) {
+function normalizeExtractedText(text, options = {}) {
   if (!text) {
     return ""
   }
 
+  if (options.isLine && isSceneBreakOrnamentLine(text)) {
+    return SCENE_BREAK_DIVIDER_TEXT
+  }
+
+  const puaNormalized = options.puaReplacementMap
+    ? normalizePuaGlyphs(text, options.puaReplacementMap)
+    : text
+
   return stripInlineArtifacts(
     joinSplitWordFragments(
-      repairEpistolaryPdfArtifacts(text)
+      repairEpistolaryPdfArtifacts(puaNormalized)
         .replace(/\u00AD/g, "")
         .replace(/\b([a-zA-Z]{2,})-\s+([a-z])/g, "$1$2")
         .replace(/\bfi\s+(?=[a-z])/gi, "fi")
@@ -1557,6 +2001,17 @@ function dropMarginCalloutLines(lines) {
       }
 
       if (line.centered) {
+        return true
+      }
+
+      if (isSceneBreakOrnamentLine(text)) {
+        return true
+      }
+
+      if (
+        CHAPTER_TITLE_TAIL_WORD_REGEX.test(text) &&
+        (line.fontSize ?? 0) >= HEADING_STRING_MIN_FONT_SIZE
+      ) {
         return true
       }
 
@@ -1858,6 +2313,16 @@ function shouldDropExtractedLine(
   if (!trimmed) {
     return true
   }
+  if (isSceneBreakOrnamentLine(trimmed)) {
+    return false
+  }
+  if (
+    /^[A-Z]{2,8}\.?$/.test(trimmed) &&
+    distinctPageCount <= 1 &&
+    !CHAPTER_PATTERN.test(trimmed)
+  ) {
+    return false
+  }
   if (STANDALONE_PAGE_NUMBER_REGEX.test(trimmed)) {
     return true
   }
@@ -2125,6 +2590,9 @@ async function extractPdfPageLines(pdf, pageNumber, headingStrings) {
 
     for (const line of rawLines) {
       line.indented = line.x > medianX + INDENT_THRESHOLD_PX
+      if (isSceneBreakOrnamentLine(line.text)) {
+        line.centered = true
+      }
     }
 
     annotateLinesCentered(rawLines)
@@ -2136,13 +2604,14 @@ async function extractPdfPageLines(pdf, pageNumber, headingStrings) {
   }
 }
 
-async function extractPdfStructure(buffer, { onPageProcessed } = {}) {
+async function extractPdfStructure(buffer, { onPageProcessed, puaReplacementMap } = {}) {
   const loadingTask = getDocument({
     data: new Uint8Array(buffer),
     disableFontFace: true,
     useSystemFonts: false,
   })
   const pdf = await loadingTask.promise
+  const puaMap = puaReplacementMap ?? buildDefaultPuaReplacementMap(buffer)
   const headingStrings = new Set()
   const pdfInfo = await readPdfInfo(pdf)
   const totalPages = pdf.numPages
@@ -2225,15 +2694,20 @@ async function extractPdfStructure(buffer, { onPageProcessed } = {}) {
         continue
       }
 
-      const cleanedText = normalizeExtractedText(line.text)
+      const cleanedText = normalizeExtractedText(line.text, {
+        puaReplacementMap: puaMap,
+        isLine: true,
+      })
       if (!cleanedText) {
         continue
       }
 
+      const isSceneBreak = cleanedText === SCENE_BREAK_DIVIDER_TEXT
+
       lines.push({
         text: cleanedText,
         indented: Boolean(line.indented),
-        centered: Boolean(line.centered),
+        centered: Boolean(line.centered) || isSceneBreak,
         fontSize: line.fontSize,
         y: line.y,
         runs: line.runs ?? [],
@@ -2272,7 +2746,7 @@ function isStandaloneChapterNumber(text, block) {
   return (block.fontSize ?? 0) >= CHAPTER_HEADING_MIN_FONT_SIZE
 }
 
-function qualifiesAsEmittedHeading(text) {
+function qualifiesAsEmittedHeading(text, { fontSize = 0 } = {}) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
     return false
@@ -2290,6 +2764,12 @@ function qualifiesAsEmittedHeading(text) {
     !CHAPTER_PATTERN.test(trimmed) &&
     !STRUCTURAL_HEADING_PREFIX_REGEX.test(trimmed)
   ) {
+    if (
+      fontSize >= HEADING_STRING_MIN_FONT_SIZE &&
+      /^[A-Z]+$/.test(core)
+    ) {
+      return true
+    }
     return false
   }
 
@@ -2304,7 +2784,7 @@ function logHeadingPromotion(text, reasonLabel) {
 
 function pushHeadingBlock(blocks, payload, reasonLabel) {
   const text = (payload.text ?? "").trim()
-  if (!qualifiesAsEmittedHeading(text)) {
+  if (!qualifiesAsEmittedHeading(text, { fontSize: payload.fontSize ?? 0 })) {
     return false
   }
 
@@ -2391,7 +2871,7 @@ const CHAPTER_WITH_SUBTITLE_REGEX =
 function formatChapterLabel(kind, number, subtitle = "") {
   const label = kind.charAt(0).toUpperCase() + kind.slice(1).toLowerCase()
   const base = `${label} ${number}`
-  const trimmedSubtitle = (subtitle ?? "").trim()
+  const trimmedSubtitle = (subtitle ?? "").trim().replace(/[.!?]+\s*$/, "")
   if (trimmedSubtitle) {
     return `${base} - ${trimmedSubtitle}`
   }
@@ -3008,6 +3488,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
   let pendingConnective = null
   let nonEmptyLineIndex = 0
   let index = 0
+  let inPrintedTocSection = false
   const sectionLabelState = { lastRepeatedSectionLabel: null }
 
   while (index < allLines.length) {
@@ -3019,6 +3500,29 @@ function buildBlocksFromLines(pageData, headingStrings) {
     if (isScannerWatermarkLine(text)) {
       index += 1
       continue
+    }
+
+    if (isPrintedTocHeading(text)) {
+      pendingConnective = null
+      inPrintedTocSection = true
+      index += 1
+      continue
+    }
+
+    if (
+      inPrintedTocSection ||
+      (lineIndex < PRINTED_TOC_SCAN_LINE_LIMIT && isPrintedTocEntryLine(text))
+    ) {
+      if (isPrintedTocEntryLine(text)) {
+        pendingConnective = null
+        inPrintedTocSection = true
+        index += 1
+        continue
+      }
+
+      if (inPrintedTocSection) {
+        inPrintedTocSection = false
+      }
     }
 
     if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
@@ -3116,6 +3620,17 @@ function buildBlocksFromLines(pageData, headingStrings) {
         index += 1
         continue
       }
+    }
+
+    if (
+      blockBeforeHeading?.isHeading &&
+      (line.fontSize ?? 0) >= HEADING_STRING_MIN_FONT_SIZE &&
+      CHAPTER_TITLE_TAIL_WORD_REGEX.test(trimmedContinuation)
+    ) {
+      pendingConnective = null
+      blockBeforeHeading.text = joinWrappedText(blockBeforeHeading.text, text)
+      index += 1
+      continue
     }
 
     if (isLikelyChapterNumberLine(text, line)) {
@@ -3548,8 +4063,11 @@ async function parsePdfBuffer(
     percent: 0,
   })
 
+  const puaReplacementMap = buildDefaultPuaReplacementMap(buffer)
+
   const { pageData, headingStrings, numPages, pdfInfo } =
     await extractPdfStructure(buffer, {
+      puaReplacementMap,
       onPageProcessed(pageNumber, totalPages) {
         onPageProcessed?.(pageNumber, totalPages)
 
@@ -3583,7 +4101,10 @@ async function parsePdfBuffer(
   })
 
   let blocks = splitDialogueHeavyBlocks(buildBlocksFromLines(pageData, headingStrings))
+  blocks = mergeMultilineChapterTitleBlocks(blocks)
   blocks = mergeChapterSubtitleBlocks(blocks)
+  blocks = mergeInlineChapterLabelTitles(blocks)
+  blocks = mergeTrailingChapterTitleFragments(blocks)
 
   reportProgress({
     phase: "structuring",
