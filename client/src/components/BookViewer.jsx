@@ -1,5 +1,4 @@
 import {
-  cloneElement,
   Fragment,
   startTransition,
   useCallback,
@@ -38,14 +37,14 @@ const PAGE_HEIGHT_PX = 600
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX = 600
 const SPINE_PX = 1
-const PAGE_FOOTER_RESERVE_PX = 20
+const PAGE_FOOTER_RESERVE_PX = 10
 const PAGE_NUMBER_RESERVED_PX = PAGE_FOOTER_RESERVE_PX
 const BODY_DESCENDER_PAD_PX = 6
 const PAGE_CONTENT_FIT_BUFFER_PX = 2
 const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 1
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
 /** Compact mobile footer reserve (page number line + small breathing room). */
-const MOBILE_PAGE_NUMBER_RESERVED_PX = 16
+const MOBILE_PAGE_NUMBER_RESERVED_PX = 10
 /** Gap above page number + number line in mobile fullscreen. */
 const MOBILE_FULLSCREEN_FOOTER_BLOCK_PX = 8
 /** Bottom inset so the page number sits near the Safari URL bar. */
@@ -74,7 +73,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 11
+const PAGINATION_MEASUREMENT_VERSION = 12
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 /**
@@ -539,12 +538,47 @@ function resolvePageByCharOffset(newPages, targetOffset) {
   return newPages[newPages.length - 1].pageNumber
 }
 
+/** Map a whitespace-stripped offset into the original plain-text string. */
+function mapStrippedOffsetToPlain(plainText, strippedOffset) {
+  let stripped = 0
+  for (let i = 0; i < plainText.length; i += 1) {
+    if (!/\s/.test(plainText[i])) {
+      if (stripped >= strippedOffset) {
+        return i
+      }
+      stripped += 1
+    }
+  }
+  return plainText.length
+}
+
+/** Split prose into sentence spans with start/end indices in the source string. */
+function splitIntoSentenceSpans(text) {
+  const sentences = []
+  const regex = /[^.!?…]+[.!?…]+(?:\s+|$)|[^.!?…]+$/g
+  let match = regex.exec(text)
+  while (match) {
+    const raw = match[0]
+    const trimmed = raw.trim()
+    if (trimmed) {
+      const start = match.index + raw.indexOf(trimmed)
+      sentences.push({
+        text: trimmed,
+        start,
+        end: start + trimmed.length,
+      })
+    }
+    match = regex.exec(text)
+  }
+  return sentences
+}
+
 /**
- * Locates the visual item on `targetPageNumber` that holds the character at
- * `targetOffset` (whitespace-stripped book offset). Used to subtly mark where the
- * previous top sentence landed after a fullscreen swap.
+ * Returns the first full sentence at the reading anchor on `targetPageNumber`.
+ * When the page starts mid-paragraph, skips the partial fragment and marks the
+ * next complete sentence instead.
  */
-function findResumeAnchorItemIndex(newPages, targetPageNumber, targetOffset) {
+function findResumeAnchorSentence(newPages, targetPageNumber, targetOffset) {
   if (!newPages?.length || !Number.isFinite(targetOffset)) {
     return null
   }
@@ -564,19 +598,51 @@ function findResumeAnchorItemIndex(newPages, targetPageNumber, targetOffset) {
   }
 
   const items = targetPage.visualItems ?? []
-  let offsetIntoPage = Math.max(0, targetOffset - cumulative)
+  const offsetIntoPage = Math.max(0, targetOffset - cumulative)
   let itemCumulative = 0
+
   for (let i = 0; i < items.length; i += 1) {
-    const len = visualItemPlainText(items[i]).trim().replace(/\s+/g, "").length
-    if (len === 0) {
+    const plain = visualItemPlainText(items[i])
+    const strippedLen = plain.replace(/\s+/g, "").length
+    if (strippedLen === 0) {
       continue
     }
-    if (offsetIntoPage < itemCumulative + len) {
-      return i
+
+    if (offsetIntoPage < itemCumulative + strippedLen) {
+      const offsetInItem = offsetIntoPage - itemCumulative
+      const plainOffset = mapStrippedOffsetToPlain(plain, offsetInItem)
+      const sentences = splitIntoSentenceSpans(plain)
+      if (sentences.length === 0) {
+        return null
+      }
+
+      const pageStartsMidItem = offsetInItem > 0
+      if (pageStartsMidItem) {
+        const nextFull = sentences.find((sentence) => sentence.start >= plainOffset)
+        if (nextFull) {
+          return { itemIndex: i, sentenceText: nextFull.text }
+        }
+        return null
+      }
+
+      const containing = sentences.find(
+        (sentence) => plainOffset >= sentence.start && plainOffset < sentence.end
+      )
+      if (containing) {
+        return { itemIndex: i, sentenceText: containing.text }
+      }
+
+      const following = sentences.find((sentence) => sentence.start >= plainOffset)
+      if (following) {
+        return { itemIndex: i, sentenceText: following.text }
+      }
+      return { itemIndex: i, sentenceText: sentences[0].text }
     }
-    itemCumulative += len
+
+    itemCumulative += strippedLen
   }
-  return items.length > 0 ? 0 : null
+
+  return null
 }
 
 /**
@@ -624,17 +690,19 @@ function resolvePageAfterRepagination({
   return 1
 }
 
-function buildPaginationLoadingLabel(percent, isComplete) {
+function buildPaginationLoadingLabel(percent, isComplete, mode = "opening") {
   if (isComplete || percent >= 100) {
-    return "Ready"
+    return mode === "typesetting" ? "Typesetting complete" : "Ready"
   }
   if (percent >= 90) {
-    return "Almost there..."
+    return mode === "typesetting" ? "Finishing typesetting..." : "Almost there..."
   }
   if (percent <= 0) {
-    return "Preparing pages..."
+    return mode === "typesetting" ? "Applying typesetting..." : "Preparing pages..."
   }
-  return `Preparing pages… ${percent}%`
+  return mode === "typesetting"
+    ? `Applying typesetting… ${percent}%`
+    : `Preparing pages… ${percent}%`
 }
 
 function computeOpeningLoadingPercent(
@@ -864,7 +932,47 @@ function proseRunClassName(run) {
   return classes.length > 0 ? classes.join(" ") : undefined
 }
 
-function renderProseContent(item, searchQuery, highlightTracker, activeSearchOccurrence) {
+function wrapResumeSentenceHighlight(content, sentenceText) {
+  if (!sentenceText || typeof content !== "string") {
+    return content
+  }
+
+  const start = content.indexOf(sentenceText)
+  if (start < 0) {
+    return content
+  }
+
+  const end = start + sentenceText.length
+  return (
+    <>
+      {content.slice(0, start)}
+      <mark className="book-page__resume-anchor">{content.slice(start, end)}</mark>
+      {content.slice(end)}
+    </>
+  )
+}
+
+function getItemRenderablePlain(item) {
+  if (item?.runs?.length > 1) {
+    return item.runs.map((run) => run.text).join(" ")
+  }
+  return item.text ?? visualItemPlainText(item)
+}
+
+function renderProseContent(
+  item,
+  searchQuery,
+  highlightTracker,
+  activeSearchOccurrence,
+  resumeSentenceText = null
+) {
+  if (resumeSentenceText) {
+    const plain = getItemRenderablePlain(item)
+    if (plain.includes(resumeSentenceText)) {
+      return wrapResumeSentenceHighlight(plain, resumeSentenceText)
+    }
+  }
+
   if (item?.runs?.length > 1) {
     return item.runs.map((run, runIndex) => (
       <Fragment key={`run-${runIndex}`}>
@@ -2519,7 +2627,7 @@ function BookPageContent({
   settings,
   searchQuery = "",
   activeSearchOccurrence = null,
-  highlightItemIndex = null,
+  highlightResumeSentence = null,
 }) {
   const themeId = settings?.theme ?? DEFAULT_SETTINGS.theme
   const pageClassName = [
@@ -2643,6 +2751,10 @@ function BookPageContent({
           }
 
           const previousItem = index > 0 ? visualItems[index - 1] : null
+          const sentenceForItem =
+            highlightResumeSentence?.itemIndex === index
+              ? highlightResumeSentence.text
+              : null
 
           return (
             <p key={index} className={proseParagraphClassName(previousItem, item)}>
@@ -2650,27 +2762,14 @@ function BookPageContent({
                 item,
                 searchQuery,
                 highlightTracker,
-                activeSearchOccurrence
+                activeSearchOccurrence,
+                sentenceForItem
               )}
             </p>
           )
           }
 
-          const element = renderItemElement()
-          if (
-            highlightItemIndex != null &&
-            index === highlightItemIndex &&
-            element &&
-            element.type !== Fragment &&
-            element.props
-          ) {
-            return cloneElement(element, {
-              className: [element.props.className, "book-page__resume-anchor"]
-                .filter(Boolean)
-                .join(" "),
-            })
-          }
-          return element
+          return renderItemElement()
         })}
       </div>
 
@@ -3435,7 +3534,12 @@ export default function BookViewer({
         ? 100
         : Math.max(maxLoadingProgressRef.current, safePercent)
       maxLoadingProgressRef.current = monotonicPercent
-      const label = buildPaginationLoadingLabel(monotonicPercent, isComplete)
+      const progressMode = layoutRepaginationNeeded ? "typesetting" : "opening"
+      const label = buildPaginationLoadingLabel(
+        monotonicPercent,
+        isComplete,
+        progressMode
+      )
 
       setLoadingProgress(monotonicPercent)
       setLoadingProgressLabel(label)
@@ -3449,6 +3553,11 @@ export default function BookViewer({
         setIsRepaginating(false)
         setLoadingProgress(0)
         setLoadingProgressLabel("Preparing pages...")
+      } else if (mode === "typesetting") {
+        setIsRepaginating(true)
+        setIsPaginating(false)
+        setLoadingProgress(0)
+        setLoadingProgressLabel("Applying typesetting...")
       } else {
         setIsRepaginating(true)
       }
@@ -3631,7 +3740,13 @@ export default function BookViewer({
 
           maxLoadingProgressRef.current = bumped
           setLoadingProgress(bumped)
-          setLoadingProgressLabel(buildPaginationLoadingLabel(bumped, false))
+          setLoadingProgressLabel(
+            buildPaginationLoadingLabel(
+              bumped,
+              false,
+              isTypesettingReload ? "typesetting" : "opening"
+            )
+          )
         }, 120)
 
         try {
@@ -3785,7 +3900,19 @@ export default function BookViewer({
       )
       persistPaginationCache(finalPages)
 
-      if (isTypesettingReload || isLayoutReload) {
+      if (isTypesettingReload) {
+        maxLoadingProgressRef.current = 100
+        setLoadingProgress(100)
+        setLoadingProgressLabel(buildPaginationLoadingLabel(100, true, "typesetting"))
+        await new Promise((resolve) => {
+          loadingDismissTimerRef.current = setTimeout(resolve, LOADING_READY_DISMISS_MS)
+        })
+        if (!isActiveRun()) {
+          abortRun()
+          return
+        }
+        setIsRepaginating(false)
+      } else if (isLayoutReload) {
         setIsRepaginating(false)
       } else {
         setIsPaginating(false)
@@ -4265,13 +4392,18 @@ export default function BookViewer({
       if (markResumeAnchor) {
         const charOffset =
           anchor && typeof anchor === "object" ? anchor.charOffset : null
-        const itemIndex = findResumeAnchorItemIndex(
+        const anchorSentence = findResumeAnchorSentence(
           layoutBundle.pages,
           targetPage,
           charOffset
         )
-        if (itemIndex != null) {
-          resumeMark = { pageNumber: targetPage, itemIndex, token: Date.now() }
+        if (anchorSentence?.sentenceText) {
+          resumeMark = {
+            pageNumber: targetPage,
+            itemIndex: anchorSentence.itemIndex,
+            sentenceText: anchorSentence.sentenceText,
+            token: Date.now(),
+          }
         }
       }
 
@@ -4800,17 +4932,25 @@ export default function BookViewer({
     !isPaginating &&
     !isRepaginating
 
+  const showTypesettingScreen =
+    isRepaginating && paginationLoadingMode === "typesetting"
+
   if (
     (isPaginating && paginationLoadingMode === "opening") ||
+    showTypesettingScreen ||
     showFullscreenPrepareScreen
   ) {
     const loadingSubtext = showFullscreenPrepareScreen
       ? "Preparing fullscreen…"
-      : "Opening your book..."
+      : showTypesettingScreen
+        ? "Updating layout…"
+        : "Opening your book..."
     const progressValue = showFullscreenPrepareScreen ? 100 : loadingProgress
     const progressLabel = showFullscreenPrepareScreen
       ? "Preparing fullscreen…"
-      : buildPaginationLoadingLabel(loadingProgress, loadingProgress >= 100)
+      : showTypesettingScreen
+        ? loadingProgressLabel
+        : buildPaginationLoadingLabel(loadingProgress, loadingProgress >= 100)
 
     return (
       <div className="reader-screen">
@@ -5088,10 +5228,13 @@ export default function BookViewer({
                       ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
                       : null
                   }
-                  highlightItemIndex={
+                  highlightResumeSentence={
                     resumeHighlight &&
                     leftPage?.pageNumber === resumeHighlight.pageNumber
-                      ? resumeHighlight.itemIndex
+                      ? {
+                          text: resumeHighlight.sentenceText,
+                          itemIndex: resumeHighlight.itemIndex,
+                        }
                       : null
                   }
                 />
@@ -5119,10 +5262,13 @@ export default function BookViewer({
                             ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
                             : null
                         }
-                        highlightItemIndex={
+                        highlightResumeSentence={
                           resumeHighlight &&
                           rightPage?.pageNumber === resumeHighlight.pageNumber
-                            ? resumeHighlight.itemIndex
+                            ? {
+                                text: resumeHighlight.sentenceText,
+                                itemIndex: resumeHighlight.itemIndex,
+                              }
                             : null
                         }
                       />
