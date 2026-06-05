@@ -1,4 +1,5 @@
 import {
+  cloneElement,
   Fragment,
   startTransition,
   useCallback,
@@ -43,10 +44,10 @@ const BODY_DESCENDER_PAD_PX = 6
 const PAGE_CONTENT_FIT_BUFFER_PX = 2
 const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 1
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
-/** Matches 059e9ea mobile footer reserve for non-fullscreen pagination. */
-const MOBILE_PAGE_NUMBER_RESERVED_PX = 52
+/** Compact mobile footer reserve (page number line + small breathing room). */
+const MOBILE_PAGE_NUMBER_RESERVED_PX = 16
 /** Gap above page number + number line in mobile fullscreen. */
-const MOBILE_FULLSCREEN_FOOTER_BLOCK_PX = 16
+const MOBILE_FULLSCREEN_FOOTER_BLOCK_PX = 8
 /** Bottom inset so the page number sits near the Safari URL bar. */
 const MOBILE_FULLSCREEN_BOTTOM_CHROME_PX = 4
 /** Top inset matching .book-page--mobile-fs safe-area padding. */
@@ -73,7 +74,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 10
+const PAGINATION_MEASUREMENT_VERSION = 11
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 /**
@@ -536,6 +537,46 @@ function resolvePageByCharOffset(newPages, targetOffset) {
   }
 
   return newPages[newPages.length - 1].pageNumber
+}
+
+/**
+ * Locates the visual item on `targetPageNumber` that holds the character at
+ * `targetOffset` (whitespace-stripped book offset). Used to subtly mark where the
+ * previous top sentence landed after a fullscreen swap.
+ */
+function findResumeAnchorItemIndex(newPages, targetPageNumber, targetOffset) {
+  if (!newPages?.length || !Number.isFinite(targetOffset)) {
+    return null
+  }
+
+  let cumulative = 0
+  let targetPage = null
+  for (const page of newPages) {
+    if (page.pageNumber === targetPageNumber) {
+      targetPage = page
+      break
+    }
+    cumulative += getPageTextLength(page)
+  }
+
+  if (!targetPage) {
+    return null
+  }
+
+  const items = targetPage.visualItems ?? []
+  let offsetIntoPage = Math.max(0, targetOffset - cumulative)
+  let itemCumulative = 0
+  for (let i = 0; i < items.length; i += 1) {
+    const len = visualItemPlainText(items[i]).trim().replace(/\s+/g, "").length
+    if (len === 0) {
+      continue
+    }
+    if (offsetIntoPage < itemCumulative + len) {
+      return i
+    }
+    itemCumulative += len
+  }
+  return items.length > 0 ? 0 : null
 }
 
 /**
@@ -2478,6 +2519,7 @@ function BookPageContent({
   settings,
   searchQuery = "",
   activeSearchOccurrence = null,
+  highlightItemIndex = null,
 }) {
   const themeId = settings?.theme ?? DEFAULT_SETTINGS.theme
   const pageClassName = [
@@ -2520,6 +2562,7 @@ function BookPageContent({
         }
       >
         {visualItems.map((item, index) => {
+          const renderItemElement = () => {
           if (item.type === "title") {
             return (
               <h1 key={index} className="book-page__title">
@@ -2611,6 +2654,23 @@ function BookPageContent({
               )}
             </p>
           )
+          }
+
+          const element = renderItemElement()
+          if (
+            highlightItemIndex != null &&
+            index === highlightItemIndex &&
+            element &&
+            element.type !== Fragment &&
+            element.props
+          ) {
+            return cloneElement(element, {
+              className: [element.props.className, "book-page__resume-anchor"]
+                .filter(Boolean)
+                .join(" "),
+            })
+          }
+          return element
         })}
       </div>
 
@@ -2918,6 +2978,8 @@ export default function BookViewer({
   const [scale, setScale] = useState(1)
   const [mobileFsDisplayLayout, setMobileFsDisplayLayout] = useState(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [resumeHighlight, setResumeHighlight] = useState(null)
+  const resumeHighlightTimerRef = useRef(null)
 
   const loadSavedSettings = () => {
     try {
@@ -4185,7 +4247,7 @@ export default function BookViewer({
   }, [])
 
   const swapReadingLayout = useCallback(
-    (layoutBundle, anchor, oldPage, oldTotal, { afterSwap } = {}) => {
+    (layoutBundle, anchor, oldPage, oldTotal, { afterSwap, markResumeAnchor } = {}) => {
       if (!layoutBundle?.pages?.length) {
         return
       }
@@ -4199,14 +4261,42 @@ export default function BookViewer({
         normalizeBookmarkPage,
       })
 
+      let resumeMark = null
+      if (markResumeAnchor) {
+        const charOffset =
+          anchor && typeof anchor === "object" ? anchor.charOffset : null
+        const itemIndex = findResumeAnchorItemIndex(
+          layoutBundle.pages,
+          targetPage,
+          charOffset
+        )
+        if (itemIndex != null) {
+          resumeMark = { pageNumber: targetPage, itemIndex, token: Date.now() }
+        }
+      }
+
       startTransition(() => {
         setPages(layoutBundle.pages)
         setChapterPageMap(layoutBundle.chapterMap)
         setPageTextMap(layoutBundle.pageTextMap)
         setCurrentPage(targetPage)
+        if (markResumeAnchor) {
+          setResumeHighlight(resumeMark)
+        }
         afterSwap?.()
         onPageChange?.(targetPage)
       })
+
+      if (markResumeAnchor) {
+        if (resumeHighlightTimerRef.current) {
+          clearTimeout(resumeHighlightTimerRef.current)
+        }
+        if (resumeMark) {
+          resumeHighlightTimerRef.current = setTimeout(() => {
+            setResumeHighlight(null)
+          }, 2800)
+        }
+      }
     },
     [normalizeBookmarkPage, onPageChange]
   )
@@ -4236,7 +4326,7 @@ export default function BookViewer({
       anchor,
       currentPageRef.current,
       pages.length,
-      { afterSwap: () => setIsMobileFullscreen(true) }
+      { afterSwap: () => setIsMobileFullscreen(true), markResumeAnchor: true }
     )
   }, [
     bookDocument,
@@ -4268,9 +4358,18 @@ export default function BookViewer({
       anchor,
       currentPageRef.current,
       pages.length,
-      { afterSwap: () => setIsMobileFullscreen(false) }
+      { afterSwap: () => setIsMobileFullscreen(false), markResumeAnchor: true }
     )
   }, [isMobile, isMobileFullscreen, pages, swapReadingLayout])
+
+  useEffect(
+    () => () => {
+      if (resumeHighlightTimerRef.current) {
+        clearTimeout(resumeHighlightTimerRef.current)
+      }
+    },
+    []
+  )
 
   const handleStageTap = useCallback(() => {
     if (!isMobile) return
@@ -4957,7 +5056,11 @@ export default function BookViewer({
               !showSpreadLayout ? "book-viewer__spread--single" : ""
             }`}
             style={{
-              width: PAGE_WIDTH_PX,
+              // Only force single-page width for the mobile-fullscreen downscale
+              // wrapper. On desktop the CSS width:fit-content must win so the
+              // two-page spread can hold both page slots (otherwise the right
+              // page is clipped by overflow:hidden).
+              width: mobileFsDisplayLayout ? PAGE_WIDTH_PX : undefined,
               height: activePageHeight,
               ...(mobileFsDisplayLayout && mobileFsDisplayLayout.downscale < 1
                 ? {
@@ -4985,6 +5088,12 @@ export default function BookViewer({
                       ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
                       : null
                   }
+                  highlightItemIndex={
+                    resumeHighlight &&
+                    leftPage?.pageNumber === resumeHighlight.pageNumber
+                      ? resumeHighlight.itemIndex
+                      : null
+                  }
                 />
               </div>
             </div>
@@ -5008,6 +5117,12 @@ export default function BookViewer({
                           searchOpen &&
                           searchResults[searchResultIndex]?.pageNumber === rightPage?.pageNumber
                             ? searchResults[searchResultIndex]?.occurrenceOnPage ?? null
+                            : null
+                        }
+                        highlightItemIndex={
+                          resumeHighlight &&
+                          rightPage?.pageNumber === resumeHighlight.pageNumber
+                            ? resumeHighlight.itemIndex
                             : null
                         }
                       />
