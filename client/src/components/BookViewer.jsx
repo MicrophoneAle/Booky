@@ -55,6 +55,17 @@ const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX =
   MOBILE_FULLSCREEN_FOOTER_BLOCK_PX
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
 const BODY_BOTTOM_PADDING_PX = 3
+/**
+ * Exact body (text) height for a mobile-fullscreen page. Kept in lock-step with
+ * the measurement math in getLayoutHeights so the displayed body is the same
+ * height the text was paginated for — no gap above the page number, no clipping.
+ */
+const MOBILE_FULLSCREEN_CONTENT_HEIGHT_PX =
+  MOBILE_FULLSCREEN_PAGE_HEIGHT_PX -
+  MOBILE_FULLSCREEN_TOP_INSET_PX -
+  MOBILE_FULLSCREEN_BOTTOM_CHROME_PX -
+  MOBILE_FULLSCREEN_FOOTER_BLOCK_PX -
+  BODY_BOTTOM_PADDING_PX
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
@@ -65,7 +76,12 @@ const PARSER_VERSION = 37
 const PAGINATION_MEASUREMENT_VERSION = 9
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
-const PAGINATION_CACHE_MAX_ENTRIES = 3
+/**
+ * Each book stores up to two pagination entries (normal + mobile fullscreen),
+ * so this caps roughly the number of fully-cached books. Eviction is grouped by
+ * book to avoid leaving a book half-cached (which would force re-pagination).
+ */
+const PAGINATION_CACHE_MAX_BOOKS = 8
 const READING_ANCHOR_PREFIX_LENGTH = 40
 const LOADING_READY_DISMISS_MS = 150
 
@@ -185,27 +201,50 @@ function readStoredProgressPage(progressKey, initialPage) {
   return Number.isFinite(initialPage) && initialPage > 0 ? initialPage : 1
 }
 
-function evictPaginationCacheIfNeeded() {
+function evictPaginationCacheIfNeeded(exceptBookId = null) {
   try {
     const allKeys = Object.keys(localStorage).filter((key) =>
       key.startsWith(PAGINATION_CACHE_PREFIX)
     )
-    if (allKeys.length < PAGINATION_CACHE_MAX_ENTRIES) {
+
+    // Group cache keys by bookId (second segment of the key).
+    const keysByBook = new Map()
+    for (const key of allKeys) {
+      const bookId = key.split("|")[1]
+      if (!bookId) {
+        continue
+      }
+      if (!keysByBook.has(bookId)) {
+        keysByBook.set(bookId, [])
+      }
+      keysByBook.get(bookId).push(key)
+    }
+
+    const books = [...keysByBook.keys()].filter(
+      (bookId) => bookId !== String(exceptBookId)
+    )
+    if (keysByBook.size <= PAGINATION_CACHE_MAX_BOOKS) {
       return
     }
 
-    const withTs = allKeys.map((key) => ({
-      key,
-      ts: Number(localStorage.getItem(`${PAGINATION_CACHE_TS_PREFIX}${key.split("|")[1]}`) ?? 0),
-    }))
-    withTs.sort((a, b) => a.ts - b.ts)
-    const oldest = withTs[0]
-    if (!oldest) {
-      return
-    }
+    // Oldest books first (by their stored timestamp).
+    books.sort((a, b) => {
+      const tsA = Number(localStorage.getItem(`${PAGINATION_CACHE_TS_PREFIX}${a}`) ?? 0)
+      const tsB = Number(localStorage.getItem(`${PAGINATION_CACHE_TS_PREFIX}${b}`) ?? 0)
+      return tsA - tsB
+    })
 
-    localStorage.removeItem(oldest.key)
-    localStorage.removeItem(`${PAGINATION_CACHE_TS_PREFIX}${oldest.key.split("|")[1]}`)
+    let bookCount = keysByBook.size
+    for (const bookId of books) {
+      if (bookCount <= PAGINATION_CACHE_MAX_BOOKS) {
+        break
+      }
+      for (const key of keysByBook.get(bookId) ?? []) {
+        localStorage.removeItem(key)
+      }
+      localStorage.removeItem(`${PAGINATION_CACHE_TS_PREFIX}${bookId}`)
+      bookCount -= 1
+    }
   } catch {
     // Ignore eviction errors.
   }
@@ -260,7 +299,7 @@ function readPaginationCache(cacheKey, parserVersion) {
 
 function writePaginationCache(cacheKey, bookId, payload) {
   try {
-    evictPaginationCacheIfNeeded()
+    evictPaginationCacheIfNeeded(bookId)
     localStorage.setItem(cacheKey, JSON.stringify(payload))
     localStorage.setItem(`${PAGINATION_CACHE_TS_PREFIX}${bookId}`, String(Date.now()))
   } catch (error) {
@@ -349,15 +388,83 @@ function findPageIndexWithAnchorPrefix(pages, anchorPrefix) {
   return null
 }
 
+/** Concatenated plain text of a page's visual items (stable across page heights). */
+function getPagePlainText(page) {
+  return (page?.visualItems ?? [])
+    .map((item) => visualItemPlainText(item).trim())
+    .filter(Boolean)
+    .join(" ")
+}
+
+/**
+ * Character offset (in the book's concatenated plain text) of the first character
+ * shown on `currentPage`. This is robust to page-height changes because the total
+ * text is identical regardless of where pages break.
+ */
+function getReadingAnchorCharOffset(pages, currentPage) {
+  const startIndex = Math.max(0, currentPage - 1)
+  let offset = 0
+  for (let i = 0; i < startIndex && i < pages.length; i += 1) {
+    const text = getPagePlainText(pages[i])
+    if (text) {
+      offset += text.length + 1
+    }
+  }
+  return offset
+}
+
+/** Find the page whose text range contains `targetOffset` (mirrors the forward walk). */
+function resolvePageByCharOffset(newPages, targetOffset) {
+  if (!Number.isFinite(targetOffset) || targetOffset <= 0 || newPages.length === 0) {
+    return newPages.length > 0 ? newPages[0].pageNumber : 1
+  }
+
+  let cumulative = 0
+  for (let i = 0; i < newPages.length; i += 1) {
+    const text = getPagePlainText(newPages[i])
+    const span = text ? text.length + 1 : 0
+    if (targetOffset < cumulative + span) {
+      return newPages[i].pageNumber
+    }
+    cumulative += span
+  }
+
+  return newPages[newPages.length - 1].pageNumber
+}
+
+/**
+ * Builds a reading anchor capturing both a text prefix and a character offset.
+ * Used to preserve reading position across repagination / fullscreen swaps.
+ */
+function getReadingAnchor(pages, currentPage, isSpreadView) {
+  return {
+    prefix: getReadingAnchorPrefix(pages, currentPage, isSpreadView),
+    charOffset: getReadingAnchorCharOffset(pages, currentPage),
+  }
+}
+
 function resolvePageAfterRepagination({
   newPages,
-  anchorPrefix,
+  anchor,
   oldPage,
   oldTotal,
   isSpreadView,
   normalizeBookmarkPage,
 }) {
-  const matched = findPageIndexWithAnchorPrefix(newPages, anchorPrefix)
+  const prefix = typeof anchor === "string" ? anchor : anchor?.prefix ?? null
+  const charOffset =
+    anchor && typeof anchor === "object" ? anchor.charOffset : null
+
+  // Character-offset matching first — robust both ways (default <-> fullscreen)
+  // and across split paragraphs, where prefix matching can miss.
+  if (Number.isFinite(charOffset) && charOffset > 0 && newPages.length > 0) {
+    const byOffset = resolvePageByCharOffset(newPages, charOffset)
+    if (byOffset) {
+      return normalizeBookmarkPage(byOffset, newPages.length, isSpreadView)
+    }
+  }
+
+  const matched = findPageIndexWithAnchorPrefix(newPages, prefix)
   if (matched) {
     return normalizeBookmarkPage(matched, newPages.length, isSpreadView)
   }
@@ -2279,6 +2386,11 @@ function BookPageContent({
     ? {
         "--page-footer-reserve": `${MOBILE_FULLSCREEN_FOOTER_BLOCK_PX}px`,
         "--mobile-fs-footer-block": `${MOBILE_FULLSCREEN_FOOTER_BLOCK_PX}px`,
+        "--mobile-fs-content-h": `${MOBILE_FULLSCREEN_CONTENT_HEIGHT_PX}px`,
+        "--mobile-fs-top-inset": `${MOBILE_FULLSCREEN_TOP_INSET_PX}px`,
+        "--mobile-fs-bottom-chrome": `${MOBILE_FULLSCREEN_BOTTOM_CHROME_PX}px`,
+        paddingTop: `${MOBILE_FULLSCREEN_TOP_INSET_PX}px`,
+        paddingBottom: `${MOBILE_FULLSCREEN_BOTTOM_CHROME_PX}px`,
       }
     : {
         ...getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins),
@@ -2730,6 +2842,7 @@ export default function BookViewer({
   const [viewportRevision, setViewportRevision] = useState(0)
   const lastPaginatedViewportRevisionRef = useRef(0)
   const lastPaginatedMobileFullscreenRef = useRef(false)
+  const fullscreenSwapAtRef = useRef(0)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
@@ -2898,7 +3011,7 @@ export default function BookViewer({
       {
         isFinal = false,
         preservePage = null,
-        anchorPrefix = null,
+        anchor = null,
         oldPage = null,
         oldTotal = null,
       } = {}
@@ -2922,10 +3035,10 @@ export default function BookViewer({
           return normalizeBookmarkPage(preservePage, maxPage, isSpreadViewForTarget)
         }
 
-        if (anchorPrefix && oldPage && oldTotal) {
+        if (anchor && oldPage && oldTotal) {
           return resolvePageAfterRepagination({
             newPages: measuredPages,
-            anchorPrefix,
+            anchor,
             oldPage,
             oldTotal,
             isSpreadView: isSpreadViewForTarget,
@@ -2988,11 +3101,27 @@ export default function BookViewer({
         paginationSettings
       )
 
+    // Entering/exiting fullscreen makes the browser show/hide its toolbar, which
+    // fires a visualViewport resize. Without this guard, that resize triggers a
+    // full normal-layout repagination right after exit and freezes the reader.
+    const withinFullscreenSwapWindow =
+      Date.now() - fullscreenSwapAtRef.current < 1200
+
     const viewportRepaginationNeeded =
       hasDisplayedBookRef.current &&
       displayedPagesCountRef.current > 0 &&
       viewportRevision !== lastPaginatedViewportRevisionRef.current &&
-      !(viewport.mobile && isMobileFullscreen)
+      !(viewport.mobile && isMobileFullscreen) &&
+      !withinFullscreenSwapWindow
+
+    // Consume any viewport bump that occurred during a fullscreen swap so it does
+    // not fire a delayed repagination once the suppression window elapses.
+    if (
+      withinFullscreenSwapWindow &&
+      viewportRevision !== lastPaginatedViewportRevisionRef.current
+    ) {
+      lastPaginatedViewportRevisionRef.current = viewportRevision
+    }
 
     const mobileFullscreenLayoutChanged =
       hasDisplayedBookRef.current &&
@@ -3014,8 +3143,8 @@ export default function BookViewer({
     const preserveReadingPageRepagination = viewportRepaginationNeeded
 
     const pagesSnapshotForAnchor = pages
-    const layoutAnchorPrefix = repaginationNeeded
-      ? getReadingAnchorPrefix(
+    const layoutAnchor = repaginationNeeded
+      ? getReadingAnchor(
           pagesSnapshotForAnchor,
           currentPageRef.current,
           isSpreadViewForTarget
@@ -3058,10 +3187,31 @@ export default function BookViewer({
       prevPaginationSettingsRef.current = paginationSettings
       lastPaginatedViewportRevisionRef.current = viewportRevision
       lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
+
+      // Warm fullscreen readiness synchronously from cache so reopening is
+      // instant — no "Preparing fullscreen" screen when it was cached before.
+      if (viewport.mobile && !isMobileFullscreen) {
+        const fsCache = readMobileFullscreenCache(bookDocument, paginationSettings)
+        if (fsCache.cached?.pages?.length) {
+          fullscreenLayoutBundleRef.current = buildLayoutBundle(
+            fsCache.cached.pages,
+            bookDocument?.chapters ?? []
+          )
+          initialFullscreenPrepareDoneRef.current = true
+          setFullscreenCacheReady(true)
+        }
+      }
       return true
     }
 
-    if (!openingPaginationInFlightRef.current && !repaginationNeeded) {
+    // Only apply the opening cache during the initial open. Once the book is
+    // displayed, re-applying it would reset the reader to the bookmark page
+    // (e.g. after a fullscreen swap or a suppressed viewport bump).
+    if (
+      !openingPaginationInFlightRef.current &&
+      !repaginationNeeded &&
+      !hasDisplayedBookRef.current
+    ) {
       if (tryApplyOpeningCache()) {
         return undefined
       }
@@ -3217,7 +3367,7 @@ export default function BookViewer({
 
     const runFullPagination = async ({
       loadingMode = "opening",
-      anchorPrefix = null,
+      anchor = null,
       oldPage = null,
       oldTotal = null,
       runId = 0,
@@ -3253,7 +3403,7 @@ export default function BookViewer({
 
         applyMeasuredPages(cleanedPages, {
           isFinal: true,
-          anchorPrefix,
+          anchor,
           oldPage,
           oldTotal,
         })
@@ -3422,11 +3572,11 @@ export default function BookViewer({
       }
 
       const applyOptions = isTypesettingReload
-        ? { isFinal: true, anchorPrefix, oldPage, oldTotal }
+        ? { isFinal: true, anchor, oldPage, oldTotal }
         : preserveReadingPageRepagination || isLayoutReload
           ? {
               isFinal: true,
-              anchorPrefix,
+              anchor,
               oldPage,
               oldTotal,
             }
@@ -3501,14 +3651,14 @@ export default function BookViewer({
     const startLayoutRepagination = () => {
       if (layoutRepaginationNeeded) {
         const pagesSnapshot = pages
-        const anchorPrefix = getReadingAnchorPrefix(
+        const anchor = getReadingAnchor(
           pagesSnapshot,
           currentPageRef.current,
           isSpreadViewForTarget
         )
         void runFullPagination({
           loadingMode: "typesetting",
-          anchorPrefix,
+          anchor,
           oldPage: currentPageRef.current,
           oldTotal: pagesSnapshot.length,
           runId,
@@ -3518,7 +3668,7 @@ export default function BookViewer({
 
       void runFullPagination({
         loadingMode: "layout",
-        anchorPrefix: layoutAnchorPrefix,
+        anchor: layoutAnchor,
         oldPage: layoutOldPage,
         oldTotal: layoutOldTotal,
         runId,
@@ -3863,14 +4013,14 @@ export default function BookViewer({
   }, [])
 
   const swapReadingLayout = useCallback(
-    (layoutBundle, anchorPrefix, oldPage, oldTotal, { afterSwap } = {}) => {
+    (layoutBundle, anchor, oldPage, oldTotal, { afterSwap } = {}) => {
       if (!layoutBundle?.pages?.length) {
         return
       }
 
       const targetPage = resolvePageAfterRepagination({
         newPages: layoutBundle.pages,
-        anchorPrefix,
+        anchor,
         oldPage,
         oldTotal,
         isSpreadView: false,
@@ -3905,16 +4055,13 @@ export default function BookViewer({
     }
 
     normalLayoutAtEnterRef.current = normalLayoutBundleRef.current
-    const anchorPrefix = getReadingAnchorPrefix(
-      pages,
-      currentPageRef.current,
-      false
-    )
+    const anchor = getReadingAnchor(pages, currentPageRef.current, false)
     isMobileFullscreenLayoutRef.current = true
     lastPaginatedMobileFullscreenRef.current = true
+    fullscreenSwapAtRef.current = Date.now()
     swapReadingLayout(
       fsBundle,
-      anchorPrefix,
+      anchor,
       currentPageRef.current,
       pages.length,
       { afterSwap: () => setIsMobileFullscreen(true) }
@@ -3940,16 +4087,13 @@ export default function BookViewer({
       return
     }
 
-    const anchorPrefix = getReadingAnchorPrefix(
-      pages,
-      currentPageRef.current,
-      false
-    )
+    const anchor = getReadingAnchor(pages, currentPageRef.current, false)
     isMobileFullscreenLayoutRef.current = false
     lastPaginatedMobileFullscreenRef.current = false
+    fullscreenSwapAtRef.current = Date.now()
     swapReadingLayout(
       normalBundle,
-      anchorPrefix,
+      anchor,
       currentPageRef.current,
       pages.length,
       { afterSwap: () => setIsMobileFullscreen(false) }
@@ -4125,6 +4269,12 @@ export default function BookViewer({
     let frameId = 0
     let innerFrameId = 0
     let outerFrameId = 0
+    let retryFrameId = 0
+    let retriesLeft = 30
+
+    const isOnBookmarkPage =
+      leftPage?.pageNumber === bookmarkPage ||
+      rightPage?.pageNumber === bookmarkPage
 
     const measureBookmarkPosition = () => {
       if (bookmarkHidden) {
@@ -4132,21 +4282,25 @@ export default function BookViewer({
         return
       }
 
-      const anchorElement =
-        leftPage?.pageNumber === bookmarkPage
-          ? leftPageFaceRef.current
-          : rightPage?.pageNumber === bookmarkPage
-            ? rightPageFaceRef.current
-            : null
-
-      if (!anchorElement) {
+      if (!isOnBookmarkPage) {
         setBookmarkPosition(null)
         return
       }
 
-      const rect = anchorElement.getBoundingClientRect()
-      if (rect.width <= 0 || rect.height <= 0) {
-        setBookmarkPosition(null)
+      const anchorElement =
+        leftPage?.pageNumber === bookmarkPage
+          ? leftPageFaceRef.current
+          : rightPageFaceRef.current
+
+      const rect = anchorElement?.getBoundingClientRect()
+      // On initial open the page face may not be laid out (or the scale transform
+      // not yet applied) on the first frame. Retry a few frames before giving up
+      // so the ribbon appears without needing to navigate away and back.
+      if (!rect || rect.width <= 0 || rect.height <= 0) {
+        if (retriesLeft > 0) {
+          retriesLeft -= 1
+          retryFrameId = requestAnimationFrame(measureBookmarkPosition)
+        }
         return
       }
 
@@ -4158,6 +4312,8 @@ export default function BookViewer({
 
     const scheduleMeasure = () => {
       cancelAnimationFrame(innerFrameId)
+      cancelAnimationFrame(retryFrameId)
+      retriesLeft = 30
       innerFrameId = requestAnimationFrame(measureBookmarkPosition)
     }
 
@@ -4171,6 +4327,7 @@ export default function BookViewer({
       cancelAnimationFrame(outerFrameId)
       cancelAnimationFrame(frameId)
       cancelAnimationFrame(innerFrameId)
+      cancelAnimationFrame(retryFrameId)
       window.removeEventListener("resize", scheduleMeasure)
       window.removeEventListener("scroll", scheduleMeasure, true)
     }
@@ -4178,11 +4335,16 @@ export default function BookViewer({
     bookmarkPage,
     bookmarkHidden,
     isPaginating,
+    isRepaginating,
     currentPage,
     leftPage?.pageNumber,
     rightPage?.pageNumber,
     pages.length,
     scale,
+    // Re-measure once the loading / "Preparing fullscreen" screen is dismissed and
+    // the real page DOM mounts, and whenever the fullscreen layout swaps.
+    fullscreenCacheReady,
+    mobileFullscreenActive,
   ])
 
   const handleDismissBookmark = useCallback(() => {
