@@ -44,8 +44,8 @@ const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 1
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
 /** Matches 059e9ea mobile footer reserve for non-fullscreen pagination. */
 const MOBILE_PAGE_NUMBER_RESERVED_PX = 52
-const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX =
-  PAGE_NUMBER_RESERVED_PX + MOBILE_PAGE_NUMBER_GAP_PX
+/** Matches 059e9ea measure footer — tight gap above the page number in mobile FS. */
+const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX = 20
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
 const BODY_BOTTOM_PADDING_PX = 3
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
@@ -55,7 +55,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 4
+const PAGINATION_MEASUREMENT_VERSION = 5
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 const PAGINATION_CACHE_MAX_ENTRIES = 3
@@ -2145,10 +2145,12 @@ function BookPageContent({
     .filter(Boolean)
     .join(" ")
 
-  const pageStyle = {
-    ...getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins),
-    "--page-footer-reserve": `${PAGE_FOOTER_RESERVE_PX}px`,
-  }
+  const pageStyle = isMobileFullscreen
+    ? { "--page-footer-reserve": `${PAGE_FOOTER_RESERVE_PX}px` }
+    : {
+        ...getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins),
+        "--page-footer-reserve": `${PAGE_FOOTER_RESERVE_PX}px`,
+      }
 
   if (!page) {
     return <div className={`${pageClassName} book-page--empty`} style={pageStyle} />
@@ -2619,6 +2621,7 @@ export default function BookViewer({
   const currentPageRef = useRef(currentPage)
   const hasShownResumeToastRef = useRef(false)
   const hasShownFsTipRef = useRef(false)
+  const pendingLayoutAnchorRef = useRef(null)
 
   const normalizeBookmarkPage = useCallback((page, total, desktopSpreadBehavior) => {
     if (!Number.isFinite(page)) return 1
@@ -2842,6 +2845,20 @@ export default function BookViewer({
 
     const preserveReadingPageRepagination = isLayoutOnlyRepagination
 
+    const pagesSnapshotForAnchor = pages
+    const pendingAnchor = pendingLayoutAnchorRef.current
+    const layoutAnchorPrefix = repaginationNeeded
+      ? pendingAnchor?.anchorPrefix ??
+        getReadingAnchorPrefix(
+          pagesSnapshotForAnchor,
+          currentPageRef.current,
+          isSpreadViewForTarget
+        )
+      : null
+    const layoutOldPage = pendingAnchor?.oldPage ?? currentPageRef.current
+    const layoutOldTotal = pendingAnchor?.oldTotal ?? pagesSnapshotForAnchor.length
+    pendingLayoutAnchorRef.current = null
+
     const tryApplyReadingLayoutCache = () => {
       const cached = readPaginationCache(cacheKey, parserVersion)
       if (!cached?.pages?.length) {
@@ -2850,7 +2867,9 @@ export default function BookViewer({
 
       applyMeasuredPages(cached.pages, {
         isFinal: true,
-        preservePage: currentPageRef.current,
+        anchorPrefix: layoutAnchorPrefix,
+        oldPage: layoutOldPage,
+        oldTotal: layoutOldTotal,
       })
       prevPaginationSettingsRef.current = paginationSettings
       lastPaginatedViewportRevisionRef.current = viewportRevision
@@ -3004,11 +3023,16 @@ export default function BookViewer({
         "--page-footer-reserve",
         `${PAGE_FOOTER_RESERVE_PX}px`
       )
-      const pagePad = getPagePaddingStyle(paginationSettings.margins)
-      measureElements.page.style.paddingTop = pagePad.paddingTop ?? "0"
-      measureElements.page.style.paddingRight = pagePad.paddingRight ?? "0"
-      measureElements.page.style.paddingLeft = pagePad.paddingLeft ?? "0"
-      measureElements.page.style.paddingBottom = pagePad.paddingBottom ?? "0"
+      if (mobileFS) {
+        measureElements.page.classList.add("book-page--mobile-fs")
+        measureElements.page.style.padding = "0"
+      } else {
+        const pagePad = getPagePaddingStyle(paginationSettings.margins)
+        measureElements.page.style.paddingTop = pagePad.paddingTop ?? "0"
+        measureElements.page.style.paddingRight = pagePad.paddingRight ?? "0"
+        measureElements.page.style.paddingLeft = pagePad.paddingLeft ?? "0"
+        measureElements.page.style.paddingBottom = pagePad.paddingBottom ?? "0"
+      }
       measureElements.body.style.padding = "0"
       measureElements.body.style.paddingBottom = `${BODY_BOTTOM_PADDING_PX}px`
       measureElements.body.style.height = `${contentMaxHeight}px`
@@ -3144,7 +3168,9 @@ export default function BookViewer({
           pageLayout,
           {
             isFinal: true,
-            preservePage: currentPageRef.current,
+            anchorPrefix,
+            oldPage,
+            oldTotal,
           }
         )
         persistPaginationCache(finalPages)
@@ -3306,7 +3332,9 @@ export default function BookViewer({
         : preserveReadingPageRepagination || isLayoutReload
           ? {
               isFinal: true,
-              preservePage: currentPageRef.current,
+              anchorPrefix,
+              oldPage,
+              oldTotal,
             }
           : { isFinal: true, preservePage: resolveOpeningBookmarkPage() }
 
@@ -3396,6 +3424,9 @@ export default function BookViewer({
 
       void runFullPagination({
         loadingMode: "layout",
+        anchorPrefix: layoutAnchorPrefix,
+        oldPage: layoutOldPage,
+        oldTotal: layoutOldTotal,
         runId,
       })
     }
@@ -3631,11 +3662,20 @@ export default function BookViewer({
     clearTimeout(tapTimerRef.current)
     tapTimerRef.current = setTimeout(() => {
       if (tapCountRef.current >= 3) {
+        pendingLayoutAnchorRef.current = {
+          anchorPrefix: getReadingAnchorPrefix(
+            pages,
+            currentPageRef.current,
+            false
+          ),
+          oldPage: currentPageRef.current,
+          oldTotal: pages.length,
+        }
         setIsMobileFullscreen((previous) => !previous)
       }
       tapCountRef.current = 0
     }, 400)
-  }, [isMobile])
+  }, [isMobile, pages])
 
   const toggleLayoutMode = useCallback(() => {
     setLayoutMode((mode) => (mode === "spread" ? "single" : "spread"))
