@@ -47,7 +47,7 @@ const MOBILE_PAGE_NUMBER_RESERVED_PX =
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
 const BODY_BOTTOM_PADDING_PX = 3
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
-const PAGINATION_DEBOUNCE_MS = 400
+const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
@@ -2501,6 +2501,7 @@ export default function BookViewer({
   const progressKey = `booky-progress-${bookDocument?.id ?? ""}`
   const [pages, setPages] = useState([])
   const [isPaginating, setIsPaginating] = useState(true)
+  const [isRepaginating, setIsRepaginating] = useState(false)
   const [paginationLoadingMode, setPaginationLoadingMode] = useState("opening")
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [loadingProgressLabel, setLoadingProgressLabel] = useState("Preparing pages...")
@@ -2542,6 +2543,7 @@ export default function BookViewer({
   const isMobileLayoutRef = useRef(false)
   const isMobileFullscreenLayoutRef = useRef(false)
   const [viewportRevision, setViewportRevision] = useState(0)
+  const lastPaginatedViewportRevisionRef = useRef(0)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
@@ -2585,6 +2587,7 @@ export default function BookViewer({
 
   useEffect(() => {
     prevPaginationSettingsRef.current = null
+    lastPaginatedViewportRevisionRef.current = 0
     hasDisplayedBookRef.current = false
     openingPaginationStartedRef.current = false
     openingPaginationInFlightRef.current = false
@@ -2600,24 +2603,24 @@ export default function BookViewer({
   }, [bookDocument?.id])
 
   useEffect(() => {
-    if (hasDisplayedBookRef.current) {
-      const timer = setTimeout(() => {
-        setPaginationSettings((previous) => {
-          if (
-            layoutPaginationSettingsEqual(previous, uiSettings) &&
-            previous.theme === uiSettings.theme
-          ) {
-            return previous
-          }
-          return { ...uiSettings }
-        })
-      }, PAGINATION_DEBOUNCE_MS)
-
-      return () => clearTimeout(timer)
+    if (!hasDisplayedBookRef.current) {
+      setPaginationSettings(uiSettings)
+      return undefined
     }
 
-    setPaginationSettings(uiSettings)
-    return undefined
+    const timer = setTimeout(() => {
+      setPaginationSettings((previous) => {
+        if (
+          layoutPaginationSettingsEqual(previous, uiSettings) &&
+          previous.theme === uiSettings.theme
+        ) {
+          return previous
+        }
+        return { ...uiSettings }
+      })
+    }, TYPESETTING_REPAGINATION_DELAY_MS)
+
+    return () => clearTimeout(timer)
   }, [uiSettings])
 
   useEffect(() => {
@@ -2745,6 +2748,11 @@ export default function BookViewer({
         setRestoredPage(resumePage)
         hasShownResumeToastRef.current = true
       }
+
+      if (isFinal) {
+        prevPaginationSettingsRef.current = paginationSettings
+        lastPaginatedViewportRevisionRef.current = viewportRevision
+      }
     }
 
     const resolveOpeningBookmarkPage = () =>
@@ -2760,6 +2768,14 @@ export default function BookViewer({
         previousPaginationSettingsForCache,
         paginationSettings
       )
+
+    const viewportRepaginationNeeded =
+      hasDisplayedBookRef.current &&
+      displayedPagesCountRef.current > 0 &&
+      viewportRevision !== lastPaginatedViewportRevisionRef.current
+
+    const repaginationNeeded =
+      layoutRepaginationNeeded || viewportRepaginationNeeded
 
     // Opening cache read FIRST — before theme/layout guards (cache is optional).
     const tryApplyOpeningCache = () => {
@@ -2793,10 +2809,11 @@ export default function BookViewer({
       hasDisplayedBookRef.current = true
       maxLoadingProgressRef.current = 100
       prevPaginationSettingsRef.current = paginationSettings
+      lastPaginatedViewportRevisionRef.current = viewportRevision
       return true
     }
 
-    if (!openingPaginationInFlightRef.current && !layoutRepaginationNeeded) {
+    if (!openingPaginationInFlightRef.current && !repaginationNeeded) {
       if (tryApplyOpeningCache()) {
         return undefined
       }
@@ -2808,27 +2825,23 @@ export default function BookViewer({
       isThemeOnlyPaginationChange(previousPaginationSettings, paginationSettings)
     ) {
       prevPaginationSettingsRef.current = paginationSettings
-      if (isPaginating && paginationLoadingMode === "typesetting") {
-        setIsPaginating(false)
-      }
+      setIsRepaginating(false)
       return undefined
     }
 
     if (
       previousPaginationSettings &&
       hasDisplayedBookRef.current &&
-      layoutPaginationSettingsEqual(previousPaginationSettings, paginationSettings)
+      layoutPaginationSettingsEqual(previousPaginationSettings, paginationSettings) &&
+      !viewportRepaginationNeeded
     ) {
       prevPaginationSettingsRef.current = paginationSettings
-      if (isPaginating && paginationLoadingMode === "typesetting") {
-        setIsPaginating(false)
-      }
+      lastPaginatedViewportRevisionRef.current = viewportRevision
+      setIsRepaginating(false)
       return undefined
     }
 
-    prevPaginationSettingsRef.current = paginationSettings
-
-    const isSettingsRepagination = layoutRepaginationNeeded
+    const isSettingsRepagination = repaginationNeeded
 
     let measureRoot = null
     paginationCancelRef.current = false
@@ -2863,9 +2876,14 @@ export default function BookViewer({
     const beginPaginationLoadingScreen = (mode) => {
       maxLoadingProgressRef.current = 0
       setPaginationLoadingMode(mode)
-      setIsPaginating(true)
-      setLoadingProgress(0)
-      setLoadingProgressLabel("Preparing pages...")
+      if (mode === "opening") {
+        setIsPaginating(true)
+        setIsRepaginating(false)
+        setLoadingProgress(0)
+        setLoadingProgressLabel("Preparing pages...")
+      } else {
+        setIsRepaginating(true)
+      }
       if (mode === "typesetting") {
         setSettingsOpen(false)
         setTocOpen(false)
@@ -3146,13 +3164,15 @@ export default function BookViewer({
         null
       )
 
-      await new Promise((resolve) => {
-        loadingDismissTimerRef.current = setTimeout(resolve, LOADING_READY_DISMISS_MS)
-      })
+      if (!isTypesettingReload) {
+        await new Promise((resolve) => {
+          loadingDismissTimerRef.current = setTimeout(resolve, LOADING_READY_DISMISS_MS)
+        })
 
-      if (!isActiveRun()) {
-        abortRun()
-        return
+        if (!isActiveRun()) {
+          abortRun()
+          return
+        }
       }
 
       const applyOptions = isTypesettingReload
@@ -3167,17 +3187,20 @@ export default function BookViewer({
       )
       persistPaginationCache(finalPages)
 
-      setIsPaginating(false)
-      if (!isTypesettingReload) {
+      if (isTypesettingReload) {
+        setIsRepaginating(false)
+      } else {
+        setIsPaginating(false)
         hasDisplayedBookRef.current = true
+        setLoadingProgress(100)
+        setLoadingProgressLabel("Ready")
       }
-      setLoadingProgress(100)
-      setLoadingProgressLabel("Ready")
 
       abortRun()
       } catch (error) {
         console.error("[BookViewer] runFullPagination failed:", error)
         setIsPaginating(false)
+        setIsRepaginating(false)
         abortRun()
       }
     }
@@ -3801,11 +3824,8 @@ export default function BookViewer({
     setSearchResults,
   ])
 
-  if (isPaginating) {
-    const loadingSubtext =
-      paginationLoadingMode === "typesetting"
-        ? "Applying typesetting..."
-        : "Opening your book..."
+  if (isPaginating && paginationLoadingMode === "opening") {
+    const loadingSubtext = "Opening your book..."
 
     return (
       <div className="reader-screen">
@@ -3838,7 +3858,9 @@ export default function BookViewer({
   return (
     <div
       ref={viewerRef}
-      className={`book-viewer${mobileFullscreenActive ? " book-viewer--mobile-fs" : ""}`}
+      className={`book-viewer${mobileFullscreenActive ? " book-viewer--mobile-fs" : ""}${
+        isRepaginating ? " book-viewer--repaginating" : ""
+      }`}
       tabIndex={-1}
     >
       {showFsTip && <div className="book-viewer__fs-tip">Triple tap to exit</div>}
@@ -3903,7 +3925,10 @@ export default function BookViewer({
             totalPages={totalPages}
             isSpreadView={showSpreadLayout}
             onJump={jumpToPage}
-            disabled={isPaginating || totalPages === 0}
+            disabled={
+              (isPaginating && paginationLoadingMode === "opening") ||
+              totalPages === 0
+            }
           />
           {!isMobile && (
             <button
@@ -3921,15 +3946,18 @@ export default function BookViewer({
           {!(isMobile && isMobileFullscreen) && (
             <button
               type="button"
-              className="book-viewer__typesetting-btn"
+              className={`book-viewer__typesetting-btn${
+                isRepaginating ? " book-viewer__typesetting-btn--busy" : ""
+              }`}
               onClick={() => {
                 setSettingsOpen((prev) => !prev)
                 setTocOpen(false)
                 setSearchOpen(false)
               }}
-              title="Typesetting"
-              aria-label="Typesetting"
+              title={isRepaginating ? "Applying typesetting…" : "Typesetting"}
+              aria-label={isRepaginating ? "Applying typesetting" : "Typesetting"}
               aria-expanded={settingsOpen}
+              aria-busy={isRepaginating}
             >
               <NibIcon />
               <span className="book-viewer__typesetting-label">Typesetting</span>

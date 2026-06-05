@@ -281,6 +281,15 @@
   text-transform: uppercase;
 }
 
+.book-viewer__typesetting-btn--busy {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.book-viewer--repaginating .book-viewer__stage {
+  transition: opacity 0.15s ease;
+}
+
 .book-viewer__typesetting-btn:hover {
   color: #d4af37;
 }
