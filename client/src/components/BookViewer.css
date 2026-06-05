@@ -474,16 +474,16 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  --page-footer-reserve: 14px;
+  --page-footer-reserve: 12px;
 }
 
-.book-page::after {
+.book-page:not(.book-page--mobile-fs)::after {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: var(--page-footer-reserve);
+  height: calc(var(--page-footer-reserve) + 1.5rem);
   background: linear-gradient(transparent, var(--color-page));
   pointer-events: none;
   z-index: 1;
@@ -1038,26 +1038,37 @@
   line-height: 8px;
 }
 
-/* Non-fullscreen pages: body + footer are flex siblings so the footer band is
-   exactly --page-footer-reserve tall and the number centers inside it. */
-.book-page:not(.book-page--mobile-fs) .book-page__body:not(.book-page__body--title-spread) {
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: none;
-  overflow: hidden;
+/* Non-fullscreen: stack text + page number at the page bottom so the number
+   sits directly under the last line with no flex-grow dead zone above it. */
+.book-page:not(.book-page--mobile-fs) {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  justify-content: flex-end;
+  align-items: stretch;
+}
+
+.book-page:not(.book-page--mobile-fs):has(.book-page__body--title-spread) {
+  justify-content: center;
+}
+
+.book-page:not(.book-page--mobile-fs) .book-page__body:not(.book-page__body--title-spread),
+.book-page:not(.book-page--mobile-fs) .book-page__body--title-spread {
+  position: static;
+  flex: 0 0 auto;
+  min-height: 0;
+  max-height: calc(100% - var(--page-footer-reserve));
+  overflow: hidden;
   box-sizing: border-box;
   padding-bottom: 0;
+  margin: 0;
   --lh-display: calc(var(--lh-body, 1.15) * 1.04);
 }
 
-.book-page__body--title-spread {
-  flex: 1;
-  max-height: none;
+.book-page:not(.book-page--mobile-fs) .book-page__body--title-spread {
+  display: flex;
+  flex-direction: column;
   justify-content: center;
-  padding-bottom: 20px;
+  max-height: 100%;
 }
 
 .book-page__title {
@@ -1294,13 +1305,11 @@ ol.book-page__list {
 
 .book-page:not(.book-page--mobile-fs) .book-page__number {
   position: static;
-  flex: 0 0 var(--page-footer-reserve);
-  height: var(--page-footer-reserve);
+  flex: 0 0 auto;
+  height: auto;
   margin: 0;
   padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   text-align: center;
   font-family: var(--ff-body, var(--font-body));
   font-size: 9px;
@@ -1312,16 +1321,9 @@ ol.book-page__list {
 
 @media (max-width: 767px) {
   .book-page:not(.book-page--mobile-fs) {
-    --page-footer-reserve: 14px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --page-footer-reserve: 12px;
     box-sizing: border-box;
-  }
-
-  .book-page:not(.book-page--mobile-fs) .book-page__body--title-spread {
-    flex: 1 1 auto;
-    min-height: 0;
-    max-height: none;
-    padding-bottom: 0;
+    padding-bottom: max(2px, env(safe-area-inset-bottom, 0px));
   }
 
   .book-viewer__stage {
@@ -1420,6 +1422,6 @@ ol.book-page__list {
 
 .book-viewer__measure-footer {
   flex-shrink: 0;
-  height: 14px;
+  height: 12px;
   margin: 0;
 }
