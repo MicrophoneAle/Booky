@@ -615,7 +615,11 @@
 }
 
 .book-viewer--mobile-fs .book-viewer__scale-wrapper {
-  overflow: hidden;
+  overflow: visible;
+}
+
+.book-viewer--mobile-fs .book-viewer__scale-wrapper--mobile-fs {
+  flex-shrink: 0;
 }
 
 .book-viewer--mobile-fs .book-viewer__stage::before {
