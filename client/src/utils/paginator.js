@@ -27,12 +27,76 @@ export const CHAPTER_WITH_SUBTITLE_REGEX =
 
 export const CHAPTER_HEADING_MIN_FONT_SIZE = 12.5
 
+const VOLUME_PART_LABEL_REGEX =
+  /\b(volume|part|book)\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|\d+|[ivxlcdm]+)\b/i
+
 /**
  * Maps API chapter ids to first reader page numbers from measured layout pages.
  */
+const ROMAN_CHAPTER_VALUES = {
+  i: 1,
+  ii: 2,
+  iii: 3,
+  iv: 4,
+  v: 5,
+  vi: 6,
+  vii: 7,
+  viii: 8,
+  ix: 9,
+  x: 10,
+  xi: 11,
+  xii: 12,
+}
+
 function extractChapterNumberLabel(text) {
-  const match = (text ?? "").trim().match(/\bchapter\s+(\d{1,3})\b/i)
-  return match ? match[1] : null
+  const trimmed = (text ?? "").trim()
+  const digitMatch = trimmed.match(/\bchapter\s+(\d{1,3})\b/i)
+  if (digitMatch) {
+    return digitMatch[1]
+  }
+
+  const romanMatch = trimmed.match(/\bchapter\s+([ivxlcdm]+)\b/i)
+  if (romanMatch) {
+    const value = ROMAN_CHAPTER_VALUES[romanMatch[1].toLowerCase()]
+    return value !== undefined ? String(value) : romanMatch[1].toLowerCase()
+  }
+
+  return null
+}
+
+function extractVolumePartKey(text) {
+  const match = (text ?? "").trim().match(VOLUME_PART_LABEL_REGEX)
+  if (!match) {
+    return null
+  }
+  return `${match[1]} ${match[2]}`.toLowerCase()
+}
+
+function isChapterBoundaryVisualItem(item) {
+  if (!item) {
+    return false
+  }
+  if (item.type === "chapter") {
+    return true
+  }
+  if (item.type === "title" && item.isChapterStart) {
+    return true
+  }
+  return Boolean(item.isChapterStart && isChapterBoundaryText(item.text))
+}
+
+function pageDeclaresChapter(page, chapter) {
+  if (!page?.isChapterStart) {
+    return false
+  }
+
+  const titles = [page.chapterTitle, ...(page.chaptersOnPage ?? [])].filter(
+    Boolean
+  )
+
+  return titles.some((title) =>
+    chapterTitlesReferToSameChapter(chapter.title, title)
+  )
 }
 
 /** Keeps volume/chapter labels on one line in the narrow TOC sidebar. */
@@ -53,17 +117,51 @@ export function chapterTitlesReferToSameChapter(apiTitle, candidateTitle) {
   if (api === candidate) {
     return true
   }
-  if (candidate.includes(api) || api.includes(candidate)) {
-    return true
+
+  const apiPart = extractVolumePartKey(api)
+  const candidatePart = extractVolumePartKey(candidate)
+  if (apiPart && candidatePart && apiPart !== candidatePart) {
+    return false
+  }
+  if (apiPart && !candidatePart) {
+    return false
   }
 
   const apiNumber = extractChapterNumberLabel(api)
   const candidateNumber = extractChapterNumberLabel(candidate)
-  if (!apiNumber || !candidateNumber || apiNumber !== candidateNumber) {
-    return false
+  if (apiNumber && candidateNumber) {
+    return (
+      apiNumber === candidateNumber &&
+      /\bchapter\s+\d/i.test(api) &&
+      /\bchapter\s+\d/i.test(candidate)
+    )
   }
 
-  return /\bchapter\s+\d/i.test(api) && /\bchapter\s+\d/i.test(candidate)
+  // Part/volume-only headings (e.g. "PART TWO") or roman chapter labels without digits.
+  if (!apiNumber && !candidateNumber) {
+    const apiLower = api.toLowerCase()
+    const candidateLower = candidate.toLowerCase()
+    const apiNamesChapter = /\bchapter\s+/i.test(api)
+    const candidateNamesChapter = /\bchapter\s+/i.test(candidate)
+
+    if (apiNamesChapter !== candidateNamesChapter) {
+      return false
+    }
+
+    if (!apiNamesChapter) {
+      return apiPart
+        ? apiPart === candidatePart
+        : apiLower === candidateLower
+    }
+
+    return (
+      apiLower === candidateLower ||
+      (apiLower.length >= 16 && candidateLower.includes(apiLower)) ||
+      (candidateLower.length >= 16 && apiLower.includes(candidateLower))
+    )
+  }
+
+  return false
 }
 
 export function buildChapterPageMap(measuredPages, apiChapters) {
@@ -73,54 +171,37 @@ export function buildChapterPageMap(measuredPages, apiChapters) {
     return map
   }
 
+  let minPage = 1
+
   for (const chapter of apiChapters) {
     for (const page of measuredPages) {
-      if (map[chapter.id] !== undefined) {
+      if (page.pageNumber < minPage) {
         continue
       }
 
-      if (page.isChapterStart) {
-        const titles = [
-          page.chapterTitle,
-          page.activeChapterTitle,
-          ...(page.chaptersOnPage ?? []),
-        ].filter(Boolean)
-
-        if (titles.some((title) => chapterTitlesReferToSameChapter(chapter.title, title))) {
-          map[chapter.id] = page.pageNumber
-          continue
-        }
-      }
+      let matched = false
 
       for (const item of page.visualItems ?? []) {
         if (item.chapterId !== chapter.id) {
           continue
         }
-        if (
-          item.type === "chapter" ||
-          item.type === "heading" ||
-          item.type === "title"
-        ) {
-          map[chapter.id] = page.pageNumber
-          break
+        if (!isChapterBoundaryVisualItem(item)) {
+          continue
         }
+        map[chapter.id] = page.pageNumber
+        minPage = page.pageNumber
+        matched = true
+        break
       }
 
-      if (map[chapter.id] === undefined) {
-        const pageTitles = [
-          page.chapterTitle,
-          page.activeChapterTitle,
-          ...(page.chaptersOnPage ?? []),
-          ...(page.visualItems ?? []).map((item) => item.chapterTitle ?? item.text),
-        ].filter(Boolean)
+      if (matched) {
+        break
+      }
 
-        if (
-          pageTitles.some((title) =>
-            chapterTitlesReferToSameChapter(chapter.title, title)
-          )
-        ) {
-          map[chapter.id] = page.pageNumber
-        }
+      if (pageDeclaresChapter(page, chapter)) {
+        map[chapter.id] = page.pageNumber
+        minPage = page.pageNumber
+        break
       }
     }
   }
