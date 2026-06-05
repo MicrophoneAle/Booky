@@ -73,7 +73,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 16
+const PAGINATION_MEASUREMENT_VERSION = 17
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 /**
@@ -1392,17 +1392,24 @@ function setupMeasureElements(
 
   body.style.padding = "0"
   body.style.paddingBottom = `${BODY_BOTTOM_PADDING_PX}px`
-  body.style.height = `${contentMaxHeight}px`
-  body.style.maxHeight = `${contentMaxHeight}px`
-  body.style.minHeight = `${contentMaxHeight}px`
+  body.style.flex = "1 1 auto"
+  body.style.minHeight = "0"
+  body.style.height = ""
+  body.style.maxHeight = ""
+  body.style.minWidth = "0"
   body.style.overflow = "hidden"
 
-  if (mobileViewport && !mobileFS) {
+  if (mobileFS) {
+    footer.style.display = "none"
+    body.style.height = `${contentMaxHeight}px`
+    body.style.maxHeight = `${contentMaxHeight}px`
+    body.style.minHeight = `${contentMaxHeight}px`
+    body.style.flex = "0 0 auto"
+  } else {
     footer.style.display = "block"
     footer.style.height = `${pageNumberReservedPx}px`
+    footer.style.flex = `0 0 ${pageNumberReservedPx}px`
     footer.style.flexShrink = "0"
-  } else {
-    footer.style.display = "none"
   }
 
   const font = FONT_SIZE_MAP[paginationSettings.fontSize] ?? FONT_SIZE_MAP.medium
