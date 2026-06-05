@@ -32,6 +32,8 @@ import "./BookViewer.css"
 const NAVBAR_HEIGHT_PX = 44
 const PAGE_WIDTH_PX = 400
 const PAGE_HEIGHT_PX = 600
+/** Fallback page height when the stage is not mounted yet (matches 059e9ea). */
+const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX = 600
 const SPINE_PX = 1
 const PAGE_FOOTER_RESERVE_PX = 20
@@ -42,8 +44,8 @@ const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 1
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
 /** Matches 059e9ea mobile footer reserve for non-fullscreen pagination. */
 const MOBILE_PAGE_NUMBER_RESERVED_PX = 52
-const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX =
-  PAGE_NUMBER_RESERVED_PX + MOBILE_PAGE_NUMBER_GAP_PX
+/** Matches 059e9ea measure footer — tight gap above the page number in mobile FS. */
+const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX = 20
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
 const BODY_BOTTOM_PADDING_PX = 3
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
@@ -53,7 +55,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 7
+const PAGINATION_MEASUREMENT_VERSION = 6
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 const PAGINATION_CACHE_MAX_ENTRIES = 3
@@ -131,23 +133,50 @@ function getMobileFullscreenViewportSize() {
   }
 }
 
-/** Page height so width-first scaling fills the visual viewport. */
-function getMobileFullscreenPageHeightPx() {
+function getMobileFullscreenStageMetrics(stageEl) {
+  if (stageEl) {
+    const cs = getComputedStyle(stageEl)
+    const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)
+    const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
+    return {
+      availW: Math.max(1, stageEl.clientWidth - padX),
+      availH: Math.max(1, stageEl.clientHeight - padY),
+    }
+  }
+
   const { width, height } = getMobileFullscreenViewportSize()
-  const widthScale = width / PAGE_WIDTH_PX
-  const pageHeight = Math.round(height / widthScale)
-  return Math.max(MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX, pageHeight)
+  return { availW: width, availH: height }
 }
 
-/** Scale pages to cover the viewport in mobile fullscreen (no letterboxing). */
-function getMobileFullscreenCoverScale(availW, availH, pageHeight = PAGE_HEIGHT_PX) {
-  return Math.max(availW / PAGE_WIDTH_PX, availH / pageHeight)
+/**
+ * Paginate to the visible stage height (taller pages, no upscale).
+ * Falls back to 059e9ea's 780px when the stage is not ready yet.
+ */
+function getMobileFullscreenPageHeightPx(stageEl, { predictNavHidden = false } = {}) {
+  if (stageEl) {
+    const { availH } = getMobileFullscreenStageMetrics(stageEl)
+    const expandedHeight = predictNavHidden ? availH + NAVBAR_HEIGHT_PX : availH
+    return Math.max(MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX, Math.floor(expandedHeight))
+  }
+
+  const { height } = getMobileFullscreenViewportSize()
+  return Math.max(MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX, Math.floor(height))
+}
+
+/** Downscale only — never upscale (prevents left/right clipping from transform). */
+function getMobileFullscreenDownscale(availW) {
+  return Math.min(1, availW / PAGE_WIDTH_PX)
 }
 
 /** Single source of truth for cache key — same inputs at read and write. */
-function getPaginationPageHeight(mobileViewport, mobileFullscreen) {
+function getPaginationPageHeight(
+  mobileViewport,
+  mobileFullscreen,
+  stageEl,
+  predictNavHidden = false
+) {
   return mobileViewport && mobileFullscreen
-    ? getMobileFullscreenPageHeightPx()
+    ? getMobileFullscreenPageHeightPx(stageEl, { predictNavHidden })
     : PAGE_HEIGHT_PX
 }
 
@@ -155,7 +184,9 @@ function resolvePaginationCacheContext(
   bookId,
   parserVersionFromDoc,
   settings,
-  viewport
+  viewport,
+  stageEl = null,
+  predictNavHidden = false
 ) {
   const layoutSettings = getLayoutPaginationSettings(settings)
   const docParserVersion = Number(parserVersionFromDoc)
@@ -165,7 +196,9 @@ function resolvePaginationCacheContext(
       : PARSER_VERSION
   const pageHeight = getPaginationPageHeight(
     viewport.mobile,
-    viewport.mobileFullscreen
+    viewport.mobileFullscreen,
+    stageEl,
+    predictNavHidden
   )
 
   return {
@@ -981,13 +1014,18 @@ function setupMeasureElements(
   measureElements,
   paginationSettings,
   mobileViewport,
-  mobileFS
+  mobileFS,
+  stageEl,
+  predictNavHidden = false
 ) {
-  const pageHeightToUse = mobileFS ? getMobileFullscreenPageHeightPx() : undefined
+  const marginSetting = mobileFS ? "none" : paginationSettings.margins
+  const pageHeightToUse = mobileFS
+    ? getMobileFullscreenPageHeightPx(stageEl, { predictNavHidden })
+    : undefined
   const pageNumberReservedPx = getPageNumberReservedPx(mobileViewport, mobileFS)
   const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(
     pageHeightToUse,
-    paginationSettings.margins,
+    marginSetting,
     pageNumberReservedPx
   )
 
@@ -1000,17 +1038,23 @@ function setupMeasureElements(
   page.style.setProperty("--page-footer-reserve", `${PAGE_FOOTER_RESERVE_PX}px`)
   page.style.overflow = "visible"
 
+  page.classList.remove("book-page--mobile-fs")
   for (const themeClass of [...page.classList].filter((name) =>
     name.startsWith("book-page--theme-")
   )) {
     page.classList.remove(themeClass)
   }
 
-  const pagePad = getPagePaddingStyle(paginationSettings.margins)
-  page.style.paddingTop = pagePad.paddingTop ?? "0"
-  page.style.paddingRight = pagePad.paddingRight ?? "0"
-  page.style.paddingLeft = pagePad.paddingLeft ?? "0"
-  page.style.paddingBottom = pagePad.paddingBottom ?? "0"
+  if (mobileFS) {
+    page.classList.add("book-page--mobile-fs")
+    page.style.padding = "0"
+  } else {
+    const pagePad = getPagePaddingStyle(paginationSettings.margins)
+    page.style.paddingTop = pagePad.paddingTop ?? "0"
+    page.style.paddingRight = pagePad.paddingRight ?? "0"
+    page.style.paddingLeft = pagePad.paddingLeft ?? "0"
+    page.style.paddingBottom = pagePad.paddingBottom ?? "0"
+  }
 
   body.style.padding = "0"
   body.style.paddingBottom = `${BODY_BOTTOM_PADDING_PX}px`
@@ -2230,10 +2274,12 @@ function BookPageContent({
     .filter(Boolean)
     .join(" ")
 
-  const pageStyle = {
-    ...getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins),
-    "--page-footer-reserve": `${PAGE_FOOTER_RESERVE_PX}px`,
-  }
+  const pageStyle = isMobileFullscreen
+    ? { "--page-footer-reserve": `${PAGE_FOOTER_RESERVE_PX}px` }
+    : {
+        ...getPagePaddingStyle(settings?.margins ?? DEFAULT_SETTINGS.margins),
+        "--page-footer-reserve": `${PAGE_FOOTER_RESERVE_PX}px`,
+      }
 
   if (!page) {
     return <div className={`${pageClassName} book-page--empty`} style={pageStyle} />
@@ -2647,6 +2693,7 @@ export default function BookViewer({
   const tapCountRef = useRef(0)
   const tapTimerRef = useRef(null)
   const [scale, setScale] = useState(1)
+  const [mobileFsDisplayLayout, setMobileFsDisplayLayout] = useState(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   const loadSavedSettings = () => {
@@ -2829,7 +2876,8 @@ export default function BookViewer({
       bookDocument.id,
       bookDocument.parserVersion,
       paginationSettings,
-      viewport
+      viewport,
+      stageRef.current
     )
 
     const isSpreadViewForTarget = !viewport.mobile && layoutMode === "spread"
@@ -3088,7 +3136,7 @@ export default function BookViewer({
       }
     }
 
-    const createMeasurementContext = () => {
+    const createMeasurementContext = (predictNavHidden = false) => {
       const flatBlocks = getCachedFlatBlocks(
         bookDocument,
         flatBlocksCacheRef.current
@@ -3101,7 +3149,9 @@ export default function BookViewer({
         measureElements,
         paginationSettings,
         mobileViewport,
-        mobileFS
+        mobileFS,
+        stageRef.current,
+        predictNavHidden
       )
 
       return { flatBlocks, measureElements, pageLayout }
@@ -3123,7 +3173,8 @@ export default function BookViewer({
         {
           mobile: isMobileLayoutRef.current,
           mobileFullscreen: isMobileFullscreenLayoutRef.current,
-        }
+        },
+        stageRef.current
       )
       const payload = {
         parserVersion: writeContext.parserVersion,
@@ -3491,7 +3542,9 @@ export default function BookViewer({
   ])
 
   const mobileFullscreenActive = isMobile && isMobileFullscreen
-  const activePageHeight = PAGE_HEIGHT_PX
+  const activePageHeight = mobileFullscreenActive
+    ? getMobileFullscreenPageHeightPx(stageRef.current)
+    : PAGE_HEIGHT_PX
 
   const isSpreadView = !isMobile && layoutMode === "spread"
   const totalPages = pages.length
@@ -3550,11 +3603,20 @@ export default function BookViewer({
         : PAGE_WIDTH_PX
       const naturalH = activePageHeight
       const fitScale = Math.min(availW / naturalW, availH / naturalH)
-      const next =
-        isMobile && isMobileFullscreen
-          ? getMobileFullscreenCoverScale(availW, availH, naturalH)
-          : fitScale
-      setScale(next > 0 && Number.isFinite(next) ? next : 1)
+
+      if (isMobile && isMobileFullscreen) {
+        const downscale = getMobileFullscreenDownscale(availW)
+        setMobileFsDisplayLayout({
+          downscale,
+          wrapperW: naturalW * downscale,
+          wrapperH: naturalH * downscale,
+        })
+        setScale(1)
+        return
+      }
+
+      setMobileFsDisplayLayout(null)
+      setScale(fitScale > 0 && Number.isFinite(fitScale) ? fitScale : 1)
     }
 
     recomputeScale()
@@ -3577,7 +3639,6 @@ export default function BookViewer({
 
   useEffect(() => {
     isMobileFullscreenLayoutRef.current = isMobileFullscreen
-    lastPaginatedMobileFullscreenRef.current = isMobileFullscreen
   }, [isMobileFullscreen])
 
   useEffect(() => {
@@ -3643,12 +3704,15 @@ export default function BookViewer({
         return
       }
 
+      const predictNavHidden = warmupFullscreen
       const viewport = { mobile: true, mobileFullscreen: warmupFullscreen }
       const { cacheKey, parserVersion, layoutSettings } = resolvePaginationCacheContext(
         bookDocument.id,
         bookDocument.parserVersion,
         paginationSettings,
-        viewport
+        viewport,
+        stageRef.current,
+        predictNavHidden
       )
 
       if (readPaginationCache(cacheKey, parserVersion)?.pages?.length) {
@@ -3664,7 +3728,9 @@ export default function BookViewer({
         measureElements,
         paginationSettings,
         true,
-        warmupFullscreen
+        warmupFullscreen,
+        stageRef.current,
+        predictNavHidden
       )
       const cleanedPages = measureDocumentPages(
         flatBlocks,
@@ -4356,10 +4422,19 @@ export default function BookViewer({
         )}
 
         <div
-          className="book-viewer__scale-wrapper"
+          className={`book-viewer__scale-wrapper${
+            mobileFsDisplayLayout ? " book-viewer__scale-wrapper--mobile-fs" : ""
+          }`}
           style={{
-            transform: `scale(${scale})`,
-            transformOrigin: "center center",
+            ...(mobileFsDisplayLayout
+              ? {
+                  width: mobileFsDisplayLayout.wrapperW,
+                  height: mobileFsDisplayLayout.wrapperH,
+                }
+              : {
+                  transform: `scale(${scale})`,
+                  transformOrigin: "center center",
+                }),
             "--fs-body": `${font.body}px`,
             "--fs-heading": `${font.heading}px`,
             "--fs-title": `${font.title}px`,
@@ -4373,7 +4448,16 @@ export default function BookViewer({
             className={`book-viewer__spread ${
               !showSpreadLayout ? "book-viewer__spread--single" : ""
             }`}
-            style={{ height: activePageHeight }}
+            style={{
+              width: PAGE_WIDTH_PX,
+              height: activePageHeight,
+              ...(mobileFsDisplayLayout && mobileFsDisplayLayout.downscale < 1
+                ? {
+                    transform: `scale(${mobileFsDisplayLayout.downscale})`,
+                    transformOrigin: "top center",
+                  }
+                : {}),
+            }}
           >
             <div
               className={`book-viewer__page-slot book-viewer__page-slot--left ${
