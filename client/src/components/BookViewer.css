@@ -477,13 +477,13 @@
   --page-footer-reserve: 12px;
 }
 
-.book-page:not(.book-page--mobile-fs)::after {
+.book-page::after {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: calc(var(--page-footer-reserve) + 1.5rem);
+  height: var(--page-footer-reserve);
   background: linear-gradient(transparent, var(--color-page));
   pointer-events: none;
   z-index: 1;
@@ -1038,25 +1038,13 @@
   line-height: 8px;
 }
 
-/* Non-fullscreen: stack text + page number at the page bottom so the number
-   sits directly under the last line with no flex-grow dead zone above it. */
-.book-page:not(.book-page--mobile-fs) {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: stretch;
-}
-
-.book-page:not(.book-page--mobile-fs):has(.book-page__body--title-spread) {
-  justify-content: center;
-}
-
-.book-page:not(.book-page--mobile-fs) .book-page__body:not(.book-page__body--title-spread),
-.book-page:not(.book-page--mobile-fs) .book-page__body--title-spread {
-  position: static;
+/* Non-fullscreen: fixed body height (same as pagination) flows from the top;
+   page number sits in a compact band directly below — no flex-grow dead zone. */
+.book-page:not(.book-page--mobile-fs) .book-page__body:not(.book-page__body--title-spread) {
   flex: 0 0 auto;
+  height: var(--page-content-h);
+  max-height: var(--page-content-h);
   min-height: 0;
-  max-height: calc(100% - var(--page-footer-reserve));
   overflow: hidden;
   box-sizing: border-box;
   padding-bottom: 0;
@@ -1065,10 +1053,17 @@
 }
 
 .book-page:not(.book-page--mobile-fs) .book-page__body--title-spread {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-height: 100%;
+  box-sizing: border-box;
+  padding-bottom: 0;
+  margin: 0;
+  --lh-display: calc(var(--lh-body, 1.15) * 1.04);
 }
 
 .book-page__title {
@@ -1305,11 +1300,13 @@ ol.book-page__list {
 
 .book-page:not(.book-page--mobile-fs) .book-page__number {
   position: static;
-  flex: 0 0 auto;
-  height: auto;
+  flex: 0 0 var(--page-footer-reserve);
+  height: var(--page-footer-reserve);
   margin: 0;
   padding: 0;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   font-family: var(--ff-body, var(--font-body));
   font-size: 9px;

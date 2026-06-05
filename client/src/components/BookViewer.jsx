@@ -74,7 +74,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 37
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 19
+const PAGINATION_MEASUREMENT_VERSION = 20
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 /**
@@ -884,11 +884,23 @@ function getPagePaddingStyle(marginSetting) {
   }
 }
 
-/** Bottom-anchored non-fullscreen chrome: side/top margins + small bottom inset. */
-function getPageChromeStyle(marginSetting) {
+/** Non-fullscreen chrome: margins + exact paginated body height (matches measurement). */
+function getPageContentHeightPx(marginSetting, isMobileViewport = false) {
+  const { contentMaxHeight } = getLayoutHeights(
+    undefined,
+    marginSetting,
+    getPageNumberReservedPx(isMobileViewport, false),
+    { pageInsetTopPx: 0, pageInsetBottomPx: PAGE_BOTTOM_INSET_PX }
+  )
+  return contentMaxHeight
+}
+
+function getPageChromeStyle(marginSetting, isMobileViewport = false) {
   const pad = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
+  const contentHeightPx = getPageContentHeightPx(marginSetting, isMobileViewport)
   return {
     "--page-footer-reserve": `${PAGE_FOOTER_RESERVE_PX}px`,
+    "--page-content-h": `${contentHeightPx}px`,
     ...(pad === "0px"
       ? { padding: 0, paddingBottom: `${PAGE_BOTTOM_INSET_PX}px` }
       : {
@@ -1406,18 +1418,17 @@ function setupMeasureElements(
 
   if (mobileFS) {
     page.classList.add("book-page--mobile-fs")
-    page.style.justifyContent = ""
     page.style.paddingTop = `${pageInsetTopPx}px`
     page.style.paddingRight = "0"
     page.style.paddingLeft = "0"
     page.style.paddingBottom = `${pageInsetBottomPx}px`
   } else {
-    page.style.justifyContent = "flex-end"
-    const pageChrome = getPageChromeStyle(paginationSettings.margins)
+    const pageChrome = getPageChromeStyle(paginationSettings.margins, mobileViewport)
     page.style.paddingTop = pageChrome.paddingTop ?? "0"
     page.style.paddingRight = pageChrome.paddingRight ?? "0"
     page.style.paddingLeft = pageChrome.paddingLeft ?? "0"
     page.style.paddingBottom = pageChrome.paddingBottom ?? `${PAGE_BOTTOM_INSET_PX}px`
+    page.style.setProperty("--page-content-h", pageChrome["--page-content-h"])
   }
 
   body.style.padding = "0"
@@ -1434,8 +1445,8 @@ function setupMeasureElements(
   } else {
     footer.style.display = "none"
     body.style.flex = "0 0 auto"
-    body.style.minHeight = "0"
-    body.style.height = "auto"
+    body.style.minHeight = `${contentMaxHeight}px`
+    body.style.height = `${contentMaxHeight}px`
     body.style.maxHeight = `${contentMaxHeight}px`
   }
 
@@ -2668,6 +2679,7 @@ function highlightTextContent(text, query, tracker = null, activeOccurrence = nu
 function BookPageContent({
   page,
   isMobileFullscreen = false,
+  isMobileViewport = false,
   settings,
   searchQuery = "",
   activeSearchOccurrence = null,
@@ -2692,7 +2704,10 @@ function BookPageContent({
         paddingTop: `${MOBILE_FULLSCREEN_TOP_INSET_PX}px`,
         paddingBottom: `${MOBILE_FULLSCREEN_BOTTOM_CHROME_PX}px`,
       }
-    : getPageChromeStyle(settings?.margins ?? DEFAULT_SETTINGS.margins)
+    : getPageChromeStyle(
+        settings?.margins ?? DEFAULT_SETTINGS.margins,
+        isMobileViewport
+      )
 
   if (!page) {
     return <div className={`${pageClassName} book-page--empty`} style={pageStyle} />
@@ -5261,6 +5276,7 @@ export default function BookViewer({
                 <BookPageContent
                   page={leftPage}
                   isMobileFullscreen={mobileFullscreenActive}
+                  isMobileViewport={isMobile}
                   settings={uiSettings}
                   searchQuery={searchOpen ? searchQuery : ""}
                   activeSearchOccurrence={
@@ -5295,6 +5311,7 @@ export default function BookViewer({
                       <BookPageContent
                         page={rightPage}
                         isMobileFullscreen={mobileFullscreenActive}
+                        isMobileViewport={isMobile}
                         settings={uiSettings}
                         searchQuery={searchOpen ? searchQuery : ""}
                         activeSearchOccurrence={
@@ -5317,6 +5334,7 @@ export default function BookViewer({
                       <BookPageContent
                         page={null}
                         isMobileFullscreen={mobileFullscreenActive}
+                        isMobileViewport={isMobile}
                         settings={uiSettings}
                         searchQuery={searchOpen ? searchQuery : ""}
                         activeSearchOccurrence={null}
