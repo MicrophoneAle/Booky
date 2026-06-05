@@ -1311,30 +1311,6 @@ ol.book-page__list {
 }
 
 @media (max-width: 767px) {
-  .book-viewer.book-viewer--theme-parchment {
-    background: #ffffff;
-  }
-
-  .book-viewer.book-viewer--theme-warm {
-    background: #f5ecd7;
-  }
-
-  .book-viewer.book-viewer--theme-sepia {
-    background: #e8d5b0;
-  }
-
-  .book-viewer.book-viewer--theme-dusk {
-    background: #2c2b3c;
-  }
-
-  .book-viewer.book-viewer--theme-midnight {
-    background: #1a1a2e;
-  }
-
-  .book-viewer.book-viewer--theme-obsidian {
-    background: #1c1917;
-  }
-
   .book-page:not(.book-page--mobile-fs) {
     --page-footer-reserve: 10px;
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -1357,42 +1333,7 @@ ol.book-page__list {
   }
 
   .book-viewer__stage {
-    padding: 0;
-    background: inherit;
-  }
-
-  .book-viewer__stage::before {
-    background: linear-gradient(
-      to bottom,
-      var(--mobile-stage-fade, #ffffff) 0%,
-      transparent 10%,
-      transparent 90%,
-      var(--mobile-stage-fade, #ffffff) 100%
-    );
-  }
-
-  .book-viewer--theme-parchment .book-viewer__stage {
-    --mobile-stage-fade: #ffffff;
-  }
-
-  .book-viewer--theme-warm .book-viewer__stage {
-    --mobile-stage-fade: #f5ecd7;
-  }
-
-  .book-viewer--theme-sepia .book-viewer__stage {
-    --mobile-stage-fade: #e8d5b0;
-  }
-
-  .book-viewer--theme-dusk .book-viewer__stage {
-    --mobile-stage-fade: #2c2b3c;
-  }
-
-  .book-viewer--theme-midnight .book-viewer__stage {
-    --mobile-stage-fade: #1a1a2e;
-  }
-
-  .book-viewer--theme-obsidian .book-viewer__stage {
-    --mobile-stage-fade: #1c1917;
+    padding: 0.5rem;
   }
 
   .book-viewer__nav {
