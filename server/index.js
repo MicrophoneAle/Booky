@@ -3,7 +3,6 @@ import path from "node:path"
 import zlib from "node:zlib"
 import { fileURLToPath } from "node:url"
 import express from "express"
-import cors from "cors"
 import multer from "multer"
 import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
@@ -64,6 +63,12 @@ const supabase = createClient(
 
 const app = express()
 
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://localhost:4173",
+  "https://booky-lemon.vercel.app",
+]
+
 function normalizeOrigin(origin) {
   if (!origin || typeof origin !== "string") {
     return null
@@ -71,60 +76,57 @@ function normalizeOrigin(origin) {
   return origin.replace(/\/$/, "")
 }
 
-function buildAllowedOrigins() {
-  const origins = new Set()
-  const candidates = [
-    "http://localhost:5173",
-    "http://localhost:4173",
-    "https://booky-lemon.vercel.app",
-    process.env.CLIENT_URL,
-    ...(process.env.ALLOWED_ORIGINS ?? "").split(","),
-  ]
+function isAllowedOrigin(origin) {
+  const normalized = normalizeOrigin(origin)
+  if (!normalized) {
+    return false
+  }
 
-  for (const candidate of candidates) {
-    const normalized = normalizeOrigin(
-      typeof candidate === "string" ? candidate.trim() : candidate
-    )
-    if (normalized) {
-      origins.add(normalized)
+  if (ALLOWED_ORIGINS.includes(normalized)) {
+    return true
+  }
+
+  const clientUrl = normalizeOrigin(process.env.CLIENT_URL)
+  if (clientUrl && normalized === clientUrl) {
+    return true
+  }
+
+  for (const entry of (process.env.ALLOWED_ORIGINS ?? "").split(",")) {
+    if (normalizeOrigin(entry.trim()) === normalized) {
+      return true
     }
   }
 
-  return origins
-}
-
-const allowedOrigins = buildAllowedOrigins()
-
-function isAllowedCorsOrigin(origin) {
-  const normalized = normalizeOrigin(origin)
-  if (!normalized) {
-    return true
-  }
-  if (allowedOrigins.has(normalized)) {
-    return true
-  }
   return /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(normalized)
 }
 
-const corsOptions = {
-  origin(origin, callback) {
-    if (isAllowedCorsOrigin(origin)) {
-      callback(null, origin || true)
-      return
-    }
-    callback(null, false)
-  },
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
+function applyCorsHeaders(req, res) {
+  const origin = req.headers.origin
+  if (origin && isAllowedOrigin(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin)
+    res.setHeader("Access-Control-Allow-Credentials", "true")
+    res.setHeader("Vary", "Origin")
+  }
+
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+  )
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
+  res.setHeader("Access-Control-Max-Age", "86400")
 }
 
-// 1. CORS first — must be before everything else
-const corsMiddleware = cors(corsOptions)
-app.use(corsMiddleware)
-app.options(/.*/, corsMiddleware)
+// 1. CORS first — answer preflight before Clerk or auth middleware
+app.use((req, res, next) => {
+  applyCorsHeaders(req, res)
+
+  if (req.method === "OPTIONS") {
+    res.sendStatus(204)
+    return
+  }
+
+  next()
+})
 
 // 2. Clerk middleware after CORS
 app.use(clerkMiddleware())
@@ -4629,21 +4631,6 @@ app.post("/admin/reparse", async (req, res) => {
       error: error instanceof Error ? error.message : "Re-parse failed",
     })
   }
-})
-
-app.use((error, req, res, next) => {
-  if (res.headersSent) {
-    next(error)
-    return
-  }
-
-  corsMiddleware(req, res, () => {
-    const status = error?.status ?? error?.statusCode ?? 500
-    res.status(status).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Server error",
-    })
-  })
 })
 
 export {

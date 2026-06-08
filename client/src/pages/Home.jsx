@@ -94,6 +94,23 @@ function isPdfFile(file) {
   return hasPdfMime || hasPdfExtension
 }
 
+async function fetchWithRetry(url, options, retries = 4) {
+  let lastError = null
+
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    try {
+      return await fetch(url, options)
+    } catch (error) {
+      lastError = error
+      if (attempt < retries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)))
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Failed to fetch")
+}
+
 async function pollDocumentParseStatus(documentId, getToken, onProgress) {
   const startedAt = Date.now()
 
@@ -103,7 +120,7 @@ async function pollDocumentParseStatus(documentId, getToken, onProgress) {
       throw new Error("Unauthorized")
     }
 
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${API_URL}/documents/${encodeURIComponent(documentId)}/status`,
       {
         headers: {
@@ -221,13 +238,15 @@ function doUpload(file, getToken, setUploadState, navigate) {
               }))
               setTimeout(() => navigate(`/read/${documentId}`), 600)
             } catch (pollError) {
+              const message =
+                pollError instanceof Error ? pollError.message : "Processing failed"
               setUploadState((state) => ({
                 ...state,
                 phase: "error",
                 errorMessage:
-                  pollError instanceof Error
-                    ? pollError.message
-                    : "Processing failed",
+                  message === "Failed to fetch"
+                    ? "Could not reach the server. Wait ~30 seconds for Render to wake up, then try again."
+                    : message,
               }))
             }
 
@@ -324,13 +343,13 @@ export default function Home() {
     }
 
     try {
-      await fetch(`${API_URL}/`, {
+      await fetchWithRetry(`${API_URL}/`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
     } catch {
-      // server unreachable — will fail on upload too
+      // server may still be waking — upload will retry via xhr
     } finally {
       clearTimeout(wakeTimer)
     }
