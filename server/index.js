@@ -64,20 +64,67 @@ const supabase = createClient(
 
 const app = express()
 
+function normalizeOrigin(origin) {
+  if (!origin || typeof origin !== "string") {
+    return null
+  }
+  return origin.replace(/\/$/, "")
+}
+
+function buildAllowedOrigins() {
+  const origins = new Set()
+  const candidates = [
+    "http://localhost:5173",
+    "http://localhost:4173",
+    "https://booky-lemon.vercel.app",
+    process.env.CLIENT_URL,
+    ...(process.env.ALLOWED_ORIGINS ?? "").split(","),
+  ]
+
+  for (const candidate of candidates) {
+    const normalized = normalizeOrigin(
+      typeof candidate === "string" ? candidate.trim() : candidate
+    )
+    if (normalized) {
+      origins.add(normalized)
+    }
+  }
+
+  return origins
+}
+
+const allowedOrigins = buildAllowedOrigins()
+
+function isAllowedCorsOrigin(origin) {
+  const normalized = normalizeOrigin(origin)
+  if (!normalized) {
+    return true
+  }
+  if (allowedOrigins.has(normalized)) {
+    return true
+  }
+  return /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(normalized)
+}
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (isAllowedCorsOrigin(origin)) {
+      callback(null, origin || true)
+      return
+    }
+    callback(null, false)
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+}
+
 // 1. CORS first — must be before everything else
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://booky-lemon.vercel.app",
-    ],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  })
-)
+const corsMiddleware = cors(corsOptions)
+app.use(corsMiddleware)
+app.options(/.*/, corsMiddleware)
 
 // 2. Clerk middleware after CORS
 app.use(clerkMiddleware())
@@ -4582,6 +4629,21 @@ app.post("/admin/reparse", async (req, res) => {
       error: error instanceof Error ? error.message : "Re-parse failed",
     })
   }
+})
+
+app.use((error, req, res, next) => {
+  if (res.headersSent) {
+    next(error)
+    return
+  }
+
+  corsMiddleware(req, res, () => {
+    const status = error?.status ?? error?.statusCode ?? 500
+    res.status(status).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    })
+  })
 })
 
 export {
