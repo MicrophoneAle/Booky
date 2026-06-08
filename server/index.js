@@ -4540,13 +4540,13 @@ app.post("/upload", requireAuth, (req, res) => {
         return
       }
 
-      const pdfBuffer = uploadedFile.buffer
+      const fileBuffer = uploadedFile.buffer
       const documentId = insertedDocument.id
       const userId = req.userId
       const originalName = uploadedFile.originalname
 
       setImmediate(() => {
-        void parseDocumentInBackground(documentId, userId, pdfBuffer, originalName)
+        void parseDocumentInBackground(documentId, userId, fileBuffer, originalName)
       })
 
       res.json({
