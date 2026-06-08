@@ -8,7 +8,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 39
+const PARSER_VERSION = 40
 
 const PUA_FALLBACK_MAP = {
   "\uE002": "Th",
@@ -873,16 +873,21 @@ function buildDefaultPuaReplacementMap(buffer = null) {
 
 function isSceneBreakOrnamentLine(text) {
   const trimmed = (text ?? "").trim()
-  if (!trimmed || trimmed.length > 5) {
+  if (!trimmed || trimmed.length > 24) {
     return false
   }
 
   const glyphs = [...trimmed]
-  if (glyphs.length < 1 || glyphs.length > 5) {
+  if (glyphs.length < 2 || glyphs.length > 5) {
     return false
   }
 
-  return glyphs.every((glyph) => isPuaCodePoint(glyph.codePointAt(0)))
+  const codePoints = glyphs.map((glyph) => glyph.codePointAt(0))
+  if (!codePoints.every((codePoint) => isPuaCodePoint(codePoint))) {
+    return false
+  }
+
+  return new Set(codePoints).size === 1
 }
 
 function isSceneBreakDividerText(text) {
@@ -903,10 +908,6 @@ function pushSceneBreakBlock(blocks) {
 function translatePuaCharacters(text, replacementByPua = null) {
   if (!text) {
     return ""
-  }
-
-  if (isSceneBreakOrnamentLine(text)) {
-    return SCENE_BREAK_DIVIDER_TEXT
   }
 
   let normalized = ""
@@ -957,15 +958,61 @@ function isPrintedTocEntryLine(text) {
     return true
   }
 
-  // Printed front-matter lists like "I. Loomings" / "XLII. The Chart 162".
+  // Printed front-matter lists like "I. Loomings 1" / "XXIII. Postscript 88".
   if (
-    /^(?:[IVXLCDM]{1,4}|\d{1,3})\.\s+\S/.test(trimmed) &&
+    /^(?:[IVXLCDM]{1,10}|\d{1,3})\.\s+\S/.test(trimmed) &&
     !/^chapter\b/i.test(trimmed)
   ) {
     return true
   }
 
+  if (isPrintedTocRomanRowLine(trimmed)) {
+    return true
+  }
+
   return false
+}
+
+function isPrintedTocRomanRowLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || /^chapter\b/i.test(trimmed)) {
+    return false
+  }
+
+  return /^(?:[IVXLCDM]{1,10}|\d{1,3})\.\s+.+\s+\d{1,4}\s*$/.test(trimmed)
+}
+
+function countPrintedTocRomanEntries(text) {
+  const pattern = /(?:^|\s)(?:[IVXLCDM]{1,10}|\d{1,3})\.\s+.+?\s+\d{1,4}/g
+  let count = 0
+  while (pattern.exec(text ?? "")) {
+    count += 1
+  }
+  return count
+}
+
+function isMergedPrintedTocBlock(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (countPrintedTocRomanEntries(trimmed) >= 2) {
+    return true
+  }
+  if (countStructuralMarkers(trimmed) >= 2) {
+    return true
+  }
+  return isTocDenseListingLine(trimmed)
+}
+
+function findFirstChapterBlockIndex(blocks) {
+  return blocks.findIndex((block) => {
+    const text = (block?.text ?? "").trim()
+    return (
+      /^Chapter\s+(?:\d+|[IVXLCDM]+)\s*-/i.test(text) ||
+      Boolean(parseChapterOnlyHeading(text))
+    )
+  })
 }
 
 function isLargeFontAllCapsChapterWrapLine(text, line) {
@@ -989,6 +1036,7 @@ function isLargeFontAllCapsChapterWrapLine(text, line) {
 function excludePrintedTocBlocks(blocks) {
   const dropIndices = new Set()
   let inPrintedTocSection = false
+  const firstChapterIndex = findFirstChapterBlockIndex(blocks)
 
   for (let index = 0; index < blocks.length; index += 1) {
     const text = (blocks[index]?.text ?? "").trim()
@@ -999,7 +1047,7 @@ function excludePrintedTocBlocks(blocks) {
     }
 
     if (inPrintedTocSection) {
-      if (isPrintedTocEntryLine(text)) {
+      if (isPrintedTocEntryLine(text) || isMergedPrintedTocBlock(text)) {
         dropIndices.add(index)
         continue
       }
@@ -1007,10 +1055,28 @@ function excludePrintedTocBlocks(blocks) {
     }
   }
 
+  if (firstChapterIndex > 1) {
+    for (let index = 1; index < firstChapterIndex; index += 1) {
+      const text = (blocks[index]?.text ?? "").trim()
+      if (
+        isPrintedTocEntryLine(text) ||
+        isPrintedTocRomanRowLine(text) ||
+        isMergedPrintedTocBlock(text)
+      ) {
+        dropIndices.add(index)
+      }
+    }
+  }
+
   let runStart = -1
   let runLength = 0
   for (let index = 0; index < blocks.length; index += 1) {
-    if (isPrintedTocEntryLine((blocks[index]?.text ?? "").trim())) {
+    const text = (blocks[index]?.text ?? "").trim()
+    if (
+      isPrintedTocEntryLine(text) ||
+      isPrintedTocRomanRowLine(text) ||
+      isMergedPrintedTocBlock(text)
+    ) {
       if (runLength === 0) {
         runStart = index
       }
@@ -2731,12 +2797,16 @@ async function extractPdfPageLines(pdf, pageNumber, headingStrings) {
 
     for (const line of rawLines) {
       line.indented = line.x > medianX + INDENT_THRESHOLD_PX
-      if (isSceneBreakOrnamentLine(line.text)) {
-        line.centered = true
-      }
     }
 
     annotateLinesCentered(rawLines)
+
+    for (const line of rawLines) {
+      if (isSceneBreakOrnamentLine(line.text) && line.centered) {
+        line.isSceneBreakOrnament = true
+      }
+    }
+
     return dropMarginCalloutLines(rawLines)
   } finally {
     if (typeof page.cleanup === "function") {
@@ -2835,19 +2905,26 @@ async function extractPdfStructure(buffer, { onPageProcessed, puaReplacementMap 
         continue
       }
 
+      if (isSceneBreakOrnamentLine(line.text) && !line.centered) {
+        continue
+      }
+
       const cleanedText = normalizeExtractedText(line.text, {
         puaReplacementMap: puaMap,
         isLine: true,
       })
-      if (!cleanedText) {
+
+      const isSceneBreak = Boolean(line.isSceneBreakOrnament)
+      const outputText = isSceneBreak
+        ? SCENE_BREAK_DIVIDER_TEXT.trim()
+        : cleanedText
+
+      if (!outputText) {
         continue
       }
 
-      const isSceneBreak =
-        cleanedText.trim() === SCENE_BREAK_DIVIDER_TEXT.trim()
-
       lines.push({
-        text: cleanedText,
+        text: outputText,
         indented: Boolean(line.indented),
         centered: Boolean(line.centered) || isSceneBreak,
         fontSize: line.fontSize,

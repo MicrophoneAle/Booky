@@ -27,15 +27,47 @@ export default {
     ],
     [
       "no printed CONTENTS run in body",
+      (ctx) => {
+        const firstChapterIndex = ctx.blocks.findIndex((block) =>
+          /^Chapter\s+I\s*-/i.test((block.text ?? "").trim())
+        )
+        const frontMatter =
+          firstChapterIndex > 0 ? ctx.blocks.slice(1, firstChapterIndex) : []
+        return (
+          !ctx.blocks.some((block) => /^CONTENTS$/i.test((block.text ?? "").trim())) &&
+          frontMatter.every((block) => {
+            const text = (block.text ?? "").trim()
+            return (
+              !/^(?:[IVXLCDM]{1,10}|\d{1,3})\.\s+.+\s+\d{1,4}\s*$/i.test(text) &&
+              !/^I\.\s+Loomings\b/i.test(text) &&
+              !/^XXIII\.\s+Postscript\b/i.test(text)
+            )
+          })
+        )
+      },
+    ],
+    [
+      "no false scene breaks flooding chapter I",
+      (ctx) => {
+        const chapterStart = ctx.blocks.findIndex((block) =>
+          /^Chapter\s+I\s*-/i.test((block.text ?? "").trim())
+        )
+        if (chapterStart < 0) {
+          return false
+        }
+        const chapterSlice = ctx.blocks.slice(chapterStart, chapterStart + 20)
+        const sceneBreaks = chapterSlice.filter(
+          (block) => (block.text ?? "").trim() === "* * *"
+        )
+        return sceneBreaks.length <= 1
+      },
+    ],
+    [
+      "loomings key-to-it-all sentence intact",
       (ctx) =>
-        !ctx.blocks.some((block) => {
-          const text = (block.text ?? "").trim()
-          return (
-            /^I\.\s+Loomings\b/i.test(text) ||
-            /^XVII\.\s+The prophet\b/i.test(text) ||
-            /^CONTENTS$/i.test(text)
-          )
-        }),
+        ctx.blocks.some((block) =>
+          /\bthis is the key to it all\b/i.test(block.text ?? "")
+        ),
     ],
     [
       "chapter LIV merged heading at normal size",
@@ -90,12 +122,10 @@ export default {
         ctx.chapters.some((chapter) => /epilogue/i.test(chapter.title ?? "")),
     ],
     [
-      "scene break divider present in chapter XXXVIII",
+      "no standalone scene break dividers in body",
       (ctx) =>
-        ctx.blocks.some(
-          (block) =>
-            (block.text ?? "").trim() === "* * *" &&
-            block.textAlign === "center"
+        !ctx.blocks.some(
+          (block) => (block.text ?? "").trim() === "* * *"
         ),
     ],
   ],
