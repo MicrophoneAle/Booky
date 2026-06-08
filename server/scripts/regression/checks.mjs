@@ -45,7 +45,11 @@ function isAcceptableChapterTitle(title) {
     return false
   }
 
-  if (/^chapter\s+\d+\.?$/i.test(trimmed)) {
+  if (/^chapter\s+(?:\d+|[IVXLCDM]+)\.?$/i.test(trimmed)) {
+    return true
+  }
+
+  if (/^chapter\s+(?:\d+|[IVXLCDM]+)\s*-\s+\S/i.test(trimmed)) {
     return true
   }
 

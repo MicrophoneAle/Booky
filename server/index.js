@@ -8,7 +8,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 40
+const PARSER_VERSION = 41
 
 const PUA_FALLBACK_MAP = {
   "\uE002": "Th",
@@ -1013,6 +1013,19 @@ function findFirstChapterBlockIndex(blocks) {
       Boolean(parseChapterOnlyHeading(text))
     )
   })
+}
+
+function isShortChapterHeadingSubtitleLine(text, line) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || (line?.fontSize ?? 0) < CHAPTER_HEADING_MIN_FONT_SIZE) {
+    return false
+  }
+  if (!isLikelyChapterSubtitleText(trimmed)) {
+    return false
+  }
+
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  return trimmed.length <= 24 && letters.length > 0 && letters.length <= 14
 }
 
 function isLargeFontAllCapsChapterWrapLine(text, line) {
@@ -2201,7 +2214,7 @@ function dropMarginCalloutLines(lines) {
       const previousText = entryIndex > 0 ? entries[entryIndex - 1].text : ""
 
       if (
-        /^Chapter\s+\d+\.?\s*$/i.test(previousText) &&
+        parseChapterOnlyHeading(previousText) &&
         isLikelyChapterSubtitleText(text)
       ) {
         return true
@@ -2506,6 +2519,15 @@ function repairEpistolaryPdfArtifacts(text) {
       "Your affectionate brother, R. Walton."
     )
     .replace(/\bR\.\s+W\s+ALTON\b/gi, "R. Walton")
+}
+
+function isStandalonePageNumberText(text) {
+  const trimmed = (text ?? "").trim()
+  return (
+    STANDALONE_PAGE_NUMBER_REGEX.test(trimmed) ||
+    STANDALONE_ROMAN_PAGE_MARKER_REGEX.test(trimmed) ||
+    /^-\s*\d{1,4}\s*-$/.test(trimmed)
+  )
 }
 
 function shouldDropExtractedLine(
@@ -2892,6 +2914,7 @@ async function extractPdfStructure(buffer, { onPageProcessed, puaReplacementMap 
       const distinctPageCount = lineDistinctPages.get(line.text)?.size ?? 0
       const occurrencesOnThisPage =
         lineOccurrencesPerPage.get(line.text)?.get(pageIndex) ?? 1
+      const normalizedForDropCheck = translatePuaCharacters(line.text, puaMap).trim()
       if (
         shouldDropExtractedLine(
           line.text,
@@ -2900,7 +2923,18 @@ async function extractPdfStructure(buffer, { onPageProcessed, puaReplacementMap 
           Boolean(line.centered),
           pageIndex,
           lineFirstPageIndex
-        )
+        ) ||
+        (normalizedForDropCheck &&
+          normalizedForDropCheck !== line.text.trim() &&
+          shouldDropExtractedLine(
+            normalizedForDropCheck,
+            distinctPageCount,
+            occurrencesOnThisPage,
+            Boolean(line.centered),
+            pageIndex,
+            lineFirstPageIndex
+          )) ||
+        isStandalonePageNumberText(normalizedForDropCheck)
       ) {
         continue
       }
@@ -3090,7 +3124,7 @@ const CHAPTER_WITH_SUBTITLE_REGEX =
 function formatChapterLabel(kind, number, subtitle = "") {
   const label = kind.charAt(0).toUpperCase() + kind.slice(1).toLowerCase()
   const base = `${label} ${number}`
-  const trimmedSubtitle = (subtitle ?? "").trim().replace(/[.!?]+\s*$/, "")
+  const trimmedSubtitle = (subtitle ?? "").trim().replace(/\.+\s*$/, "")
   if (trimmedSubtitle) {
     return `${base} - ${trimmedSubtitle}`
   }
@@ -3728,6 +3762,12 @@ function buildBlocksFromLines(pageData, headingStrings) {
       continue
     }
 
+    if (isStandalonePageNumberText(text)) {
+      pendingConnective = null
+      index += 1
+      continue
+    }
+
     const chapterOnlyParts = parseChapterOnlyHeading(text)
     if (chapterOnlyParts) {
       pendingConnective = null
@@ -3752,6 +3792,12 @@ function buildBlocksFromLines(pageData, headingStrings) {
           nextFontSize >= HEADING_STRING_MIN_FONT_SIZE &&
           CHAPTER_TITLE_TAIL_WORD_REGEX.test(nextText)
         ) {
+          titleFragments.push(nextText)
+          cursor += 1
+          continue
+        }
+
+        if (isShortChapterHeadingSubtitleLine(nextText, nextEntry.line)) {
           titleFragments.push(nextText)
           cursor += 1
           continue

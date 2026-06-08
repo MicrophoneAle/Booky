@@ -85,6 +85,32 @@ export default {
       },
     ],
     [
+      "chapter XLI includes Hark subtitle",
+      (ctx) => {
+        const chapter = ctx.blocks.find((block) =>
+          /^Chapter\s+XLI\s*-\s*Hark!?\b/i.test((block.text ?? "").trim())
+        )
+        return Boolean(chapter) && chapter.isHeading === true
+      },
+    ],
+    [
+      "no stray page number after chapter I",
+      (ctx) => {
+        const chapterStart = ctx.blocks.findIndex((block) =>
+          /^Chapter\s+I\s*-/i.test((block.text ?? "").trim())
+        )
+        const chapterTwo = ctx.blocks.findIndex((block) =>
+          /^Chapter\s+II\s*-/i.test((block.text ?? "").trim())
+        )
+        if (chapterStart < 0 || chapterTwo < 0) {
+          return false
+        }
+        return !ctx.blocks
+          .slice(chapterStart, chapterTwo)
+          .some((block) => /^\d{1,3}$/.test((block.text ?? "").trim()))
+      },
+    ],
+    [
       "chapter LIII merged heading",
       (ctx) => {
         const chapter = ctx.blocks.find((block) =>
