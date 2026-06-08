@@ -9,7 +9,23 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 38
+const PARSER_VERSION = 39
+
+const PUA_FALLBACK_MAP = {
+  "\uE002": "Th",
+  "\uE053": "Th",
+  "\uE076": "ct",
+  "\uF643": "0",
+  "\uF644": "1",
+  "\uF645": "2",
+  "\uF646": "3",
+  "\uF647": "4",
+  "\uF648": "5",
+  "\uF649": "6",
+  "\uF64A": "7",
+  "\uF64B": "8",
+  "\uF64C": "9",
+}
 
 const MAX_PROSE_BLOCK_WORDS = 80
 const MAX_PROSE_BLOCK_CHARS = 500
@@ -650,15 +666,10 @@ const PUA_DIGIT_BLOCK_START = 0xf643
 const PUA_LETTER_BLOCK_START = 0xf761
 const PUA_LETTER_BLOCK_END = 0xf77a
 const PRINTED_TOC_SCAN_LINE_LIMIT = 250
-const SCENE_BREAK_DIVIDER_TEXT = "* * *"
+const SCENE_BREAK_DIVIDER_TEXT = " * * * "
 const CHAPTER_TITLE_TAIL_WORD_REGEX = /^[A-Z][A-Z\-']{1,18}\.?$/
-
-const PUA_LIGATURE_FALLBACK_REPLACEMENTS = new Map([
-  [0xe002, "Th"],
-  [0xe053, "Th"],
-  [0xe076, "ct"],
-  [0xf653, "s"],
-])
+const PRINTED_TOC_RUN_MIN_LENGTH = 5
+const MULTILINE_CHAPTER_WRAP_MIN_FONT_SIZE = 14
 
 function isPuaCodePoint(codePoint) {
   return codePoint >= PUA_PRIVATE_USE_START && codePoint <= PUA_PRIVATE_USE_END
@@ -801,8 +812,11 @@ function buildDefaultPuaReplacementMap(buffer = null) {
     )
   }
 
-  for (const [codePoint, replacement] of PUA_LIGATURE_FALLBACK_REPLACEMENTS) {
-    replacementByPua.set(codePoint, replacement)
+  for (const [glyph, replacement] of Object.entries(PUA_FALLBACK_MAP)) {
+    const codePoint = glyph.codePointAt(0)
+    if (codePoint != null) {
+      replacementByPua.set(codePoint, replacement)
+    }
   }
 
   return replacementByPua
@@ -810,42 +824,56 @@ function buildDefaultPuaReplacementMap(buffer = null) {
 
 function isSceneBreakOrnamentLine(text) {
   const trimmed = (text ?? "").trim()
-  if (!trimmed || trimmed.length > 24) {
+  if (!trimmed || trimmed.length > 5) {
     return false
   }
 
-  const tokens = trimmed.split(/\s+/).filter(Boolean)
-  if (tokens.length < 1 || tokens.length > 5) {
+  const glyphs = [...trimmed]
+  if (glyphs.length < 1 || glyphs.length > 5) {
     return false
   }
 
-  const glyphs = tokens.flatMap((token) => [...token])
-  if (glyphs.length < 2 || glyphs.length > 5) {
-    return false
-  }
-
-  const codePoints = glyphs.map((glyph) => glyph.codePointAt(0))
-  if (!codePoints.every((codePoint) => isPuaCodePoint(codePoint))) {
-    return false
-  }
-
-  return new Set(codePoints).size === 1
+  return glyphs.every((glyph) => isPuaCodePoint(glyph.codePointAt(0)))
 }
 
-function normalizePuaGlyphs(text, replacementByPua) {
+function isSceneBreakDividerText(text) {
+  return (text ?? "").trim() === SCENE_BREAK_DIVIDER_TEXT.trim()
+}
+
+function pushSceneBreakBlock(blocks) {
+  blocks.push({
+    text: SCENE_BREAK_DIVIDER_TEXT.trim(),
+    isHeading: true,
+    fontSize: 12,
+    chapterId: null,
+    centered: true,
+    textAlign: "center",
+  })
+}
+
+function translatePuaCharacters(text, replacementByPua = null) {
   if (!text) {
     return ""
   }
 
+  if (isSceneBreakOrnamentLine(text)) {
+    return SCENE_BREAK_DIVIDER_TEXT
+  }
+
   let normalized = ""
   for (const glyph of text) {
+    if (Object.prototype.hasOwnProperty.call(PUA_FALLBACK_MAP, glyph)) {
+      normalized += PUA_FALLBACK_MAP[glyph]
+      continue
+    }
+
     const codePoint = glyph.codePointAt(0)
     if (!isPuaCodePoint(codePoint)) {
       normalized += glyph
       continue
     }
 
-    const replacement = replacementByPua.get(codePoint)
+    const replacement = replacementByPua?.get(codePoint)
     if (replacement != null) {
       normalized += replacement
       continue
@@ -854,7 +882,7 @@ function normalizePuaGlyphs(text, replacementByPua) {
     // Drop unmapped PUA so it never renders as a tofu square.
   }
 
-  return normalized
+  return normalized.replace(/[\uE000-\uF8FF]/g, "")
 }
 
 function isPrintedTocHeading(text) {
@@ -889,6 +917,73 @@ function isPrintedTocEntryLine(text) {
   }
 
   return false
+}
+
+function isLargeFontAllCapsChapterWrapLine(text, line) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || (line?.fontSize ?? 0) < MULTILINE_CHAPTER_WRAP_MIN_FONT_SIZE) {
+    return false
+  }
+
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 2) {
+    return false
+  }
+
+  return (
+    letters === letters.toUpperCase() &&
+    !isNarrativeSentenceLine(trimmed) &&
+    !parseChapterOnlyHeading(trimmed)
+  )
+}
+
+function excludePrintedTocBlocks(blocks) {
+  const dropIndices = new Set()
+  let inPrintedTocSection = false
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const text = (blocks[index]?.text ?? "").trim()
+    if (isPrintedTocHeading(text)) {
+      inPrintedTocSection = true
+      dropIndices.add(index)
+      continue
+    }
+
+    if (inPrintedTocSection) {
+      if (isPrintedTocEntryLine(text)) {
+        dropIndices.add(index)
+        continue
+      }
+      inPrintedTocSection = false
+    }
+  }
+
+  let runStart = -1
+  let runLength = 0
+  for (let index = 0; index < blocks.length; index += 1) {
+    if (isPrintedTocEntryLine((blocks[index]?.text ?? "").trim())) {
+      if (runLength === 0) {
+        runStart = index
+      }
+      runLength += 1
+      continue
+    }
+
+    if (runLength >= PRINTED_TOC_RUN_MIN_LENGTH) {
+      for (let dropIndex = runStart; dropIndex < runStart + runLength; dropIndex += 1) {
+        dropIndices.add(dropIndex)
+      }
+    }
+    runLength = 0
+  }
+
+  if (runLength >= PRINTED_TOC_RUN_MIN_LENGTH) {
+    for (let dropIndex = runStart; dropIndex < runStart + runLength; dropIndex += 1) {
+      dropIndices.add(dropIndex)
+    }
+  }
+
+  return blocks.filter((_, index) => !dropIndices.has(index))
 }
 
 function isWrappedChapterTitleFragment(block) {
@@ -1847,13 +1942,10 @@ function normalizeExtractedText(text, options = {}) {
     return ""
   }
 
-  if (options.isLine && isSceneBreakOrnamentLine(text)) {
-    return SCENE_BREAK_DIVIDER_TEXT
-  }
-
-  const puaNormalized = options.puaReplacementMap
-    ? normalizePuaGlyphs(text, options.puaReplacementMap)
-    : text
+  const puaNormalized = translatePuaCharacters(
+    text,
+    options.puaReplacementMap ?? null
+  )
 
   return stripInlineArtifacts(
     joinSplitWordFragments(
@@ -2702,7 +2794,8 @@ async function extractPdfStructure(buffer, { onPageProcessed, puaReplacementMap 
         continue
       }
 
-      const isSceneBreak = cleanedText === SCENE_BREAK_DIVIDER_TEXT
+      const isSceneBreak =
+        cleanedText.trim() === SCENE_BREAK_DIVIDER_TEXT.trim()
 
       lines.push({
         text: cleanedText,
@@ -3502,6 +3595,72 @@ function buildBlocksFromLines(pageData, headingStrings) {
       continue
     }
 
+    if (isSceneBreakDividerText(text)) {
+      pendingConnective = null
+      pushSceneBreakBlock(blocks)
+      index += 1
+      continue
+    }
+
+    const chapterOnlyParts = parseChapterOnlyHeading(text)
+    if (chapterOnlyParts) {
+      pendingConnective = null
+      const titleFragments = []
+      let cursor = index + 1
+
+      while (cursor < allLines.length) {
+        const nextEntry = allLines[cursor]
+        const nextText = nextEntry.text.trim()
+        const nextFontSize = nextEntry.line.fontSize ?? 0
+
+        if (
+          nextFontSize >= MULTILINE_CHAPTER_WRAP_MIN_FONT_SIZE &&
+          isLargeFontAllCapsChapterWrapLine(nextText, nextEntry.line)
+        ) {
+          titleFragments.push(nextText)
+          cursor += 1
+          continue
+        }
+
+        if (
+          nextFontSize >= HEADING_STRING_MIN_FONT_SIZE &&
+          CHAPTER_TITLE_TAIL_WORD_REGEX.test(nextText)
+        ) {
+          titleFragments.push(nextText)
+          cursor += 1
+          continue
+        }
+
+        break
+      }
+
+      const subtitle = titleFragments.length
+        ? formatInferredTitleText(titleFragments.join(" ").replace(/\s+/g, " ").trim())
+        : ""
+      const displayTitle = formatChapterLabel(
+        chapterOnlyParts.kind,
+        chapterOnlyParts.number,
+        subtitle
+      )
+
+      pushHeadingBlock(
+        blocks,
+        {
+          text: displayTitle,
+          chapterTitle: displayTitle,
+          isHeading: true,
+          fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+          isChapterStart: true,
+          chapterId: null,
+        },
+        "compiledMultilineChapter"
+      )
+
+      nonEmptyLineIndex += cursor - index - 1
+      index = cursor
+      continue
+    }
+
     if (isPrintedTocHeading(text)) {
       pendingConnective = null
       inPrintedTocSection = true
@@ -4146,6 +4305,7 @@ async function parsePdfBuffer(
   }
 
   blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle)
+  blocks = excludePrintedTocBlocks(blocks)
 
   const content = blocksToContent(blocks)
 
