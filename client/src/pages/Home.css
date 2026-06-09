@@ -209,6 +209,7 @@
 .upload-text {
   margin: 0;
   color: var(--color-muted);
+  font-family: var(--font-heading);
   font-size: 1rem;
   font-variant: small-caps;
   letter-spacing: 0.08em;
@@ -219,6 +220,7 @@
   border: none;
   background: transparent;
   color: var(--color-gold);
+  font-family: var(--font-body);
   text-decoration: underline;
   text-underline-offset: 3px;
   font-size: 0.92rem;
@@ -238,6 +240,7 @@
 .upload-error {
   color: #b86a5a;
   margin: 0.85rem 0 0;
+  font-family: var(--font-body);
   font-size: 0.9rem;
 }
 
@@ -248,6 +251,7 @@
 .file-name {
   margin: 0;
   color: var(--color-gold);
+  font-family: var(--font-heading);
   font-size: 0.95rem;
   word-break: break-word;
 }
@@ -255,6 +259,7 @@
 .file-size {
   margin: 0.25rem 0 0;
   color: var(--color-muted);
+  font-family: var(--font-body);
   font-size: 0.85rem;
 }
 
