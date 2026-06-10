@@ -37,7 +37,7 @@ try {
     onProgress(progress) {
       phases.push(progress)
       if (
-        progress.phase === "vision" ||
+        progress.phase === "classifying_illustrations" ||
         progress.phase === "uploading_assets" ||
         progress.phase === "finalizing" ||
         progress.phase === "structuring"
@@ -61,6 +61,10 @@ try {
   console.log("image blocks", imageBlocks.length)
   console.log("images with src", imageBlocks.filter((b) => b.src).length)
   console.log("image candidates total", result.imageCandidateCount)
+  console.log(
+    "chapter boundary images",
+    imageBlocks.filter((block) => block.isChapterBoundary).length
+  )
   console.log("last phases:", phases.slice(-5))
 } catch (error) {
   console.error("\nFAILED at:", phases.at(-1)?.phase ?? "unknown")

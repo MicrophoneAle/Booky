@@ -8,9 +8,9 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import crypto from "node:crypto"
 import { getDocument, OPS } from "pdfjs-dist/legacy/build/pdf.mjs"
-import { analyzeChapterGraphic } from "./visionService.js"
+import { analyzeChapterGraphicFromContext } from "./chapterGraphicService.js"
 
-const PARSER_VERSION = 45
+const PARSER_VERSION = 46
 
 const PDF_IMAGE_PAINT_OPS = new Set(
   [OPS.paintImageXObject, OPS.paintInlineImageXObject].filter((op) => op != null)
@@ -3144,40 +3144,12 @@ async function runWithConcurrency(items, concurrency, worker) {
   return results
 }
 
-async function finalizeIllustrationBlocks(blocks, { concurrency } = {}) {
+async function finalizeIllustrationBlocks(blocks) {
   if (!Array.isArray(blocks) || blocks.length === 0) {
     return blocks
   }
 
-  const visionConcurrency =
-    concurrency ??
-    (Number(process.env.ILLUSTRATION_VISION_CONCURRENCY) ||
-      ILLUSTRATION_VISION_CONCURRENCY)
-
-  const candidateEntries = blocks
-    .map((block, index) => ({ block, index }))
-    .filter(
-      ({ block }) => block?.type === "image_candidate" && block.isCandidate === true
-    )
-
-  const visionResultsByIndex = new Map()
-
-  if (candidateEntries.length > 0) {
-    const visionResults = await runWithConcurrency(
-      candidateEntries,
-      visionConcurrency,
-      async ({ block, index }) => ({
-        index,
-        result: await analyzeChapterGraphic(extractImageBlockPayload(block)),
-      })
-    )
-
-    for (const entry of visionResults) {
-      if (entry?.index != null) {
-        visionResultsByIndex.set(entry.index, entry.result)
-      }
-    }
-  }
+  let chapterSequence = 0
 
   return blocks.flatMap((block, index) => {
     if (block?.type !== "image_candidate") {
@@ -3188,14 +3160,18 @@ async function finalizeIllustrationBlocks(blocks, { concurrency } = {}) {
       return []
     }
 
-    const visionResult = visionResultsByIndex.get(index) ?? {
-      isChapterBoundary: false,
-      title: null,
-      number: null,
-      rawText: null,
+    const analysisResult = analyzeChapterGraphicFromContext({
+      imageBlock: block,
+      blocks,
+      blockIndex: index,
+      chapterSequence: chapterSequence + 1,
+    })
+
+    if (analysisResult.isChapterBoundary) {
+      chapterSequence += 1
     }
 
-    return [finalizeVisionImageBlock(block, visionResult)]
+    return [finalizeVisionImageBlock(block, analysisResult)]
   })
 }
 
@@ -5108,8 +5084,8 @@ async function parsePdfBuffer(
   blocks = interleaveImageCandidateBlocks(blocks, pageImageCandidates, pageData)
 
   reportProgress({
-    phase: "vision",
-    label: "Analyzing illustrations",
+    phase: "classifying_illustrations",
+    label: "Classifying illustrations",
     current: 0,
     total: blocks.filter((block) => block?.type === "image_candidate" && block.isCandidate).length,
     percent: PARSE_PROGRESS_STRUCTURE_PERCENT + 5,

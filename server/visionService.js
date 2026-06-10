@@ -1,3 +1,7 @@
+/**
+ * @deprecated Use chapterGraphicService.js instead — heuristic analysis with no API cost.
+ * Kept for optional manual use if OPENAI_API_KEY is configured.
+ */
 import OpenAI from "openai"
 
 const VISION_ANALYSIS_PROMPT =
