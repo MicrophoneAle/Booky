@@ -18,9 +18,12 @@ import {
   formatImageChapterTocTitle,
   formatTocChapterTitle,
   flattenDocument,
+  getImageChapterAccessibilityLabel,
   groupFrontMatterPlacementUnits,
   inferBlockIsChapterStart,
   isChapterBoundaryText,
+  normalizeImageDimensions,
+  resolveImageLayoutMetrics,
   CHAPTER_WITH_SUBTITLE_REGEX,
   isFrontMatterVisualType,
   isTitlePageVisualItems,
@@ -35,6 +38,7 @@ import "./BookViewer.css"
 
 const NAVBAR_HEIGHT_PX = 44
 const PAGE_WIDTH_PX = 400
+const PAGE_CONTENT_INSET_PX = 72
 const PAGE_HEIGHT_PX = 600
 /** Fallback page height when the stage is not mounted yet (matches 059e9ea). */
 const MOBILE_FULLSCREEN_PAGE_HEIGHT_PX = 780
@@ -951,7 +955,8 @@ function proseParagraphClassName(previousItem, proseItem = null) {
     const noIndentAfter =
       isHeadingVisualItem(previousItem) ||
       previousItem?.type === "subtitle" ||
-      previousItem?.type === "author"
+      previousItem?.type === "author" ||
+      previousItem?.type === "image"
 
     if (noIndentAfter) {
       classes.push("book-page__text--first")
@@ -1459,6 +1464,7 @@ function setupMeasureElements(
     FONT_FAMILY_MAP[paginationSettings.fontStyle] ?? FONT_FAMILY_MAP.lora
   const pageLayout = {
     contentMaxHeight,
+    contentWidth: PAGE_WIDTH_PX - PAGE_CONTENT_INSET_PX,
     font,
     line,
     ...getPageTextCapacity(contentMaxHeight, font, line),
@@ -1649,6 +1655,7 @@ function groupBlocksForDisplay(blocks) {
         isChapterBoundary: Boolean(block.isChapterBoundary),
         chapterMetadata: block.chapterMetadata ?? null,
         coordinates: block.coordinates ?? null,
+        dimensions: normalizeImageDimensions(block),
       })
       continue
     }
@@ -1790,20 +1797,97 @@ function appendGroupedListNodes(parentEl, nodes) {
   }
 }
 
-function estimateImageDisplayHeight(item) {
-  const width = item?.coordinates?.width
-  const height = item?.coordinates?.height
-
-  if (width > 0 && height > 0) {
-    const contentWidth = PAGE_WIDTH_PX - 72
-    const scale = contentWidth / width
-    return Math.min(420, Math.max(120, Math.round(height * scale)))
-  }
-
-  return 220
+function getPageContentWidthPx(pageLayout) {
+  return pageLayout?.contentWidth ?? PAGE_WIDTH_PX - PAGE_CONTENT_INSET_PX
 }
 
-function appendVisualItem(body, item, previousItem = null) {
+function applyImageLayoutStylesToElement(element, styles) {
+  if (!element || !styles) {
+    return
+  }
+
+  for (const [key, value] of Object.entries(styles)) {
+    if (value != null && value !== "") {
+      element.style[key] = value
+    }
+  }
+}
+
+function appendImageMeasureElement(body, item, pageLayout = null) {
+  const layout = resolveImageLayoutMetrics(item, {
+    contentMaxHeight: pageLayout?.contentMaxHeight ?? 0,
+    contentWidth: getPageContentWidthPx(pageLayout),
+  })
+
+  const illustration = document.createElement("div")
+  illustration.className = [
+    "book-page__illustration",
+    item.isChapterBoundary ? "book-page__illustration--chapter-boundary" : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+  illustration.dataset.blockId = item.id ?? ""
+
+  if (item.isChapterBoundary) {
+    const srHeading = document.createElement("h2")
+    srHeading.className = "book-page__sr-only"
+    srHeading.textContent = getImageChapterAccessibilityLabel(item)
+    illustration.appendChild(srHeading)
+  }
+
+  const wrapper = document.createElement("div")
+  wrapper.className = "book-page__illustration-wrapper"
+  applyImageLayoutStylesToElement(wrapper, layout.wrapperStyle)
+
+  if (item.src) {
+    const image = document.createElement("img")
+    image.className = "book-page__illustration-image"
+    image.src = item.src
+    image.alt = ""
+    image.loading = "eager"
+    image.decoding = "sync"
+    wrapper.appendChild(image)
+  }
+
+  illustration.appendChild(wrapper)
+  body.appendChild(illustration)
+}
+
+function ImageLayoutItem({ item, pageLayout = null }) {
+  const layout = resolveImageLayoutMetrics(item, {
+    contentMaxHeight: pageLayout?.contentMaxHeight ?? 0,
+    contentWidth: getPageContentWidthPx(pageLayout),
+  })
+
+  return (
+    <div
+      className={[
+        "book-page__illustration",
+        item.isChapterBoundary ? "book-page__illustration--chapter-boundary" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      data-block-id={item.id ?? ""}
+    >
+      {item.isChapterBoundary ? (
+        <h2 className="book-page__sr-only">{getImageChapterAccessibilityLabel(item)}</h2>
+      ) : null}
+      <div className="book-page__illustration-wrapper" style={layout.wrapperStyle}>
+        {item.src ? (
+          <img
+            className="book-page__illustration-image"
+            src={item.src}
+            alt=""
+            loading="eager"
+            decoding="async"
+          />
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function appendVisualItem(body, item, previousItem = null, pageLayout = null) {
   if (item.type === "title") {
     const title = document.createElement("h1")
     title.className = "book-page__title"
@@ -1850,12 +1934,7 @@ function appendVisualItem(body, item, previousItem = null) {
   }
 
   if (item.type === "image") {
-    const illustration = document.createElement("div")
-    illustration.className = "book-page__illustration"
-    illustration.dataset.blockId = item.id ?? ""
-    illustration.style.height = `${estimateImageDisplayHeight(item)}px`
-    illustration.style.width = "100%"
-    body.appendChild(illustration)
+    appendImageMeasureElement(body, item, pageLayout)
     return
   }
 
@@ -1884,14 +1963,14 @@ function appendVisualItem(body, item, previousItem = null) {
   }
 }
 
-function renderMeasureBody(body, visualItems, { centerTitlePage = false } = {}) {
+function renderMeasureBody(body, visualItems, { centerTitlePage = false, pageLayout = null } = {}) {
   body.replaceChildren()
   body.className = centerTitlePage
     ? "book-page__body book-page__body--title-spread"
     : "book-page__body book-page__body--measure"
 
   for (let index = 0; index < visualItems.length; index += 1) {
-    appendVisualItem(body, visualItems[index], visualItems[index - 1])
+    appendVisualItem(body, visualItems[index], visualItems[index - 1], pageLayout)
   }
 }
 
@@ -1962,7 +2041,7 @@ function cleanupPages(pages, bodyEl, pageLayout) {
 
       if (onlyItem.type === "prose" && onlyItem.text.length < TRIVIAL_LAST_PAGE_CHAR_LIMIT) {
         const mergedItems = [...previousPage.visualItems, ...lastPage.visualItems]
-        renderMeasureBody(bodyEl, mergedItems)
+        renderMeasureBody(bodyEl, mergedItems, { pageLayout })
 
         const { fitHeight } = getPageTextCapacity(
           pageLayout.contentMaxHeight,
@@ -2116,6 +2195,7 @@ function pagePlaceablesFit(bodyEl, pagePlaceables, pageLayout) {
   const trialVisualItems = placeablesToVisualItems(pagePlaceables)
   renderMeasureBody(bodyEl, trialVisualItems, {
     centerTitlePage: shouldCenterTitlePage(trialVisualItems),
+    pageLayout,
   })
   const { fitHeight } = getPageTextCapacity(
     pageLayout.contentMaxHeight,
@@ -2276,6 +2356,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout, incrementalOpts = n
   const pageItemsFit = (pageItems) => {
     renderMeasureBody(bodyEl, pageItems, {
       centerTitlePage: shouldCenterTitlePage(pageItems),
+      pageLayout,
     })
     const { fitHeight } = getPageTextCapacity(
       contentMaxHeight,
@@ -2774,6 +2855,11 @@ function BookPageContent({
       ? { maxHeight: `${pageContentHeightPx}px` }
       : undefined
 
+  const imagePageLayout = {
+    contentMaxHeight: pageContentHeightPx,
+    contentWidth: PAGE_WIDTH_PX - PAGE_CONTENT_INSET_PX,
+  }
+
   if (!page) {
     return <div className={`${pageClassName} book-page--empty`} style={pageStyle} />
   }
@@ -2874,21 +2960,11 @@ function BookPageContent({
 
           if (item.type === "image") {
             return (
-              <div
+              <ImageLayoutItem
                 key={item.id ?? index}
-                className="book-page__illustration"
-                data-block-id={item.id ?? ""}
-                style={{ height: `${estimateImageDisplayHeight(item)}px` }}
-              >
-                {item.src ? (
-                  <img
-                    className="book-page__illustration-image"
-                    src={item.src}
-                    alt=""
-                    loading="lazy"
-                  />
-                ) : null}
-              </div>
+                item={item}
+                pageLayout={imagePageLayout}
+              />
             )
           }
 

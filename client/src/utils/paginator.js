@@ -108,6 +108,67 @@ export function formatTocChapterTitle(title) {
     .replace(/(\d{1,3})\s*-\s*/g, "$1\u00a0-\u00a0")
 }
 
+export function normalizeImageDimensions(source) {
+  const dimensions = source?.dimensions ?? {}
+  const coordinates = source?.coordinates ?? {}
+  const width = Number(dimensions.width ?? coordinates.width ?? 0)
+  const height = Number(dimensions.height ?? coordinates.height ?? 0)
+  let aspectRatio = Number(dimensions.aspectRatio)
+
+  if (!Number.isFinite(aspectRatio) || aspectRatio <= 0) {
+    aspectRatio = width > 0 && height > 0 ? width / height : 4 / 3
+  }
+
+  return {
+    width,
+    height,
+    aspectRatio,
+  }
+}
+
+export function resolveImageLayoutMetrics(
+  item,
+  { contentMaxHeight = 0, contentWidth = 328 } = {}
+) {
+  const dimensions = normalizeImageDimensions(item)
+  const maxHeightCap =
+    contentMaxHeight > 0 ? Math.round(contentMaxHeight * 0.7) : null
+  const safeContentWidth = Math.max(120, contentWidth)
+  let naturalHeight = safeContentWidth / dimensions.aspectRatio
+
+  const wrapperStyle = {
+    width: "100%",
+    aspectRatio: String(dimensions.aspectRatio),
+    maxWidth: "100%",
+  }
+
+  if (maxHeightCap && naturalHeight > maxHeightCap) {
+    const scaledWidth = Math.round(maxHeightCap * dimensions.aspectRatio)
+    wrapperStyle.width = `${scaledWidth}px`
+    wrapperStyle.maxWidth = "100%"
+    wrapperStyle.height = `${maxHeightCap}px`
+    wrapperStyle.maxHeight = `${maxHeightCap}px`
+    wrapperStyle.marginLeft = "auto"
+    wrapperStyle.marginRight = "auto"
+    naturalHeight = maxHeightCap
+  }
+
+  return {
+    dimensions,
+    wrapperStyle,
+    measuredHeight: Math.max(120, Math.round(naturalHeight)),
+  }
+}
+
+export function getImageChapterAccessibilityLabel(item) {
+  const rawText = (item?.chapterMetadata?.rawText ?? "").trim()
+  if (rawText) {
+    return rawText
+  }
+
+  return formatImageChapterTocTitle(item?.chapterMetadata)
+}
+
 export function formatImageChapterTocTitle(chapterMetadata) {
   const number = (chapterMetadata?.number ?? "").trim()
   const title = (chapterMetadata?.title ?? "").trim()
@@ -647,6 +708,7 @@ export function flattenDocument(document) {
           isChapterBoundary: Boolean(block.isChapterBoundary),
           chapterMetadata: block.chapterMetadata ?? null,
           coordinates: block.coordinates ?? null,
+          dimensions: normalizeImageDimensions(block),
           pageNumber: block.pageNumber ?? null,
         })
         continue
