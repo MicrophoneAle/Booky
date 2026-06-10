@@ -64,12 +64,13 @@ const backgroundParseInFlight = new Set()
 const documentParseProgress = new Map()
 const PDF_PAGE_EXTRACTION_CONCURRENCY = 6
 
-const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 60
-const PARSE_PROGRESS_STRUCTURE_PERCENT = 68
-const PARSE_PROGRESS_CLASSIFY_PERCENT = 74
-const PARSE_PROGRESS_UPLOAD_MAX_PERCENT = 90
-const PARSE_PROGRESS_FINALIZE_PERCENT = 94
-const PARSE_PROGRESS_SAVE_PERCENT = 97
+const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 58
+const PARSE_PROGRESS_STRUCTURE_PERCENT = 62
+const PARSE_PROGRESS_ILLUSTRATION_START_PERCENT = 63
+const PARSE_PROGRESS_ILLUSTRATION_END_PERCENT = 80
+const PARSE_PROGRESS_UPLOAD_MAX_PERCENT = 93
+const PARSE_PROGRESS_FINALIZE_PERCENT = 96
+const PARSE_PROGRESS_SAVE_PERCENT = 98
 
 function setDocumentParseProgress(documentId, progress) {
   documentParseProgress.set(documentId, progress)
@@ -3368,6 +3369,57 @@ function getSamePageTextChars(pageTextCharCounts, imageBlock) {
   return pageTextCharCounts.get(pageIndex) ?? 0
 }
 
+function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, printedToc) {
+  let chapterSequence = 0
+  let interludeSequence = 0
+  let pendingInterludes = 0
+  let count = 0
+
+  for (const { block } of candidateEntries) {
+    const forceInterludeBoundary =
+      pendingInterludes > 0 && block.imageRole === "chapter_heading"
+    const sparseIllustrationPage =
+      block.imageRole === "full_page_illustration" &&
+      getSamePageTextChars(pageTextCharCounts, block) <= 80
+
+    let tocMetadata = null
+    if (block.imageRole === "chapter_heading" && printedToc) {
+      tocMetadata = buildOcrMetadataFromPrintedToc(printedToc, {
+        chapterSequence,
+        interludeSequence,
+        forceInterludeBoundary,
+      })
+    }
+
+    const willRunOcr =
+      block.imageRole === "chapter_heading" ? !tocMetadata : sparseIllustrationPage
+
+    if (willRunOcr) {
+      count += 1
+    }
+
+    if (sparseIllustrationPage && willRunOcr) {
+      pendingInterludes = 3
+      continue
+    }
+
+    if (forceInterludeBoundary || tocMetadata?.boundaryKind === "interlude") {
+      interludeSequence += 1
+      pendingInterludes = Math.max(0, pendingInterludes - 1)
+    } else if (
+      tocMetadata?.boundaryKind === "chapter" ||
+      (block.imageRole === "chapter_heading" && !tocMetadata)
+    ) {
+      chapterSequence += 1
+      pendingInterludes = 0
+    } else if (tocMetadata?.boundaryKind === "part") {
+      pendingInterludes = 0
+    }
+  }
+
+  return count
+}
+
 function buildOcrMetadataFromPrintedToc(
   printedToc,
   { chapterSequence = 0, interludeSequence = 0, forceInterludeBoundary = false } = {}
@@ -3593,7 +3645,17 @@ async function runWithConcurrency(items, concurrency, worker) {
   return results
 }
 
-async function finalizeIllustrationBlocks(blocks, { onProgress, printedToc = null } = {}) {
+async function finalizeIllustrationBlocks(
+  blocks,
+  {
+    onProgress,
+    printedToc = null,
+    illustrationProgressRange = {
+      start: PARSE_PROGRESS_ILLUSTRATION_START_PERCENT,
+      end: PARSE_PROGRESS_ILLUSTRATION_END_PERCENT,
+    },
+  } = {}
+) {
   if (!Array.isArray(blocks) || blocks.length === 0) {
     return blocks
   }
@@ -3613,22 +3675,18 @@ async function finalizeIllustrationBlocks(blocks, { onProgress, printedToc = nul
   let interludeSequence = 0
   let pendingInterludes = 0
   let ocrCompleted = 0
+  let processedCandidates = 0
+  const totalCandidates = candidateEntries.length
+  const illustrationSpan = Math.max(
+    1,
+    illustrationProgressRange.end - illustrationProgressRange.start
+  )
 
-  const plannedOcrTotal = candidateEntries.reduce((count, { block }) => {
-    const sparseIllustrationPage =
-      block.imageRole === "full_page_illustration" &&
-      getSamePageTextChars(pageTextCharCounts, block) <= 80
-
-    if (sparseIllustrationPage) {
-      return count + 1
-    }
-
-    if (block.imageRole === "chapter_heading" && !printedToc) {
-      return count + 1
-    }
-
-    return count
-  }, 0)
+  const plannedOcrTotal = countPlannedOcrEntries(
+    candidateEntries,
+    pageTextCharCounts,
+    printedToc
+  )
 
   const finalizedByIndex = new Map()
 
@@ -3659,12 +3717,6 @@ async function finalizeIllustrationBlocks(blocks, { onProgress, printedToc = nul
       if (imageBuffer?.length && shouldRunOcr) {
         ocrMetadata = await ocrIllustrationMetadata(imageBuffer, block.imageRole ?? null)
         ocrCompleted += 1
-        onProgress?.({
-          phase: "ocr_illustrations",
-          label: "Reading text from illustrations",
-          current: ocrCompleted,
-          total: Math.max(plannedOcrTotal, ocrCompleted),
-        })
       }
 
       const analysisResult = analyzeChapterGraphicFromContext({
@@ -3691,6 +3743,37 @@ async function finalizeIllustrationBlocks(blocks, { onProgress, printedToc = nul
       }
 
       finalizedByIndex.set(index, finalizeVisionImageBlock(block, analysisResult))
+
+      processedCandidates += 1
+      const illustrationPercent =
+        illustrationProgressRange.start +
+        Math.round((processedCandidates / Math.max(1, totalCandidates)) * illustrationSpan)
+
+      if (shouldRunOcr && imageBuffer?.length) {
+        onProgress?.({
+          phase: "ocr_illustrations",
+          label: printedToc
+            ? "Reading part and interlude dividers from artwork"
+            : "Reading text from illustrations",
+          current: ocrCompleted,
+          total: Math.max(plannedOcrTotal, ocrCompleted),
+          percent: illustrationPercent,
+          usingPrintedToc: Boolean(printedToc),
+          illustrationCurrent: processedCandidates,
+          illustrationTotal: totalCandidates,
+        })
+      } else {
+        onProgress?.({
+          phase: "classifying_illustrations",
+          label: printedToc
+            ? "Applying printed table of contents to chapter headers"
+            : "Analyzing illustrations",
+          current: processedCandidates,
+          total: totalCandidates,
+          percent: illustrationPercent,
+          usingPrintedToc: Boolean(printedToc),
+        })
+      }
     }
   } finally {
     await terminateOcrWorker()
@@ -5659,7 +5742,7 @@ async function parsePdfBuffer(
     label: "Building book structure",
     current: 0,
     total: 0,
-    percent: PARSE_PROGRESS_EXTRACT_MAX_PERCENT + 2,
+    percent: PARSE_PROGRESS_EXTRACT_MAX_PERCENT + 1,
   })
 
   let blocks = splitDialogueHeavyBlocks(buildBlocksFromLines(pageData, headingStrings))
@@ -5724,15 +5807,22 @@ async function parsePdfBuffer(
 
   reportProgress({
     phase: "classifying_illustrations",
-    label: "Analyzing illustrations",
+    label: printedToc
+      ? "Applying printed table of contents to chapter headers"
+      : "Analyzing illustrations",
     current: 0,
     total: illustrationCandidateCount,
-    percent: PARSE_PROGRESS_CLASSIFY_PERCENT,
+    percent: PARSE_PROGRESS_ILLUSTRATION_START_PERCENT,
+    usingPrintedToc: Boolean(printedToc),
   })
 
   blocks = await finalizeIllustrationBlocks(blocks, {
     onProgress: reportProgress,
     printedToc,
+    illustrationProgressRange: {
+      start: PARSE_PROGRESS_ILLUSTRATION_START_PERCENT,
+      end: PARSE_PROGRESS_ILLUSTRATION_END_PERCENT,
+    },
   })
 
   const imageBlockCount = blocks.filter((block) => block?.type === "image").length
@@ -5742,14 +5832,13 @@ async function parsePdfBuffer(
       label: "Uploading book illustrations",
       current: 0,
       total: imageBlockCount,
-      percent: PARSE_PROGRESS_CLASSIFY_PERCENT + 2,
+      percent: PARSE_PROGRESS_ILLUSTRATION_END_PERCENT,
     })
 
     blocks = await uploadBookAssets(documentId, blocks, {
       onProgress({ current, total }) {
         const uploadSpan =
-          PARSE_PROGRESS_UPLOAD_MAX_PERCENT -
-          (PARSE_PROGRESS_CLASSIFY_PERCENT + 2)
+          PARSE_PROGRESS_UPLOAD_MAX_PERCENT - PARSE_PROGRESS_ILLUSTRATION_END_PERCENT
         const uploadPercent =
           total > 0
             ? Math.round((current / total) * uploadSpan)
@@ -5759,7 +5848,7 @@ async function parsePdfBuffer(
           label: "Uploading book illustrations",
           current,
           total,
-          percent: PARSE_PROGRESS_CLASSIFY_PERCENT + 2 + uploadPercent,
+          percent: PARSE_PROGRESS_ILLUSTRATION_END_PERCENT + uploadPercent,
         })
       },
     })

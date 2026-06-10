@@ -40,6 +40,14 @@ export function getParseProgressHeadline(parseProgress) {
     return "Preparing your book…"
   }
 
+  if (parseProgress.phase === "classifying_illustrations" && parseProgress.usingPrintedToc) {
+    return "Applying printed table of contents…"
+  }
+
+  if (parseProgress.phase === "ocr_illustrations" && parseProgress.usingPrintedToc) {
+    return "Reading part and interlude dividers…"
+  }
+
   if (parseProgress.label && parseProgress.phase !== "error") {
     const mapped = PHASE_HEADLINES[parseProgress.phase]
     if (mapped) {
@@ -71,7 +79,8 @@ export function getParseProgressDetail(parseProgress) {
 
   if (phase === "extracting") {
     if (total > 0) {
-      return `Extracting text and images from page ${current} of ${total}.`
+      const pct = Math.round((current / total) * 100)
+      return `Reading page ${current} of ${total} (${pct}% of PDF scan).`
     }
     return "Scanning pages for text, headings, and embedded artwork."
   }
@@ -81,13 +90,19 @@ export function getParseProgressDetail(parseProgress) {
   }
 
   if (phase === "classifying_illustrations") {
+    if (parseProgress.usingPrintedToc && total > 0) {
+      return `Matching chapter headers from the printed table of contents (${current} of ${total}).`
+    }
     if (total > 0) {
-      return `Classifying ${total} illustration${total === 1 ? "" : "s"} and chapter header graphics.`
+      return `Classifying illustration ${current} of ${total} (chapter headers and full-page art).`
     }
     return "Identifying full-page art and chapter heading banners."
   }
 
   if (phase === "ocr_illustrations") {
+    if (parseProgress.usingPrintedToc && total > 0) {
+      return `Reading part and interlude dividers from artwork (${current} of ${total}).`
+    }
     if (total > 0) {
       return `Reading text from illustration ${current} of ${total} (chapter titles, parts, interludes).`
     }
@@ -96,12 +111,16 @@ export function getParseProgressDetail(parseProgress) {
 
   if (phase === "uploading_assets") {
     if (total > 0) {
+      const remaining = Math.max(0, total - current)
+      if (remaining > 0 && current > 0) {
+        return `Uploading illustration ${current} of ${total} (${remaining} remaining, 4 at a time).`
+      }
       return `Uploading illustration ${current} of ${total} to storage.`
     }
     if (label) {
       return label
     }
-    return "Uploading book illustrations — this is often the slowest step."
+    return "Uploading book illustrations — this is often the slowest step for illustrated books."
   }
 
   if (phase === "finalizing") {
