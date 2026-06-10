@@ -341,9 +341,59 @@
   color: #8b7355;
   margin: 0;
   text-align: center;
-  max-width: 320px;
+  max-width: 360px;
   line-height: 1.5;
   font-style: italic;
+}
+
+.home__parse-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 0.65rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 360px;
+}
+
+.home__parse-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(139, 115, 85, 0.55);
+}
+
+.home__parse-step-marker {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  border: 1px solid rgba(139, 115, 85, 0.45);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.home__parse-step--active {
+  color: #d4af37;
+}
+
+.home__parse-step--active .home__parse-step-marker {
+  border-color: #d4af37;
+  background: #d4af37;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
+}
+
+.home__parse-step--done {
+  color: rgba(139, 115, 85, 0.85);
+}
+
+.home__parse-step--done .home__parse-step-marker {
+  border-color: rgba(212, 175, 55, 0.65);
+  background: rgba(212, 175, 55, 0.65);
 }
 
 .home__large-file-warning {

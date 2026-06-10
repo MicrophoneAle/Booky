@@ -9,13 +9,18 @@ import {
   UserButton,
 } from "@clerk/clerk-react"
 import FullscreenButton from "../components/FullscreenButton"
+import {
+  getParsePipelineStepStates,
+  getParseProgressDetail,
+  getParseProgressHeadline,
+} from "../utils/parseProgress"
 import "./Home.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 
 const LARGE_FILE_BYTES = 15 * 1024 * 1024
 const PARSE_POLL_INTERVAL_MS = 1000
-const PARSE_POLL_TIMEOUT_MS = 5 * 60 * 1000
+const PARSE_POLL_TIMEOUT_MS = 20 * 60 * 1000
 const UPLOAD_PROGRESS_WEIGHT = 0.12
 
 const EMPTY_UPLOAD_STATE = {
@@ -38,33 +43,16 @@ const PHASE_LABELS = {
 
 const PHASE_SUBLABELS = {
   waking: "Server is waking up, this takes ~15 seconds after a period of inactivity",
-  uploading: null,
+  uploading: "Sending your PDF to the server",
   processing: null,
   done: null,
 }
 
-function formatProcessingSublabel(parseProgress) {
-  if (!parseProgress) {
-    return "Extracting text, detecting chapters and headings — large books may take a few minutes"
+function getProcessingHeadline(phase, parseProgress) {
+  if (phase === "processing") {
+    return getParseProgressHeadline(parseProgress)
   }
-
-  if (parseProgress.phase === "extracting" && parseProgress.total > 0) {
-    return `Extracting page ${parseProgress.current} of ${parseProgress.total}`
-  }
-
-  if (parseProgress.phase === "structuring") {
-    return "Structuring chapters and paragraphs"
-  }
-
-  if (parseProgress.phase === "finalizing" || parseProgress.phase === "saving") {
-    return "Saving your book"
-  }
-
-  if (parseProgress.phase === "starting") {
-    return "Opening PDF"
-  }
-
-  return "Processing your book"
+  return PHASE_LABELS[phase] ?? "Working…"
 }
 
 function overallUploadProgress(phase, uploadPercent, parseProgress) {
@@ -160,7 +148,11 @@ async function pollDocumentParseStatus(documentId, getToken, onProgress) {
     }
 
     if (data.parse_status === "error") {
-      throw new Error("Processing failed. Try uploading again.")
+      throw new Error(
+        data.parse_progress?.label ??
+          data.error ??
+          "Processing failed. Try uploading again."
+      )
     }
 
     await new Promise((resolve) => setTimeout(resolve, PARSE_POLL_INTERVAL_MS))
@@ -490,7 +482,9 @@ export default function Home() {
           >
             {uploadState.phase !== "idle" && uploadState.phase !== "error" ? (
               <div className="home__upload-progress">
-                <p className="home__upload-phase">{PHASE_LABELS[uploadState.phase]}</p>
+                <p className="home__upload-phase">
+                  {getProcessingHeadline(uploadState.phase, uploadState.parseProgress)}
+                </p>
 
                 {(uploadState.phase === "uploading" ||
                   uploadState.phase === "processing" ||
@@ -510,9 +504,22 @@ export default function Home() {
                 )}
 
                 {uploadState.phase === "processing" ? (
-                  <p className="home__upload-sublabel">
-                    {formatProcessingSublabel(uploadState.parseProgress)}
-                  </p>
+                  <>
+                    <ol className="home__parse-steps" aria-label="Processing steps">
+                      {getParsePipelineStepStates(uploadState.parseProgress).map((step) => (
+                        <li
+                          key={step.phase}
+                          className={`home__parse-step home__parse-step--${step.status}`}
+                        >
+                          <span className="home__parse-step-marker" aria-hidden="true" />
+                          <span className="home__parse-step-label">{step.label}</span>
+                        </li>
+                      ))}
+                    </ol>
+                    <p className="home__upload-sublabel">
+                      {getParseProgressDetail(uploadState.parseProgress)}
+                    </p>
+                  </>
                 ) : (
                   PHASE_SUBLABELS[uploadState.phase] && (
                     <p className="home__upload-sublabel">
@@ -521,12 +528,9 @@ export default function Home() {
                   )
                 )}
 
-                {uploadState.phase === "processing" &&
-                  uploadState.parseProgress?.percent > 0 && (
-                    <p className="home__upload-percent">
-                      {uploadState.parseProgress.percent}%
-                    </p>
-                  )}
+                {(uploadState.phase === "uploading" || uploadState.phase === "processing") && (
+                  <p className="home__upload-percent">{uploadState.progress}%</p>
+                )}
 
                 {uploadState.fileName && (
                   <p className="home__upload-filename">{uploadState.fileName}</p>

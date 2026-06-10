@@ -54,9 +54,12 @@ const backgroundParseInFlight = new Set()
 const documentParseProgress = new Map()
 const PDF_PAGE_EXTRACTION_CONCURRENCY = 6
 
-const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 70
-const PARSE_PROGRESS_STRUCTURE_PERCENT = 85
-const PARSE_PROGRESS_SAVE_PERCENT = 95
+const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 60
+const PARSE_PROGRESS_STRUCTURE_PERCENT = 68
+const PARSE_PROGRESS_CLASSIFY_PERCENT = 74
+const PARSE_PROGRESS_UPLOAD_MAX_PERCENT = 90
+const PARSE_PROGRESS_FINALIZE_PERCENT = 94
+const PARSE_PROGRESS_SAVE_PERCENT = 97
 
 function setDocumentParseProgress(documentId, progress) {
   documentParseProgress.set(documentId, progress)
@@ -3467,7 +3470,7 @@ async function uploadImageAssetBuffer(bookId, blockId, imageBuffer) {
   return resolveUploadedImageAssetUrl(bucket, storagePath)
 }
 
-async function uploadBookAssets(bookId, blocks) {
+async function uploadBookAssets(bookId, blocks, { onProgress } = {}) {
   if (!bookId) {
     throw new Error("uploadBookAssets requires a bookId")
   }
@@ -3477,6 +3480,7 @@ async function uploadBookAssets(bookId, blocks) {
   }
 
   const nextBlocks = [...blocks]
+  const uploadableIndices = []
 
   for (let index = 0; index < nextBlocks.length; index += 1) {
     const block = nextBlocks[index]
@@ -3485,10 +3489,21 @@ async function uploadBookAssets(bookId, blocks) {
     }
 
     if (block.src && !extractImageBase64Payload(block)) {
-      nextBlocks[index] = stripImageBinaryFields(block)
       continue
     }
 
+    if (!extractImageBase64Payload(block)) {
+      continue
+    }
+
+    uploadableIndices.push(index)
+  }
+
+  const totalImages = uploadableIndices.length
+  let uploadedImages = 0
+
+  for (const index of uploadableIndices) {
+    const block = nextBlocks[index]
     const blockId = block.id ?? `image-${index + 1}`
     const imageBuffer = base64PayloadToImageBuffer(extractImageBase64Payload(block))
 
@@ -3519,6 +3534,23 @@ async function uploadBookAssets(bookId, blocks) {
       ...stripImageBinaryFields(block),
       id: blockId,
       src: publicUrl,
+    }
+
+    uploadedImages += 1
+    onProgress?.({
+      current: uploadedImages,
+      total: totalImages,
+    })
+  }
+
+  for (let index = 0; index < nextBlocks.length; index += 1) {
+    const block = nextBlocks[index]
+    if (block?.type !== "image") {
+      continue
+    }
+
+    if (block.src && !extractImageBase64Payload(block)) {
+      nextBlocks[index] = stripImageBinaryFields(block)
     }
   }
 
@@ -5103,6 +5135,7 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
 
     setDocumentParseProgress(documentId, {
       phase: "saving",
+      label: "Saving to your library",
       current: 0,
       total: 0,
       percent: PARSE_PROGRESS_SAVE_PERCENT,
@@ -5162,7 +5195,6 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
       .eq("user_id", userId)
   } finally {
     backgroundParseInFlight.delete(documentId)
-    clearDocumentParseProgress(documentId)
   }
 }
 
@@ -5190,6 +5222,7 @@ async function parsePdfBuffer(
 
   reportProgress({
     phase: "extracting",
+    label: "Reading PDF pages",
     current: 0,
     total: 0,
     percent: 0,
@@ -5212,6 +5245,7 @@ async function parsePdfBuffer(
 
         reportProgress({
           phase: "extracting",
+          label: "Reading PDF pages",
           current: pageNumber,
           total: totalPages,
           percent: extractPercent,
@@ -5227,6 +5261,7 @@ async function parsePdfBuffer(
 
   reportProgress({
     phase: "structuring",
+    label: "Building book structure",
     current: 0,
     total: 0,
     percent: PARSE_PROGRESS_EXTRACT_MAX_PERCENT + 2,
@@ -5240,6 +5275,7 @@ async function parsePdfBuffer(
 
   reportProgress({
     phase: "structuring",
+    label: "Building book structure",
     current: 0,
     total: 0,
     percent: PARSE_PROGRESS_STRUCTURE_PERCENT,
@@ -5284,12 +5320,16 @@ async function parsePdfBuffer(
 
   blocks = interleaveImageCandidateBlocks(blocks, pageImageCandidates, pageData)
 
+  const illustrationCandidateCount = blocks.filter(
+    (block) => block?.type === "image_candidate" && block.isCandidate
+  ).length
+
   reportProgress({
     phase: "classifying_illustrations",
-    label: "Classifying illustrations",
+    label: "Analyzing illustrations",
     current: 0,
-    total: blocks.filter((block) => block?.type === "image_candidate" && block.isCandidate).length,
-    percent: PARSE_PROGRESS_STRUCTURE_PERCENT + 5,
+    total: illustrationCandidateCount,
+    percent: PARSE_PROGRESS_CLASSIFY_PERCENT,
   })
 
   blocks = await finalizeIllustrationBlocks(blocks)
@@ -5301,17 +5341,26 @@ async function parsePdfBuffer(
       label: "Uploading book illustrations",
       current: 0,
       total: imageBlockCount,
-      percent: PARSE_PROGRESS_STRUCTURE_PERCENT + 8,
+      percent: PARSE_PROGRESS_CLASSIFY_PERCENT + 2,
     })
 
-    blocks = await uploadBookAssets(documentId, blocks)
-
-    reportProgress({
-      phase: "uploading_assets",
-      label: "Uploading book illustrations",
-      current: imageBlockCount,
-      total: imageBlockCount,
-      percent: PARSE_PROGRESS_SAVE_PERCENT - 4,
+    blocks = await uploadBookAssets(documentId, blocks, {
+      onProgress({ current, total }) {
+        const uploadSpan =
+          PARSE_PROGRESS_UPLOAD_MAX_PERCENT -
+          (PARSE_PROGRESS_CLASSIFY_PERCENT + 2)
+        const uploadPercent =
+          total > 0
+            ? Math.round((current / total) * uploadSpan)
+            : uploadSpan
+        reportProgress({
+          phase: "uploading_assets",
+          label: "Uploading book illustrations",
+          current,
+          total,
+          percent: PARSE_PROGRESS_CLASSIFY_PERCENT + 2 + uploadPercent,
+        })
+      },
     })
   }
 
@@ -5322,9 +5371,10 @@ async function parsePdfBuffer(
 
   reportProgress({
     phase: "finalizing",
+    label: "Detecting chapters",
     current: 0,
     total: 0,
-    percent: PARSE_PROGRESS_SAVE_PERCENT - 2,
+    percent: PARSE_PROGRESS_FINALIZE_PERCENT,
   })
 
   return {
