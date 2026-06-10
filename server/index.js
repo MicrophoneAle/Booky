@@ -10,13 +10,14 @@ import crypto from "node:crypto"
 import { getDocument, OPS } from "pdfjs-dist/legacy/build/pdf.mjs"
 import { analyzeChapterGraphic } from "./visionService.js"
 
-const PARSER_VERSION = 43
+const PARSER_VERSION = 44
 
 const PDF_IMAGE_PAINT_OPS = new Set(
   [OPS.paintImageXObject, OPS.paintInlineImageXObject].filter((op) => op != null)
 )
 const PDF_IMAGE_RESOLVE_TIMEOUT_MS = 8000
 const ILLUSTRATION_VISION_CONCURRENCY = 4
+const BOOK_ASSETS_BUCKET = "book-assets"
 const PDF_IMAGE_MIN_DIMENSION_PX = 8
 
 const PUA_FALLBACK_MAP = {
@@ -3180,6 +3181,117 @@ async function finalizeIllustrationBlocks(blocks, { concurrency } = {}) {
   })
 }
 
+function extractImageBase64Payload(block) {
+  if (typeof block?.imgData === "object" && block.imgData?.buffer != null) {
+    return block.imgData.buffer
+  }
+
+  if (typeof block?.imgData === "string") {
+    return block.imgData
+  }
+
+  return block?.buffer ?? ""
+}
+
+function base64PayloadToImageBuffer(base64Payload) {
+  const trimmed = (base64Payload ?? "").trim()
+  if (!trimmed) {
+    return null
+  }
+
+  const cleanBase64 = trimmed.replace(/^data:image\/\w+;base64,/, "")
+  return Buffer.from(cleanBase64, "base64")
+}
+
+function buildBookAssetStoragePath(bookId, blockId) {
+  return `books/${bookId}/images/${blockId}.png`
+}
+
+function stripImageBinaryFields(block) {
+  const { buffer: _buffer, imgData: _imgData, ...rest } = block
+  return rest
+}
+
+async function uploadBookAssets(bookId, blocks) {
+  if (!bookId) {
+    throw new Error("uploadBookAssets requires a bookId")
+  }
+
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  const nextBlocks = [...blocks]
+
+  for (let index = 0; index < nextBlocks.length; index += 1) {
+    const block = nextBlocks[index]
+    if (block?.type !== "image") {
+      continue
+    }
+
+    if (block.src && !extractImageBase64Payload(block)) {
+      nextBlocks[index] = stripImageBinaryFields(block)
+      continue
+    }
+
+    const blockId = block.id ?? `image-${index + 1}`
+    const imageBuffer = base64PayloadToImageBuffer(extractImageBase64Payload(block))
+
+    if (!imageBuffer || imageBuffer.length === 0) {
+      const error = new Error(`Image block ${blockId} is missing uploadable binary data`)
+      console.error("[uploadBookAssets]", {
+        bookId,
+        blockId,
+        index,
+        message: error.message,
+      })
+      throw error
+    }
+
+    const filePath = buildBookAssetStoragePath(bookId, blockId)
+    const { error: uploadError } = await supabase.storage
+      .from(BOOK_ASSETS_BUCKET)
+      .upload(filePath, imageBuffer, {
+        contentType: "image/png",
+        upsert: true,
+      })
+
+    if (uploadError) {
+      console.error("[uploadBookAssets]", {
+        bookId,
+        blockId,
+        filePath,
+        message: uploadError.message,
+      })
+      throw new Error(`Failed to upload image asset ${blockId}: ${uploadError.message}`)
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(BOOK_ASSETS_BUCKET)
+      .getPublicUrl(filePath)
+
+    const publicUrl = publicUrlData?.publicUrl
+    if (!publicUrl) {
+      const error = new Error(`Failed to resolve public URL for image asset ${blockId}`)
+      console.error("[uploadBookAssets]", {
+        bookId,
+        blockId,
+        filePath,
+        message: error.message,
+      })
+      throw error
+    }
+
+    nextBlocks[index] = {
+      ...stripImageBinaryFields(block),
+      id: blockId,
+      src: publicUrl,
+    }
+  }
+
+  return nextBlocks
+}
+
 async function readPdfInfo(pdf) {
   try {
     const metadata = await pdf.getMetadata()
@@ -4720,6 +4832,7 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
   try {
     const { parsedText, chapters, contentWithChapters, wordCount, bookTitle } =
       await parsePdfBuffer(buffer, fileName, {
+        documentId,
         onPageProcessed(pageNumber, totalPages) {
           if (pageNumber % 100 === 0 || pageNumber === totalPages) {
             console.log(
@@ -4803,7 +4916,7 @@ function blocksToContent(blocks, blocksPerPage = 40) {
 async function parsePdfBuffer(
   buffer,
   fileName = "",
-  { onPageProcessed, onProgress } = {}
+  { onPageProcessed, onProgress, documentId } = {}
 ) {
   const reportProgress = (progress) => {
     onProgress?.(progress)
@@ -4913,6 +5026,27 @@ async function parsePdfBuffer(
 
   blocks = await finalizeIllustrationBlocks(blocks)
 
+  const imageBlockCount = blocks.filter((block) => block?.type === "image").length
+  if (documentId && imageBlockCount > 0) {
+    reportProgress({
+      phase: "uploading_assets",
+      label: "Uploading book illustrations",
+      current: 0,
+      total: imageBlockCount,
+      percent: PARSE_PROGRESS_STRUCTURE_PERCENT + 8,
+    })
+
+    blocks = await uploadBookAssets(documentId, blocks)
+
+    reportProgress({
+      phase: "uploading_assets",
+      label: "Uploading book illustrations",
+      current: imageBlockCount,
+      total: imageBlockCount,
+      percent: PARSE_PROGRESS_SAVE_PERCENT - 4,
+    })
+  }
+
   const content = blocksToContent(blocks)
 
   const { chapters, content: contentWithChapters } = detectChapters(content, bookTitle)
@@ -5009,7 +5143,9 @@ async function reparseDocumentIfOutdated(documentRow, options = {}) {
   }
 
   const fileBuffer = Buffer.from(await storageFile.arrayBuffer())
-  const parseResult = await parsePdfBuffer(fileBuffer, documentRow.name ?? "")
+  const parseResult = await parsePdfBuffer(fileBuffer, documentRow.name ?? "", {
+    documentId: documentRow.id,
+  })
   const { parsedText, chapters, contentWithChapters, wordCount } = parseResult
 
   const { error: updateError } = await supabase
@@ -5199,6 +5335,7 @@ export {
   isChapterHeaderCandidate,
   interleaveImageCandidateBlocks,
   finalizeIllustrationBlocks,
+  uploadBookAssets,
   PARSER_VERSION,
 }
 
