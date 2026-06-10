@@ -3,12 +3,30 @@
  * Uses tesseract.js + canvas preprocessing tuned for Stormlight-style graphics.
  */
 
+import fs from "node:fs"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
 import { createCanvas, loadImage } from "@napi-rs/canvas/node-canvas.js"
 import { createWorker } from "tesseract.js"
 
 const OCR_DEBUG = process.env.BOOKY_OCR_DEBUG === "1"
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const LOCAL_TESSDATA_PATH = path.join(__dirname, "tessdata")
+const BUNDLED_ENG_TRAINEDDATA = path.join(__dirname, "eng.traineddata")
 
 let sharedWorkerPromise = null
+
+function resolveTesseractLangPath() {
+  if (fs.existsSync(LOCAL_TESSDATA_PATH)) {
+    return LOCAL_TESSDATA_PATH
+  }
+
+  if (fs.existsSync(BUNDLED_ENG_TRAINEDDATA)) {
+    return __dirname
+  }
+
+  return undefined
+}
 
 const ROMAN_WORDS = new Set([
   "one",
@@ -41,16 +59,32 @@ function logOcr(message, context = {}) {
 async function getOcrWorker() {
   if (!sharedWorkerPromise) {
     sharedWorkerPromise = (async () => {
-      const worker = OCR_DEBUG
-        ? await createWorker("eng", 1, {
-            logger: (message) => console.log("[tesseract]", message),
-          })
-        : await createWorker("eng")
+      const langPath = resolveTesseractLangPath()
+      const workerOptions = {
+        ...(langPath ? { langPath } : {}),
+        ...(OCR_DEBUG ? { logger: (message) => console.log("[tesseract]", message) } : {}),
+      }
+      const worker = await createWorker("eng", 1, workerOptions)
       return worker
     })()
   }
 
   return sharedWorkerPromise
+}
+
+async function terminateOcrWorker() {
+  if (!sharedWorkerPromise) {
+    return
+  }
+
+  try {
+    const worker = await sharedWorkerPromise
+    await worker.terminate()
+  } catch {
+    // Worker may already be terminated.
+  } finally {
+    sharedWorkerPromise = null
+  }
 }
 
 function normalizeOcrLine(text) {
@@ -145,9 +179,9 @@ function preprocessImageData(imageData) {
   return output
 }
 
-async function prepareScaledCanvas(imageBuffer, minWidth = 960) {
+async function prepareScaledCanvas(imageBuffer, minWidth = 800) {
   const source = await loadImage(imageBuffer)
-  const scale = Math.max(2.5, minWidth / Math.max(1, source.width))
+  const scale = Math.min(2.5, minWidth / Math.max(1, source.width))
   const width = Math.max(3, Math.round(source.width * scale))
   const height = Math.max(3, Math.round(source.height * scale))
   const canvas = createCanvas(width, height)
@@ -430,44 +464,20 @@ function parseChapterHeadingBannerText(bannerText) {
 }
 
 async function ocrChapterHeading(imageBuffer) {
-  const scaledCanvas = await prepareScaledCanvas(imageBuffer, 1200)
-
-  const numberRegion = { left: 0.02, top: 0.06, width: 0.16, height: 0.5 }
-  const titleRegion = { left: 0.14, top: 0.1, width: 0.78, height: 0.45 }
-
-  const [numberText, titleText] = await Promise.all([
-    recognizeRegion(scaledCanvas, numberRegion, {
-      psm: "7",
-      whitelist: "0123456789IVXLCDM",
-    }),
-    recognizeRegion(scaledCanvas, titleRegion, {
-      psm: "7",
-      whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ '-",
-    }),
-  ])
-
-  logOcr("chapter_heading_regions", { numberText, titleText })
-
-  const number = parseChapterNumberToken(numberText)
-  const title = parseTitleLine(titleText)
-
-  const regional = buildChapterHeadingMetadata({ number, title })
-  if (regional?.number || regional?.title) {
-    return regional
-  }
-
+  const scaledCanvas = await prepareScaledCanvas(imageBuffer, 800)
   const bannerRegion = { left: 0.04, top: 0, width: 0.92, height: 0.58 }
+
   const bannerText = await recognizeRegion(scaledCanvas, bannerRegion, {
     psm: "6",
   })
 
-  logOcr("chapter_heading_banner_fallback", { bannerText })
+  logOcr("chapter_heading_banner", { bannerText })
 
   return parseChapterHeadingBannerText(bannerText)
 }
 
 async function ocrFullPageSection(imageBuffer) {
-  const scaledCanvas = await prepareScaledCanvas(imageBuffer, 1400)
+  const scaledCanvas = await prepareScaledCanvas(imageBuffer, 1000)
   const bodyRegion = { left: 0.06, top: 0.08, width: 0.88, height: 0.84 }
 
   const combined = await recognizeRegion(scaledCanvas, bodyRegion, {
@@ -555,4 +565,5 @@ export {
   parsePartLabel,
   isPlausibleTitle,
   countInterludeNamesInDivider,
+  terminateOcrWorker,
 }
