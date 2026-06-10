@@ -8,13 +8,15 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import crypto from "node:crypto"
 import { getDocument, OPS } from "pdfjs-dist/legacy/build/pdf.mjs"
+import { analyzeChapterGraphic } from "./visionService.js"
 
-const PARSER_VERSION = 42
+const PARSER_VERSION = 43
 
 const PDF_IMAGE_PAINT_OPS = new Set(
   [OPS.paintImageXObject, OPS.paintInlineImageXObject].filter((op) => op != null)
 )
 const PDF_IMAGE_RESOLVE_TIMEOUT_MS = 8000
+const ILLUSTRATION_VISION_CONCURRENCY = 4
 const PDF_IMAGE_MIN_DIMENSION_PX = 8
 
 const PUA_FALLBACK_MAP = {
@@ -3071,6 +3073,113 @@ function interleaveImageCandidateBlocks(textBlocks, pageImageCandidates, pageDat
   return timeline.map((entry) => entry.block)
 }
 
+function extractImageBlockPayload(block) {
+  return block?.buffer ?? block?.imgData ?? ""
+}
+
+function finalizeNonCandidateImageBlock(block) {
+  const { isCandidate: _isCandidate, ...rest } = block
+
+  return {
+    ...rest,
+    type: "image",
+    isChapterBoundary: false,
+    chapterMetadata: null,
+  }
+}
+
+function finalizeVisionImageBlock(block, visionResult) {
+  const { isCandidate: _isCandidate, ...rest } = block
+
+  return {
+    ...rest,
+    type: "image",
+    isChapterBoundary: Boolean(visionResult?.isChapterBoundary),
+    chapterMetadata: {
+      title: visionResult?.title ?? null,
+      number: visionResult?.number ?? null,
+      rawText: visionResult?.rawText ?? null,
+    },
+  }
+}
+
+async function runWithConcurrency(items, concurrency, worker) {
+  if (items.length === 0) {
+    return []
+  }
+
+  const results = new Array(items.length)
+  let nextIndex = 0
+
+  async function runWorker() {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex
+      nextIndex += 1
+      results[currentIndex] = await worker(items[currentIndex], currentIndex)
+    }
+  }
+
+  const workerCount = Math.min(Math.max(1, concurrency), items.length)
+  await Promise.all(Array.from({ length: workerCount }, () => runWorker()))
+
+  return results
+}
+
+async function finalizeIllustrationBlocks(blocks, { concurrency } = {}) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  const visionConcurrency =
+    concurrency ??
+    (Number(process.env.ILLUSTRATION_VISION_CONCURRENCY) ||
+      ILLUSTRATION_VISION_CONCURRENCY)
+
+  const candidateEntries = blocks
+    .map((block, index) => ({ block, index }))
+    .filter(
+      ({ block }) => block?.type === "image_candidate" && block.isCandidate === true
+    )
+
+  const visionResultsByIndex = new Map()
+
+  if (candidateEntries.length > 0) {
+    const visionResults = await runWithConcurrency(
+      candidateEntries,
+      visionConcurrency,
+      async ({ block, index }) => ({
+        index,
+        result: await analyzeChapterGraphic(extractImageBlockPayload(block)),
+      })
+    )
+
+    for (const entry of visionResults) {
+      if (entry?.index != null) {
+        visionResultsByIndex.set(entry.index, entry.result)
+      }
+    }
+  }
+
+  return blocks.map((block, index) => {
+    if (block?.type !== "image_candidate") {
+      return block
+    }
+
+    if (block.isCandidate !== true) {
+      return finalizeNonCandidateImageBlock(block)
+    }
+
+    const visionResult = visionResultsByIndex.get(index) ?? {
+      isChapterBoundary: false,
+      title: null,
+      number: null,
+      rawText: null,
+    }
+
+    return finalizeVisionImageBlock(block, visionResult)
+  })
+}
+
 async function readPdfInfo(pdf) {
   try {
     const metadata = await pdf.getMetadata()
@@ -4480,7 +4589,7 @@ function countWordsFromContent(content) {
 
   for (const page of content) {
     for (const block of page.blocks ?? []) {
-      if (block?.type === "image_candidate") {
+      if (block?.type === "image_candidate" || block?.type === "image") {
         continue
       }
       total += countWordsInPlainText(block.text)
@@ -4496,7 +4605,7 @@ function countWordsFromBlocks(blocks) {
   }
 
   return blocks.reduce((total, block) => {
-    if (block?.type === "image_candidate") {
+    if (block?.type === "image_candidate" || block?.type === "image") {
       return total
     }
     return total + countWordsInPlainText(block.text)
@@ -4794,6 +4903,16 @@ async function parsePdfBuffer(
 
   blocks = interleaveImageCandidateBlocks(blocks, pageImageCandidates, pageData)
 
+  reportProgress({
+    phase: "vision",
+    label: "Analyzing illustrations",
+    current: 0,
+    total: blocks.filter((block) => block?.type === "image_candidate" && block.isCandidate).length,
+    percent: PARSE_PROGRESS_STRUCTURE_PERCENT + 5,
+  })
+
+  blocks = await finalizeIllustrationBlocks(blocks)
+
   const content = blocksToContent(blocks)
 
   const { chapters, content: contentWithChapters } = detectChapters(content, bookTitle)
@@ -5079,6 +5198,7 @@ export {
   normalizeExtractedText,
   isChapterHeaderCandidate,
   interleaveImageCandidateBlocks,
+  finalizeIllustrationBlocks,
   PARSER_VERSION,
 }
 
