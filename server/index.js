@@ -10,7 +10,7 @@ import crypto from "node:crypto"
 import { getDocument, OPS } from "pdfjs-dist/legacy/build/pdf.mjs"
 import { analyzeChapterGraphic } from "./visionService.js"
 
-const PARSER_VERSION = 44
+const PARSER_VERSION = 45
 
 const PDF_IMAGE_PAINT_OPS = new Set(
   [OPS.paintImageXObject, OPS.paintInlineImageXObject].filter((op) => op != null)
@@ -2810,16 +2810,28 @@ function imageMetricsFromTransform(transform, pageWidth, pageHeight) {
 }
 
 function isChapterHeaderCandidate(metrics) {
-  const { y, width, pageHeight, pageWidth } = metrics ?? {}
-  if (!pageHeight || !pageWidth || !width) {
+  const { width, height, pageHeight, pageWidth } = metrics ?? {}
+  if (!pageHeight || !pageWidth || !width || !height) {
     return false
   }
 
-  const printableWidth = pageWidth
-  const isInUpperPortion = y >= pageHeight * 0.6
-  const spansHalfPage = width > printableWidth * 0.5
+  // Illustrated chapter openers (e.g. Stormlight) are large centered art, not
+  // necessarily in the top 40% of the page by baseline y.
+  const spansSignificantWidth = width >= pageWidth * 0.38
+  const spansSignificantHeight = height >= pageHeight * 0.35
 
-  return isInUpperPortion && spansHalfPage
+  return spansSignificantWidth && spansSignificantHeight
+}
+
+function withSourcePdfPage(payload, pageIndex) {
+  if (pageIndex == null) {
+    return payload
+  }
+
+  return {
+    ...payload,
+    sourcePdfPageIndex: pageIndex,
+  }
 }
 
 function generateImageCandidateId(pageNumber, streamIndex) {
@@ -3030,50 +3042,54 @@ function mapTextBlocksToPagePositions(blocks, pageData) {
 }
 
 function interleaveImageCandidateBlocks(textBlocks, pageImageCandidates, pageData) {
-  const flatImages = (pageImageCandidates ?? []).flat()
-  if (flatImages.length === 0) {
+  const eligibleImages = (pageImageCandidates ?? [])
+    .flat()
+    .filter(
+      (imageBlock) =>
+        imageBlock?.isCandidate === true &&
+        Boolean(extractImageBlockPayload(imageBlock))
+    )
+
+  if (eligibleImages.length === 0) {
     return textBlocks
   }
 
-  const positionedTextBlocks = mapTextBlocksToPagePositions(textBlocks, pageData)
-  const timeline = [
-    ...positionedTextBlocks.map((entry) => ({
-      kind: "text",
-      pageIndex: entry.pageIndex,
-      y: entry.y,
-      streamIndex: entry.streamIndex,
-      block: entry.block,
-    })),
-    ...flatImages.map((imageBlock) => ({
-      kind: "image",
-      pageIndex: imageBlock.pageNumber - 1,
-      y: imageBlock.coordinates?.y ?? 0,
-      streamIndex: imageBlock.streamIndex ?? 0,
-      block: imageBlock,
-    })),
-  ]
+  const imagesByPage = new Map()
+  for (const imageBlock of eligibleImages) {
+    const pageIndex = Math.max(0, (imageBlock.pageNumber ?? 1) - 1)
+    const pageImages = imagesByPage.get(pageIndex) ?? []
+    pageImages.push(imageBlock)
+    imagesByPage.set(pageIndex, pageImages)
+  }
 
-  timeline.sort((left, right) => {
-    if (left.pageIndex !== right.pageIndex) {
-      return left.pageIndex - right.pageIndex
-    }
+  const textBlocksByPage = new Map()
+  for (const block of textBlocks) {
+    const pageIndex = Math.max(0, block.sourcePdfPageIndex ?? 0)
+    const pageBlocks = textBlocksByPage.get(pageIndex) ?? []
+    pageBlocks.push(block)
+    textBlocksByPage.set(pageIndex, pageBlocks)
+  }
 
-    if (left.y !== right.y) {
-      return right.y - left.y
-    }
+  const maxPageIndex = Math.max(
+    pageData.length - 1,
+    ...imagesByPage.keys(),
+    ...textBlocksByPage.keys()
+  )
 
-    if (left.streamIndex !== right.streamIndex) {
-      return left.streamIndex - right.streamIndex
-    }
+  const interleaved = []
 
-    if (left.kind !== right.kind) {
-      return left.kind === "image" ? -1 : 1
-    }
+  for (let pageIndex = 0; pageIndex <= maxPageIndex; pageIndex += 1) {
+    const pageImages = [...(imagesByPage.get(pageIndex) ?? [])].sort(
+      (left, right) =>
+        (right.coordinates?.y ?? 0) - (left.coordinates?.y ?? 0) ||
+        (left.streamIndex ?? 0) - (right.streamIndex ?? 0)
+    )
+    const pageTextBlocks = textBlocksByPage.get(pageIndex) ?? []
 
-    return 0
-  })
+    interleaved.push(...pageImages, ...pageTextBlocks)
+  }
 
-  return timeline.map((entry) => entry.block)
+  return interleaved
 }
 
 function extractImageBlockPayload(block) {
@@ -3163,13 +3179,13 @@ async function finalizeIllustrationBlocks(blocks, { concurrency } = {}) {
     }
   }
 
-  return blocks.map((block, index) => {
+  return blocks.flatMap((block, index) => {
     if (block?.type !== "image_candidate") {
-      return block
+      return [block]
     }
 
-    if (block.isCandidate !== true) {
-      return finalizeNonCandidateImageBlock(block)
+    if (block.isCandidate !== true || !extractImageBlockPayload(block)) {
+      return []
     }
 
     const visionResult = visionResultsByIndex.get(index) ?? {
@@ -3179,7 +3195,7 @@ async function finalizeIllustrationBlocks(blocks, { concurrency } = {}) {
       rawText: null,
     }
 
-    return finalizeVisionImageBlock(block, visionResult)
+    return [finalizeVisionImageBlock(block, visionResult)]
   })
 }
 
@@ -3601,14 +3617,14 @@ function logHeadingPromotion(text, reasonLabel) {
   }
 }
 
-function pushHeadingBlock(blocks, payload, reasonLabel) {
+function pushHeadingBlock(blocks, payload, reasonLabel, pageIndex) {
   const text = (payload.text ?? "").trim()
   if (!qualifiesAsEmittedHeading(text, { fontSize: payload.fontSize ?? 0 })) {
     return false
   }
 
   logHeadingPromotion(text, reasonLabel)
-  blocks.push(payload)
+  blocks.push(withSourcePdfPage(payload, pageIndex))
   return true
 }
 
@@ -4327,7 +4343,19 @@ function buildBlocksFromLines(pageData, headingStrings) {
 
     if (isSceneBreakDividerText(text)) {
       pendingConnective = null
-      pushSceneBreakBlock(blocks)
+      blocks.push(
+        withSourcePdfPage(
+          {
+            text: SCENE_BREAK_DIVIDER_TEXT.trim(),
+            isHeading: true,
+            fontSize: 12,
+            chapterId: null,
+            centered: true,
+            textAlign: "center",
+          },
+          entry.pageIndex
+        )
+      )
       index += 1
       continue
     }
@@ -4395,7 +4423,8 @@ function buildBlocksFromLines(pageData, headingStrings) {
           isChapterStart: true,
           chapterId: null,
         },
-        "compiledMultilineChapter"
+        "compiledMultilineChapter",
+        entry.pageIndex
       )
 
       nonEmptyLineIndex += cursor - index - 1
@@ -4443,7 +4472,8 @@ function buildBlocksFromLines(pageData, headingStrings) {
             fontSize: 13,
             chapterId: null,
           },
-          "dedicationConnective"
+          "dedicationConnective",
+          entry.pageIndex
         )
         index += 1
         continue
@@ -4464,7 +4494,8 @@ function buildBlocksFromLines(pageData, headingStrings) {
           fontSize: 13,
           chapterId: null,
         },
-        "structuralLine"
+        "structuralLine",
+        entry.pageIndex
       )
       index += 1
       continue
@@ -4497,7 +4528,8 @@ function buildBlocksFromLines(pageData, headingStrings) {
           isChapterStart: true,
           chapterId: null,
         },
-        "tocChapterListing"
+        "tocChapterListing",
+        entry.pageIndex
       )
       index += 1
       continue
@@ -4546,7 +4578,8 @@ function buildBlocksFromLines(pageData, headingStrings) {
             isChapterStart: true,
             chapterId: null,
           },
-          "likelyChapterNumber"
+          "likelyChapterNumber",
+          entry.pageIndex
         )
       ) {
         index += 1
@@ -4571,7 +4604,8 @@ function buildBlocksFromLines(pageData, headingStrings) {
           isChapterStart: true,
           chapterId: null,
         },
-        "narrativeBoundary"
+        "narrativeBoundary",
+        entry.pageIndex
       )
       index += 1
       continue
@@ -4636,7 +4670,8 @@ function buildBlocksFromLines(pageData, headingStrings) {
             ? "tocHeadingRunListing"
             : isBoundary
               ? "tocHeadingRunBoundary"
-              : "tocHeadingRun"
+              : "tocHeadingRun",
+          runEntry.pageIndex
         )
       }
       nonEmptyLineIndex += run.length - 1
@@ -4671,7 +4706,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
         chapterId: null,
       }
       applyProseBlockDefaults(proseBlock, line, proseText)
-      blocks.push(proseBlock)
+      blocks.push(withSourcePdfPage(proseBlock, entry.pageIndex))
       index += 1
       continue
     }
@@ -4687,7 +4722,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
         chapterId: null,
       }
       applyProseBlockDefaults(splitBlock, line, proseText)
-      blocks.push(splitBlock)
+      blocks.push(withSourcePdfPage(splitBlock, entry.pageIndex))
       index += 1
       continue
     }
@@ -4709,7 +4744,7 @@ function buildBlocksFromLines(pageData, headingStrings) {
         chapterId: null,
       }
       applyProseBlockDefaults(proseBlock, line, proseText)
-      blocks.push(proseBlock)
+      blocks.push(withSourcePdfPage(proseBlock, entry.pageIndex))
     } else {
       previous.text = joinWrappedText(previous.text, proseText)
       if (line.indented) {
@@ -5045,6 +5080,7 @@ async function parsePdfBuffer(
         isHeading: true,
         fontSize: 20,
         chapterId: null,
+        sourcePdfPageIndex: 0,
       })
     }
 
@@ -5056,6 +5092,7 @@ async function parsePdfBuffer(
           isHeading: true,
           fontSize: 13,
           chapterId: null,
+          sourcePdfPageIndex: 0,
         })
       }
     }
