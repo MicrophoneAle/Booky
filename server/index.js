@@ -10,8 +10,9 @@ import crypto from "node:crypto"
 import { getDocument, OPS, ImageKind } from "pdfjs-dist/legacy/build/pdf.mjs"
 import { createCanvas } from "@napi-rs/canvas/node-canvas.js"
 import { analyzeChapterGraphicFromContext } from "./chapterGraphicService.js"
+import { ocrIllustrationMetadata } from "./imageOcrService.js"
 
-const PARSER_VERSION = 48
+const PARSER_VERSION = 49
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -3319,6 +3320,7 @@ function finalizeVisionImageBlock(block, visionResult) {
     imageRole: block.imageRole ?? null,
     isChapterBoundary: Boolean(visionResult?.isChapterBoundary),
     chapterMetadata: {
+      boundaryKind: visionResult?.boundaryKind ?? null,
       title: visionResult?.title ?? null,
       number: visionResult?.number ?? null,
       rawText: visionResult?.rawText ?? null,
@@ -3348,12 +3350,88 @@ async function runWithConcurrency(items, concurrency, worker) {
   return results
 }
 
-async function finalizeIllustrationBlocks(blocks) {
+function countSamePageTextCharsForImage(blocks, imageBlock) {
+  const pageIndex = Math.max(0, (imageBlock?.pageNumber ?? 1) - 1)
+  let total = 0
+
+  for (const block of blocks) {
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      continue
+    }
+
+    if ((block?.sourcePdfPageIndex ?? -1) === pageIndex) {
+      total += (block?.text ?? "").length
+    }
+  }
+
+  return total
+}
+
+async function finalizeIllustrationBlocks(blocks, { onProgress } = {}) {
   if (!Array.isArray(blocks) || blocks.length === 0) {
     return blocks
   }
 
+  const candidateEntries = blocks
+    .map((block, index) => ({ block, index }))
+    .filter(
+      ({ block }) =>
+        block?.type === "image_candidate" &&
+        block.isCandidate === true &&
+        Boolean(extractImageBlockPayload(block))
+    )
+
+  const ocrEntries = candidateEntries.filter(({ block, index }) => {
+    if (block.imageRole === "chapter_heading") {
+      return true
+    }
+
+    return (
+      block.imageRole === "full_page_illustration" &&
+      countSamePageTextCharsForImage(blocks, block) <= 80
+    )
+  })
+
   let chapterSequence = 0
+  let ocrCompleted = 0
+
+  const finalizedByIndex = new Map()
+
+  for (const { block, index } of candidateEntries) {
+    const imageBuffer = base64PayloadToImageBuffer(extractImageBlockPayload(block))
+    let ocrMetadata = null
+
+    const sparseIllustrationPage =
+      block.imageRole === "full_page_illustration" &&
+      countSamePageTextCharsForImage(blocks, block) <= 80
+    const shouldRunOcr =
+      block.imageRole === "chapter_heading" || sparseIllustrationPage
+
+    if (imageBuffer?.length && shouldRunOcr) {
+      ocrMetadata = await ocrIllustrationMetadata(imageBuffer, block.imageRole ?? null)
+      ocrCompleted += 1
+      onProgress?.({
+        phase: "ocr_illustrations",
+        label: "Reading text from illustrations",
+        current: ocrCompleted,
+        total: ocrEntries.length,
+      })
+    }
+
+    const analysisResult = analyzeChapterGraphicFromContext({
+      imageBlock: block,
+      blocks,
+      blockIndex: index,
+      chapterSequence: chapterSequence + 1,
+      ocrMetadata,
+    })
+
+    if (analysisResult.isChapterBoundary && analysisResult.boundaryKind === "chapter") {
+      chapterSequence += 1
+    }
+
+    finalizedByIndex.set(index, finalizeVisionImageBlock(block, analysisResult))
+  }
 
   return blocks.flatMap((block, index) => {
     if (block?.type !== "image_candidate") {
@@ -3364,18 +3442,7 @@ async function finalizeIllustrationBlocks(blocks) {
       return []
     }
 
-    const analysisResult = analyzeChapterGraphicFromContext({
-      imageBlock: block,
-      blocks,
-      blockIndex: index,
-      chapterSequence: chapterSequence + 1,
-    })
-
-    if (analysisResult.isChapterBoundary) {
-      chapterSequence += 1
-    }
-
-    return [finalizeVisionImageBlock(block, analysisResult)]
+    return [finalizedByIndex.get(index)]
   })
 }
 
@@ -4140,8 +4207,47 @@ function dedupeFrontMatterTitleBlocks(blocks, bookTitle) {
   })
 }
 
+function flattenContentBlocks(content) {
+  const flat = []
+
+  for (const page of content ?? []) {
+    for (const block of page.blocks ?? []) {
+      flat.push(block)
+    }
+  }
+
+  return flat
+}
+
+function isOrphanTextPartHeading(block, flatBlocks, flatIndex) {
+  const text = (block?.text ?? "").trim()
+  if (!PART_HEADING_PATTERN.test(text)) {
+    return false
+  }
+
+  for (
+    let index = flatIndex + 1;
+    index < Math.min(flatIndex + 24, flatBlocks.length);
+    index += 1
+  ) {
+    const candidate = flatBlocks[index]
+    if (candidate?.type !== "image" || !candidate.isChapterBoundary) {
+      continue
+    }
+
+    const kind = candidate.chapterMetadata?.boundaryKind
+    if (kind === "part" || kind === "interlude_divider") {
+      return true
+    }
+  }
+
+  return false
+}
+
 function detectChapters(content, bookTitle = "") {
   const trimmedBookTitle = (bookTitle ?? "").trim()
+  const flatBlocks = flattenContentBlocks(content)
+  let flatBlockIndex = 0
 
   if (!contentHasChapterHeadings(content) && trimmedBookTitle) {
     const id = slugify(trimmedBookTitle)
@@ -4175,9 +4281,23 @@ function detectChapters(content, bookTitle = "") {
   const updatedContent = content.map((page) => ({
     ...page,
     blocks: page.blocks.map((block, blockIndex) => {
+      const currentFlatIndex = flatBlockIndex
+      flatBlockIndex += 1
+
       let chapterId = currentChapterId
       let isChapterStart = false
       let displayChapterTitle = block.chapterTitle ?? null
+
+      if (
+        isChapterHeading(block) &&
+        isOrphanTextPartHeading(block, flatBlocks, currentFlatIndex)
+      ) {
+        return {
+          ...block,
+          chapterId,
+          isChapterStart: false,
+        }
+      }
 
       if (isChapterHeading(block)) {
         const rawTitle = (block.chapterTitle ?? block.text ?? "").trim()
@@ -5332,7 +5452,7 @@ async function parsePdfBuffer(
     percent: PARSE_PROGRESS_CLASSIFY_PERCENT,
   })
 
-  blocks = await finalizeIllustrationBlocks(blocks)
+  blocks = await finalizeIllustrationBlocks(blocks, { onProgress: reportProgress })
 
   const imageBlockCount = blocks.filter((block) => block?.type === "image").length
   if (documentId && imageBlockCount > 0) {

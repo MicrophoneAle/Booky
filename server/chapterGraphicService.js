@@ -5,6 +5,7 @@
 
 const SAFE_FALLBACK = Object.freeze({
   isChapterBoundary: false,
+  boundaryKind: null,
   title: null,
   number: null,
   rawText: null,
@@ -161,7 +162,11 @@ function parseChapterLabel(text) {
   return null
 }
 
-function extractChapterMetadata(followingBlocks, chapterSequence) {
+function extractChapterMetadata(
+  followingBlocks,
+  chapterSequence,
+  { allowSequentialFallback = true } = {}
+) {
   let title = null
   let number = null
   let rawText = null
@@ -183,7 +188,7 @@ function extractChapterMetadata(followingBlocks, chapterSequence) {
     }
   }
 
-  if (!number) {
+  if (!number && allowSequentialFallback) {
     number = `Chapter ${chapterSequence}`
   }
 
@@ -247,18 +252,103 @@ function analyzeChapterHeadingBanner({
   }
 
   const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex)
-  const metadata = extractChapterMetadata(followingBlocks, chapterSequence)
+  let rawText = null
+
+  for (const { text } of followingBlocks) {
+    if (EPIGRAPH_PREFIX_REGEX.test(text)) {
+      rawText = text.length > 140 ? `${text.slice(0, 137)}...` : text
+      break
+    }
+  }
 
   logChapterGraphicDecision("chapter_heading_banner", {
     pageNumber,
     chapterSequence,
-    metadata,
   })
 
   return {
     isChapterBoundary: true,
-    ...metadata,
+    boundaryKind: "chapter",
+    title: null,
+    number: null,
+    rawText: normalizeNullableString(rawText),
   }
+}
+
+/**
+ * Full-page section dividers (PART N, INTERLUDES) detected via OCR.
+ */
+function analyzeFullPageSectionDivider(ocrMetadata) {
+  if (!ocrMetadata?.boundaryKind) {
+    return { ...SAFE_FALLBACK }
+  }
+
+  if (ocrMetadata.boundaryKind === "part" || ocrMetadata.boundaryKind === "interlude_divider") {
+    return {
+      isChapterBoundary: true,
+      boundaryKind: ocrMetadata.boundaryKind,
+      title: ocrMetadata.title ?? null,
+      number: ocrMetadata.number ?? null,
+      rawText: ocrMetadata.rawText ?? null,
+    }
+  }
+
+  return { ...SAFE_FALLBACK }
+}
+
+/**
+ * Merge local OCR results into heuristic analysis (OCR wins for labels).
+ */
+function mergeOcrIntoAnalysis(analysisResult, ocrMetadata, imageRole) {
+  if (!ocrMetadata) {
+    return analysisResult
+  }
+
+  if (imageRole === "full_page_illustration") {
+    const section = analyzeFullPageSectionDivider(ocrMetadata)
+    if (section.isChapterBoundary) {
+      return section
+    }
+  }
+
+  if (!analysisResult?.isChapterBoundary && imageRole !== "chapter_heading") {
+    return analysisResult
+  }
+
+  const boundaryKind =
+    ocrMetadata.boundaryKind ??
+    analysisResult.boundaryKind ??
+    (imageRole === "chapter_heading" ? "chapter" : null)
+
+  const ocrTitle = parseTitleFromOcr(ocrMetadata?.title)
+  const mergedTitle = ocrTitle ?? (imageRole === "chapter_heading" ? null : analysisResult.title)
+  const mergedNumber = ocrMetadata?.number ?? analysisResult.number ?? null
+
+  return {
+    isChapterBoundary: true,
+    boundaryKind,
+    number: mergedNumber,
+    title: mergedTitle,
+    rawText: ocrMetadata?.rawText ?? analysisResult.rawText ?? null,
+  }
+}
+
+function parseTitleFromOcr(title) {
+  if (!title) {
+    return null
+  }
+
+  const trimmed = String(title).trim()
+  if (trimmed.length < 4) {
+    return null
+  }
+
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length < trimmed.length * 0.5) {
+    return null
+  }
+
+  return trimmed
 }
 
 /**
@@ -317,6 +407,7 @@ function analyzeFullPageIllustration({
 
   return {
     isChapterBoundary: true,
+    boundaryKind: "chapter",
     ...metadata,
   }
 }
@@ -336,13 +427,30 @@ function analyzeChapterGraphicFromContext({
   blocks,
   blockIndex,
   chapterSequence = 1,
+  ocrMetadata = null,
 }) {
   if (!imageBlock || imageBlock.type !== "image_candidate") {
     return { ...SAFE_FALLBACK }
   }
 
+  if (imageBlock.imageRole === "full_page_illustration" && ocrMetadata) {
+    const section = analyzeFullPageSectionDivider(ocrMetadata)
+    if (section.isChapterBoundary) {
+      return section
+    }
+  }
+
+  let analysisResult = { ...SAFE_FALLBACK }
+
   if (imageBlock.imageRole === "chapter_heading") {
-    return analyzeChapterHeadingBanner({
+    analysisResult = analyzeChapterHeadingBanner({
+      imageBlock,
+      blocks,
+      blockIndex,
+      chapterSequence,
+    })
+  } else if (imageBlock.imageRole === "full_page_illustration") {
+    analysisResult = analyzeFullPageIllustration({
       imageBlock,
       blocks,
       blockIndex,
@@ -350,16 +458,7 @@ function analyzeChapterGraphicFromContext({
     })
   }
 
-  if (imageBlock.imageRole === "full_page_illustration") {
-    return analyzeFullPageIllustration({
-      imageBlock,
-      blocks,
-      blockIndex,
-      chapterSequence,
-    })
-  }
-
-  return { ...SAFE_FALLBACK }
+  return mergeOcrIntoAnalysis(analysisResult, ocrMetadata, imageBlock.imageRole)
 }
 
 /**
@@ -385,5 +484,6 @@ async function analyzeChapterGraphic(_base64Image, context = {}) {
 export {
   analyzeChapterGraphic,
   analyzeChapterGraphicFromContext,
+  mergeOcrIntoAnalysis,
   SAFE_FALLBACK,
 }

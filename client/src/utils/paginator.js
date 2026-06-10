@@ -172,9 +172,28 @@ export function getImageChapterAccessibilityLabel(item) {
 }
 
 export function formatImageChapterTocTitle(chapterMetadata) {
+  const boundaryKind = chapterMetadata?.boundaryKind ?? null
   const number = (chapterMetadata?.number ?? "").trim()
   const title = (chapterMetadata?.title ?? "").trim()
   const rawText = (chapterMetadata?.rawText ?? "").trim()
+
+  if (boundaryKind === "interlude_divider") {
+    return title ? `${number || "Interludes"} — ${title}` : number || "Interludes"
+  }
+
+  if (boundaryKind === "part") {
+    if (number && title) {
+      return `${number}: ${title}`
+    }
+    return number || title || "Part"
+  }
+
+  if (boundaryKind === "interlude") {
+    if (number && title) {
+      return `${number}: ${title}`
+    }
+    return number || title || "Interlude"
+  }
 
   if (number && title) {
     const numberLower = number.toLowerCase()
@@ -713,6 +732,7 @@ export function flattenDocument(document) {
           src: block.src,
           imageRole: block.imageRole ?? null,
           isChapterBoundary: Boolean(block.isChapterBoundary),
+          boundaryKind: block.chapterMetadata?.boundaryKind ?? null,
           chapterMetadata: block.chapterMetadata ?? null,
           coordinates: block.coordinates ?? null,
           dimensions: normalizeImageDimensions(block),

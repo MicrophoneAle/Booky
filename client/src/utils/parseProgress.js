@@ -3,7 +3,8 @@ export const PARSE_PIPELINE_STEPS = [
   { phase: "starting", label: "Open PDF" },
   { phase: "extracting", label: "Read pages" },
   { phase: "structuring", label: "Structure text" },
-  { phase: "classifying_illustrations", label: "Illustrations" },
+  { phase: "classifying_illustrations", label: "Classify art" },
+  { phase: "ocr_illustrations", label: "Read headers" },
   { phase: "uploading_assets", label: "Upload art" },
   { phase: "finalizing", label: "Chapters" },
   { phase: "saving", label: "Save" },
@@ -14,6 +15,7 @@ const PHASE_HEADLINES = {
   extracting: "Reading PDF pages…",
   structuring: "Building book structure…",
   classifying_illustrations: "Analyzing illustrations…",
+  ocr_illustrations: "Reading chapter headers…",
   uploading_assets: "Uploading illustrations…",
   finalizing: "Detecting chapters…",
   saving: "Saving to your library…",
@@ -83,6 +85,13 @@ export function getParseProgressDetail(parseProgress) {
       return `Classifying ${total} illustration${total === 1 ? "" : "s"} and chapter header graphics.`
     }
     return "Identifying full-page art and chapter heading banners."
+  }
+
+  if (phase === "ocr_illustrations") {
+    if (total > 0) {
+      return `Reading text from illustration ${current} of ${total} (chapter titles, parts, interludes).`
+    }
+    return "Extracting chapter numbers and titles from header artwork."
   }
 
   if (phase === "uploading_assets") {

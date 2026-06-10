@@ -1048,7 +1048,7 @@
   min-height: 0;
   overflow: hidden;
   box-sizing: border-box;
-  padding-bottom: 0;
+  padding-bottom: 2px;
   margin: 0;
   --lh-display: calc(var(--lh-body, 1.15) * 1.04);
 }

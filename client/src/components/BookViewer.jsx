@@ -47,9 +47,9 @@ const SPINE_PX = 1
 const PAGE_FOOTER_RESERVE_PX = 12
 const PAGE_BOTTOM_INSET_PX = 2
 const PAGE_NUMBER_RESERVED_PX = PAGE_FOOTER_RESERVE_PX
-const BODY_DESCENDER_PAD_PX = 0
-const PAGE_CONTENT_FIT_BUFFER_PX = 0
-const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 1
+const BODY_DESCENDER_PAD_PX = 5
+const PAGE_CONTENT_FIT_BUFFER_PX = 3
+const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 0
 const MOBILE_PAGE_NUMBER_GAP_PX = 3
 /** Compact mobile footer reserve (page number line + small breathing room). */
 const MOBILE_PAGE_NUMBER_RESERVED_PX = 12
@@ -61,8 +61,8 @@ const MOBILE_FULLSCREEN_BOTTOM_CHROME_PX = 4
 const MOBILE_FULLSCREEN_TOP_INSET_PX = 8
 const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX =
   MOBILE_FULLSCREEN_FOOTER_BLOCK_PX
-const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 0
-const BODY_BOTTOM_PADDING_PX = 0
+const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 4
+const BODY_BOTTOM_PADDING_PX = 2
 /**
  * Exact body (text) height for a mobile-fullscreen page. Kept in lock-step with
  * the measurement math in getLayoutHeights so the displayed body is the same
@@ -79,9 +79,9 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 48
+const PARSER_VERSION = 49
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 22
+const PAGINATION_MEASUREMENT_VERSION = 23
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 /**
@@ -1657,6 +1657,7 @@ function groupBlocksForDisplay(blocks) {
         id: block.id ?? null,
         src: block.src,
         imageRole: block.imageRole ?? null,
+        boundaryKind: block.chapterMetadata?.boundaryKind ?? null,
         isChapterBoundary: Boolean(block.isChapterBoundary),
         chapterMetadata: block.chapterMetadata ?? null,
         coordinates: block.coordinates ?? null,
