@@ -79,9 +79,9 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 37
+const PARSER_VERSION = 48
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 21
+const PAGINATION_MEASUREMENT_VERSION = 22
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 /**
@@ -1656,6 +1656,7 @@ function groupBlocksForDisplay(blocks) {
         type: "image",
         id: block.id ?? null,
         src: block.src,
+        imageRole: block.imageRole ?? null,
         isChapterBoundary: Boolean(block.isChapterBoundary),
         chapterMetadata: block.chapterMetadata ?? null,
         coordinates: block.coordinates ?? null,
@@ -1817,6 +1818,21 @@ function applyImageLayoutStylesToElement(element, styles) {
   }
 }
 
+function illustrationClassNames(item) {
+  return [
+    "book-page__illustration",
+    item?.imageRole === "chapter_heading"
+      ? "book-page__illustration--chapter-heading"
+      : "",
+    item?.imageRole === "full_page_illustration"
+      ? "book-page__illustration--full-page"
+      : "",
+    item?.isChapterBoundary ? "book-page__illustration--chapter-boundary" : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+}
+
 function appendImageMeasureElement(body, item, pageLayout = null) {
   const layout = resolveImageLayoutMetrics(item, {
     contentMaxHeight: pageLayout?.contentMaxHeight ?? 0,
@@ -1824,12 +1840,7 @@ function appendImageMeasureElement(body, item, pageLayout = null) {
   })
 
   const illustration = document.createElement("div")
-  illustration.className = [
-    "book-page__illustration",
-    item.isChapterBoundary ? "book-page__illustration--chapter-boundary" : "",
-  ]
-    .filter(Boolean)
-    .join(" ")
+  illustration.className = illustrationClassNames(item)
   illustration.dataset.blockId = item.id ?? ""
 
   if (item.isChapterBoundary) {
@@ -1865,12 +1876,7 @@ function ImageLayoutItem({ item, pageLayout = null }) {
 
   return (
     <div
-      className={[
-        "book-page__illustration",
-        item.isChapterBoundary ? "book-page__illustration--chapter-boundary" : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={illustrationClassNames(item)}
       data-block-id={item.id ?? ""}
     >
       {item.isChapterBoundary ? (
@@ -2160,6 +2166,20 @@ function isChapterBoundaryPlaceable(placeable) {
 
   return (
     placeable.type === "chapter" || Boolean(placeable.item?.isChapterStart)
+  )
+}
+
+function isChapterHeadingImagePlaceable(placeable) {
+  return (
+    placeable.type === "image" &&
+    placeable.item?.imageRole === "chapter_heading"
+  )
+}
+
+function isFullPageIllustrationPlaceable(placeable) {
+  return (
+    placeable.type === "image" &&
+    placeable.item?.imageRole === "full_page_illustration"
   )
 }
 
@@ -2599,18 +2619,21 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout, incrementalOpts = n
     if (isChapterBoundaryPlaceable(placeable)) {
       ensureChapterStartsOnNewPage(placeable)
       const followingPlaceable = remainder[placeableIndex + 1]
-
-      if (
+      const canPairWithFollowing =
         followingPlaceable &&
         !isChapterBoundaryPlaceable(followingPlaceable) &&
         !isFrontMatterPlaceable(followingPlaceable)
-      ) {
+
+      if (isChapterHeadingImagePlaceable(placeable) && canPairWithFollowing) {
         placeHeadingWithFollowing(placeable, followingPlaceable)
         placeableIndex += 1
         continue
       }
 
       placePlaceable(placeable)
+      if (isFullPageIllustrationPlaceable(placeable)) {
+        flushPage()
+      }
       continue
     }
 
@@ -2649,6 +2672,9 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout, incrementalOpts = n
     }
 
     placePlaceable(placeable)
+    if (isFullPageIllustrationPlaceable(placeable)) {
+      flushPage()
+    }
   }
 
   const hasRemainingWork =

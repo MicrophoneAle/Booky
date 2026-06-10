@@ -131,8 +131,10 @@ export function resolveImageLayoutMetrics(
   { contentMaxHeight = 0, contentWidth = 328 } = {}
 ) {
   const dimensions = normalizeImageDimensions(item)
+  const isChapterHeading = item?.imageRole === "chapter_heading"
+  const maxHeightFraction = isChapterHeading ? 0.42 : 0.7
   const maxHeightCap =
-    contentMaxHeight > 0 ? Math.round(contentMaxHeight * 0.7) : null
+    contentMaxHeight > 0 ? Math.round(contentMaxHeight * maxHeightFraction) : null
   const safeContentWidth = Math.max(120, contentWidth)
   let naturalHeight = safeContentWidth / dimensions.aspectRatio
 
@@ -709,6 +711,7 @@ export function flattenDocument(document) {
           type: "image",
           id: block.id ?? null,
           src: block.src,
+          imageRole: block.imageRole ?? null,
           isChapterBoundary: Boolean(block.isChapterBoundary),
           chapterMetadata: block.chapterMetadata ?? null,
           coordinates: block.coordinates ?? null,

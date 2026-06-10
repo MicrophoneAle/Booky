@@ -1142,6 +1142,21 @@
   margin-bottom: 1rem;
 }
 
+.book-page__illustration--chapter-heading {
+  margin-top: 1.25rem;
+  margin-bottom: 0.35rem;
+}
+
+.book-page__illustration--full-page {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.book-page__illustration--chapter-heading + .book-page__text,
+.book-page__illustration--chapter-heading + .book-page__text--first {
+  margin-top: 0.35rem;
+}
+
 .book-page__illustration-wrapper {
   position: relative;
   display: block;

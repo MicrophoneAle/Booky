@@ -65,6 +65,14 @@ try {
     "chapter boundary images",
     imageBlocks.filter((block) => block.isChapterBoundary).length
   )
+  console.log(
+    "chapter heading banners",
+    imageBlocks.filter((block) => block.imageRole === "chapter_heading").length
+  )
+  console.log(
+    "full page illustrations",
+    imageBlocks.filter((block) => block.imageRole === "full_page_illustration").length
+  )
   console.log("last phases:", phases.slice(-5))
 } catch (error) {
   console.error("\nFAILED at:", phases.at(-1)?.phase ?? "unknown")

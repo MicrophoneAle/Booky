@@ -11,7 +11,7 @@ import { getDocument, OPS, ImageKind } from "pdfjs-dist/legacy/build/pdf.mjs"
 import { createCanvas } from "@napi-rs/canvas/node-canvas.js"
 import { analyzeChapterGraphicFromContext } from "./chapterGraphicService.js"
 
-const PARSER_VERSION = 47
+const PARSER_VERSION = 48
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -2811,18 +2811,53 @@ function imageMetricsFromTransform(transform, pageWidth, pageHeight) {
   }
 }
 
-function isChapterHeaderCandidate(metrics) {
+const PDF_IMAGE_ROLE = Object.freeze({
+  FULL_PAGE_ILLUSTRATION: "full_page_illustration",
+  CHAPTER_HEADING: "chapter_heading",
+})
+
+/** Minimum rendered height (px) for a wide banner to count as a chapter heading graphic. */
+const CHAPTER_HEADING_MIN_HEIGHT_PX = 36
+
+/**
+ * Classify extracted PDF images into illustration roles.
+ * Full-page art and wide chapter-heading banners (e.g. Stormlight arch headers) are kept;
+ * small decorations and narrow clips are dropped.
+ *
+ * @returns {"full_page_illustration"|"chapter_heading"|null}
+ */
+function classifyPdfImageRole(metrics) {
   const { width, height, pageHeight, pageWidth } = metrics ?? {}
   if (!pageHeight || !pageWidth || !width || !height) {
-    return false
+    return null
   }
 
-  // Illustrated chapter openers (e.g. Stormlight) are large centered art, not
-  // necessarily in the top 40% of the page by baseline y.
-  const spansSignificantWidth = width >= pageWidth * 0.38
-  const spansSignificantHeight = height >= pageHeight * 0.35
+  const widthRatio = width / pageWidth
+  const heightRatio = height / pageHeight
 
-  return spansSignificantWidth && spansSignificantHeight
+  if (widthRatio < 0.35) {
+    return null
+  }
+
+  if (heightRatio >= 0.35) {
+    return PDF_IMAGE_ROLE.FULL_PAGE_ILLUSTRATION
+  }
+
+  if (
+    height >= CHAPTER_HEADING_MIN_HEIGHT_PX &&
+    heightRatio >= 0.06 &&
+    heightRatio < 0.35 &&
+    width / height >= 1.2
+  ) {
+    return PDF_IMAGE_ROLE.CHAPTER_HEADING
+  }
+
+  return null
+}
+
+/** @deprecated Use classifyPdfImageRole — kept for regression scripts. */
+function isChapterHeaderCandidate(metrics) {
+  return classifyPdfImageRole(metrics) != null
 }
 
 function withSourcePdfPage(payload, pageIndex) {
@@ -3087,6 +3122,8 @@ async function extractPdfPageImageCandidates(page, pageNumber) {
       buffer = null
     }
 
+    const imageRole = classifyPdfImageRole(metrics)
+
     candidates.push({
       type: "image_candidate",
       id: generateImageCandidateId(pageNumber, streamIndex),
@@ -3098,7 +3135,8 @@ async function extractPdfPageImageCandidates(page, pageNumber) {
         width: metrics.width,
         height: metrics.height,
       },
-      isCandidate: isChapterHeaderCandidate(metrics),
+      imageRole,
+      isCandidate: imageRole != null,
       buffer,
     })
   }
@@ -3275,6 +3313,7 @@ function finalizeVisionImageBlock(block, visionResult) {
   return {
     ...rest,
     type: "image",
+    imageRole: block.imageRole ?? null,
     isChapterBoundary: Boolean(visionResult?.isChapterBoundary),
     chapterMetadata: {
       title: visionResult?.title ?? null,
@@ -5561,7 +5600,9 @@ export {
   parsePdfBuffer,
   extractLinesByPosition,
   normalizeExtractedText,
+  classifyPdfImageRole,
   isChapterHeaderCandidate,
+  PDF_IMAGE_ROLE,
   interleaveImageCandidateBlocks,
   finalizeIllustrationBlocks,
   uploadBookAssets,

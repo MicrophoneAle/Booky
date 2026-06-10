@@ -41,6 +41,7 @@ const EPIGRAPH_PREFIX_REGEX = /^["'\u201c\u2018]|^—(?:Collected|Noted|Dated|Pu
 const INTERSTITIAL_TITLE_REGEX = /^[A-Z][A-Z0-9\s'’\-]{3,}$/
 
 const MIN_CHAPTER_ILLUSTRATION_PAGE = 30
+const MIN_CHAPTER_HEADING_BANNER_PAGE = 20
 
 function normalizeNullableString(value) {
   if (value == null) {
@@ -193,54 +194,88 @@ function extractChapterMetadata(followingBlocks, chapterSequence) {
   }
 }
 
-/**
- * Classify an illustration block using layout metrics and nearby PDF text.
- *
- * @param {object} params
- * @param {object} params.imageBlock The image_candidate block.
- * @param {Array<object>} params.blocks Full interleaved block stream.
- * @param {number} params.blockIndex Index of the image block in `blocks`.
- * @param {number} [params.chapterSequence] Sequential chapter number for fallback labels.
- * @returns {{ isChapterBoundary: boolean, title: string | null, number: string | null, rawText: string | null }}
- */
-function analyzeChapterGraphicFromContext({
-  imageBlock,
-  blocks,
-  blockIndex,
-  chapterSequence = 1,
-}) {
-  if (!imageBlock || imageBlock.type !== "image_candidate") {
-    return { ...SAFE_FALLBACK }
-  }
-
+function shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex) {
   if (isCoverPageImage(imageBlock)) {
     logChapterGraphicDecision("skip_cover", { pageNumber: imageBlock.pageNumber })
-    return { ...SAFE_FALLBACK }
+    return true
   }
 
   const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex)
-  const samePageTextChars = countSamePageTextChars(blocks, imageBlock)
 
   if (hasNonChapterCaption(followingBlocks)) {
     logChapterGraphicDecision("skip_non_chapter_caption", {
       pageNumber: imageBlock.pageNumber,
     })
-    return { ...SAFE_FALLBACK }
+    return true
   }
 
   if (isFrontMatterIllustration(followingBlocks)) {
     logChapterGraphicDecision("skip_front_matter_illustration", {
       pageNumber: imageBlock.pageNumber,
     })
-    return { ...SAFE_FALLBACK }
+    return true
   }
 
   if (isSpreadContinuation(blocks, blockIndex, imageBlock)) {
     logChapterGraphicDecision("skip_spread_continuation", {
       pageNumber: imageBlock.pageNumber,
     })
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Wide banner chapter headers (e.g. Stormlight arch + "CITY OF BELLS").
+ * Title/number are usually embedded in the artwork; nearby text supplies epigraphs.
+ */
+function analyzeChapterHeadingBanner({
+  imageBlock,
+  blocks,
+  blockIndex,
+  chapterSequence = 1,
+}) {
+  if (shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex)) {
     return { ...SAFE_FALLBACK }
   }
+
+  const pageNumber = imageBlock.pageNumber ?? 0
+  if (pageNumber < MIN_CHAPTER_HEADING_BANNER_PAGE) {
+    logChapterGraphicDecision("skip_early_chapter_heading", { pageNumber })
+    return { ...SAFE_FALLBACK }
+  }
+
+  const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex)
+  const metadata = extractChapterMetadata(followingBlocks, chapterSequence)
+
+  logChapterGraphicDecision("chapter_heading_banner", {
+    pageNumber,
+    chapterSequence,
+    metadata,
+  })
+
+  return {
+    isChapterBoundary: true,
+    ...metadata,
+  }
+}
+
+/**
+ * Full-page chapter opener illustrations (character art, etc.).
+ */
+function analyzeFullPageIllustration({
+  imageBlock,
+  blocks,
+  blockIndex,
+  chapterSequence = 1,
+}) {
+  if (shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex)) {
+    return { ...SAFE_FALLBACK }
+  }
+
+  const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex)
+  const samePageTextChars = countSamePageTextChars(blocks, imageBlock)
 
   if (samePageTextChars > 220) {
     logChapterGraphicDecision("skip_text_heavy_page", {
@@ -274,7 +309,7 @@ function analyzeChapterGraphicFromContext({
 
   const metadata = extractChapterMetadata(followingBlocks, chapterSequence)
 
-  logChapterGraphicDecision("chapter_boundary", {
+  logChapterGraphicDecision("full_page_chapter_boundary", {
     pageNumber,
     chapterSequence,
     metadata,
@@ -284,6 +319,47 @@ function analyzeChapterGraphicFromContext({
     isChapterBoundary: true,
     ...metadata,
   }
+}
+
+/**
+ * Classify an illustration block using layout metrics and nearby PDF text.
+ *
+ * @param {object} params
+ * @param {object} params.imageBlock The image_candidate block.
+ * @param {Array<object>} params.blocks Full interleaved block stream.
+ * @param {number} params.blockIndex Index of the image block in `blocks`.
+ * @param {number} [params.chapterSequence] Sequential chapter number for fallback labels.
+ * @returns {{ isChapterBoundary: boolean, title: string | null, number: string | null, rawText: string | null }}
+ */
+function analyzeChapterGraphicFromContext({
+  imageBlock,
+  blocks,
+  blockIndex,
+  chapterSequence = 1,
+}) {
+  if (!imageBlock || imageBlock.type !== "image_candidate") {
+    return { ...SAFE_FALLBACK }
+  }
+
+  if (imageBlock.imageRole === "chapter_heading") {
+    return analyzeChapterHeadingBanner({
+      imageBlock,
+      blocks,
+      blockIndex,
+      chapterSequence,
+    })
+  }
+
+  if (imageBlock.imageRole === "full_page_illustration") {
+    return analyzeFullPageIllustration({
+      imageBlock,
+      blocks,
+      blockIndex,
+      chapterSequence,
+    })
+  }
+
+  return { ...SAFE_FALLBACK }
 }
 
 /**
