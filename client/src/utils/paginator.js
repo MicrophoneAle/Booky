@@ -177,6 +177,16 @@ export function formatImageChapterTocTitle(chapterMetadata) {
   const title = (chapterMetadata?.title ?? "").trim()
   const rawText = (chapterMetadata?.rawText ?? "").trim()
 
+  if (boundaryKind === "prelude" || boundaryKind === "prologue" || boundaryKind === "epilogue") {
+    if (number && title) {
+      return `${number}: ${title}`
+    }
+    if (title) {
+      return `${number || boundaryKind.charAt(0).toUpperCase() + boundaryKind.slice(1)}: ${title}`
+    }
+    return number || boundaryKind.charAt(0).toUpperCase() + boundaryKind.slice(1)
+  }
+
   if (boundaryKind === "interlude_divider") {
     return title ? `${number || "Interludes"} — ${title}` : number || "Interludes"
   }
@@ -224,12 +234,23 @@ export function extractImageChapterTocEntries(document) {
 
   for (const page of document?.content ?? []) {
     for (const block of page?.blocks ?? []) {
-      if (block?.type === "image" && block.isChapterBoundary === true) {
-        entries.push({
-          id: block.id,
-          chapterMetadata: block.chapterMetadata ?? {},
-        })
+      if (block?.type !== "image" || block.isChapterBoundary !== true) {
+        continue
       }
+
+      const metadata = block.chapterMetadata ?? {}
+      if (metadata.includeInToc === false) {
+        continue
+      }
+
+      if (metadata.boundaryKind === "interlude_divider") {
+        continue
+      }
+
+      entries.push({
+        id: block.id,
+        chapterMetadata: metadata,
+      })
     }
   }
 
@@ -737,7 +758,10 @@ export function flattenDocument(document) {
           imageRole: block.imageRole ?? null,
           isChapterBoundary: Boolean(block.isChapterBoundary),
           boundaryKind: block.chapterMetadata?.boundaryKind ?? null,
-          chapterMetadata: block.chapterMetadata ?? null,
+          chapterMetadata: {
+            ...(block.chapterMetadata ?? {}),
+            includeInToc: block.chapterMetadata?.includeInToc !== false,
+          },
           coordinates: block.coordinates ?? null,
           dimensions: normalizeImageDimensions(block),
           pageNumber: block.pageNumber ?? null,

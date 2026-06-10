@@ -1,14 +1,18 @@
 /**
- * Extract chapter / interlude / part titles from the printed table of contents
+ * Extract chapter / interlude / section titles from the printed table of contents
  * in the PDF text layer (e.g. Stormlight "1: STORMBLESSED" listings).
+ * Used as fallback when illustration OCR cannot read a title.
  */
 
 const CHAPTER_TOC_LINE_REGEX = /^(\d{1,3}):\s+([A-Z][A-Z0-9\s'’\-]+)$/
-const INTERLUDE_TOC_LINE_REGEX = /^(\d-\d{1,2}):\s+(.+)$/
+const INTERLUDE_TOC_LINE_REGEX = /^(?:I-(\d{1,2})|(\d)-(\d{1,2})):\s+(.+)$/i
 const PART_TOC_LINE_REGEX =
   /^Part\s+((?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)|[IVXLCDM]+|\d+):\s*(.+)$/i
 const CHAPTER_LISTING_TOC_REGEX =
   /^Chapter\s+(\d{1,3}|[IVXLCDM]+):\s+(.+)$/i
+const PROLOGUE_TOC_REGEX = /^Prologue:\s+(.+)$/i
+const EPILOGUE_TOC_REGEX = /^Epilogue:\s+(.+)$/i
+const PRELUDE_TOC_REGEX = /^Prelude to the Stormlight Archive$/i
 
 function normalizeLine(text) {
   return (text ?? "").replace(/\s+/g, " ").trim()
@@ -44,21 +48,16 @@ function isPrintedTocSectionLine(text) {
     INTERLUDE_TOC_LINE_REGEX.test(trimmed) ||
     PART_TOC_LINE_REGEX.test(trimmed) ||
     CHAPTER_LISTING_TOC_REGEX.test(trimmed) ||
+    PROLOGUE_TOC_REGEX.test(trimmed) ||
+    EPILOGUE_TOC_REGEX.test(trimmed) ||
+    PRELUDE_TOC_REGEX.test(trimmed) ||
     /^interludes$/i.test(trimmed) ||
-    /^prologue:\s+/i.test(trimmed) ||
-    /^prelude\b/i.test(trimmed) ||
     /^book\s+(?:one|two|three)\b/i.test(trimmed)
   )
 }
 
 /**
  * @param {Array<{ text?: string }>} blocks
- * @returns {{
- *   chapters: Map<string, string>,
- *   interludes: Map<string, string>,
- *   parts: Map<string, string>,
- *   ordered: Array<{ kind: string, key: string, title: string, label: string }>
- * } | null}
  */
 function extractPrintedTocLookup(blocks) {
   if (!Array.isArray(blocks) || blocks.length === 0) {
@@ -67,7 +66,7 @@ function extractPrintedTocLookup(blocks) {
 
   const chapters = new Map()
   const interludes = new Map()
-  const parts = new Map()
+  const sections = new Map()
   const ordered = []
 
   let inTocSection = false
@@ -92,6 +91,32 @@ function extractPrintedTocLookup(blocks) {
       inTocSection = true
     }
 
+    if (PRELUDE_TOC_REGEX.test(text)) {
+      const title = "Prelude to the Stormlight Archive"
+      sections.set("prelude", title)
+      ordered.push({ kind: "prelude", key: "prelude", title, label: "Prelude" })
+      tocEntryCount += 1
+      continue
+    }
+
+    const prologueMatch = text.match(PROLOGUE_TOC_REGEX)
+    if (prologueMatch) {
+      const title = titleCaseTocTitle(prologueMatch[1])
+      sections.set("prologue", title)
+      ordered.push({ kind: "prologue", key: "prologue", title, label: "Prologue" })
+      tocEntryCount += 1
+      continue
+    }
+
+    const epilogueMatch = text.match(EPILOGUE_TOC_REGEX)
+    if (epilogueMatch) {
+      const title = titleCaseTocTitle(epilogueMatch[1])
+      sections.set("epilogue", title)
+      ordered.push({ kind: "epilogue", key: "epilogue", title, label: "Epilogue" })
+      tocEntryCount += 1
+      continue
+    }
+
     const chapterMatch = text.match(CHAPTER_TOC_LINE_REGEX)
     if (chapterMatch) {
       const key = chapterMatch[1]
@@ -105,22 +130,12 @@ function extractPrintedTocLookup(blocks) {
 
     const interludeMatch = text.match(INTERLUDE_TOC_LINE_REGEX)
     if (interludeMatch) {
-      const key = interludeMatch[1]
-      const title = titleCaseTocTitle(interludeMatch[2])
-      const label = `Interlude I-${key.split("-")[1]}`
+      const interludeNum = interludeMatch[1] ?? interludeMatch[3]
+      const key = `1-${interludeNum}`
+      const title = titleCaseTocTitle(interludeMatch[4])
+      const label = `Interlude I-${interludeNum}`
       interludes.set(key, title)
       ordered.push({ kind: "interlude", key, title, label })
-      tocEntryCount += 1
-      continue
-    }
-
-    const partMatch = text.match(PART_TOC_LINE_REGEX)
-    if (partMatch) {
-      const key = partMatch[1]
-      const title = titleCaseTocTitle(partMatch[2])
-      const label = `Part ${key.charAt(0).toUpperCase()}${key.slice(1).toLowerCase()}`
-      parts.set(key.toLowerCase(), title)
-      ordered.push({ kind: "part", key: key.toLowerCase(), title, label })
       tocEntryCount += 1
       continue
     }
@@ -140,7 +155,7 @@ function extractPrintedTocLookup(blocks) {
     return null
   }
 
-  return { chapters, interludes, parts, ordered }
+  return { chapters, interludes, sections, ordered }
 }
 
 function parseChapterNumberKey(numberLabel) {
@@ -161,32 +176,29 @@ function parseInterludeKey(numberLabel) {
 
   const match =
     trimmed.match(/I-(\d{1,2})/i) ??
-    trimmed.match(/(\d-\d{1,2})/)
+    trimmed.match(/(\d)-(\d{1,2})/)
 
   if (!match) {
     return null
   }
 
-  if (match[0].includes("-") && !match[0].startsWith("I")) {
-    return match[0]
+  if (match[2] != null) {
+    return `${match[1]}-${match[2]}`
   }
 
-  const interludeNum = match[1]
-  return `1-${interludeNum}`
+  return `1-${match[1]}`
 }
 
-/**
- * Resolve a chapter or interlude title from the printed TOC.
- *
- * @param {ReturnType<typeof extractPrintedTocLookup>} printedToc
- * @param {object} params
- * @param {string|null} params.number OCR/heuristic number label
- * @param {string|null} params.boundaryKind
- * @param {number} params.chapterSequence 1-based main-chapter counter
- */
-function lookupPrintedTocTitle(printedToc, { number = null, boundaryKind = "chapter", chapterSequence = 1 } = {}) {
+function lookupPrintedTocTitle(
+  printedToc,
+  { number = null, boundaryKind = "chapter", chapterSequence = 1 } = {}
+) {
   if (!printedToc) {
     return null
+  }
+
+  if (boundaryKind === "prelude" || boundaryKind === "prologue" || boundaryKind === "epilogue") {
+    return printedToc.sections?.get(boundaryKind) ?? null
   }
 
   if (boundaryKind === "interlude") {
@@ -209,9 +221,24 @@ function lookupPrintedTocTitle(printedToc, { number = null, boundaryKind = "chap
   return null
 }
 
-function lookupPrintedTocNumberLabel(printedToc, { boundaryKind = "chapter", chapterSequence = 1, number = null } = {}) {
+function lookupPrintedTocNumberLabel(
+  printedToc,
+  { boundaryKind = "chapter", chapterSequence = 1, number = null } = {}
+) {
   if (!printedToc) {
     return null
+  }
+
+  if (boundaryKind === "prelude") {
+    return "Prelude"
+  }
+
+  if (boundaryKind === "prologue") {
+    return "Prologue"
+  }
+
+  if (boundaryKind === "epilogue") {
+    return "Epilogue"
   }
 
   if (boundaryKind === "interlude") {

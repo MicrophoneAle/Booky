@@ -49,6 +49,8 @@ const INTERSTITIAL_TITLE_REGEX = /^[A-Z][A-Z0-9\s'’\-]{3,}$/
 
 const MIN_CHAPTER_ILLUSTRATION_PAGE = 30
 const MIN_CHAPTER_HEADING_BANNER_PAGE = 20
+/** Ignore part/interlude-divider art in front matter (maps, printed TOC graphics). */
+const MIN_SECTION_BOUNDARY_PAGE = 28
 
 function normalizeNullableString(value) {
   if (value == null) {
@@ -284,15 +286,32 @@ function analyzeChapterHeadingBanner({
 /**
  * Full-page section dividers (PART N, INTERLUDES) detected via OCR.
  */
-function analyzeFullPageSectionDivider(ocrMetadata) {
+function analyzeFullPageSectionDivider(ocrMetadata, imageBlock = null) {
   if (!ocrMetadata?.boundaryKind) {
     return { ...SAFE_FALLBACK }
   }
 
-  if (ocrMetadata.boundaryKind === "part" || ocrMetadata.boundaryKind === "interlude_divider") {
+  const pageNumber = imageBlock?.pageNumber ?? 0
+  if (pageNumber < MIN_SECTION_BOUNDARY_PAGE) {
+    return { ...SAFE_FALLBACK }
+  }
+
+  if (ocrMetadata.boundaryKind === "part") {
     return {
       isChapterBoundary: true,
-      boundaryKind: ocrMetadata.boundaryKind,
+      includeInToc: true,
+      boundaryKind: "part",
+      title: ocrMetadata.title ?? null,
+      number: ocrMetadata.number ?? null,
+      rawText: ocrMetadata.rawText ?? null,
+    }
+  }
+
+  if (ocrMetadata.boundaryKind === "interlude_divider") {
+    return {
+      isChapterBoundary: true,
+      includeInToc: false,
+      boundaryKind: "interlude_divider",
       title: ocrMetadata.title ?? null,
       number: ocrMetadata.number ?? null,
       rawText: ocrMetadata.rawText ?? null,
@@ -303,17 +322,23 @@ function analyzeFullPageSectionDivider(ocrMetadata) {
 }
 
 /**
- * Merge local OCR + printed TOC into heuristic analysis.
- * Printed TOC titles win when available; OCR titles must pass plausibility checks.
+ * Merge illustration OCR with printed TOC fallback.
+ * OCR titles from header images take priority; TOC fills gaps only.
  */
 function mergeOcrIntoAnalysis(
   analysisResult,
   ocrMetadata,
   imageRole,
-  { printedToc = null, chapterSequence = 1, interludeSequence = 1 } = {}
+  {
+    printedToc = null,
+    chapterSequence = 1,
+    interludeSequence = 1,
+    imageBlock = null,
+    forceInterludeBoundary = false,
+  } = {}
 ) {
   if (imageRole === "full_page_illustration" && ocrMetadata) {
-    const section = analyzeFullPageSectionDivider(ocrMetadata)
+    const section = analyzeFullPageSectionDivider(ocrMetadata, imageBlock)
     if (section.isChapterBoundary) {
       return section
     }
@@ -327,10 +352,11 @@ function mergeOcrIntoAnalysis(
     return analysisResult
   }
 
-  const boundaryKind =
-    ocrMetadata?.boundaryKind ??
-    analysisResult.boundaryKind ??
-    (imageRole === "chapter_heading" ? "chapter" : null)
+  const boundaryKind = forceInterludeBoundary
+    ? "interlude"
+    : ocrMetadata?.boundaryKind ??
+      analysisResult.boundaryKind ??
+      (imageRole === "chapter_heading" ? "chapter" : null)
 
   let number = ocrMetadata?.number ?? analysisResult.number ?? null
   let title = parseTitleFromOcr(ocrMetadata?.title) ?? analysisResult.title ?? null
@@ -338,23 +364,23 @@ function mergeOcrIntoAnalysis(
   const lookupSequence =
     boundaryKind === "interlude" ? interludeSequence : chapterSequence
 
-  const tocTitle = lookupPrintedTocTitle(printedToc, {
-    number,
-    boundaryKind,
-    chapterSequence: lookupSequence,
-  })
-  const tocNumber = lookupPrintedTocNumberLabel(printedToc, {
-    number,
-    boundaryKind,
-    chapterSequence: lookupSequence,
-  })
-
-  if (tocTitle) {
-    title = tocTitle
+  if (!title) {
+    title = lookupPrintedTocTitle(printedToc, {
+      number,
+      boundaryKind,
+      chapterSequence: lookupSequence,
+    })
   }
 
-  if (tocNumber) {
-    number = tocNumber
+  if (!number || /^chapter$/i.test(number)) {
+    const tocNumber = lookupPrintedTocNumberLabel(printedToc, {
+      number,
+      boundaryKind,
+      chapterSequence: lookupSequence,
+    })
+    if (tocNumber) {
+      number = tocNumber
+    }
   }
 
   const rawText =
@@ -364,6 +390,7 @@ function mergeOcrIntoAnalysis(
 
   return {
     isChapterBoundary: true,
+    includeInToc: boundaryKind !== "interlude_divider",
     boundaryKind,
     number,
     title,
@@ -463,13 +490,14 @@ function analyzeChapterGraphicFromContext({
   interludeSequence = 1,
   ocrMetadata = null,
   printedToc = null,
+  forceInterludeBoundary = false,
 }) {
   if (!imageBlock || imageBlock.type !== "image_candidate") {
     return { ...SAFE_FALLBACK }
   }
 
   if (imageBlock.imageRole === "full_page_illustration" && ocrMetadata) {
-    const section = analyzeFullPageSectionDivider(ocrMetadata)
+    const section = analyzeFullPageSectionDivider(ocrMetadata, imageBlock)
     if (section.isChapterBoundary) {
       return section
     }
@@ -497,6 +525,8 @@ function analyzeChapterGraphicFromContext({
     printedToc,
     chapterSequence,
     interludeSequence,
+    imageBlock,
+    forceInterludeBoundary,
   })
 }
 

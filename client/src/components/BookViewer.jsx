@@ -79,7 +79,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 50
+const PARSER_VERSION = 51
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 23
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -2320,7 +2320,15 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout, incrementalOpts = n
 
   const updateCurrentActiveChapter = (item) => {
     if (item.type === "image" && item.isChapterBoundary) {
-      currentActiveChapter = formatImageChapterTocTitle(item.chapterMetadata)
+      const boundaryKind = item.chapterMetadata?.boundaryKind ?? null
+      if (boundaryKind === "interlude_divider" || boundaryKind === "part") {
+        return
+      }
+
+      const imageTitle = formatImageChapterTocTitle(item.chapterMetadata)
+      if (imageTitle && imageTitle !== "Chapter") {
+        currentActiveChapter = imageTitle
+      }
       return
     }
 
@@ -2329,7 +2337,10 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout, incrementalOpts = n
     }
 
     if (isChapterBoundaryItem(item) || item.type === "title") {
-      currentActiveChapter = item.chapterTitle ?? item.text
+      const headingTitle = item.chapterTitle ?? item.text
+      if (headingTitle) {
+        currentActiveChapter = headingTitle
+      }
       return
     }
 
@@ -2347,8 +2358,13 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout, incrementalOpts = n
 
     for (const pageItem of pageItems) {
       if (pageItem.type === "image" && pageItem.isChapterBoundary) {
+        const boundaryKind = pageItem.chapterMetadata?.boundaryKind ?? null
+        if (boundaryKind === "interlude_divider") {
+          continue
+        }
+
         const title = formatImageChapterTocTitle(pageItem.chapterMetadata)
-        if (title && !chaptersOnPage.includes(title)) {
+        if (title && title !== "Chapter" && !chaptersOnPage.includes(title)) {
           chaptersOnPage.push(title)
         }
         continue

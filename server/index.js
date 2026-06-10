@@ -10,10 +10,13 @@ import crypto from "node:crypto"
 import { getDocument, OPS, ImageKind } from "pdfjs-dist/legacy/build/pdf.mjs"
 import { createCanvas } from "@napi-rs/canvas/node-canvas.js"
 import { analyzeChapterGraphicFromContext } from "./chapterGraphicService.js"
-import { ocrIllustrationMetadata } from "./imageOcrService.js"
+import {
+  countInterludeNamesInDivider,
+  ocrIllustrationMetadata,
+} from "./imageOcrService.js"
 import { extractPrintedTocLookup } from "./printedTocService.js"
 
-const PARSER_VERSION = 50
+const PARSER_VERSION = 51
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -1138,6 +1141,90 @@ function isLargeFontAllCapsChapterWrapLine(text, line) {
   )
 }
 
+const PRELUDE_HEADING_REGEX = /^PRELUDE TO THE STORMLIGHT ARCHIVE$/i
+
+function mergeEndOfPartBlocks(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  const merged = []
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    const text = (block?.text ?? "").trim()
+
+    if (/^THE END OF\.?$/i.test(text)) {
+      let mergedEndOfPart = false
+
+      for (let nextIndex = index + 1; nextIndex < Math.min(index + 6, blocks.length); nextIndex += 1) {
+        const nextBlock = blocks[nextIndex]
+        if (nextBlock?.type === "image" || nextBlock?.type === "image_candidate") {
+          break
+        }
+
+        const nextText = (nextBlock?.text ?? "").trim()
+        if (!nextText) {
+          continue
+        }
+
+        const partMatch = nextText.match(
+          /^Part\s+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\b/i
+        )
+        if (partMatch) {
+          const partWord =
+            partMatch[1].charAt(0).toUpperCase() + partMatch[1].slice(1).toLowerCase()
+          merged.push({
+            ...block,
+            text: `The End of Part ${partWord}`,
+            isHeading: true,
+            fontSize: Math.max(block.fontSize ?? 12, nextBlock.fontSize ?? 12),
+          })
+          index = nextIndex
+          mergedEndOfPart = true
+          break
+        }
+
+        break
+      }
+
+      if (mergedEndOfPart) {
+        continue
+      }
+    }
+
+    merged.push(block)
+  }
+
+  return merged
+}
+
+function promoteStructuralSectionHeadings(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  return blocks.map((block) => {
+    const normalized = (block?.text ?? "").replace(/\s+/g, " ").trim()
+    if (!normalized) {
+      return block
+    }
+
+    if (PRELUDE_HEADING_REGEX.test(normalized)) {
+      return {
+        ...block,
+        text: "Prelude to the Stormlight Archive",
+        isHeading: true,
+        isChapterStart: true,
+        fontSize: Math.max(block.fontSize ?? 0, 15),
+        chapterTitle: "Prelude to the Stormlight Archive",
+      }
+    }
+
+    return block
+  })
+}
+
 function excludePrintedTocBlocks(blocks) {
   const dropIndices = new Set()
   let inPrintedTocSection = false
@@ -1597,6 +1684,9 @@ function inferBookTitleFromEarlyBlocks(blocks) {
       continue
     }
     if (/\bcontents\b/i.test(text)) {
+      continue
+    }
+    if (/^book\s+(?:one|two|three|four|five)\s+of\b/i.test(text)) {
       continue
     }
     if (isAuthorBylineHeadingText(text) || /^by\s+/i.test(text)) {
@@ -3387,6 +3477,7 @@ function finalizeNonCandidateImageBlock(block) {
 
 function finalizeVisionImageBlock(block, visionResult) {
   const { isCandidate: _isCandidate, ...rest } = block
+  const includeInToc = visionResult?.includeInToc !== false
 
   return {
     ...rest,
@@ -3398,6 +3489,7 @@ function finalizeVisionImageBlock(block, visionResult) {
       title: visionResult?.title ?? null,
       number: visionResult?.number ?? null,
       rawText: visionResult?.rawText ?? null,
+      includeInToc,
     },
   }
 }
@@ -3468,6 +3560,7 @@ async function finalizeIllustrationBlocks(blocks, { onProgress, printedToc = nul
 
   let chapterSequence = 0
   let interludeSequence = 0
+  let pendingInterludes = 0
   let ocrCompleted = 0
 
   const finalizedByIndex = new Map()
@@ -3493,6 +3586,9 @@ async function finalizeIllustrationBlocks(blocks, { onProgress, printedToc = nul
       })
     }
 
+    const forceInterludeBoundary =
+      pendingInterludes > 0 && block.imageRole === "chapter_heading"
+
     const analysisResult = analyzeChapterGraphicFromContext({
       imageBlock: block,
       blocks,
@@ -3501,12 +3597,19 @@ async function finalizeIllustrationBlocks(blocks, { onProgress, printedToc = nul
       interludeSequence: interludeSequence + 1,
       ocrMetadata,
       printedToc,
+      forceInterludeBoundary,
     })
 
-    if (analysisResult.isChapterBoundary && analysisResult.boundaryKind === "chapter") {
-      chapterSequence += 1
-    } else if (analysisResult.isChapterBoundary && analysisResult.boundaryKind === "interlude") {
+    if (analysisResult.boundaryKind === "interlude_divider") {
+      pendingInterludes = countInterludeNamesInDivider(ocrMetadata) || 3
+    } else if (analysisResult.boundaryKind === "interlude") {
       interludeSequence += 1
+      pendingInterludes = Math.max(0, pendingInterludes - 1)
+    } else if (analysisResult.boundaryKind === "chapter") {
+      chapterSequence += 1
+      pendingInterludes = 0
+    } else if (analysisResult.boundaryKind === "part") {
+      pendingInterludes = 0
     }
 
     finalizedByIndex.set(index, finalizeVisionImageBlock(block, analysisResult))
@@ -5471,6 +5574,8 @@ async function parsePdfBuffer(
   blocks = mergeChapterSubtitleBlocks(blocks)
   blocks = mergeInlineChapterLabelTitles(blocks)
   blocks = mergeTrailingChapterTitleFragments(blocks)
+  blocks = mergeEndOfPartBlocks(blocks)
+  blocks = promoteStructuralSectionHeadings(blocks)
 
   reportProgress({
     phase: "structuring",

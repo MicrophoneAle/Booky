@@ -201,15 +201,46 @@ async function recognizeRegion(scaledCanvas, region, options = {}) {
   return recognizeBuffer(cropCanvasRegion(scaledCanvas, region, { preprocess: true }), options)
 }
 
+function parseSectionLabelToken(token) {
+  const trimmed = normalizeOcrLine(token).replace(/\.$/, "")
+  if (!trimmed) {
+    return null
+  }
+
+  if (/^PRELUDE$/i.test(trimmed)) {
+    return { kind: "prelude", label: "Prelude" }
+  }
+
+  if (/^PROLOGUE$/i.test(trimmed)) {
+    return { kind: "prologue", label: "Prologue" }
+  }
+
+  if (/^EPILOGUE$/i.test(trimmed)) {
+    return { kind: "epilogue", label: "Epilogue" }
+  }
+
+  return null
+}
+
 function parseChapterNumberToken(token) {
   const trimmed = normalizeOcrLine(token).replace(/\.$/, "")
   if (!trimmed) {
     return null
   }
 
+  const sectionLabel = parseSectionLabelToken(trimmed)
+  if (sectionLabel) {
+    return sectionLabel
+  }
+
   const interludeMatch = trimmed.match(/^I[\s\-–—]*(\d{1,2})$/i)
   if (interludeMatch) {
     return { kind: "interlude", label: `Interlude I-${interludeMatch[1]}` }
+  }
+
+  const dashInterludeMatch = trimmed.match(/^(\d)-(\d{1,2})$/)
+  if (dashInterludeMatch) {
+    return { kind: "interlude", label: `Interlude I-${dashInterludeMatch[2]}` }
   }
 
   if (/^\d{1,3}$/.test(trimmed)) {
@@ -332,12 +363,29 @@ function parseCharacterList(text) {
   return names.length > 0 ? names.join(" · ") : null
 }
 
+function resolveBoundaryKind(number) {
+  if (!number?.kind) {
+    return "chapter"
+  }
+
+  if (
+    number.kind === "interlude" ||
+    number.kind === "prelude" ||
+    number.kind === "prologue" ||
+    number.kind === "epilogue"
+  ) {
+    return number.kind
+  }
+
+  return "chapter"
+}
+
 function buildChapterHeadingMetadata({ number, title }) {
   if (!number && !title) {
     return null
   }
 
-  const boundaryKind = number?.kind === "interlude" ? "interlude" : "chapter"
+  const boundaryKind = resolveBoundaryKind(number)
 
   return {
     boundaryKind,
@@ -486,9 +534,25 @@ async function ocrIllustrationMetadata(imageBuffer, imageRole) {
   return null
 }
 
+function countInterludeNamesInDivider(ocrMetadata) {
+  const title = (ocrMetadata?.title ?? "").trim()
+  if (!title) {
+    return 0
+  }
+
+  const names = title
+    .split(/\s*[•·]\s*/)
+    .map((part) => part.trim())
+    .filter((part) => part.length >= 3)
+
+  return names.length
+}
+
 export {
   ocrIllustrationMetadata,
   parseChapterNumberToken,
+  parseSectionLabelToken,
   parsePartLabel,
   isPlausibleTitle,
+  countInterludeNamesInDivider,
 }
