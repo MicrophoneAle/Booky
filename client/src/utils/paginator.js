@@ -701,10 +701,14 @@ export function flattenDocument(document) {
   for (const page of document?.content ?? []) {
     for (const block of page?.blocks ?? []) {
       if (block?.type === "image") {
+        if (!block.src) {
+          continue
+        }
+
         flatBlocks.push({
           type: "image",
           id: block.id ?? null,
-          src: block.src ?? null,
+          src: block.src,
           isChapterBoundary: Boolean(block.isChapterBoundary),
           chapterMetadata: block.chapterMetadata ?? null,
           coordinates: block.coordinates ?? null,
