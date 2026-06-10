@@ -7,10 +7,12 @@ import multer from "multer"
 import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import crypto from "node:crypto"
-import { getDocument, OPS } from "pdfjs-dist/legacy/build/pdf.mjs"
+import { getDocument, OPS, ImageKind } from "pdfjs-dist/legacy/build/pdf.mjs"
+import { createCanvas } from "@napi-rs/canvas/node-canvas.js"
 import { analyzeChapterGraphicFromContext } from "./chapterGraphicService.js"
 
-const PARSER_VERSION = 46
+const PARSER_VERSION = 47
+const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
   [OPS.paintImageXObject, OPS.paintInlineImageXObject].filter((op) => op != null)
@@ -2854,26 +2856,186 @@ async function resolvePdfImageObject(page, imageRefId) {
   ])
 }
 
-function pdfImageDataToBase64(imageObject) {
-  if (!imageObject?.data) {
+function isJpegImageBuffer(buffer) {
+  return (
+    Buffer.isBuffer(buffer) &&
+    buffer.length >= 3 &&
+    buffer[0] === 0xff &&
+    buffer[1] === 0xd8 &&
+    buffer[2] === 0xff
+  )
+}
+
+function bufferFromByteSource(source) {
+  if (!source) {
     return null
   }
 
-  const data = imageObject.data
-  const buffer = Buffer.from(
-    data.buffer ?? data,
-    data.byteOffset ?? 0,
-    data.byteLength ?? data.length
-  )
+  if (Buffer.isBuffer(source)) {
+    return source.length > 0 ? source : null
+  }
 
-  return buffer.length > 0 ? buffer.toString("base64") : null
+  if (source instanceof Uint8Array) {
+    return Buffer.from(source.buffer, source.byteOffset, source.byteLength)
+  }
+
+  if (source instanceof ArrayBuffer) {
+    return Buffer.from(source)
+  }
+
+  if (typeof source === "object" && source.buffer instanceof ArrayBuffer) {
+    return Buffer.from(
+      source.buffer,
+      source.byteOffset ?? 0,
+      source.byteLength ?? source.length ?? 0
+    )
+  }
+
+  if (typeof source === "string") {
+    const trimmed = source.trim()
+    if (!trimmed) {
+      return null
+    }
+
+    if (trimmed.startsWith("data:")) {
+      const commaIndex = trimmed.indexOf(",")
+      if (commaIndex === -1) {
+        return null
+      }
+      return Buffer.from(trimmed.slice(commaIndex + 1), "base64")
+    }
+
+    return Buffer.from(trimmed, "base64")
+  }
+
+  return null
+}
+
+function extractCompressedPdfImageBytes(imageObject) {
+  if (!imageObject) {
+    return null
+  }
+
+  const compressedCandidates = [
+    imageObject.srcData,
+    imageObject.currentSrc,
+    imageObject.bytes,
+    imageObject.stream,
+  ]
+
+  for (const candidate of compressedCandidates) {
+    const buffer = bufferFromByteSource(candidate)
+    if (isJpegImageBuffer(buffer)) {
+      return buffer
+    }
+  }
+
+  if (typeof imageObject.src === "string" && imageObject.src.startsWith("data:image/jpeg")) {
+    const buffer = bufferFromByteSource(imageObject.src)
+    if (buffer?.length) {
+      return buffer
+    }
+  }
+
+  const dataBuffer = bufferFromByteSource(imageObject.data)
+  if (isJpegImageBuffer(dataBuffer)) {
+    return dataBuffer
+  }
+
+  return null
+}
+
+function expectedRawPixelByteLength(width, height, kind) {
+  if (!width || !height) {
+    return 0
+  }
+
+  if (kind === ImageKind.GRAYSCALE_1BPP) {
+    return Math.ceil((width * height) / 8)
+  }
+
+  if (kind === ImageKind.RGB_24BPP) {
+    return width * height * 3
+  }
+
+  if (kind === ImageKind.RGBA_32BPP) {
+    return width * height * 4
+  }
+
+  return width * height * 4
+}
+
+function rawPdfPixelsToJpegBuffer(imageObject) {
+  const width = imageObject?.width
+  const height = imageObject?.height
+  const kind = imageObject?.kind ?? ImageKind.RGBA_32BPP
+  const pixelData = imageObject?.data
+
+  if (!width || !height || !pixelData?.length) {
+    return null
+  }
+
+  const expectedLength = expectedRawPixelByteLength(width, height, kind)
+  if (expectedLength > 0 && pixelData.length < expectedLength) {
+    return null
+  }
+
+  const canvas = createCanvas(width, height)
+  const context = canvas.getContext("2d")
+  const imageData = context.createImageData(width, height)
+
+  if (kind === ImageKind.RGBA_32BPP) {
+    imageData.data.set(pixelData.subarray(0, width * height * 4))
+  } else if (kind === ImageKind.RGB_24BPP) {
+    let sourceIndex = 0
+    for (let destinationIndex = 0; destinationIndex < imageData.data.length; destinationIndex += 4) {
+      imageData.data[destinationIndex] = pixelData[sourceIndex]
+      imageData.data[destinationIndex + 1] = pixelData[sourceIndex + 1]
+      imageData.data[destinationIndex + 2] = pixelData[sourceIndex + 2]
+      imageData.data[destinationIndex + 3] = 255
+      sourceIndex += 3
+    }
+  } else if (kind === ImageKind.GRAYSCALE_1BPP) {
+    for (let row = 0; row < height; row += 1) {
+      for (let column = 0; column < width; column += 1) {
+        const bitIndex = row * width + column
+        const byteIndex = bitIndex >> 3
+        const bitMask = 0x80 >> (bitIndex & 7)
+        const gray = pixelData[byteIndex] & bitMask ? 0 : 255
+        const destinationIndex = (row * width + column) * 4
+        imageData.data[destinationIndex] = gray
+        imageData.data[destinationIndex + 1] = gray
+        imageData.data[destinationIndex + 2] = gray
+        imageData.data[destinationIndex + 3] = 255
+      }
+    }
+  } else {
+    return null
+  }
+
+  context.putImageData(imageData, 0, 0)
+  return canvas.toBuffer("image/jpeg", { quality: 0.92 })
+}
+
+function resolvePdfImageBuffer(imageObject) {
+  const compressedBuffer = extractCompressedPdfImageBytes(imageObject)
+  if (compressedBuffer?.length) {
+    return compressedBuffer
+  }
+
+  return rawPdfPixelsToJpegBuffer(imageObject)
+}
+
+function pdfImageDataToBase64(imageObject) {
+  const buffer = resolvePdfImageBuffer(imageObject)
+  return buffer?.length ? buffer.toString("base64") : null
 }
 
 async function extractPdfPageImageCandidates(page, pageNumber) {
   const viewport = page.getViewport({ scale: 1 })
   const pageWidth = viewport.width
   const pageHeight = viewport.height
-  const operatorList = await page.getOperatorList()
+  const operatorList = await page.getOperatorList({ intent: "display" })
   const candidates = []
 
   let transform = [1, 0, 0, 1, 0, 0]
@@ -3198,7 +3360,7 @@ function base64PayloadToImageBuffer(base64Payload) {
 }
 
 function buildBookAssetStoragePath(bookId, blockId) {
-  return `books/${bookId}/images/${blockId}.png`
+  return `books/${bookId}/images/${blockId}.jpg`
 }
 
 function stripImageBinaryFields(block) {
@@ -3232,7 +3394,7 @@ async function resolveUploadedImageAssetUrl(bucket, storagePath) {
 async function uploadImageAssetBuffer(bookId, blockId, imageBuffer) {
   const filePath = buildBookAssetStoragePath(bookId, blockId)
   const uploadOptions = {
-    contentType: "image/png",
+    contentType: PDF_IMAGE_JPEG_CONTENT_TYPE,
     upsert: true,
   }
 
