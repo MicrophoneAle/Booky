@@ -212,7 +212,11 @@ export function formatImageChapterTocTitle(chapterMetadata) {
     return number
   }
 
-  return rawText || "Chapter"
+  if (rawText && /^Chapter\s+\d{1,3}(?::\s+[A-Za-z][A-Za-z\s'\-]{3,})?$/i.test(rawText)) {
+    return rawText
+  }
+
+  return "Chapter"
 }
 
 export function extractImageChapterTocEntries(document) {

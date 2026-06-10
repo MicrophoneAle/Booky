@@ -60,17 +60,86 @@ function normalizeOcrLine(text) {
     .trim()
 }
 
-function binarizeImageData(imageData, threshold = 168) {
+function otsuThreshold(grayValues) {
+  const histogram = new Array(256).fill(0)
+  for (const value of grayValues) {
+    histogram[value] += 1
+  }
+
+  const total = grayValues.length
+  if (total === 0) {
+    return null
+  }
+
+  let sum = 0
+  for (let index = 0; index < 256; index += 1) {
+    sum += index * histogram[index]
+  }
+
+  let sumBackground = 0
+  let weightBackground = 0
+  let maxVariance = 0
+  let threshold = 128
+
+  for (let index = 0; index < 256; index += 1) {
+    weightBackground += histogram[index]
+    if (weightBackground === 0) {
+      continue
+    }
+
+    const weightForeground = total - weightBackground
+    if (weightForeground === 0) {
+      break
+    }
+
+    sumBackground += index * histogram[index]
+    const meanBackground = sumBackground / weightBackground
+    const meanForeground = (sum - sumBackground) / weightForeground
+    const variance =
+      weightBackground *
+      weightForeground *
+      (meanBackground - meanForeground) *
+      (meanBackground - meanForeground)
+
+    if (variance > maxVariance) {
+      maxVariance = variance
+      threshold = index
+    }
+  }
+
+  return threshold
+}
+
+function preprocessImageData(imageData) {
   const { data, width, height } = imageData
+  const pixelCount = width * height
+  const grayValues = new Uint8Array(pixelCount)
+  let sum = 0
+
+  for (let pixelIndex = 0, dataIndex = 0; pixelIndex < pixelCount; pixelIndex += 1, dataIndex += 4) {
+    const gray =
+      data[dataIndex] * 0.299 + data[dataIndex + 1] * 0.587 + data[dataIndex + 2] * 0.114
+    grayValues[pixelIndex] = gray
+    sum += gray
+  }
+
+  const mean = sum / pixelCount
+  const invert = mean < 132
+  if (invert) {
+    for (let index = 0; index < pixelCount; index += 1) {
+      grayValues[index] = 255 - grayValues[index]
+    }
+  }
+
+  const threshold = otsuThreshold(grayValues) ?? 168
   const output = createCanvas(width, height).getContext("2d").createImageData(width, height)
 
-  for (let index = 0; index < data.length; index += 4) {
-    const gray = data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114
-    const value = gray < threshold ? 0 : 255
-    output.data[index] = value
-    output.data[index + 1] = value
-    output.data[index + 2] = value
-    output.data[index + 3] = 255
+  for (let pixelIndex = 0, dataIndex = 0; pixelIndex < pixelCount; pixelIndex += 1, dataIndex += 4) {
+    const value = grayValues[pixelIndex] < threshold ? 0 : 255
+    output.data[dataIndex] = value
+    output.data[dataIndex + 1] = value
+    output.data[dataIndex + 2] = value
+    output.data[dataIndex + 3] = 255
   }
 
   return output
@@ -78,7 +147,7 @@ function binarizeImageData(imageData, threshold = 168) {
 
 async function prepareScaledCanvas(imageBuffer, minWidth = 960) {
   const source = await loadImage(imageBuffer)
-  const scale = Math.max(2, minWidth / Math.max(1, source.width))
+  const scale = Math.max(2.5, minWidth / Math.max(1, source.width))
   const width = Math.max(3, Math.round(source.width * scale))
   const height = Math.max(3, Math.round(source.height * scale))
   const canvas = createCanvas(width, height)
@@ -91,7 +160,7 @@ async function prepareScaledCanvas(imageBuffer, minWidth = 960) {
   return canvas
 }
 
-function cropCanvasRegion(canvas, region, { binarize = true } = {}) {
+function cropCanvasRegion(canvas, region, { preprocess = true } = {}) {
   const sourceWidth = canvas.width
   const sourceHeight = canvas.height
   const x = Math.max(0, Math.round(sourceWidth * region.left))
@@ -105,9 +174,9 @@ function cropCanvasRegion(canvas, region, { binarize = true } = {}) {
   context.fillRect(0, 0, width, height)
   context.drawImage(canvas, x, y, width, height, 0, 0, width, height)
 
-  if (binarize) {
+  if (preprocess) {
     const imageData = context.getImageData(0, 0, width, height)
-    context.putImageData(binarizeImageData(imageData), 0, 0)
+    context.putImageData(preprocessImageData(imageData), 0, 0)
   }
 
   return cropCanvas.toBuffer("image/png")
@@ -129,7 +198,7 @@ async function recognizeBuffer(buffer, { psm = "7", whitelist = null } = {}) {
 }
 
 async function recognizeRegion(scaledCanvas, region, options = {}) {
-  return recognizeBuffer(cropCanvasRegion(scaledCanvas, region, { binarize: true }), options)
+  return recognizeBuffer(cropCanvasRegion(scaledCanvas, region, { preprocess: true }), options)
 }
 
 function parseChapterNumberToken(token) {
@@ -166,21 +235,40 @@ function isPlausibleTitle(text) {
     .replace(/\s+/g, " ")
     .trim()
 
-  if (cleaned.length < 4) {
+  if (cleaned.length < 4 || cleaned.length > 60) {
     return false
   }
 
-  const letters = cleaned.replace(/[^A-Za-z]/g, "")
-  if (letters.length < cleaned.length * 0.55) {
+  const words = cleaned.split(" ").filter((word) => word.length > 0)
+  if (words.length === 0 || words.length > 8) {
     return false
   }
 
-  const words = cleaned.split(" ").filter((word) => word.length >= 2)
-  if (words.length === 0) {
+  const longWords = words.filter((word) => word.replace(/[^A-Za-z]/g, "").length >= 4)
+  if (longWords.length === 0) {
     return false
   }
 
-  if (words.every((word) => word.length <= 2)) {
+  const shortWords = words.filter((word) => word.length <= 2)
+  if (shortWords.length / words.length > 0.35) {
+    return false
+  }
+
+  const alpha = cleaned.replace(/[^A-Za-z]/g, "")
+  const longAlpha = longWords.join("").replace(/[^A-Za-z]/g, "")
+  if (longAlpha.length < alpha.length * 0.65) {
+    return false
+  }
+
+  for (const word of words) {
+    const letters = word.replace(/[^A-Za-z]/g, "")
+    if (letters.length >= 4 && !/[AEIOUaeiou]/.test(letters)) {
+      return false
+    }
+  }
+
+  const uppercaseLetters = alpha.replace(/[^A-Z]/g, "").length
+  if (alpha.length >= 6 && uppercaseLetters < alpha.length * 0.45) {
     return false
   }
 
@@ -244,6 +332,21 @@ function parseCharacterList(text) {
   return names.length > 0 ? names.join(" · ") : null
 }
 
+function buildChapterHeadingMetadata({ number, title }) {
+  if (!number && !title) {
+    return null
+  }
+
+  const boundaryKind = number?.kind === "interlude" ? "interlude" : "chapter"
+
+  return {
+    boundaryKind,
+    number: number?.label ?? null,
+    title,
+    rawText: [number?.label, title].filter(Boolean).join(": "),
+  }
+}
+
 function parseChapterHeadingBannerText(bannerText) {
   const lines = bannerText
     .split(/\n/)
@@ -275,30 +378,42 @@ function parseChapterHeadingBannerText(bannerText) {
     }
   }
 
-  if (!number && !title) {
-    return null
-  }
-
-  const boundaryKind = number?.kind === "interlude" ? "interlude" : "chapter"
-
-  return {
-    boundaryKind,
-    number: number?.label ?? null,
-    title,
-    rawText: [number?.label, title].filter(Boolean).join(": "),
-  }
+  return buildChapterHeadingMetadata({ number, title })
 }
 
 async function ocrChapterHeading(imageBuffer) {
-  const scaledCanvas = await prepareScaledCanvas(imageBuffer, 1100)
-  const bannerRegion = { left: 0.04, top: 0, width: 0.92, height: 0.58 }
+  const scaledCanvas = await prepareScaledCanvas(imageBuffer, 1200)
 
+  const numberRegion = { left: 0.02, top: 0.06, width: 0.16, height: 0.5 }
+  const titleRegion = { left: 0.14, top: 0.1, width: 0.78, height: 0.45 }
+
+  const [numberText, titleText] = await Promise.all([
+    recognizeRegion(scaledCanvas, numberRegion, {
+      psm: "7",
+      whitelist: "0123456789IVXLCDM",
+    }),
+    recognizeRegion(scaledCanvas, titleRegion, {
+      psm: "7",
+      whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ '-",
+    }),
+  ])
+
+  logOcr("chapter_heading_regions", { numberText, titleText })
+
+  const number = parseChapterNumberToken(numberText)
+  const title = parseTitleLine(titleText)
+
+  const regional = buildChapterHeadingMetadata({ number, title })
+  if (regional?.number || regional?.title) {
+    return regional
+  }
+
+  const bannerRegion = { left: 0.04, top: 0, width: 0.92, height: 0.58 }
   const bannerText = await recognizeRegion(scaledCanvas, bannerRegion, {
     psm: "6",
-    minLength: 2,
   })
 
-  logOcr("chapter_heading_banner", { bannerText })
+  logOcr("chapter_heading_banner_fallback", { bannerText })
 
   return parseChapterHeadingBannerText(bannerText)
 }
@@ -309,7 +424,6 @@ async function ocrFullPageSection(imageBuffer) {
 
   const combined = await recognizeRegion(scaledCanvas, bodyRegion, {
     psm: "6",
-    minLength: 4,
   })
 
   logOcr("full_page_body", { combined })
@@ -372,4 +486,9 @@ async function ocrIllustrationMetadata(imageBuffer, imageRole) {
   return null
 }
 
-export { ocrIllustrationMetadata, parseChapterNumberToken, parsePartLabel }
+export {
+  ocrIllustrationMetadata,
+  parseChapterNumberToken,
+  parsePartLabel,
+  isPlausibleTitle,
+}

@@ -14,6 +14,23 @@ import "./Library.css"
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 const PARSE_STATUS_POLL_MS = 5000
 
+async function fetchWithRetry(url, options, retries = 3) {
+  let lastError = null
+
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    try {
+      return await fetch(url, options)
+    } catch (error) {
+      lastError = error
+      if (attempt < retries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)))
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Failed to fetch")
+}
+
 function formatUploadDate(dateString) {
   const date = new Date(dateString)
   return date
@@ -245,16 +262,26 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
     try {
       const token = await getToken()
       if (!token) throw new Error("Unauthorized")
-      const response = await fetch(`${API_URL}/documents/${document.id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      const data = await response.json()
 
-      if (!response.ok || !data.success) {
-        throw new Error("Delete failed")
+      const response = await fetchWithRetry(
+        `${API_URL}/documents/${encodeURIComponent(document.id)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      let data = null
+      try {
+        data = await response.json()
+      } catch {
+        throw new Error("Unexpected server response")
+      }
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error ?? "Delete failed")
       }
 
       onDelete(document.id)
@@ -435,7 +462,9 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
               <>
                 <p className="library-card__confirm-text">Are you sure?</p>
                 {deleteError && (
-                  <p className="library-card__delete-error">Delete failed. Try again.</p>
+                  <p className="library-card__delete-error">
+                    Delete failed. The server may be waking up — wait a moment and try again.
+                  </p>
                 )}
                 <div className="library-card__confirm-actions">
                   <button

@@ -3,6 +3,12 @@
  * Uses PDF layout metrics plus nearby extracted text to classify illustration blocks.
  */
 
+import { isPlausibleTitle } from "./imageOcrService.js"
+import {
+  lookupPrintedTocNumberLabel,
+  lookupPrintedTocTitle,
+} from "./printedTocService.js"
+
 const SAFE_FALLBACK = Object.freeze({
   isChapterBoundary: false,
   boundaryKind: null,
@@ -297,18 +303,24 @@ function analyzeFullPageSectionDivider(ocrMetadata) {
 }
 
 /**
- * Merge local OCR results into heuristic analysis (OCR wins for labels).
+ * Merge local OCR + printed TOC into heuristic analysis.
+ * Printed TOC titles win when available; OCR titles must pass plausibility checks.
  */
-function mergeOcrIntoAnalysis(analysisResult, ocrMetadata, imageRole) {
-  if (!ocrMetadata) {
-    return analysisResult
-  }
-
-  if (imageRole === "full_page_illustration") {
+function mergeOcrIntoAnalysis(
+  analysisResult,
+  ocrMetadata,
+  imageRole,
+  { printedToc = null, chapterSequence = 1, interludeSequence = 1 } = {}
+) {
+  if (imageRole === "full_page_illustration" && ocrMetadata) {
     const section = analyzeFullPageSectionDivider(ocrMetadata)
     if (section.isChapterBoundary) {
       return section
     }
+  }
+
+  if (!ocrMetadata && !analysisResult?.isChapterBoundary) {
+    return analysisResult
   }
 
   if (!analysisResult?.isChapterBoundary && imageRole !== "chapter_heading") {
@@ -316,20 +328,46 @@ function mergeOcrIntoAnalysis(analysisResult, ocrMetadata, imageRole) {
   }
 
   const boundaryKind =
-    ocrMetadata.boundaryKind ??
+    ocrMetadata?.boundaryKind ??
     analysisResult.boundaryKind ??
     (imageRole === "chapter_heading" ? "chapter" : null)
 
-  const ocrTitle = parseTitleFromOcr(ocrMetadata?.title)
-  const mergedTitle = ocrTitle ?? (imageRole === "chapter_heading" ? null : analysisResult.title)
-  const mergedNumber = ocrMetadata?.number ?? analysisResult.number ?? null
+  let number = ocrMetadata?.number ?? analysisResult.number ?? null
+  let title = parseTitleFromOcr(ocrMetadata?.title) ?? analysisResult.title ?? null
+
+  const lookupSequence =
+    boundaryKind === "interlude" ? interludeSequence : chapterSequence
+
+  const tocTitle = lookupPrintedTocTitle(printedToc, {
+    number,
+    boundaryKind,
+    chapterSequence: lookupSequence,
+  })
+  const tocNumber = lookupPrintedTocNumberLabel(printedToc, {
+    number,
+    boundaryKind,
+    chapterSequence: lookupSequence,
+  })
+
+  if (tocTitle) {
+    title = tocTitle
+  }
+
+  if (tocNumber) {
+    number = tocNumber
+  }
+
+  const rawText =
+    number && title
+      ? `${number}: ${title}`
+      : number ?? title ?? analysisResult.rawText ?? null
 
   return {
     isChapterBoundary: true,
     boundaryKind,
-    number: mergedNumber,
-    title: mergedTitle,
-    rawText: ocrMetadata?.rawText ?? analysisResult.rawText ?? null,
+    number,
+    title,
+    rawText,
   }
 }
 
@@ -339,12 +377,7 @@ function parseTitleFromOcr(title) {
   }
 
   const trimmed = String(title).trim()
-  if (trimmed.length < 4) {
-    return null
-  }
-
-  const letters = trimmed.replace(/[^A-Za-z]/g, "")
-  if (letters.length < trimmed.length * 0.5) {
+  if (!isPlausibleTitle(trimmed)) {
     return null
   }
 
@@ -427,7 +460,9 @@ function analyzeChapterGraphicFromContext({
   blocks,
   blockIndex,
   chapterSequence = 1,
+  interludeSequence = 1,
   ocrMetadata = null,
+  printedToc = null,
 }) {
   if (!imageBlock || imageBlock.type !== "image_candidate") {
     return { ...SAFE_FALLBACK }
@@ -458,7 +493,11 @@ function analyzeChapterGraphicFromContext({
     })
   }
 
-  return mergeOcrIntoAnalysis(analysisResult, ocrMetadata, imageBlock.imageRole)
+  return mergeOcrIntoAnalysis(analysisResult, ocrMetadata, imageBlock.imageRole, {
+    printedToc,
+    chapterSequence,
+    interludeSequence,
+  })
 }
 
 /**

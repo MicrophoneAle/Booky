@@ -11,8 +11,9 @@ import { getDocument, OPS, ImageKind } from "pdfjs-dist/legacy/build/pdf.mjs"
 import { createCanvas } from "@napi-rs/canvas/node-canvas.js"
 import { analyzeChapterGraphicFromContext } from "./chapterGraphicService.js"
 import { ocrIllustrationMetadata } from "./imageOcrService.js"
+import { extractPrintedTocLookup } from "./printedTocService.js"
 
-const PARSER_VERSION = 49
+const PARSER_VERSION = 50
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -230,9 +231,70 @@ app.get("/documents", requireAuth, async (req, res) => {
   }
 })
 
+async function listStorageObjectPaths(bucket, folderPath) {
+  const paths = []
+  const queue = [folderPath.replace(/\/$/, "")]
+
+  while (queue.length > 0) {
+    const currentPath = queue.shift()
+    const { data, error } = await supabase.storage.from(bucket).list(currentPath, {
+      limit: 1000,
+    })
+
+    if (error || !Array.isArray(data)) {
+      continue
+    }
+
+    for (const entry of data) {
+      const entryPath = currentPath ? `${currentPath}/${entry.name}` : entry.name
+      if (entry.metadata == null) {
+        queue.push(entryPath)
+      } else {
+        paths.push(entryPath)
+      }
+    }
+  }
+
+  return paths
+}
+
+async function removeStoragePaths(bucket, paths) {
+  if (!Array.isArray(paths) || paths.length === 0) {
+    return
+  }
+
+  const chunkSize = 100
+  for (let index = 0; index < paths.length; index += chunkSize) {
+    const chunk = paths.slice(index, index + chunkSize)
+    const { error } = await supabase.storage.from(bucket).remove(chunk)
+    if (error) {
+      console.warn(`[deleteDocument] Failed to remove ${chunk.length} objects from ${bucket}:`, error.message)
+    }
+  }
+}
+
+async function deleteBookIllustrationAssets(documentId) {
+  const assetPrefix = `books/${documentId}`
+  const buckets = new Set([BOOK_ASSETS_BUCKET, BOOK_ASSETS_FALLBACK_BUCKET])
+
+  for (const bucket of buckets) {
+    const paths = await listStorageObjectPaths(bucket, assetPrefix)
+    await removeStoragePaths(bucket, paths)
+
+    const nestedPrefix = `${BOOK_ASSETS_BUCKET}/${assetPrefix}`
+    if (bucket === BOOK_ASSETS_FALLBACK_BUCKET) {
+      const nestedPaths = await listStorageObjectPaths(bucket, nestedPrefix)
+      await removeStoragePaths(bucket, nestedPaths)
+    }
+  }
+}
+
 app.delete("/documents/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params
+
+    backgroundParseInFlight.delete(id)
+    clearDocumentParseProgress(id)
 
     const { data: document, error: fetchError } = await supabase
       .from("documents")
@@ -242,7 +304,7 @@ app.delete("/documents/:id", requireAuth, async (req, res) => {
       .single()
 
     if (fetchError || !document) {
-      res.status(500).json({ success: false, error: "Delete failed" })
+      res.status(404).json({ success: false, error: "Document not found" })
       return
     }
 
@@ -252,9 +314,17 @@ app.delete("/documents/:id", requireAuth, async (req, res) => {
         .remove([document.storage_path])
 
       if (storageError) {
-        res.status(500).json({ success: false, error: "Delete failed" })
-        return
+        console.warn(`[deleteDocument] PDF remove failed for ${id}:`, storageError.message)
       }
+    }
+
+    try {
+      await deleteBookIllustrationAssets(id)
+    } catch (error) {
+      console.warn(
+        `[deleteDocument] Illustration cleanup failed for ${id}:`,
+        error instanceof Error ? error.message : String(error)
+      )
     }
 
     const { error: deleteError } = await supabase
@@ -269,7 +339,11 @@ app.delete("/documents/:id", requireAuth, async (req, res) => {
     }
 
     res.json({ success: true })
-  } catch {
+  } catch (error) {
+    console.error(
+      `[deleteDocument] ${req.params.id}:`,
+      error instanceof Error ? error.message : String(error)
+    )
     res.status(500).json({ success: false, error: "Delete failed" })
   }
 })
@@ -3367,7 +3441,7 @@ function countSamePageTextCharsForImage(blocks, imageBlock) {
   return total
 }
 
-async function finalizeIllustrationBlocks(blocks, { onProgress } = {}) {
+async function finalizeIllustrationBlocks(blocks, { onProgress, printedToc = null } = {}) {
   if (!Array.isArray(blocks) || blocks.length === 0) {
     return blocks
   }
@@ -3393,6 +3467,7 @@ async function finalizeIllustrationBlocks(blocks, { onProgress } = {}) {
   })
 
   let chapterSequence = 0
+  let interludeSequence = 0
   let ocrCompleted = 0
 
   const finalizedByIndex = new Map()
@@ -3423,11 +3498,15 @@ async function finalizeIllustrationBlocks(blocks, { onProgress } = {}) {
       blocks,
       blockIndex: index,
       chapterSequence: chapterSequence + 1,
+      interludeSequence: interludeSequence + 1,
       ocrMetadata,
+      printedToc,
     })
 
     if (analysisResult.isChapterBoundary && analysisResult.boundaryKind === "chapter") {
       chapterSequence += 1
+    } else if (analysisResult.isChapterBoundary && analysisResult.boundaryKind === "interlude") {
+      interludeSequence += 1
     }
 
     finalizedByIndex.set(index, finalizeVisionImageBlock(block, analysisResult))
@@ -5436,6 +5515,7 @@ async function parsePdfBuffer(
   }
 
   blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle)
+  const printedToc = extractPrintedTocLookup(blocks)
   blocks = excludePrintedTocBlocks(blocks)
 
   blocks = interleaveImageCandidateBlocks(blocks, pageImageCandidates, pageData)
@@ -5452,7 +5532,10 @@ async function parsePdfBuffer(
     percent: PARSE_PROGRESS_CLASSIFY_PERCENT,
   })
 
-  blocks = await finalizeIllustrationBlocks(blocks, { onProgress: reportProgress })
+  blocks = await finalizeIllustrationBlocks(blocks, {
+    onProgress: reportProgress,
+    printedToc,
+  })
 
   const imageBlockCount = blocks.filter((block) => block?.type === "image").length
   if (documentId && imageBlockCount > 0) {
@@ -5782,6 +5865,18 @@ export {
 const isServerEntryPoint =
   process.argv[1] &&
   path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1])
+
+app.use((error, req, res, _next) => {
+  applyCorsHeaders(req, res)
+  console.error(
+    `[server] ${req.method} ${req.path}:`,
+    error instanceof Error ? error.message : String(error)
+  )
+
+  if (!res.headersSent) {
+    res.status(500).json({ success: false, error: "Internal server error" })
+  }
+})
 
 if (isServerEntryPoint) {
   const PORT = process.env.PORT || 3000
