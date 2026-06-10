@@ -6,9 +6,16 @@ import express from "express"
 import multer from "multer"
 import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs"
+import crypto from "node:crypto"
+import { getDocument, OPS } from "pdfjs-dist/legacy/build/pdf.mjs"
 
-const PARSER_VERSION = 41
+const PARSER_VERSION = 42
+
+const PDF_IMAGE_PAINT_OPS = new Set(
+  [OPS.paintImageXObject, OPS.paintInlineImageXObject].filter((op) => op != null)
+)
+const PDF_IMAGE_RESOLVE_TIMEOUT_MS = 8000
+const PDF_IMAGE_MIN_DIMENSION_PX = 8
 
 const PUA_FALLBACK_MAP = {
   "\uE002": "Th",
@@ -2770,6 +2777,300 @@ function annotateLinesCentered(lines) {
   }
 }
 
+function multiplyPdfTransform(left, right) {
+  return [
+    left[0] * right[0] + left[2] * right[1],
+    left[1] * right[0] + left[3] * right[1],
+    left[0] * right[2] + left[2] * right[3],
+    left[1] * right[2] + left[3] * right[3],
+    left[0] * right[4] + left[2] * right[5] + left[4],
+    left[1] * right[4] + left[3] * right[5] + left[5],
+  ]
+}
+
+function imageMetricsFromTransform(transform, pageWidth, pageHeight) {
+  const width = Math.hypot(transform[0], transform[1])
+  const height = Math.hypot(transform[2], transform[3])
+  const x = transform[4]
+  const y = transform[5]
+
+  return {
+    x,
+    y,
+    width,
+    height,
+    pageWidth,
+    pageHeight,
+  }
+}
+
+function isChapterHeaderCandidate(metrics) {
+  const { y, width, pageHeight, pageWidth } = metrics ?? {}
+  if (!pageHeight || !pageWidth || !width) {
+    return false
+  }
+
+  const printableWidth = pageWidth
+  const isInUpperPortion = y >= pageHeight * 0.6
+  const spansHalfPage = width > printableWidth * 0.5
+
+  return isInUpperPortion && spansHalfPage
+}
+
+function generateImageCandidateId(pageNumber, streamIndex) {
+  return `img-p${pageNumber}-s${streamIndex}-${crypto.randomUUID().slice(0, 8)}`
+}
+
+async function resolvePdfImageObject(page, imageRefId) {
+  if (!imageRefId) {
+    return null
+  }
+
+  return Promise.race([
+    page.objs.get(imageRefId),
+    new Promise((_, reject) => {
+      setTimeout(
+        () => reject(new Error("Image resolve timed out")),
+        PDF_IMAGE_RESOLVE_TIMEOUT_MS
+      )
+    }),
+  ])
+}
+
+function pdfImageDataToBase64(imageObject) {
+  if (!imageObject?.data) {
+    return null
+  }
+
+  const data = imageObject.data
+  const buffer = Buffer.from(
+    data.buffer ?? data,
+    data.byteOffset ?? 0,
+    data.byteLength ?? data.length
+  )
+
+  return buffer.length > 0 ? buffer.toString("base64") : null
+}
+
+async function extractPdfPageImageCandidates(page, pageNumber) {
+  const viewport = page.getViewport({ scale: 1 })
+  const pageWidth = viewport.width
+  const pageHeight = viewport.height
+  const operatorList = await page.getOperatorList()
+  const candidates = []
+
+  let transform = [1, 0, 0, 1, 0, 0]
+  const transformStack = []
+  let streamIndex = 0
+
+  for (let opIndex = 0; opIndex < operatorList.fnArray.length; opIndex += 1) {
+    const op = operatorList.fnArray[opIndex]
+    const args = operatorList.argsArray[opIndex]
+    streamIndex += 1
+
+    if (op === OPS.save) {
+      transformStack.push([...transform])
+      continue
+    }
+
+    if (op === OPS.restore) {
+      transform = transformStack.pop() ?? [1, 0, 0, 1, 0, 0]
+      continue
+    }
+
+    if (op === OPS.transform) {
+      transform = multiplyPdfTransform(transform, args)
+      continue
+    }
+
+    if (!PDF_IMAGE_PAINT_OPS.has(op)) {
+      continue
+    }
+
+    const metrics = imageMetricsFromTransform(transform, pageWidth, pageHeight)
+    if (
+      metrics.width < PDF_IMAGE_MIN_DIMENSION_PX ||
+      metrics.height < PDF_IMAGE_MIN_DIMENSION_PX
+    ) {
+      continue
+    }
+
+    let buffer = null
+
+    try {
+      if (op === OPS.paintInlineImageXObject) {
+        buffer = pdfImageDataToBase64(args?.[0])
+      } else {
+        const imageObject = await resolvePdfImageObject(page, args?.[0])
+        buffer = pdfImageDataToBase64(imageObject)
+      }
+    } catch {
+      buffer = null
+    }
+
+    candidates.push({
+      type: "image_candidate",
+      id: generateImageCandidateId(pageNumber, streamIndex),
+      pageNumber,
+      streamIndex,
+      coordinates: {
+        x: metrics.x,
+        y: metrics.y,
+        width: metrics.width,
+        height: metrics.height,
+      },
+      isCandidate: isChapterHeaderCandidate(metrics),
+      buffer,
+    })
+  }
+
+  return candidates
+}
+
+async function extractPdfPageImages(pdf, pageNumber) {
+  const page = await pdf.getPage(pageNumber)
+
+  try {
+    return await extractPdfPageImageCandidates(page, pageNumber)
+  } finally {
+    if (typeof page.cleanup === "function") {
+      page.cleanup()
+    }
+  }
+}
+
+function normalizeBlockTextForPageMatch(text) {
+  return (text ?? "").replace(/\s+/g, " ").trim().toLowerCase()
+}
+
+function buildPageLineQueue(pageData) {
+  const queue = []
+
+  for (let pageIndex = 0; pageIndex < pageData.length; pageIndex += 1) {
+    for (const line of pageData[pageIndex]?.lines ?? []) {
+      const text = (line.text ?? "").trim()
+      if (!text) {
+        continue
+      }
+
+      queue.push({
+        pageIndex,
+        y: line.y ?? 0,
+        text,
+      })
+    }
+  }
+
+  return queue
+}
+
+function mapTextBlocksToPagePositions(blocks, pageData) {
+  const lineQueue = buildPageLineQueue(pageData)
+  let queueIndex = 0
+
+  return blocks.map((block, blockIndex) => {
+    if (block.type === "image_candidate") {
+      return {
+        block,
+        blockIndex,
+        pageIndex: block.pageNumber - 1,
+        y: block.coordinates?.y ?? 0,
+        streamIndex: block.streamIndex ?? blockIndex,
+      }
+    }
+
+    const target = normalizeBlockTextForPageMatch(block.text)
+    if (!target) {
+      const fallbackPage = lineQueue[queueIndex]?.pageIndex ?? 0
+      return {
+        block,
+        blockIndex,
+        pageIndex: fallbackPage,
+        y: lineQueue[queueIndex]?.y ?? 0,
+        streamIndex: blockIndex * 1000,
+      }
+    }
+
+    const startIndex = queueIndex
+    let consumed = ""
+
+    while (queueIndex < lineQueue.length) {
+      consumed += normalizeBlockTextForPageMatch(lineQueue[queueIndex].text)
+      queueIndex += 1
+
+      if (
+        consumed.startsWith(target.slice(0, Math.min(48, target.length))) ||
+        target.startsWith(consumed.slice(0, Math.min(48, consumed.length)))
+      ) {
+        if (consumed.length >= target.length || queueIndex - startIndex >= 12) {
+          break
+        }
+      }
+
+      if (queueIndex - startIndex >= 24) {
+        break
+      }
+    }
+
+    const anchor = lineQueue[startIndex] ?? lineQueue[lineQueue.length - 1]
+
+    return {
+      block,
+      blockIndex,
+      pageIndex: anchor?.pageIndex ?? 0,
+      y: anchor?.y ?? 0,
+      streamIndex: blockIndex * 1000,
+    }
+  })
+}
+
+function interleaveImageCandidateBlocks(textBlocks, pageImageCandidates, pageData) {
+  const flatImages = (pageImageCandidates ?? []).flat()
+  if (flatImages.length === 0) {
+    return textBlocks
+  }
+
+  const positionedTextBlocks = mapTextBlocksToPagePositions(textBlocks, pageData)
+  const timeline = [
+    ...positionedTextBlocks.map((entry) => ({
+      kind: "text",
+      pageIndex: entry.pageIndex,
+      y: entry.y,
+      streamIndex: entry.streamIndex,
+      block: entry.block,
+    })),
+    ...flatImages.map((imageBlock) => ({
+      kind: "image",
+      pageIndex: imageBlock.pageNumber - 1,
+      y: imageBlock.coordinates?.y ?? 0,
+      streamIndex: imageBlock.streamIndex ?? 0,
+      block: imageBlock,
+    })),
+  ]
+
+  timeline.sort((left, right) => {
+    if (left.pageIndex !== right.pageIndex) {
+      return left.pageIndex - right.pageIndex
+    }
+
+    if (left.y !== right.y) {
+      return right.y - left.y
+    }
+
+    if (left.streamIndex !== right.streamIndex) {
+      return left.streamIndex - right.streamIndex
+    }
+
+    if (left.kind !== right.kind) {
+      return left.kind === "image" ? -1 : 1
+    }
+
+    return 0
+  })
+
+  return timeline.map((entry) => entry.block)
+}
+
 async function readPdfInfo(pdf) {
   try {
     const metadata = await pdf.getMetadata()
@@ -2850,6 +3151,7 @@ async function extractPdfStructure(buffer, { onPageProcessed, puaReplacementMap 
   const totalPages = pdf.numPages
 
   const pagesBeforeFilter = new Array(totalPages)
+  const pageImageCandidates = new Array(totalPages)
 
   try {
     for (
@@ -2867,15 +3169,17 @@ async function extractPdfStructure(buffer, { onPageProcessed, puaReplacementMap 
         batchPageNumbers.push(pageNumber)
       }
 
-      const batchLines = await Promise.all(
-        batchPageNumbers.map((pageNumber) =>
-          extractPdfPageLines(pdf, pageNumber, headingStrings)
-        )
+      const batchResults = await Promise.all(
+        batchPageNumbers.map(async (pageNumber) => ({
+          lines: await extractPdfPageLines(pdf, pageNumber, headingStrings),
+          images: await extractPdfPageImages(pdf, pageNumber),
+        }))
       )
 
       for (let index = 0; index < batchPageNumbers.length; index += 1) {
         const pageNumber = batchPageNumbers[index]
-        pagesBeforeFilter[pageNumber - 1] = { lines: batchLines[index] }
+        pagesBeforeFilter[pageNumber - 1] = { lines: batchResults[index].lines }
+        pageImageCandidates[pageNumber - 1] = batchResults[index].images
 
         if (onPageProcessed) {
           onPageProcessed(pageNumber, totalPages)
@@ -2975,6 +3279,7 @@ async function extractPdfStructure(buffer, { onPageProcessed, puaReplacementMap 
     headingStrings,
     numPages: pdf.numPages,
     pdfInfo,
+    pageImageCandidates,
   }
 }
 
@@ -4175,6 +4480,9 @@ function countWordsFromContent(content) {
 
   for (const page of content) {
     for (const block of page.blocks ?? []) {
+      if (block?.type === "image_candidate") {
+        continue
+      }
       total += countWordsInPlainText(block.text)
     }
   }
@@ -4187,7 +4495,12 @@ function countWordsFromBlocks(blocks) {
     return 0
   }
 
-  return blocks.reduce((total, block) => total + countWordsInPlainText(block.text), 0)
+  return blocks.reduce((total, block) => {
+    if (block?.type === "image_candidate") {
+      return total
+    }
+    return total + countWordsInPlainText(block.text)
+  }, 0)
 }
 
 async function resolveWordCountForDocument(documentRow, userId) {
@@ -4396,7 +4709,7 @@ async function parsePdfBuffer(
 
   const puaReplacementMap = buildDefaultPuaReplacementMap(buffer)
 
-  const { pageData, headingStrings, numPages, pdfInfo } =
+  const { pageData, headingStrings, numPages, pdfInfo, pageImageCandidates } =
     await extractPdfStructure(buffer, {
       puaReplacementMap,
       onPageProcessed(pageNumber, totalPages) {
@@ -4479,6 +4792,8 @@ async function parsePdfBuffer(
   blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle)
   blocks = excludePrintedTocBlocks(blocks)
 
+  blocks = interleaveImageCandidateBlocks(blocks, pageImageCandidates, pageData)
+
   const content = blocksToContent(blocks)
 
   const { chapters, content: contentWithChapters } = detectChapters(content, bookTitle)
@@ -4497,6 +4812,8 @@ async function parsePdfBuffer(
     contentWithChapters,
     wordCount,
     bookTitle,
+    pageImageCandidates,
+    imageCandidateCount: (pageImageCandidates ?? []).flat().length,
   }
 }
 
@@ -4760,6 +5077,8 @@ export {
   parsePdfBuffer,
   extractLinesByPosition,
   normalizeExtractedText,
+  isChapterHeaderCandidate,
+  interleaveImageCandidateBlocks,
   PARSER_VERSION,
 }
 
