@@ -13,6 +13,9 @@ import { useNavigate } from "react-router-dom"
 import {
   buildChapterPageMap,
   buildFrontMatterPack,
+  buildImageChapterPageMap,
+  extractImageChapterTocEntries,
+  formatImageChapterTocTitle,
   formatTocChapterTitle,
   flattenDocument,
   groupFrontMatterPlacementUnits,
@@ -1511,9 +1514,12 @@ function readMobileFullscreenCache(bookDocument, paginationSettings) {
 }
 
 function buildLayoutBundle(pages, chapters) {
+  const textChapterMap = buildChapterPageMap(pages, chapters ?? [])
+  const imageChapterMap = buildImageChapterPageMap(pages)
+
   return {
     pages,
-    chapterMap: buildChapterPageMap(pages, chapters ?? []),
+    chapterMap: { ...textChapterMap, ...imageChapterMap },
     pageTextMap: buildPageTextMap(pages),
   }
 }
@@ -1634,6 +1640,19 @@ function groupBlocksForDisplay(blocks) {
 
   for (let index = 0; index < expandedBlocks.length; index += 1) {
     const block = expandedBlocks[index]
+
+    if (block.type === "image") {
+      visualItems.push({
+        type: "image",
+        id: block.id ?? null,
+        src: block.src ?? null,
+        isChapterBoundary: Boolean(block.isChapterBoundary),
+        chapterMetadata: block.chapterMetadata ?? null,
+        coordinates: block.coordinates ?? null,
+      })
+      continue
+    }
+
     const text = (block.text ?? "").trim()
 
     if (!text) {
@@ -1771,6 +1790,19 @@ function appendGroupedListNodes(parentEl, nodes) {
   }
 }
 
+function estimateImageDisplayHeight(item) {
+  const width = item?.coordinates?.width
+  const height = item?.coordinates?.height
+
+  if (width > 0 && height > 0) {
+    const contentWidth = PAGE_WIDTH_PX - 72
+    const scale = contentWidth / width
+    return Math.min(420, Math.max(120, Math.round(height * scale)))
+  }
+
+  return 220
+}
+
 function appendVisualItem(body, item, previousItem = null) {
   if (item.type === "title") {
     const title = document.createElement("h1")
@@ -1814,6 +1846,16 @@ function appendVisualItem(body, item, previousItem = null) {
 
   if (item.type === "list") {
     appendGroupedListNodes(body, item.items)
+    return
+  }
+
+  if (item.type === "image") {
+    const illustration = document.createElement("div")
+    illustration.className = "book-page__illustration"
+    illustration.dataset.blockId = item.id ?? ""
+    illustration.style.height = `${estimateImageDisplayHeight(item)}px`
+    illustration.style.width = "100%"
+    body.appendChild(illustration)
     return
   }
 
@@ -2029,6 +2071,10 @@ function isHeadingPlaceable(placeable) {
 }
 
 function isChapterBoundaryPlaceable(placeable) {
+  if (placeable.type === "image") {
+    return Boolean(placeable.item?.isChapterBoundary)
+  }
+
   return (
     placeable.type === "chapter" || Boolean(placeable.item?.isChapterStart)
   )
@@ -2168,6 +2214,11 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout, incrementalOpts = n
   let placeableIndex = resume?.placeableIndex ?? 0
 
   const updateCurrentActiveChapter = (item) => {
+    if (item.type === "image" && item.isChapterBoundary) {
+      currentActiveChapter = formatImageChapterTocTitle(item.chapterMetadata)
+      return
+    }
+
     if (!isHeadingVisualItem(item)) {
       return
     }
@@ -2190,6 +2241,14 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout, incrementalOpts = n
     }
 
     for (const pageItem of pageItems) {
+      if (pageItem.type === "image" && pageItem.isChapterBoundary) {
+        const title = formatImageChapterTocTitle(pageItem.chapterMetadata)
+        if (title && !chaptersOnPage.includes(title)) {
+          chaptersOnPage.push(title)
+        }
+        continue
+      }
+
       if (
         isHeadingVisualItem(pageItem) &&
         (isChapterBoundaryItem(pageItem) || pageItem.type === "title")
@@ -2813,6 +2872,26 @@ function BookPageContent({
             )
           }
 
+          if (item.type === "image") {
+            return (
+              <div
+                key={item.id ?? index}
+                className="book-page__illustration"
+                data-block-id={item.id ?? ""}
+                style={{ height: `${estimateImageDisplayHeight(item)}px` }}
+              >
+                {item.src ? (
+                  <img
+                    className="book-page__illustration-image"
+                    src={item.src}
+                    alt=""
+                    loading="lazy"
+                  />
+                ) : null}
+              </div>
+            )
+          }
+
           const previousItem = index > 0 ? visualItems[index - 1] : null
           const sentenceForItem =
             highlightResumeSentence?.itemIndex === index
@@ -3347,10 +3426,12 @@ export default function BookViewer({
       } = {}
     ) => {
       const totalMeasuredPages = measuredPages.length
-      const chapterMap = buildChapterPageMap(
+      const textChapterMap = buildChapterPageMap(
         measuredPages,
         bookDocument?.chapters ?? []
       )
+      const imageChapterMap = buildImageChapterPageMap(measuredPages)
+      const chapterMap = { ...textChapterMap, ...imageChapterMap }
 
       setPages(measuredPages)
       setChapterPageMap(chapterMap)
@@ -4150,6 +4231,29 @@ export default function BookViewer({
     }
     return active
   }, [currentPage, chapterPageMap])
+
+  const tocEntries = useMemo(() => {
+    const textEntries = (bookDocument?.chapters ?? []).map((chapter) => ({
+      id: chapter.id,
+      title: formatTocChapterTitle(chapter.title),
+      pageNum: chapterPageMap[chapter.id] ?? null,
+    }))
+
+    const imageEntries = extractImageChapterTocEntries(bookDocument).map((entry) => ({
+      id: entry.id,
+      title: formatTocChapterTitle(formatImageChapterTocTitle(entry.chapterMetadata)),
+      pageNum: chapterPageMap[entry.id] ?? null,
+    }))
+
+    return [...textEntries, ...imageEntries].sort((left, right) => {
+      const leftPage = left.pageNum ?? Number.MAX_SAFE_INTEGER
+      const rightPage = right.pageNum ?? Number.MAX_SAFE_INTEGER
+      if (leftPage !== rightPage) {
+        return leftPage - rightPage
+      }
+      return 0
+    })
+  }, [bookDocument, chapterPageMap])
 
   useEffect(() => {
     const recomputeScale = () => {
@@ -5460,14 +5564,14 @@ export default function BookViewer({
           </button>
         </div>
 
-        {bookDocument?.chapters?.length > 0 ? (
+        {tocEntries.length > 0 ? (
           <nav className="book-viewer__toc-list">
-            {bookDocument.chapters.map((chapter) => {
-              const pageNum = chapterPageMap[chapter.id]
-              const isCurrent = chapter.id === activeChapterId
+            {tocEntries.map((entry) => {
+              const pageNum = entry.pageNum
+              const isCurrent = entry.id === activeChapterId
               return (
                 <button
-                  key={chapter.id}
+                  key={entry.id}
                   type="button"
                   className={`book-viewer__toc-item ${
                     isCurrent ? "book-viewer__toc-item--active" : ""
@@ -5479,9 +5583,7 @@ export default function BookViewer({
                     setTocOpen(false)
                   }}
                 >
-                  <span className="book-viewer__toc-title">
-                    {formatTocChapterTitle(chapter.title)}
-                  </span>
+                  <span className="book-viewer__toc-title">{entry.title}</span>
                   {pageNum && (
                     <span className="book-viewer__toc-page">p. {pageNum}</span>
                   )}

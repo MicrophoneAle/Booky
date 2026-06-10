@@ -108,6 +108,64 @@ export function formatTocChapterTitle(title) {
     .replace(/(\d{1,3})\s*-\s*/g, "$1\u00a0-\u00a0")
 }
 
+export function formatImageChapterTocTitle(chapterMetadata) {
+  const number = (chapterMetadata?.number ?? "").trim()
+  const title = (chapterMetadata?.title ?? "").trim()
+  const rawText = (chapterMetadata?.rawText ?? "").trim()
+
+  if (number && title) {
+    const numberLower = number.toLowerCase()
+    const titleLower = title.toLowerCase()
+    if (numberLower.includes(titleLower) || titleLower.includes(numberLower)) {
+      return number
+    }
+    return `${number}: ${title}`
+  }
+
+  if (title) {
+    return title
+  }
+
+  if (number) {
+    return number
+  }
+
+  return rawText || "Chapter"
+}
+
+export function extractImageChapterTocEntries(document) {
+  const entries = []
+
+  for (const page of document?.content ?? []) {
+    for (const block of page?.blocks ?? []) {
+      if (block?.type === "image" && block.isChapterBoundary === true) {
+        entries.push({
+          id: block.id,
+          chapterMetadata: block.chapterMetadata ?? {},
+        })
+      }
+    }
+  }
+
+  return entries
+}
+
+export function buildImageChapterPageMap(measuredPages) {
+  const map = {}
+
+  for (const page of measuredPages ?? []) {
+    for (const item of page.visualItems ?? []) {
+      if (item.type === "image" && item.isChapterBoundary === true && item.id) {
+        if (map[item.id] == null) {
+          map[item.id] = page.pageNumber
+        }
+      }
+    }
+  }
+
+  return map
+}
+
 export function chapterTitlesReferToSameChapter(apiTitle, candidateTitle) {
   const api = (apiTitle ?? "").trim()
   const candidate = (candidateTitle ?? "").trim()
@@ -581,6 +639,19 @@ export function flattenDocument(document) {
 
   for (const page of document?.content ?? []) {
     for (const block of page?.blocks ?? []) {
+      if (block?.type === "image") {
+        flatBlocks.push({
+          type: "image",
+          id: block.id ?? null,
+          src: block.src ?? null,
+          isChapterBoundary: Boolean(block.isChapterBoundary),
+          chapterMetadata: block.chapterMetadata ?? null,
+          coordinates: block.coordinates ?? null,
+          pageNumber: block.pageNumber ?? null,
+        })
+        continue
+      }
+
       const text = block?.text ?? ""
       const chapterId = block.chapterId ?? null
 
