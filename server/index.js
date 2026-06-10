@@ -18,6 +18,8 @@ const PDF_IMAGE_PAINT_OPS = new Set(
 const PDF_IMAGE_RESOLVE_TIMEOUT_MS = 8000
 const ILLUSTRATION_VISION_CONCURRENCY = 4
 const BOOK_ASSETS_BUCKET = "book-assets"
+const BOOK_ASSETS_FALLBACK_BUCKET = process.env.BOOK_ASSETS_FALLBACK_BUCKET ?? "pdfs"
+const BOOK_ASSET_SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 365
 const PDF_IMAGE_MIN_DIMENSION_PX = 8
 
 const PUA_FALLBACK_MAP = {
@@ -3212,6 +3214,66 @@ function stripImageBinaryFields(block) {
   return rest
 }
 
+async function resolveUploadedImageAssetUrl(bucket, storagePath) {
+  const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(storagePath)
+  const publicUrl = publicUrlData?.publicUrl
+
+  if (publicUrl && !publicUrl.endsWith("/")) {
+    return publicUrl
+  }
+
+  const { data: signedData, error: signedError } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(storagePath, BOOK_ASSET_SIGNED_URL_TTL_SECONDS)
+
+  if (signedError || !signedData?.signedUrl) {
+    throw new Error(
+      `Failed to resolve accessible URL for image asset at ${storagePath}: ${
+        signedError?.message ?? "missing signed URL"
+      }`
+    )
+  }
+
+  return signedData.signedUrl
+}
+
+async function uploadImageAssetBuffer(bookId, blockId, imageBuffer) {
+  const filePath = buildBookAssetStoragePath(bookId, blockId)
+  const uploadOptions = {
+    contentType: "image/png",
+    upsert: true,
+  }
+
+  let bucket = process.env.BOOK_ASSETS_BUCKET ?? BOOK_ASSETS_BUCKET
+  let storagePath = filePath
+
+  let uploadResult = await supabase.storage
+    .from(bucket)
+    .upload(storagePath, imageBuffer, uploadOptions)
+
+  if (
+    uploadResult.error?.message?.includes("Bucket not found") &&
+    bucket !== BOOK_ASSETS_FALLBACK_BUCKET
+  ) {
+    console.warn(
+      `[uploadBookAssets] Bucket "${bucket}" not found; falling back to "${BOOK_ASSETS_FALLBACK_BUCKET}". Create a public "${bucket}" bucket in Supabase for CDN URLs.`
+    )
+    bucket = BOOK_ASSETS_FALLBACK_BUCKET
+    storagePath = `${BOOK_ASSETS_BUCKET}/${filePath}`
+    uploadResult = await supabase.storage
+      .from(bucket)
+      .upload(storagePath, imageBuffer, uploadOptions)
+  }
+
+  if (uploadResult.error) {
+    throw new Error(
+      `Failed to upload image asset ${blockId}: ${uploadResult.error.message}`
+    )
+  }
+
+  return resolveUploadedImageAssetUrl(bucket, storagePath)
+}
+
 async function uploadBookAssets(bookId, blocks) {
   if (!bookId) {
     throw new Error("uploadBookAssets requires a bookId")
@@ -3238,46 +3300,24 @@ async function uploadBookAssets(bookId, blocks) {
     const imageBuffer = base64PayloadToImageBuffer(extractImageBase64Payload(block))
 
     if (!imageBuffer || imageBuffer.length === 0) {
-      const error = new Error(`Image block ${blockId} is missing uploadable binary data`)
-      console.error("[uploadBookAssets]", {
+      console.warn("[uploadBookAssets]", {
         bookId,
         blockId,
         index,
-        message: error.message,
+        message: "Skipping image block with no uploadable binary data",
       })
-      throw error
+      nextBlocks[index] = stripImageBinaryFields(block)
+      continue
     }
 
-    const filePath = buildBookAssetStoragePath(bookId, blockId)
-    const { error: uploadError } = await supabase.storage
-      .from(BOOK_ASSETS_BUCKET)
-      .upload(filePath, imageBuffer, {
-        contentType: "image/png",
-        upsert: true,
-      })
-
-    if (uploadError) {
+    let publicUrl
+    try {
+      publicUrl = await uploadImageAssetBuffer(bookId, blockId, imageBuffer)
+    } catch (error) {
       console.error("[uploadBookAssets]", {
         bookId,
         blockId,
-        filePath,
-        message: uploadError.message,
-      })
-      throw new Error(`Failed to upload image asset ${blockId}: ${uploadError.message}`)
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from(BOOK_ASSETS_BUCKET)
-      .getPublicUrl(filePath)
-
-    const publicUrl = publicUrlData?.publicUrl
-    if (!publicUrl) {
-      const error = new Error(`Failed to resolve public URL for image asset ${blockId}`)
-      console.error("[uploadBookAssets]", {
-        bookId,
-        blockId,
-        filePath,
-        message: error.message,
+        message: error instanceof Error ? error.message : String(error),
       })
       throw error
     }
@@ -3603,6 +3643,10 @@ function isLikelyChapterNumberLine(text, line) {
 }
 
 function isChapterHeading(block) {
+  if (block?.type === "image" || typeof block?.text !== "string") {
+    return false
+  }
+
   const text = block.text.trim()
 
   if (CHAPTER_WITH_SUBTITLE_REGEX.test(text)) {
@@ -4884,10 +4928,20 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
 
     clearDocumentParseProgress(documentId)
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
     console.error(
       `Background parse failed for document ${documentId}:`,
-      error instanceof Error ? error.message : error
+      errorMessage,
+      error instanceof Error && error.stack ? `\n${error.stack}` : ""
     )
+
+    setDocumentParseProgress(documentId, {
+      phase: "error",
+      label: errorMessage,
+      current: 0,
+      total: 0,
+      percent: 0,
+    })
 
     await supabase
       .from("documents")
