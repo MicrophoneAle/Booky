@@ -501,11 +501,11 @@
 
   .home-main {
     justify-content: flex-start;
-    padding-top: 0.75rem;
+    padding-top: 1.25rem;
     padding-bottom: 2rem;
   }
 
   .home-hero {
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
   }
 }
