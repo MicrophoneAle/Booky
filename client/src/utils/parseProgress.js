@@ -14,8 +14,8 @@ const PHASE_HEADLINES = {
   starting: "Opening your PDF…",
   extracting: "Reading PDF pages…",
   structuring: "Building book structure…",
-  classifying_illustrations: "Analyzing illustrations…",
-  ocr_illustrations: "Reading chapter headers…",
+  classifying_illustrations: "Processing chapter headers…",
+  ocr_illustrations: "Reading section dividers…",
   uploading_assets: "Uploading illustrations…",
   finalizing: "Detecting chapters…",
   saving: "Saving to your library…",
@@ -31,6 +31,144 @@ function phaseRank(phase) {
   return index >= 0 ? index + 1 : -1
 }
 
+function progressPhaseRank(phase) {
+  return phaseRank(phase)
+}
+
+function emptyCounters() {
+  return {
+    pages: { current: 0, total: 0 },
+    illustrations: { current: 0, total: 0 },
+    ocr: { current: 0, total: 0 },
+    uploads: { current: 0, total: 0 },
+  }
+}
+
+function bumpCounter(counter, current, total) {
+  const next = { ...(counter ?? { current: 0, total: 0 }) }
+  if (typeof current === "number") {
+    next.current = Math.max(next.current ?? 0, current)
+  }
+  if (typeof total === "number" && total > 0) {
+    next.total = total
+  }
+  return next
+}
+
+function legacyCountersFromProgress(raw) {
+  const counters = emptyCounters()
+
+  if (typeof raw.pageCurrent === "number" || typeof raw.pageTotal === "number") {
+    counters.pages = bumpCounter(counters.pages, raw.pageCurrent, raw.pageTotal)
+  } else if (raw.phase === "extracting") {
+    counters.pages = bumpCounter(counters.pages, raw.current, raw.total)
+  }
+
+  if (typeof raw.illustrationCurrent === "number" || raw.illustrationTotal > 0) {
+    counters.illustrations = bumpCounter(
+      counters.illustrations,
+      raw.illustrationCurrent,
+      raw.illustrationTotal
+    )
+  } else if (raw.phase === "classifying_illustrations") {
+    if (raw.total > 0 && (raw.current ?? 0) <= raw.total) {
+      counters.illustrations = bumpCounter(counters.illustrations, raw.current, raw.total)
+    }
+  }
+
+  if (typeof raw.ocrCurrent === "number" || raw.ocrTotal > 0) {
+    counters.ocr = bumpCounter(counters.ocr, raw.ocrCurrent, raw.ocrTotal)
+  } else if (raw.phase === "ocr_illustrations") {
+    counters.ocr = bumpCounter(counters.ocr, raw.current, raw.total)
+  }
+
+  if (typeof raw.uploadCurrent === "number" || raw.uploadTotal > 0) {
+    counters.uploads = bumpCounter(counters.uploads, raw.uploadCurrent, raw.uploadTotal)
+  } else if (raw.phase === "uploading_assets") {
+    counters.uploads = bumpCounter(counters.uploads, raw.current, raw.total)
+  }
+
+  return counters
+}
+
+function resolveCounters(raw) {
+  if (!raw) {
+    return emptyCounters()
+  }
+
+  if (raw.counters) {
+    return {
+      pages: { ...emptyCounters().pages, ...raw.counters.pages },
+      illustrations: { ...emptyCounters().illustrations, ...raw.counters.illustrations },
+      ocr: { ...emptyCounters().ocr, ...raw.counters.ocr },
+      uploads: { ...emptyCounters().uploads, ...raw.counters.uploads },
+    }
+  }
+
+  return legacyCountersFromProgress(raw)
+}
+
+function activeCountersForPhase(phase, counters) {
+  if (phase === "extracting") {
+    return counters.pages
+  }
+  if (phase === "classifying_illustrations") {
+    return counters.illustrations
+  }
+  if (phase === "ocr_illustrations") {
+    return counters.ocr
+  }
+  if (phase === "uploading_assets") {
+    return counters.uploads
+  }
+  return { current: 0, total: 0 }
+}
+
+function mergeCounterSnapshot(previous, update) {
+  const prevCounters = resolveCounters(previous)
+  const nextCounters = resolveCounters(update)
+  const effectivePhase = update?.phase ?? previous?.phase
+
+  const counters = {
+    pages: bumpCounter(prevCounters.pages, nextCounters.pages.current, nextCounters.pages.total),
+    illustrations: bumpCounter(
+      prevCounters.illustrations,
+      nextCounters.illustrations.current,
+      nextCounters.illustrations.total
+    ),
+    ocr: bumpCounter(prevCounters.ocr, nextCounters.ocr.current, nextCounters.ocr.total),
+    uploads: bumpCounter(
+      prevCounters.uploads,
+      nextCounters.uploads.current,
+      nextCounters.uploads.total
+    ),
+  }
+
+  if (effectivePhase === "extracting") {
+    counters.pages = bumpCounter(counters.pages, update?.current, update?.total)
+  }
+  if (effectivePhase === "classifying_illustrations") {
+    counters.illustrations = bumpCounter(
+      counters.illustrations,
+      update?.illustrationCurrent ?? update?.current,
+      update?.illustrationTotal ?? update?.total
+    )
+  }
+  if (effectivePhase === "ocr_illustrations") {
+    counters.ocr = bumpCounter(counters.ocr, update?.current, update?.total)
+    counters.illustrations = bumpCounter(
+      counters.illustrations,
+      update?.illustrationCurrent,
+      update?.illustrationTotal
+    )
+  }
+  if (effectivePhase === "uploading_assets") {
+    counters.uploads = bumpCounter(counters.uploads, update?.current, update?.total)
+  }
+
+  return counters
+}
+
 function isPartialProgressUpdate(update) {
   if (!update || update.phase === "ready" || update.phase === "error") {
     return false
@@ -40,17 +178,21 @@ function isPartialProgressUpdate(update) {
   return keys.length > 0 && keys.every((key) => key === "percent" || key === "label")
 }
 
-function progressPhaseRank(phase) {
-  if (!phase || phase === "starting") {
-    return 0
+/**
+ * Counters for the active pipeline phase only (never page numbers during illustration work).
+ * @param {object|null|undefined} parseProgress
+ */
+export function getPhaseCounters(parseProgress) {
+  if (!parseProgress?.phase) {
+    return { current: 0, total: 0 }
   }
 
-  const index = PARSE_PIPELINE_STEPS.findIndex((step) => step.phase === phase)
-  return index >= 0 ? index + 1 : -1
+  const counters = resolveCounters(parseProgress)
+  return activeCountersForPhase(parseProgress.phase, counters)
 }
 
 /**
- * Merge status poll payloads without wiping page counters on partial updates.
+ * Merge status poll payloads without mixing counters across phases.
  * @param {object|null|undefined} previous
  * @param {object|null|undefined} update
  */
@@ -64,97 +206,64 @@ export function mergePollProgressUpdate(previous, update) {
   }
 
   if (!previous) {
-    return update
+    const counters = resolveCounters(update)
+    const phase = update.phase ?? "starting"
+    const active = activeCountersForPhase(phase, counters)
+    return {
+      ...update,
+      counters,
+      current: active.current,
+      total: active.total,
+    }
   }
 
   if (isPartialProgressUpdate(update)) {
-    const merged = { ...previous }
-    if (typeof update.percent === "number") {
-      merged.percent = Math.max(previous.percent ?? 0, update.percent)
-    }
-    if (update.label) {
-      merged.label = update.label
-    }
-    return merged
-  }
-
-  const merged = { ...previous, ...update }
-  const phaseChanged =
-    update.phase && update.phase !== previous.phase && update.phase !== "processing"
-  const phaseAdvanced =
-    phaseChanged &&
-    progressPhaseRank(update.phase) > progressPhaseRank(previous.phase)
-  const countersCorrupt =
-    previous.total > 0 &&
-    typeof previous.current === "number" &&
-    previous.current > previous.total
-
-  if (typeof update.percent === "number") {
-    merged.percent = Math.max(previous.percent ?? 0, update.percent)
-  }
-
-  if (phaseAdvanced || countersCorrupt) {
-    if (typeof update.current === "number") {
-      merged.current = update.current
-    }
-    if (update.total > 0) {
-      merged.total = update.total
-    }
-    if (previous.phase === "extracting" && update.phase !== "extracting") {
-      delete merged.extractSubphase
-    }
-  } else if (update.phase === previous.phase || !update.phase || update.phase === "processing") {
-    if (typeof update.current === "number") {
-      merged.current = Math.max(previous.current ?? 0, update.current)
-    }
-    if (update.total > 0) {
-      merged.total = update.total
-    } else if (previous.total > 0) {
-      merged.total = previous.total
-    }
-  } else {
-    if (typeof update.current === "number") {
-      merged.current = update.current
-    }
-    if (update.total > 0) {
-      merged.total = update.total
+    return {
+      ...previous,
+      percent: Math.max(previous.percent ?? 0, update.percent ?? 0),
+      label: update.label ?? previous.label,
     }
   }
 
-  if (
-    previous.phase &&
-    previous.phase !== "starting" &&
-    (!update.phase || update.phase === "processing")
-  ) {
-    merged.phase = previous.phase
+  const prevRank = progressPhaseRank(previous.phase)
+  const updateRank = progressPhaseRank(update.phase ?? previous.phase)
+
+  if (update.phase && updateRank < prevRank) {
+    return {
+      ...previous,
+      percent: Math.max(previous.percent ?? 0, update.percent ?? 0),
+    }
   }
 
-  if (
-    merged.phase === "extracting" &&
-    previous.extractSubphase &&
-    !update.extractSubphase
-  ) {
-    merged.extractSubphase = previous.extractSubphase
-  }
+  const phase =
+    update.phase && updateRank >= prevRank ? update.phase : previous.phase ?? update.phase
 
-  if (previous.usingPrintedToc && update.usingPrintedToc == null) {
-    merged.usingPrintedToc = previous.usingPrintedToc
-  }
+  const counters = mergeCounterSnapshot(previous, { ...update, phase })
+  const active = activeCountersForPhase(phase, counters)
 
-  if (update.illustrationTotal > 0) {
-    merged.illustrationTotal = update.illustrationTotal
-  } else if (previous.illustrationTotal > 0) {
-    merged.illustrationTotal = previous.illustrationTotal
+  return {
+    ...previous,
+    ...update,
+    phase,
+    counters,
+    current: active.current,
+    total: active.total,
+    percent: Math.max(previous.percent ?? 0, update.percent ?? previous.percent ?? 0),
+    extractSubphase:
+      phase === "extracting"
+        ? update.extractSubphase ?? previous.extractSubphase
+        : undefined,
+    usingPrintedToc:
+      update.usingPrintedToc == null ? previous.usingPrintedToc : update.usingPrintedToc,
+    pageCurrent: counters.pages.current,
+    pageTotal: counters.pages.total,
+    illustrationCurrent: counters.illustrations.current,
+    illustrationTotal: counters.illustrations.total,
+    ocrCurrent: counters.ocr.current,
+    ocrTotal: counters.ocr.total,
+    uploadCurrent: counters.uploads.current,
+    uploadTotal: counters.uploads.total,
   }
-
-  if (typeof update.illustrationCurrent === "number") {
-    merged.illustrationCurrent = Math.max(
-      previous.illustrationCurrent ?? 0,
-      update.illustrationCurrent
-    )
-  }
-
-  return merged
 }
 
 /**
@@ -166,23 +275,8 @@ export function getParseProgressHeadline(parseProgress) {
     return "Preparing your book…"
   }
 
-  if (parseProgress.phase === "classifying_illustrations" && parseProgress.usingPrintedToc) {
-    return "Applying printed table of contents…"
-  }
-
-  if (parseProgress.phase === "ocr_illustrations" && parseProgress.usingPrintedToc) {
-    return "Reading part and interlude dividers…"
-  }
-
   if (parseProgress.phase === "extracting" && parseProgress.extractSubphase === "images") {
     return "Scanning page artwork…"
-  }
-
-  if (parseProgress.label && parseProgress.phase !== "error") {
-    const mapped = PHASE_HEADLINES[parseProgress.phase]
-    if (mapped) {
-      return mapped
-    }
   }
 
   return PHASE_HEADLINES[parseProgress.phase] ?? "Processing your book…"
@@ -197,7 +291,9 @@ export function getParseProgressDetail(parseProgress) {
     return "Large illustrated books can take several minutes — especially when uploading artwork."
   }
 
-  const { phase, current = 0, total = 0, label } = parseProgress
+  const { phase, label } = parseProgress
+  const { current, total } = getPhaseCounters(parseProgress)
+  const illustrationCounters = resolveCounters(parseProgress).illustrations
 
   if (phase === "error") {
     return label ?? "Something went wrong while parsing this PDF."
@@ -223,21 +319,19 @@ export function getParseProgressDetail(parseProgress) {
   }
 
   if (phase === "classifying_illustrations") {
-    if (parseProgress.usingPrintedToc && total > 0) {
-      return `Applying printed table of contents (${current} of ${total} chapter headers).`
-    }
     if (total > 0) {
-      return `Classifying illustration ${current} of ${total} (chapter headers and full-page art).`
+      return `Processing chapter header ${current} of ${total}.`
     }
     return "Identifying full-page art and chapter heading banners."
   }
 
   if (phase === "ocr_illustrations") {
-    if (parseProgress.usingPrintedToc && total > 0) {
-      return `Reading part and interlude dividers from artwork (${current} of ${total}).`
-    }
     if (total > 0) {
-      return `Reading text from illustration ${current} of ${total} (chapter titles, parts, interludes).`
+      const reviewed = illustrationCounters.total
+      if (reviewed > 0 && illustrationCounters.current > 0) {
+        return `Reading section divider ${current} of ${total} (${illustrationCounters.current} of ${reviewed} headers reviewed).`
+      }
+      return `Reading section divider ${current} of ${total}.`
     }
     return "Extracting chapter numbers and titles from header artwork."
   }
@@ -320,8 +414,10 @@ export function getCombinedProcessingPercent(
     return Math.round(base)
   }
 
-  if (parseProgress.phase === "extracting" && parseProgress.total > 0) {
-    const fraction = parseProgress.current / parseProgress.total
+  const { current, total } = getPhaseCounters(parseProgress)
+
+  if (parseProgress.phase === "extracting" && total > 0) {
+    const fraction = current / total
     const extractMax = 58
     return Math.round(base + fraction * extractMax * processingShare)
   }
@@ -333,13 +429,8 @@ export function getCombinedProcessingPercent(
   }
   const itemBand = itemPhases[parseProgress.phase]
 
-  if (
-    itemBand &&
-    parseProgress.total > 0 &&
-    typeof parseProgress.current === "number" &&
-    parseProgress.current <= parseProgress.total
-  ) {
-    const fraction = parseProgress.current / parseProgress.total
+  if (itemBand && total > 0 && current <= total) {
+    const fraction = current / total
     const bandPercent = itemBand.start + fraction * (itemBand.end - itemBand.start)
     return Math.round(base + bandPercent * processingShare)
   }

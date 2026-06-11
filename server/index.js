@@ -79,29 +79,171 @@ const PARSE_PROGRESS_UPLOAD_MAX_PERCENT = 93
 const PARSE_PROGRESS_FINALIZE_PERCENT = 96
 const PARSE_PROGRESS_SAVE_PERCENT = 98
 
+function parseProgressPhaseRank(phase) {
+  const ranks = {
+    starting: 0,
+    extracting: 1,
+    structuring: 2,
+    classifying_illustrations: 3,
+    ocr_illustrations: 4,
+    uploading_assets: 5,
+    finalizing: 6,
+    saving: 7,
+    ready: 8,
+    error: 9,
+  }
+  return ranks[phase] ?? -1
+}
+
+function emptyParseCounters() {
+  return {
+    pages: { current: 0, total: 0 },
+    illustrations: { current: 0, total: 0 },
+    ocr: { current: 0, total: 0 },
+    uploads: { current: 0, total: 0 },
+  }
+}
+
+function bumpParseCounter(counter, current, total) {
+  const next = { ...counter }
+  if (typeof current === "number") {
+    next.current = Math.max(next.current ?? 0, current)
+  }
+  if (typeof total === "number" && total > 0) {
+    next.total = total
+  }
+  return next
+}
+
+function activeCountersForPhase(phase, counters) {
+  if (phase === "extracting") {
+    return counters.pages
+  }
+  if (phase === "classifying_illustrations") {
+    return counters.illustrations
+  }
+  if (phase === "ocr_illustrations") {
+    return counters.ocr
+  }
+  if (phase === "uploading_assets") {
+    return counters.uploads
+  }
+  return { current: 0, total: 0 }
+}
+
+function mergeParseProgressSnapshot(previous, patch) {
+  if (!patch) {
+    return previous ?? null
+  }
+
+  if (patch.phase === "ready" || patch.phase === "error") {
+    return patch
+  }
+
+  const prev = previous ?? {}
+  const prevRank = parseProgressPhaseRank(prev.phase)
+  const patchRank = parseProgressPhaseRank(patch.phase ?? prev.phase)
+
+  if (patch.phase && patchRank < prevRank) {
+    return {
+      ...prev,
+      percent: Math.max(prev.percent ?? 0, patch.percent ?? 0),
+    }
+  }
+
+  const phase =
+    patch.phase && patchRank >= prevRank ? patch.phase : prev.phase ?? patch.phase
+
+  const counters = {
+    pages: { ...emptyParseCounters().pages, ...(prev.counters?.pages ?? {}) },
+    illustrations: {
+      ...emptyParseCounters().illustrations,
+      ...(prev.counters?.illustrations ?? {}),
+    },
+    ocr: { ...emptyParseCounters().ocr, ...(prev.counters?.ocr ?? {}) },
+    uploads: { ...emptyParseCounters().uploads, ...(prev.counters?.uploads ?? {}) },
+  }
+
+  const effectivePhase = patch.phase ?? prev.phase
+
+  if (effectivePhase === "extracting") {
+    counters.pages = bumpParseCounter(counters.pages, patch.current, patch.total)
+  }
+
+  if (effectivePhase === "classifying_illustrations") {
+    counters.illustrations = bumpParseCounter(
+      counters.illustrations,
+      patch.illustrationCurrent ?? patch.current,
+      patch.illustrationTotal ?? patch.total
+    )
+  }
+
+  if (effectivePhase === "ocr_illustrations") {
+    counters.ocr = bumpParseCounter(counters.ocr, patch.current, patch.total)
+    if (patch.illustrationTotal > 0 || typeof patch.illustrationCurrent === "number") {
+      counters.illustrations = bumpParseCounter(
+        counters.illustrations,
+        patch.illustrationCurrent,
+        patch.illustrationTotal
+      )
+    }
+  }
+
+  if (effectivePhase === "uploading_assets") {
+    counters.uploads = bumpParseCounter(counters.uploads, patch.current, patch.total)
+  }
+
+  const active = activeCountersForPhase(phase, counters)
+
+  return {
+    ...prev,
+    ...patch,
+    phase,
+    counters,
+    current: active.current,
+    total: active.total,
+    percent: Math.max(prev.percent ?? 0, patch.percent ?? prev.percent ?? 0),
+    extractSubphase:
+      phase === "extracting"
+        ? patch.extractSubphase ?? prev.extractSubphase
+        : undefined,
+    usingPrintedToc:
+      patch.usingPrintedToc == null ? prev.usingPrintedToc : patch.usingPrintedToc,
+    illustrationCurrent: counters.illustrations.current,
+    illustrationTotal: counters.illustrations.total,
+    ocrCurrent: counters.ocr.current,
+    ocrTotal: counters.ocr.total,
+    pageCurrent: counters.pages.current,
+    pageTotal: counters.pages.total,
+    uploadCurrent: counters.uploads.current,
+    uploadTotal: counters.uploads.total,
+  }
+}
+
 function setDocumentParseProgress(documentId, progress) {
   const previous = documentParseProgress.get(documentId)
-  documentParseProgress.set(documentId, progress)
+  const merged = mergeParseProgressSnapshot(previous, progress)
+  documentParseProgress.set(documentId, merged)
 
   const now = Date.now()
   const lastWrite = parseProgressDbWriteAt.get(documentId) ?? 0
-  const phaseChanged = previous?.phase !== progress?.phase
+  const phaseChanged = previous?.phase !== merged?.phase
   const pageChanged =
-    progress?.phase === "extracting" &&
-    typeof progress.current === "number" &&
-    progress.current !== previous?.current
+    merged?.phase === "extracting" &&
+    typeof merged.pageCurrent === "number" &&
+    merged.pageCurrent !== previous?.pageCurrent
 
   if (
     phaseChanged ||
     pageChanged ||
-    progress?.phase === "error" ||
-    progress?.phase === "saving" ||
+    merged?.phase === "error" ||
+    merged?.phase === "saving" ||
     now - lastWrite >= PARSE_PROGRESS_DB_WRITE_MS
   ) {
     parseProgressDbWriteAt.set(documentId, now)
     void supabase
       .from("documents")
-      .update({ parse_progress: progress })
+      .update({ parse_progress: merged })
       .eq("id", documentId)
       .then(({ error }) => {
         if (error) {
@@ -4415,7 +4557,7 @@ async function finalizeIllustrationBlocks(
         onProgress?.({
           phase: "ocr_illustrations",
           label: printedToc
-            ? "Reading part and interlude dividers from artwork"
+            ? "Reading section dividers from artwork"
             : "Reading text from illustrations",
           current: ocrCompleted,
           total: Math.max(plannedOcrTotal, ocrCompleted),
@@ -4428,7 +4570,7 @@ async function finalizeIllustrationBlocks(
         onProgress?.({
           phase: "classifying_illustrations",
           label: printedToc
-            ? "Applying printed table of contents to chapter headers"
+            ? "Matching chapter headers to the book outline"
             : "Analyzing illustrations",
           current: processedCandidates,
           total: totalCandidates,
@@ -6507,8 +6649,10 @@ async function parsePdfBuffer(
   fileName = "",
   { onPageProcessed, onProgress, documentId } = {}
 ) {
-  const reportProgress = (progress) => {
-    onProgress?.(progress)
+  let progressSnapshot = null
+  const reportProgress = (patch) => {
+    progressSnapshot = mergeParseProgressSnapshot(progressSnapshot, patch)
+    onProgress?.(progressSnapshot)
   }
 
   reportProgress({
@@ -6647,7 +6791,7 @@ async function parsePdfBuffer(
   reportProgress({
     phase: "classifying_illustrations",
     label: printedToc
-      ? "Applying printed table of contents to chapter headers"
+      ? "Matching chapter headers to the book outline"
       : "Analyzing illustrations",
     current: 0,
     total: illustrationCandidateCount,
