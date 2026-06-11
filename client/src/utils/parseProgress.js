@@ -38,7 +38,7 @@ export function getRawProcessingPhase(parseProgress) {
   const pages = resolveCounters(parseProgress).pages
   if (
     parseProgress.phase === "extracting" &&
-    parseProgress.extractSubphase === "images" &&
+    parseProgress.extractSubphase === "filtering" &&
     pages.total > 0 &&
     pages.current >= pages.total
   ) {
@@ -177,6 +177,15 @@ function mergeCounterSnapshot(previous, update) {
 
   if (effectivePhase === "extracting" || effectivePhase === "structuring") {
     counters.pages = bumpCounter(counters.pages, update?.current, update?.total)
+  }
+
+  if (
+    effectivePhase === "extracting" &&
+    update?.extractSubphase &&
+    update.extractSubphase !== previous?.extractSubphase &&
+    typeof update.current === "number"
+  ) {
+    counters.pages = bumpCounter(counters.pages, update.current, update.total)
   }
   if (effectivePhase === "classifying_illustrations") {
     counters.illustrations = bumpCounter(
@@ -345,8 +354,15 @@ export function getParseProgressHeadline(parseProgress) {
 
   const phase = getEffectiveDisplayPhase(parseProgress)
 
-  if (phase === "extracting" && parseProgress.extractSubphase === "images") {
-    return "Scanning page artwork…"
+  if (phase === "extracting") {
+    const subphase = parseProgress.extractSubphase ?? "text"
+    if (subphase === "filtering") {
+      return "Cleaning extracted text…"
+    }
+    if (subphase === "images") {
+      return "Scanning page artwork…"
+    }
+    return "Reading PDF pages…"
   }
 
   if (phase === "classifying_illustrations" && (parseProgress.total ?? 0) === 0) {
@@ -386,12 +402,22 @@ export function getParseProgressDetail(parseProgress) {
   }
 
   if (phase === "extracting") {
+    const serverPercent =
+      typeof parseProgress.percent === "number"
+        ? Math.round(parseProgress.percent)
+        : null
+    const subphase = parseProgress.extractSubphase ?? "text"
+
+    if (subphase === "filtering" && total > 0) {
+      return `Cleaning extracted text — pass ${current} of ${total} (${serverPercent ?? 0}% overall).`
+    }
+
     if (total > 0) {
-      const pct = Math.round((current / total) * 100)
-      if (parseProgress.extractSubphase === "images") {
-        return `Scanning artwork on page ${current} of ${total} (${pct}% of PDF scan).`
+      const overall = serverPercent ?? Math.round((current / total) * 100)
+      if (subphase === "images") {
+        return `Processing page ${current} of ${total} — scanning artwork (${overall}% overall).`
       }
-      return `Reading page ${current} of ${total} (${pct}% of PDF scan).`
+      return `Processing page ${current} of ${total} — reading text (${overall}% overall).`
     }
     return "Opening PDF and preparing the page scanner…"
   }
@@ -496,10 +522,15 @@ export function getCombinedProcessingPercent(
   const rawPhase = getRawProcessingPhase(parseProgress)
   const displayPhase = getEffectiveDisplayPhase(parseProgress)
 
-  if (displayPhase === "extracting" && total > 0) {
-    const fraction = current / total
-    const extractMax = 58
-    return Math.round(base + fraction * extractMax * processingShare)
+  if (displayPhase === "extracting") {
+    if (typeof parseProgress.percent === "number") {
+      return Math.round(base + parseProgress.percent * processingShare)
+    }
+    if (total > 0) {
+      const fraction = current / total
+      const extractMax = 58
+      return Math.round(base + fraction * extractMax * processingShare)
+    }
   }
 
   if (rawPhase === "structuring" && total > 0) {
