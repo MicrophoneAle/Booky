@@ -81,7 +81,7 @@ const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
 const PARSER_VERSION = 51
 /** Bump only when client pagination/measurement logic changes (not server parser). */
-const PAGINATION_MEASUREMENT_VERSION = 23
+const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
 const PAGINATION_CACHE_TS_PREFIX = "booky-pages-ts|"
 /**
@@ -157,14 +157,55 @@ function buildPaginationCacheKey(
 }
 
 /** Downscale only — never upscale (prevents left/right clipping from transform). */
-function getMobileFullscreenDownscale(availW) {
-  return Math.min(1, availW / PAGE_WIDTH_PX)
+function getMobileFullscreenDownscale(availW, availH, pageOuterHeight) {
+  const widthScale = availW / PAGE_WIDTH_PX
+  const heightScale = pageOuterHeight > 0 ? availH / pageOuterHeight : 1
+  return Math.min(1, widthScale, heightScale)
+}
+
+function estimateMobileFullscreenPageHeight() {
+  const visualViewport = window.visualViewport
+  const viewportHeight = Math.round(visualViewport?.height ?? window.innerHeight)
+  return Math.max(MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX, viewportHeight)
+}
+
+function resolveMobileFullscreenPageHeight(stageEl = null) {
+  if (stageEl) {
+    const cs = getComputedStyle(stageEl)
+    const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
+    const availH = stageEl.clientHeight - padY
+    if (availH >= MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX) {
+      return Math.round(availH)
+    }
+  }
+
+  return estimateMobileFullscreenPageHeight()
+}
+
+function getMobileFullscreenLayoutMetrics(pageOuterHeight = MOBILE_FULLSCREEN_PAGE_HEIGHT_PX) {
+  const pageInsetTopPx = MOBILE_FULLSCREEN_TOP_INSET_PX
+  const pageInsetBottomPx = MOBILE_FULLSCREEN_BOTTOM_CHROME_PX
+  const pageNumberReservedPx = MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX
+  const { contentMaxHeight } = getLayoutHeights(
+    pageOuterHeight,
+    "none",
+    pageNumberReservedPx,
+    { pageInsetTopPx, pageInsetBottomPx }
+  )
+
+  return {
+    pageOuterHeight,
+    contentMaxHeight,
+    pageInsetTopPx,
+    pageInsetBottomPx,
+    footerBlockPx: MOBILE_FULLSCREEN_FOOTER_BLOCK_PX,
+  }
 }
 
 /** Single source of truth for cache key — same inputs at read and write. */
-function getPaginationPageHeight(mobileViewport, mobileFullscreen) {
+function getPaginationPageHeight(mobileViewport, mobileFullscreen, mobileFullscreenPageHeight) {
   if (mobileViewport && mobileFullscreen) {
-    return MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
+    return mobileFullscreenPageHeight ?? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
   }
 
   return PAGE_HEIGHT_PX
@@ -179,7 +220,8 @@ function resolvePaginationCacheContext(bookId, parserVersionFromDoc, settings, v
       : PARSER_VERSION
   const pageHeight = getPaginationPageHeight(
     viewport.mobile,
-    viewport.mobileFullscreen
+    viewport.mobileFullscreen,
+    viewport.mobileFullscreenPageHeight
   )
 
   return {
@@ -1391,10 +1433,11 @@ function setupMeasureElements(
   measureElements,
   paginationSettings,
   mobileViewport,
-  mobileFS
+  mobileFS,
+  mobileFullscreenPageHeight = MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
 ) {
   const marginSetting = mobileFS ? "none" : paginationSettings.margins
-  const pageHeightToUse = mobileFS ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX : undefined
+  const pageHeightToUse = mobileFS ? mobileFullscreenPageHeight : undefined
   const pageNumberReservedPx = getPageNumberReservedPx(mobileViewport, mobileFS)
   const pageInsetTopPx = mobileFS ? MOBILE_FULLSCREEN_TOP_INSET_PX : 0
   const pageInsetBottomPx = mobileFS
@@ -1429,6 +1472,8 @@ function setupMeasureElements(
     page.style.paddingRight = "0"
     page.style.paddingLeft = "0"
     page.style.paddingBottom = `${pageInsetBottomPx}px`
+    page.style.setProperty("--mobile-fs-content-h", `${contentMaxHeight}px`)
+    page.style.setProperty("--mobile-fs-footer-block", `${MOBILE_FULLSCREEN_FOOTER_BLOCK_PX}px`)
   } else {
     const pageChrome = getPageChromeStyle(paginationSettings.margins, mobileViewport)
     page.style.paddingTop = pageChrome.paddingTop ?? "0"
@@ -1442,20 +1487,14 @@ function setupMeasureElements(
   body.style.paddingBottom = `${BODY_BOTTOM_PADDING_PX}px`
   body.style.minWidth = "0"
   body.style.overflow = "hidden"
-
-  if (mobileFS) {
-    footer.style.display = "none"
-    body.style.flex = "0 0 auto"
-    body.style.minHeight = "0"
-    body.style.height = `${contentMaxHeight}px`
-    body.style.maxHeight = `${contentMaxHeight}px`
-  } else {
-    footer.style.display = "none"
-    body.style.flex = "0 0 auto"
-    body.style.minHeight = "0"
-    body.style.height = "auto"
-    body.style.maxHeight = `${contentMaxHeight}px`
-  }
+  footer.style.display = "none"
+  // Always shrink-wrap during measurement. Fixed body height makes scrollHeight
+  // equal the container height, so pagination falsely treats each paragraph as
+  // filling a whole page (mobile fullscreen was hit hardest).
+  body.style.flex = "0 0 auto"
+  body.style.minHeight = "0"
+  body.style.height = "auto"
+  body.style.maxHeight = `${contentMaxHeight}px`
 
   const font = FONT_SIZE_MAP[paginationSettings.fontSize] ?? FONT_SIZE_MAP.medium
   const line =
@@ -1492,7 +1531,8 @@ function computeMobileFullscreenPages(
   bookDocument,
   paginationSettings,
   flatBlocksCache,
-  measurePoolRef
+  measurePoolRef,
+  mobileFullscreenPageHeight = estimateMobileFullscreenPageHeight()
 ) {
   const flatBlocks = getCachedFlatBlocks(bookDocument, flatBlocksCache)
   const measureElements = getOrCreateMeasurePool(measurePoolRef)
@@ -1500,17 +1540,22 @@ function computeMobileFullscreenPages(
     measureElements,
     paginationSettings,
     true,
-    true
+    true,
+    mobileFullscreenPageHeight
   )
   return measureDocumentPages(flatBlocks, measureElements, pageLayout)
 }
 
-function readMobileFullscreenCache(bookDocument, paginationSettings) {
+function readMobileFullscreenCache(bookDocument, paginationSettings, mobileFullscreenPageHeight) {
   const { cacheKey, parserVersion } = resolvePaginationCacheContext(
     bookDocument.id,
     bookDocument.parserVersion,
     paginationSettings,
-    { mobile: true, mobileFullscreen: true }
+    {
+      mobile: true,
+      mobileFullscreen: true,
+      mobileFullscreenPageHeight,
+    }
   )
   return {
     cacheKey,
@@ -2866,6 +2911,7 @@ function BookPageContent({
   page,
   isMobileFullscreen = false,
   isMobileViewport = false,
+  mobileFullscreenMetrics = null,
   settings,
   searchQuery = "",
   activeSearchOccurrence = null,
@@ -2881,19 +2927,21 @@ function BookPageContent({
     .join(" ")
 
   const marginSetting = settings?.margins ?? DEFAULT_SETTINGS.margins
+  const fsMetrics =
+    mobileFullscreenMetrics ?? getMobileFullscreenLayoutMetrics(MOBILE_FULLSCREEN_PAGE_HEIGHT_PX)
   const pageContentHeightPx = isMobileFullscreen
-    ? MOBILE_FULLSCREEN_CONTENT_HEIGHT_PX
+    ? fsMetrics.contentMaxHeight
     : getPageContentHeightPx(marginSetting, isMobileViewport)
 
   const pageStyle = isMobileFullscreen
     ? {
-        "--page-footer-reserve": `${MOBILE_FULLSCREEN_FOOTER_BLOCK_PX}px`,
-        "--mobile-fs-footer-block": `${MOBILE_FULLSCREEN_FOOTER_BLOCK_PX}px`,
-        "--mobile-fs-content-h": `${MOBILE_FULLSCREEN_CONTENT_HEIGHT_PX}px`,
-        "--mobile-fs-top-inset": `${MOBILE_FULLSCREEN_TOP_INSET_PX}px`,
-        "--mobile-fs-bottom-chrome": `${MOBILE_FULLSCREEN_BOTTOM_CHROME_PX}px`,
-        paddingTop: `${MOBILE_FULLSCREEN_TOP_INSET_PX}px`,
-        paddingBottom: `${MOBILE_FULLSCREEN_BOTTOM_CHROME_PX}px`,
+        "--page-footer-reserve": `${fsMetrics.footerBlockPx}px`,
+        "--mobile-fs-footer-block": `${fsMetrics.footerBlockPx}px`,
+        "--mobile-fs-content-h": `${fsMetrics.contentMaxHeight}px`,
+        "--mobile-fs-top-inset": `${fsMetrics.pageInsetTopPx}px`,
+        "--mobile-fs-bottom-chrome": `${fsMetrics.pageInsetBottomPx}px`,
+        paddingTop: `${fsMetrics.pageInsetTopPx}px`,
+        paddingBottom: `${fsMetrics.pageInsetBottomPx}px`,
       }
     : getPageChromeStyle(marginSetting, isMobileViewport)
 
@@ -3341,6 +3389,7 @@ export default function BookViewer({
   const tapTimerRef = useRef(null)
   const [scale, setScale] = useState(1)
   const [mobileFsDisplayLayout, setMobileFsDisplayLayout] = useState(null)
+  const [mobileFsPageHeight, setMobileFsPageHeight] = useState(MOBILE_FULLSCREEN_PAGE_HEIGHT_PX)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [resumeHighlight, setResumeHighlight] = useState(null)
   const resumeHighlightTimerRef = useRef(null)
@@ -3407,6 +3456,7 @@ export default function BookViewer({
   const normalLayoutBundleRef = useRef(null)
   const normalLayoutAtEnterRef = useRef(null)
   const initialFullscreenPrepareDoneRef = useRef(false)
+  const mobileFullscreenPageHeightRef = useRef(MOBILE_FULLSCREEN_PAGE_HEIGHT_PX)
 
   const normalizeBookmarkPage = useCallback((page, total, desktopSpreadBehavior) => {
     if (!Number.isFinite(page)) return 1
@@ -3525,9 +3575,17 @@ export default function BookViewer({
     const viewport = {
       mobile: window.matchMedia("(max-width: 767px)").matches,
       mobileFullscreen: isMobileFullscreen,
+      mobileFullscreenPageHeight:
+        isMobileFullscreen && window.matchMedia("(max-width: 767px)").matches
+          ? resolveMobileFullscreenPageHeight(stageRef.current)
+          : null,
     }
     isMobileLayoutRef.current = viewport.mobile
     isMobileFullscreenLayoutRef.current = viewport.mobileFullscreen
+    if (viewport.mobileFullscreenPageHeight != null) {
+      mobileFullscreenPageHeightRef.current = viewport.mobileFullscreenPageHeight
+      setMobileFsPageHeight(viewport.mobileFullscreenPageHeight)
+    }
 
     const { cacheKey, parserVersion, layoutSettings } = resolvePaginationCacheContext(
       bookDocument.id,
@@ -3725,7 +3783,11 @@ export default function BookViewer({
       // Warm fullscreen readiness synchronously from cache so reopening is
       // instant — no "Preparing fullscreen" screen when it was cached before.
       if (viewport.mobile && !isMobileFullscreen) {
-        const fsCache = readMobileFullscreenCache(bookDocument, paginationSettings)
+        const fsCache = readMobileFullscreenCache(
+          bookDocument,
+          paginationSettings,
+          estimateMobileFullscreenPageHeight()
+        )
         if (fsCache.cached?.pages?.length) {
           fullscreenLayoutBundleRef.current = buildLayoutBundle(
             fsCache.cached.pages,
@@ -3844,11 +3906,15 @@ export default function BookViewer({
       const mobileFS = mobileViewport && isMobileFullscreenLayoutRef.current
       const measureElements = getOrCreateMeasurePool(measurePoolRef)
       measureRoot = measureElements.root
+      const fsPageHeight = mobileFS
+        ? resolveMobileFullscreenPageHeight(stageRef.current)
+        : MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
       const pageLayout = setupMeasureElements(
         measureElements,
         paginationSettings,
         mobileViewport,
-        mobileFS
+        mobileFS,
+        fsPageHeight
       )
 
       return { flatBlocks, measureElements, pageLayout }
@@ -3870,6 +3936,9 @@ export default function BookViewer({
         {
           mobile: isMobileLayoutRef.current,
           mobileFullscreen: isMobileFullscreenLayoutRef.current,
+          mobileFullscreenPageHeight: isMobileFullscreenLayoutRef.current
+            ? mobileFullscreenPageHeightRef.current
+            : null,
         }
       )
       const payload = {
@@ -4290,8 +4359,12 @@ export default function BookViewer({
   ])
 
   const mobileFullscreenActive = isMobile && isMobileFullscreen
+  const mobileFsLayoutMetrics = useMemo(
+    () => getMobileFullscreenLayoutMetrics(mobileFsPageHeight),
+    [mobileFsPageHeight]
+  )
   const activePageHeight = mobileFullscreenActive
-    ? MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
+    ? mobileFsPageHeight
     : PAGE_HEIGHT_PX
 
   const isSpreadView = !isMobile && layoutMode === "spread"
@@ -4394,11 +4467,17 @@ export default function BookViewer({
       const fitScale = Math.min(availW / naturalW, availH / naturalH)
 
       if (isMobile && isMobileFullscreen) {
-        const downscale = getMobileFullscreenDownscale(availW)
+        const fsPageHeight = Math.max(
+          MOBILE_FULLSCREEN_PAGE_HEIGHT_MIN_PX,
+          Math.round(availH)
+        )
+        const downscale = getMobileFullscreenDownscale(availW, availH, fsPageHeight)
+        setMobileFsPageHeight(fsPageHeight)
+        mobileFullscreenPageHeightRef.current = fsPageHeight
         setMobileFsDisplayLayout({
           downscale,
           wrapperW: naturalW * downscale,
-          wrapperH: naturalH * downscale,
+          wrapperH: fsPageHeight * downscale,
         })
         setScale(1)
         return
@@ -4501,9 +4580,11 @@ export default function BookViewer({
       return undefined
     }
 
+    const estimatedFsPageHeight = estimateMobileFullscreenPageHeight()
     const { cacheKey, parserVersion, cached } = readMobileFullscreenCache(
       bookDocument,
-      paginationSettings
+      paginationSettings,
+      estimatedFsPageHeight
     )
 
     if (cached?.pages?.length) {
@@ -4551,7 +4632,8 @@ export default function BookViewer({
         bookDocument,
         paginationSettings,
         flatBlocksCacheRef.current,
-        measurePoolRef
+        measurePoolRef,
+        estimatedFsPageHeight
       )
 
       if (cancelled || fullscreenWarmupRunIdRef.current !== warmupRunId) {
@@ -4562,7 +4644,11 @@ export default function BookViewer({
         bookDocument.id,
         bookDocument.parserVersion,
         paginationSettings,
-        { mobile: true, mobileFullscreen: true }
+        {
+          mobile: true,
+          mobileFullscreen: true,
+          mobileFullscreenPageHeight: estimatedFsPageHeight,
+        }
       )
 
       writePaginationCache(cacheKey, bookDocument.id, {
@@ -4730,7 +4816,11 @@ export default function BookViewer({
 
     let fsBundle = fullscreenLayoutBundleRef.current
     if (!fsBundle?.pages?.length) {
-      const { cached } = readMobileFullscreenCache(bookDocument, paginationSettings)
+      const { cached } = readMobileFullscreenCache(
+        bookDocument,
+        paginationSettings,
+        mobileFsPageHeight
+      )
       if (!cached?.pages?.length) {
         return
       }
@@ -4757,6 +4847,7 @@ export default function BookViewer({
     isMobileFullscreen,
     pages,
     paginationSettings,
+    mobileFsPageHeight,
     swapReadingLayout,
   ])
 
@@ -5511,6 +5602,9 @@ export default function BookViewer({
                   page={leftPage}
                   isMobileFullscreen={mobileFullscreenActive}
                   isMobileViewport={isMobile}
+                  mobileFullscreenMetrics={
+                    mobileFullscreenActive ? mobileFsLayoutMetrics : null
+                  }
                   settings={uiSettings}
                   searchQuery={searchOpen ? searchQuery : ""}
                   activeSearchOccurrence={
@@ -5546,6 +5640,9 @@ export default function BookViewer({
                         page={rightPage}
                         isMobileFullscreen={mobileFullscreenActive}
                         isMobileViewport={isMobile}
+                        mobileFullscreenMetrics={
+                          mobileFullscreenActive ? mobileFsLayoutMetrics : null
+                        }
                         settings={uiSettings}
                         searchQuery={searchOpen ? searchQuery : ""}
                         activeSearchOccurrence={
@@ -5569,6 +5666,9 @@ export default function BookViewer({
                         page={null}
                         isMobileFullscreen={mobileFullscreenActive}
                         isMobileViewport={isMobile}
+                        mobileFullscreenMetrics={
+                          mobileFullscreenActive ? mobileFsLayoutMetrics : null
+                        }
                         settings={uiSettings}
                         searchQuery={searchOpen ? searchQuery : ""}
                         activeSearchOccurrence={null}

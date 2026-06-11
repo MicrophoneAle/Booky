@@ -1471,13 +1471,12 @@ ol.book-page__list {
   z-index: -1;
 }
 
-.book-viewer__measure .book-page__body {
-  flex: 0 0 auto;
-  max-height: none;
-}
-
+.book-viewer__measure .book-page__body,
+.book-viewer__measure .book-page--mobile-fs .book-page__body,
 .book-page__body--measure {
-  max-height: none;
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 0 !important;
 }
 
 .book-viewer__measure-footer {
