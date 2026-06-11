@@ -276,12 +276,17 @@
   min-height: 100%;
   margin-left: -10px;
   margin-right: -5px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--spine-color, #8b3a3a) 72%, white 28%),
-    var(--spine-color, #8b3a3a) 38%,
-    color-mix(in srgb, var(--spine-color, #8b3a3a) 78%, black 22%)
-  );
+  background-color: color-mix(in srgb, var(--spine-color, #8b3a3a) 42%, var(--color-folio-face-lo));
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, color-mix(in srgb, var(--spine-color, #8b3a3a) 72%, white 28%) 46%, transparent) 0%,
+      color-mix(in srgb, var(--spine-color, #8b3a3a) 54%, transparent) 42%,
+      color-mix(in srgb, color-mix(in srgb, var(--spine-color, #8b3a3a) 78%, black 22%) 56%, transparent) 100%
+    ),
+    url('../assets/leather_book_texture.jpg');
+  background-size: auto, cover;
+  background-position: center, center;
   border-radius: var(--radius-md) 0 0 var(--radius-md);
   box-shadow:
     2px 0 12px rgba(0, 0, 0, 0.5),
@@ -318,9 +323,9 @@
     ),
     linear-gradient(
       168deg,
-      color-mix(in srgb, var(--color-folio-face-hi) 86%, transparent) 0%,
-      color-mix(in srgb, var(--color-folio-face) 88%, transparent) 48%,
-      color-mix(in srgb, var(--color-folio-face-lo) 90%, transparent) 100%
+      color-mix(in srgb, var(--color-folio-face-hi) 58%, transparent) 0%,
+      color-mix(in srgb, var(--color-folio-face) 64%, transparent) 48%,
+      color-mix(in srgb, var(--color-folio-face-lo) 68%, transparent) 100%
     ),
     url('../assets/leather_book_texture.jpg');
   background-size: auto, auto, cover;
@@ -346,9 +351,9 @@
   background-image:
     linear-gradient(
       168deg,
-      color-mix(in srgb, var(--color-folio-inset) 78%, black 22%) 0%,
-      color-mix(in srgb, var(--color-folio-inset) 92%, transparent) 45%,
-      color-mix(in srgb, var(--color-folio-inset) 84%, black 16%) 100%
+      color-mix(in srgb, var(--color-folio-inset) 62%, black 38%) 0%,
+      color-mix(in srgb, var(--color-folio-inset) 72%, transparent) 45%,
+      color-mix(in srgb, var(--color-folio-inset) 66%, black 34%) 100%
     ),
     url('../assets/leather_book_texture.jpg');
   background-size: auto, cover;
@@ -604,8 +609,8 @@
   background-image:
     linear-gradient(
       168deg,
-      color-mix(in srgb, var(--color-folio-face-hi) 88%, transparent) 0%,
-      color-mix(in srgb, var(--color-folio-face-lo) 90%, transparent) 100%
+      color-mix(in srgb, var(--color-folio-face-hi) 60%, transparent) 0%,
+      color-mix(in srgb, var(--color-folio-face-lo) 68%, transparent) 100%
     ),
     url('../assets/leather_book_texture.jpg');
   background-size: auto, cover;
