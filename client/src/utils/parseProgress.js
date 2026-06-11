@@ -24,6 +24,9 @@ const PHASE_HEADLINES = {
 }
 
 /** Mirrors server-side parse percent bands (server/index.js). */
+export const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 58
+export const UPLOAD_PROGRESS_WEIGHT = 0.12
+
 const PARSE_PERCENT_PHASE_THRESHOLDS = [
   { min: 98, phase: "saving" },
   { min: 96, phase: "finalizing" },
@@ -96,7 +99,13 @@ export function mergeParseProgressUpdate(previous, update) {
   }
 
   if (update.phase && update.phase !== "processing" && KNOWN_PARSE_PHASES.has(update.phase)) {
-    return { ...base, ...update }
+    const merged = { ...base, ...update }
+    for (const [key, value] of Object.entries(update)) {
+      if (value === null) {
+        delete merged[key]
+      }
+    }
+    return merged
   }
 
   const merged = {
@@ -158,6 +167,13 @@ export function getParseProgressDetail(parseProgress) {
   if (phase === "extracting") {
     if (total > 0) {
       const pct = Math.round((current / total) * 100)
+      const batchEnd = progress.batchEnd
+      if (typeof batchEnd === "number" && batchEnd > current) {
+        return `Reading pages ${current + 1}–${batchEnd} of ${total} (${pct}% of PDF scan). Heavily illustrated pages can take a few seconds each.`
+      }
+      if (progress.extractSubphase === "deduplicating") {
+        return `Analyzing extracted pages (${current} of ${total}) — almost done with the PDF scan.`
+      }
       return `Reading page ${current} of ${total} (${pct}% of PDF scan).`
     }
     return "Scanning pages for text, headings, and embedded artwork."
@@ -244,6 +260,35 @@ export function getParsePipelineStepStates(parseProgress) {
 
     return { ...step, status }
   })
+}
+
+/**
+ * Combined upload + parse percent for the main progress bar.
+ * During page extraction, uses page current/total so the bar moves steadily.
+ * @param {object|null|undefined} parseProgress
+ * @param {number} [uploadWeight]
+ * @returns {number}
+ */
+export function getCombinedProcessingPercent(
+  parseProgress,
+  uploadWeight = UPLOAD_PROGRESS_WEIGHT
+) {
+  const progress = normalizeParseProgress(parseProgress)
+  const processingShare = 1 - uploadWeight
+  const base = 100 * uploadWeight
+
+  if (!progress) {
+    return Math.round(base)
+  }
+
+  if (progress.phase === "extracting" && progress.total > 0) {
+    const pageFraction = Math.min(1, progress.current / progress.total)
+    return Math.round(
+      base + pageFraction * PARSE_PROGRESS_EXTRACT_MAX_PERCENT * processingShare
+    )
+  }
+
+  return Math.round(base + (progress.percent ?? 0) * processingShare)
 }
 
 /**

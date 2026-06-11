@@ -10,6 +10,7 @@ import {
 } from "@clerk/clerk-react"
 import FullscreenButton from "../components/FullscreenButton"
 import {
+  getCombinedProcessingPercent,
   getParsePipelineStepStates,
   getParseProgressDetail,
   getParseProgressHeadline,
@@ -21,7 +22,7 @@ import "./Home.css"
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 
 const LARGE_FILE_BYTES = 15 * 1024 * 1024
-const PARSE_POLL_INTERVAL_MS = 1000
+const PARSE_POLL_INTERVAL_MS = 500
 const PARSE_POLL_TIMEOUT_MS = 20 * 60 * 1000
 const UPLOAD_PROGRESS_WEIGHT = 0.12
 
@@ -63,11 +64,7 @@ function overallUploadProgress(phase, uploadPercent, parseProgress) {
   }
 
   if (phase === "processing") {
-    const parsePercent = parseProgress?.percent ?? 0
-    const processingShare = 1 - UPLOAD_PROGRESS_WEIGHT
-    return Math.round(
-      100 * UPLOAD_PROGRESS_WEIGHT + parsePercent * processingShare
-    )
+    return getCombinedProcessingPercent(parseProgress, UPLOAD_PROGRESS_WEIGHT)
   }
 
   if (phase === "done") {

@@ -65,6 +65,7 @@ const backgroundParseInFlight = new Set()
 const documentParseProgress = new Map()
 const parseProgressDbWriteAt = new Map()
 const PARSE_PROGRESS_DB_WRITE_MS = 1500
+const PARSE_PROGRESS_EXTRACT_PERSIST_EVERY_PAGES = 3
 const PDF_PAGE_EXTRACTION_CONCURRENCY = 6
 
 const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 58
@@ -82,8 +83,15 @@ function setDocumentParseProgress(documentId, progress) {
   const now = Date.now()
   const lastWrite = parseProgressDbWriteAt.get(documentId) ?? 0
   const phaseChanged = previous?.phase !== progress?.phase
+  const extractPagePersist =
+    progress?.phase === "extracting" &&
+    typeof progress.current === "number" &&
+    progress.current !== previous?.current &&
+    (progress.current % PARSE_PROGRESS_EXTRACT_PERSIST_EVERY_PAGES === 0 ||
+      progress.current === progress.total)
   const shouldPersist =
     phaseChanged ||
+    extractPagePersist ||
     progress?.phase === "error" ||
     progress?.phase === "saving" ||
     now - lastWrite >= PARSE_PROGRESS_DB_WRITE_MS
@@ -4716,7 +4724,10 @@ async function extractPdfPageContent(pdf, pageNumber, headingStrings) {
   }
 }
 
-async function extractPdfStructure(buffer, { onPageProcessed, puaReplacementMap } = {}) {
+async function extractPdfStructure(
+  buffer,
+  { onPageProcessed, onBatchStarted, onPostProcessProgress, puaReplacementMap } = {}
+) {
   const loadingTask = getDocument({
     data: new Uint8Array(buffer),
     disableFontFace: true,
@@ -4747,6 +4758,10 @@ async function extractPdfStructure(buffer, { onPageProcessed, puaReplacementMap 
 
       for (let pageNumber = batchStart; pageNumber <= batchEnd; pageNumber += 1) {
         batchPageNumbers.push(pageNumber)
+      }
+
+      if (onBatchStarted) {
+        onBatchStarted(batchStart, batchEnd, totalPages)
       }
 
       const batchResults = await Promise.all(
@@ -4790,6 +4805,15 @@ async function extractPdfStructure(buffer, { onPageProcessed, puaReplacementMap 
   const pageData = []
 
   for (let pageIndex = 0; pageIndex < pagesBeforeFilter.length; pageIndex += 1) {
+    if (
+      onPostProcessProgress &&
+      (pageIndex === 0 ||
+        pageIndex === pagesBeforeFilter.length - 1 ||
+        pageIndex % 50 === 0)
+    ) {
+      onPostProcessProgress(pageIndex + 1, pagesBeforeFilter.length)
+    }
+
     const page = pagesBeforeFilter[pageIndex]
     const lines = []
 
@@ -6427,6 +6451,21 @@ async function parsePdfBuffer(
   const { pageData, headingStrings, numPages, pdfInfo, pageImageCandidates } =
     await extractPdfStructure(buffer, {
       puaReplacementMap,
+      onBatchStarted(batchStart, batchEnd, totalPages) {
+        const extractPercent =
+          totalPages > 0
+            ? Math.round((batchStart / totalPages) * PARSE_PROGRESS_EXTRACT_MAX_PERCENT)
+            : 0
+
+        reportProgress({
+          phase: "extracting",
+          label: "Reading PDF pages",
+          current: Math.max(0, batchStart - 1),
+          batchEnd,
+          total: totalPages,
+          percent: extractPercent,
+        })
+      },
       onPageProcessed(pageNumber, totalPages) {
         onPageProcessed?.(pageNumber, totalPages)
 
@@ -6441,6 +6480,25 @@ async function parsePdfBuffer(
           phase: "extracting",
           label: "Reading PDF pages",
           current: pageNumber,
+          total: totalPages,
+          percent: extractPercent,
+          batchEnd: null,
+          extractSubphase: null,
+        })
+      },
+      onPostProcessProgress(currentPage, totalPages) {
+        const extractPercent =
+          totalPages > 0
+            ? Math.round(
+                (currentPage / totalPages) * PARSE_PROGRESS_EXTRACT_MAX_PERCENT * 0.98
+              )
+            : 0
+
+        reportProgress({
+          phase: "extracting",
+          extractSubphase: "deduplicating",
+          label: "Analyzing extracted pages",
+          current: currentPage,
           total: totalPages,
           percent: extractPercent,
         })
