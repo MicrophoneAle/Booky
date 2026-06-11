@@ -171,7 +171,7 @@
   width: 100%;
   height: 260px;
   border-radius: var(--radius-md);
-  border: 2px dashed var(--color-ui-accent);
+  border: 2px dashed var(--color-upload-dash);
   background: var(--color-chrome-field);
   box-shadow:
     inset 0 4px 28px rgba(0, 0, 0, 0.55),
@@ -191,7 +191,7 @@
 }
 
 .upload-zone.dragging {
-  border-color: var(--color-ui-gold);
+  border-color: rgba(148, 126, 100, 0.55);
   background: var(--color-chrome-card);
   transform: translateY(-1px);
   box-shadow:
@@ -305,7 +305,7 @@
   background: var(--color-ui-gold);
   color: var(--color-shell);
   border: 1px solid var(--color-ui-gold);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 0.55rem 0.85rem;
   font-weight: 700;
   font-size: 0.85rem;

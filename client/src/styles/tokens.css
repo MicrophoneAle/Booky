@@ -25,6 +25,7 @@
   --color-ui-accent:     #c9a86e;
   --color-ui-gold:       #d4b06a;
   --color-ui-gold-hot:   #dfc078;
+  --color-upload-dash:   rgba(132, 112, 92, 0.38);
 
   /* Library folio face — outer frame; darker than before, still above inset */
   --color-folio-face:    #4e3426;
@@ -43,9 +44,9 @@
 
   /* Spacing */
   --page-padding:      3rem;
-  --radius-sm:         4px;
-  --radius-md:         8px;
-  --radius-lg:         12px;
+  --radius-sm:         3px;
+  --radius-md:         5px;
+  --radius-lg:         8px;
   --nav-height:        44px;
 
   /* Mahogany desk — heavier overlay to dim the wood */
