@@ -71,7 +71,23 @@ function clampMonotonicProgress(base, candidate) {
     merged.current = Math.max(baseCurrent, candidateCurrent)
     merged.percent = Math.max(base.percent ?? 0, candidate.percent ?? 0)
 
-    if (typeof candidate.batchEnd === "number" && candidate.batchEnd < merged.current) {
+    const activePage =
+      candidate.activePage === null
+        ? 0
+        : Math.max(base.activePage ?? 0, candidate.activePage ?? 0)
+    if (activePage > 0) {
+      merged.activePage = activePage
+    } else {
+      delete merged.activePage
+    }
+
+    const batchEnd =
+      candidate.batchEnd === null
+        ? 0
+        : Math.max(base.batchEnd ?? 0, candidate.batchEnd ?? 0)
+    if (batchEnd > merged.current) {
+      merged.batchEnd = batchEnd
+    } else {
       delete merged.batchEnd
     }
   }
@@ -198,11 +214,21 @@ export function getParseProgressDetail(parseProgress) {
       const pageCurrent = Math.min(current, total)
       const pct = Math.round((pageCurrent / total) * 100)
       const batchEnd = progress.batchEnd
-      if (typeof batchEnd === "number" && batchEnd > pageCurrent) {
-        return `Reading pages ${pageCurrent + 1}–${batchEnd} of ${total} (${pct}% of PDF scan). Heavily illustrated pages can take a few seconds each.`
+      const activePage = progress.activePage
+
+      if (typeof activePage === "number" && activePage > pageCurrent) {
+        return `Reading page ${activePage} of ${total} (in progress — ${pct}% of PDF scan). Illustrated pages can take several seconds each.`
       }
+
+      if (typeof batchEnd === "number" && batchEnd > pageCurrent) {
+        return `Reading pages ${pageCurrent + 1}–${batchEnd} of ${total} (${pct}% of PDF scan). Illustrated pages can take several seconds each.`
+      }
+
       if (progress.extractSubphase === "deduplicating") {
-        return `Analyzing extracted pages (${current} of ${total}) — almost done with the PDF scan.`
+        return `Analyzing extracted pages (${pageCurrent} of ${total}) — almost done with the PDF scan.`
+      }
+      if (progress.extractSubphase === "indexing") {
+        return `Indexing extracted text (${pageCurrent} of ${total}) — finishing the PDF scan.`
       }
       return `Reading page ${pageCurrent} of ${total} (${pct}% of PDF scan).`
     }
@@ -292,6 +318,19 @@ export function getParsePipelineStepStates(parseProgress) {
   })
 }
 
+export function isExtractInFlight(parseProgress) {
+  const progress = normalizeParseProgress(parseProgress)
+  if (progress?.phase !== "extracting" || !progress.total) {
+    return false
+  }
+
+  const current = progress.current ?? 0
+  return (
+    (typeof progress.activePage === "number" && progress.activePage > current) ||
+    (typeof progress.batchEnd === "number" && progress.batchEnd > current)
+  )
+}
+
 /**
  * Combined upload + parse percent for the main progress bar.
  * During page extraction, uses page current/total so the bar moves steadily.
@@ -313,7 +352,11 @@ export function getCombinedProcessingPercent(
 
   if (progress.phase === "extracting" && progress.total > 0) {
     const pageCurrent = Math.min(progress.current ?? 0, progress.total)
-    const pageFraction = pageCurrent / progress.total
+    const activePage =
+      typeof progress.activePage === "number"
+        ? Math.max(pageCurrent, progress.activePage)
+        : pageCurrent
+    const pageFraction = activePage / progress.total
     return Math.round(
       base + pageFraction * PARSE_PROGRESS_EXTRACT_MAX_PERCENT * processingShare
     )

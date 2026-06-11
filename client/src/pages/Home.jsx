@@ -14,6 +14,7 @@ import {
   getParsePipelineStepStates,
   getParseProgressDetail,
   getParseProgressHeadline,
+  isExtractInFlight,
   mergeParseProgressUpdate,
   normalizeParseProgress,
 } from "../utils/parseProgress"
@@ -493,7 +494,14 @@ export default function Home() {
                 {(uploadState.phase === "uploading" ||
                   uploadState.phase === "processing" ||
                   uploadState.phase === "done") && (
-                  <div className="home__progress-bar-wrap">
+                  <div
+                    className={`home__progress-bar-wrap${
+                      uploadState.phase === "processing" &&
+                      isExtractInFlight(uploadState.parseProgress)
+                        ? " home__progress-bar-wrap--active"
+                        : ""
+                    }`}
+                  >
                     <div
                       className="home__progress-bar-fill"
                       style={{ width: `${uploadState.progress}%` }}
