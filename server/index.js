@@ -63,6 +63,8 @@ const PARSE_STATUS = {
 
 const backgroundParseInFlight = new Set()
 const documentParseProgress = new Map()
+const parseProgressDbWriteAt = new Map()
+const PARSE_PROGRESS_DB_WRITE_MS = 1500
 const PDF_PAGE_EXTRACTION_CONCURRENCY = 6
 
 const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 58
@@ -74,7 +76,36 @@ const PARSE_PROGRESS_FINALIZE_PERCENT = 96
 const PARSE_PROGRESS_SAVE_PERCENT = 98
 
 function setDocumentParseProgress(documentId, progress) {
+  const previous = documentParseProgress.get(documentId)
   documentParseProgress.set(documentId, progress)
+
+  const now = Date.now()
+  const lastWrite = parseProgressDbWriteAt.get(documentId) ?? 0
+  const phaseChanged = previous?.phase !== progress?.phase
+  const shouldPersist =
+    phaseChanged ||
+    progress?.phase === "error" ||
+    progress?.phase === "saving" ||
+    now - lastWrite >= PARSE_PROGRESS_DB_WRITE_MS
+
+  if (shouldPersist) {
+    parseProgressDbWriteAt.set(documentId, now)
+    void persistDocumentParseProgress(documentId, progress)
+  }
+}
+
+async function persistDocumentParseProgress(documentId, progress) {
+  try {
+    await supabase
+      .from("documents")
+      .update({ parse_progress: progress })
+      .eq("id", documentId)
+  } catch (error) {
+    console.warn(
+      `[parse-progress] Failed to persist progress for ${documentId}:`,
+      error instanceof Error ? error.message : String(error)
+    )
+  }
 }
 
 function getDocumentParseProgress(documentId) {
@@ -83,6 +114,11 @@ function getDocumentParseProgress(documentId) {
 
 function clearDocumentParseProgress(documentId) {
   documentParseProgress.delete(documentId)
+  parseProgressDbWriteAt.delete(documentId)
+  void supabase
+    .from("documents")
+    .update({ parse_progress: null })
+    .eq("id", documentId)
 }
 
 const supabase = createClient(
@@ -180,7 +216,7 @@ app.get("/documents/:id/status", requireAuth, async (req, res) => {
 
     const { data, error } = await supabase
       .from("documents")
-      .select("id, parse_status")
+      .select("id, parse_status, parse_progress")
       .eq("id", id)
       .eq("user_id", req.userId)
       .single()
@@ -191,7 +227,8 @@ app.get("/documents/:id/status", requireAuth, async (req, res) => {
     }
 
     const parseStatus = data.parse_status ?? PARSE_STATUS.READY
-    const liveProgress = getDocumentParseProgress(data.id)
+    const liveProgress =
+      getDocumentParseProgress(data.id) ?? data.parse_progress ?? null
 
     res.json({
       success: true,

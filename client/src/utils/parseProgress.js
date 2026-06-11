@@ -23,12 +23,93 @@ const PHASE_HEADLINES = {
   error: "Processing failed",
 }
 
-function phaseRank(phase) {
-  if (phase === "starting") {
-    return 0
+/** Mirrors server-side parse percent bands (server/index.js). */
+const PARSE_PERCENT_PHASE_THRESHOLDS = [
+  { min: 98, phase: "saving" },
+  { min: 96, phase: "finalizing" },
+  { min: 80, phase: "uploading_assets" },
+  { min: 63, phase: "classifying_illustrations" },
+  { min: 62, phase: "structuring" },
+  { min: 1, phase: "extracting" },
+]
+
+const KNOWN_PARSE_PHASES = new Set([
+  ...PARSE_PIPELINE_STEPS.map((step) => step.phase),
+  "ready",
+  "error",
+])
+
+function inferPhaseFromPercent(percent = 0) {
+  for (const { min, phase } of PARSE_PERCENT_PHASE_THRESHOLDS) {
+    if (percent >= min) {
+      return phase
+    }
   }
+
+  return "starting"
+}
+
+function phaseRank(phase) {
   const index = PARSE_PIPELINE_STEPS.findIndex((step) => step.phase === phase)
-  return index >= 0 ? index + 1 : -1
+  return index >= 0 ? index + 1 : 0
+}
+
+/**
+ * Coerce legacy/unknown poll payloads into a known pipeline phase.
+ * @param {object|null|undefined} parseProgress
+ */
+export function normalizeParseProgress(parseProgress) {
+  if (!parseProgress) {
+    return null
+  }
+
+  const phase = parseProgress.phase
+  if (phase && phase !== "processing" && KNOWN_PARSE_PHASES.has(phase)) {
+    return parseProgress
+  }
+
+  return {
+    ...parseProgress,
+    phase: inferPhaseFromPercent(parseProgress.percent ?? 0),
+  }
+}
+
+/**
+ * Merge a status poll update without clobbering detailed progress.
+ * @param {object|null|undefined} previous
+ * @param {object|null|undefined} update
+ */
+export function mergeParseProgressUpdate(previous, update) {
+  if (!update) {
+    return previous ?? null
+  }
+
+  if (update.phase === "ready" || update.phase === "error") {
+    return update
+  }
+
+  const base = previous ?? {
+    phase: "starting",
+    current: 0,
+    total: 0,
+    percent: 0,
+  }
+
+  if (update.phase && update.phase !== "processing" && KNOWN_PARSE_PHASES.has(update.phase)) {
+    return { ...base, ...update }
+  }
+
+  const merged = {
+    ...base,
+    ...update,
+    phase: base.phase,
+  }
+
+  if (!base.phase || base.phase === "processing") {
+    merged.phase = inferPhaseFromPercent(update.percent ?? base.percent ?? 0)
+  }
+
+  return merged
 }
 
 /**
@@ -36,26 +117,21 @@ function phaseRank(phase) {
  * @returns {string}
  */
 export function getParseProgressHeadline(parseProgress) {
-  if (!parseProgress?.phase) {
+  const progress = normalizeParseProgress(parseProgress)
+
+  if (!progress?.phase) {
     return "Preparing your book…"
   }
 
-  if (parseProgress.phase === "classifying_illustrations" && parseProgress.usingPrintedToc) {
+  if (progress.phase === "classifying_illustrations" && progress.usingPrintedToc) {
     return "Applying printed table of contents…"
   }
 
-  if (parseProgress.phase === "ocr_illustrations" && parseProgress.usingPrintedToc) {
+  if (progress.phase === "ocr_illustrations" && progress.usingPrintedToc) {
     return "Reading part and interlude dividers…"
   }
 
-  if (parseProgress.label && parseProgress.phase !== "error") {
-    const mapped = PHASE_HEADLINES[parseProgress.phase]
-    if (mapped) {
-      return mapped
-    }
-  }
-
-  return PHASE_HEADLINES[parseProgress.phase] ?? "Processing your book…"
+  return PHASE_HEADLINES[progress.phase] ?? "Processing your book…"
 }
 
 /**
@@ -63,11 +139,13 @@ export function getParseProgressHeadline(parseProgress) {
  * @returns {string}
  */
 export function getParseProgressDetail(parseProgress) {
-  if (!parseProgress) {
+  const progress = normalizeParseProgress(parseProgress)
+
+  if (!progress) {
     return "Large illustrated books can take several minutes — especially when uploading artwork."
   }
 
-  const { phase, current = 0, total = 0, label } = parseProgress
+  const { phase, current = 0, total = 0, label } = progress
 
   if (phase === "error") {
     return label ?? "Something went wrong while parsing this PDF."
@@ -90,7 +168,7 @@ export function getParseProgressDetail(parseProgress) {
   }
 
   if (phase === "classifying_illustrations") {
-    if (parseProgress.usingPrintedToc && total > 0) {
+    if (progress.usingPrintedToc && total > 0) {
       return `Applying printed table of contents (${current} of ${total} illustrations).`
     }
     if (total > 0) {
@@ -100,14 +178,14 @@ export function getParseProgressDetail(parseProgress) {
   }
 
   if (phase === "ocr_illustrations") {
-    if (parseProgress.usingPrintedToc && total > 0) {
+    if (progress.usingPrintedToc && total > 0) {
       return `Reading part and interlude dividers from artwork (${current} of ${total}).`
     }
     if (total > 0) {
       return `Reading text from illustration ${current} of ${total} (chapter titles, parts, interludes).`
     }
-    if (parseProgress.illustrationTotal > 0) {
-      return `Classified ${parseProgress.illustrationCurrent ?? 0} of ${parseProgress.illustrationTotal} illustrations — no OCR needed for remaining headers.`
+    if (progress.illustrationTotal > 0) {
+      return `Classified ${progress.illustrationCurrent ?? 0} of ${progress.illustrationTotal} illustrations — no OCR needed for remaining headers.`
     }
     return "Extracting chapter numbers and titles from header artwork."
   }
@@ -146,7 +224,8 @@ export function getParseProgressDetail(parseProgress) {
  * @returns {Array<{ phase: string, label: string, status: 'done'|'active'|'pending' }>}
  */
 export function getParsePipelineStepStates(parseProgress) {
-  const activePhase = parseProgress?.phase ?? "starting"
+  const progress = normalizeParseProgress(parseProgress)
+  const activePhase = progress?.phase ?? "starting"
   const activeRank = phaseRank(activePhase)
 
   return PARSE_PIPELINE_STEPS.map((step) => {
