@@ -917,9 +917,9 @@ const FONT_STYLE_OPTIONS = [
 ]
 
 const LINE_HEIGHT_MAP = {
-  compact: { body: 1.1, heading: 1.1 },
+  compact: { body: 1.0, heading: 1.0 },
   normal: { body: 1.15, heading: 1.2 },
-  relaxed: { body: 1.4, heading: 1.3 },
+  relaxed: { body: 1.5, heading: 1.3 },
   airy: { body: 1.65, heading: 1.4 },
 }
 
