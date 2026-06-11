@@ -17,6 +17,7 @@ import {
 } from "./imageOcrService.js"
 import {
   extractPrintedTocLookup,
+  extractPrintedTocFromPageData,
   lookupPrintedTocNumberLabel,
   lookupPrintedTocTitle,
 } from "./printedTocService.js"
@@ -3871,6 +3872,8 @@ async function extractPdfPageImageCandidatesFromOperatorList(
         y: metrics.y,
         width: metrics.width,
         height: metrics.height,
+        pageWidth,
+        pageHeight,
       },
       imageRole,
       isCandidate: imageRole != null,
@@ -3905,9 +3908,61 @@ function buildPageTextCharCounts(blocks) {
   return counts
 }
 
+const FULL_PAGE_OCR_MIN_PAGE = 28
+const FULL_PAGE_OCR_MIN_HEIGHT_RATIO = 0.55
+
+function shouldOcrFullPageIllustration(block, pageTextCharCounts) {
+  if (block?.imageRole !== "full_page_illustration") {
+    return false
+  }
+
+  const pageNumber = block.pageNumber ?? 0
+  if (pageNumber < FULL_PAGE_OCR_MIN_PAGE) {
+    return false
+  }
+
+  if (getSamePageTextChars(pageTextCharCounts, block) > 80) {
+    return false
+  }
+
+  const coords = block.coordinates ?? {}
+  const pageHeight = coords.pageHeight ?? 0
+  const height = coords.height ?? 0
+  if (pageHeight > 0 && height / pageHeight < FULL_PAGE_OCR_MIN_HEIGHT_RATIO) {
+    return false
+  }
+
+  return true
+}
+
+function shouldRunIllustrationOcr(block, ocrMetadata, pageTextCharCounts) {
+  if (block.imageRole === "chapter_heading") {
+    return !ocrMetadata
+  }
+
+  return shouldOcrFullPageIllustration(block, pageTextCharCounts)
+}
+
 function getSamePageTextChars(pageTextCharCounts, imageBlock) {
   const pageIndex = Math.max(0, (imageBlock?.pageNumber ?? 1) - 1)
   return pageTextCharCounts.get(pageIndex) ?? 0
+}
+
+function peekNextNonPartTocEntry(printedToc, tocOrderCursor) {
+  if (!printedToc?.ordered?.length || !tocOrderCursor) {
+    return null
+  }
+
+  let index = tocOrderCursor.index
+  while (index < printedToc.ordered.length) {
+    const entry = printedToc.ordered[index]
+    if (entry.kind !== "part") {
+      return entry
+    }
+    index += 1
+  }
+
+  return null
 }
 
 function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, printedToc) {
@@ -3915,32 +3970,36 @@ function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, printedToc
   let interludeSequence = 0
   let pendingInterludes = 0
   let count = 0
+  const tocOrderCursor = printedToc ? { index: 0 } : null
 
   for (const { block } of candidateEntries) {
     const forceInterludeBoundary =
       pendingInterludes > 0 && block.imageRole === "chapter_heading"
-    const sparseIllustrationPage =
-      block.imageRole === "full_page_illustration" &&
-      getSamePageTextChars(pageTextCharCounts, block) <= 80
 
     let tocMetadata = null
     if (block.imageRole === "chapter_heading" && printedToc) {
       tocMetadata = buildOcrMetadataFromPrintedToc(printedToc, {
-        chapterSequence,
-        interludeSequence,
+        tocOrderCursor,
         forceInterludeBoundary,
       })
     }
 
     const willRunOcr =
-      block.imageRole === "chapter_heading" ? !tocMetadata : sparseIllustrationPage
+      Boolean(extractImageBlockPayload(block)) &&
+      shouldRunIllustrationOcr(block, tocMetadata, pageTextCharCounts)
 
     if (willRunOcr) {
       count += 1
     }
 
-    if (sparseIllustrationPage && willRunOcr) {
-      pendingInterludes = 3
+    if (
+      shouldOcrFullPageIllustration(block, pageTextCharCounts) &&
+      willRunOcr
+    ) {
+      const nextEntry = peekNextNonPartTocEntry(printedToc, tocOrderCursor)
+      if (nextEntry?.kind === "interlude") {
+        pendingInterludes = 3
+      }
       continue
     }
 
@@ -3949,6 +4008,9 @@ function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, printedToc
       pendingInterludes = Math.max(0, pendingInterludes - 1)
     } else if (
       tocMetadata?.boundaryKind === "chapter" ||
+      tocMetadata?.boundaryKind === "prelude" ||
+      tocMetadata?.boundaryKind === "prologue" ||
+      tocMetadata?.boundaryKind === "epilogue" ||
       (block.imageRole === "chapter_heading" && !tocMetadata)
     ) {
       chapterSequence += 1
@@ -3961,41 +4023,47 @@ function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, printedToc
   return count
 }
 
-function buildOcrMetadataFromPrintedToc(
-  printedToc,
-  { chapterSequence = 0, interludeSequence = 0, forceInterludeBoundary = false } = {}
-) {
-  if (!printedToc) {
-    return null
-  }
-
-  const boundaryKind = forceInterludeBoundary ? "interlude" : "chapter"
-  const lookupSequence = forceInterludeBoundary ? interludeSequence + 1 : chapterSequence + 1
-
-  const title = lookupPrintedTocTitle(printedToc, {
-    boundaryKind,
-    chapterSequence: lookupSequence,
-  })
-
-  if (!title) {
-    return null
-  }
-
-  const number = lookupPrintedTocNumberLabel(printedToc, {
-    boundaryKind,
-    chapterSequence: lookupSequence,
-  })
-
-  if (!number) {
+function printedTocEntryToOcrMetadata(entry) {
+  if (!entry) {
     return null
   }
 
   return {
-    boundaryKind,
-    number,
-    title,
-    rawText: number && title ? `${number}: ${title}` : number ?? title ?? null,
+    boundaryKind: entry.kind,
+    number: entry.label,
+    title: entry.title,
+    rawText: entry.title ? `${entry.label}: ${entry.title}` : entry.label,
   }
+}
+
+function buildOcrMetadataFromPrintedToc(
+  printedToc,
+  { tocOrderCursor = null, forceInterludeBoundary = false } = {}
+) {
+  if (!printedToc?.ordered?.length || !tocOrderCursor) {
+    return null
+  }
+
+  let index = tocOrderCursor.index
+
+  while (index < printedToc.ordered.length) {
+    const entry = printedToc.ordered[index]
+
+    if (entry.kind === "part") {
+      index += 1
+      continue
+    }
+
+    if (forceInterludeBoundary && entry.kind !== "interlude") {
+      index += 1
+      continue
+    }
+
+    tocOrderCursor.index = index + 1
+    return printedTocEntryToOcrMetadata(entry)
+  }
+
+  return null
 }
 
 function normalizeBlockTextForPageMatch(text) {
@@ -4221,6 +4289,7 @@ async function finalizeIllustrationBlocks(
   let pendingInterludes = 0
   let ocrCompleted = 0
   let processedCandidates = 0
+  const tocOrderCursor = printedToc ? { index: 0 } : null
   const totalCandidates = candidateEntries.length
   const illustrationSpan = Math.max(
     1,
@@ -4242,22 +4311,19 @@ async function finalizeIllustrationBlocks(
 
       const forceInterludeBoundary =
         pendingInterludes > 0 && block.imageRole === "chapter_heading"
-      const sparseIllustrationPage =
-        block.imageRole === "full_page_illustration" &&
-        getSamePageTextChars(pageTextCharCounts, block) <= 80
 
       if (block.imageRole === "chapter_heading" && printedToc) {
         ocrMetadata = buildOcrMetadataFromPrintedToc(printedToc, {
-          chapterSequence,
-          interludeSequence,
+          tocOrderCursor,
           forceInterludeBoundary,
         })
       }
 
-      const shouldRunOcr =
-        block.imageRole === "chapter_heading"
-          ? !ocrMetadata
-          : sparseIllustrationPage
+      const shouldRunOcr = shouldRunIllustrationOcr(
+        block,
+        ocrMetadata,
+        pageTextCharCounts
+      )
 
       if (imageBuffer?.length && shouldRunOcr) {
         ocrMetadata = await ocrIllustrationMetadata(imageBuffer, block.imageRole ?? null)
@@ -4282,6 +4348,13 @@ async function finalizeIllustrationBlocks(
         interludeSequence += 1
         pendingInterludes = Math.max(0, pendingInterludes - 1)
       } else if (analysisResult.boundaryKind === "chapter") {
+        chapterSequence += 1
+        pendingInterludes = 0
+      } else if (
+        analysisResult.boundaryKind === "prelude" ||
+        analysisResult.boundaryKind === "prologue" ||
+        analysisResult.boundaryKind === "epilogue"
+      ) {
         chapterSequence += 1
         pendingInterludes = 0
       } else if (analysisResult.boundaryKind === "part") {
@@ -6398,7 +6471,8 @@ async function parsePdfBuffer(
   }
 
   blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle)
-  const printedToc = extractPrintedTocLookup(blocks)
+  const printedToc =
+    extractPrintedTocFromPageData(pageData) ?? extractPrintedTocLookup(blocks)
   blocks = excludePrintedTocBlocks(blocks)
   blocks = normalizeFrontAndBackMatterBlocks(blocks)
   blocks = injectStormlightPreludeHeading(blocks)

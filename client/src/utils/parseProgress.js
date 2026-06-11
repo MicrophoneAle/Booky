@@ -91,7 +91,7 @@ export function getParseProgressDetail(parseProgress) {
 
   if (phase === "classifying_illustrations") {
     if (parseProgress.usingPrintedToc && total > 0) {
-      return `Matching chapter headers from the printed table of contents (${current} of ${total}).`
+      return `Applying printed table of contents (${current} of ${total} illustrations).`
     }
     if (total > 0) {
       return `Classifying illustration ${current} of ${total} (chapter headers and full-page art).`
@@ -105,6 +105,9 @@ export function getParseProgressDetail(parseProgress) {
     }
     if (total > 0) {
       return `Reading text from illustration ${current} of ${total} (chapter titles, parts, interludes).`
+    }
+    if (parseProgress.illustrationTotal > 0) {
+      return `Classified ${parseProgress.illustrationCurrent ?? 0} of ${parseProgress.illustrationTotal} illustrations — no OCR needed for remaining headers.`
     }
     return "Extracting chapter numbers and titles from header artwork."
   }

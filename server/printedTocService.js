@@ -56,6 +56,145 @@ function isPrintedTocSectionLine(text) {
   )
 }
 
+function ingestPrintedTocLine(text, state) {
+  const trimmed = normalizeLine(text)
+  if (!trimmed) {
+    return false
+  }
+
+  if (/^contents$/i.test(trimmed)) {
+    state.inTocSection = true
+    return true
+  }
+
+  if (!state.inTocSection && !isPrintedTocSectionLine(trimmed)) {
+    return false
+  }
+
+  if (!state.inTocSection && isPrintedTocSectionLine(trimmed)) {
+    state.inTocSection = true
+  }
+
+  if (PRELUDE_TOC_REGEX.test(trimmed)) {
+    const title = "Prelude to the Stormlight Archive"
+    state.sections.set("prelude", title)
+    state.ordered.push({ kind: "prelude", key: "prelude", title, label: "Prelude" })
+    state.tocEntryCount += 1
+    return true
+  }
+
+  const prologueMatch = trimmed.match(PROLOGUE_TOC_REGEX)
+  if (prologueMatch) {
+    const title = titleCaseTocTitle(prologueMatch[1])
+    state.sections.set("prologue", title)
+    state.ordered.push({ kind: "prologue", key: "prologue", title, label: "Prologue" })
+    state.tocEntryCount += 1
+    return true
+  }
+
+  const epilogueMatch = trimmed.match(EPILOGUE_TOC_REGEX)
+  if (epilogueMatch) {
+    const title = titleCaseTocTitle(epilogueMatch[1])
+    state.sections.set("epilogue", title)
+    state.ordered.push({ kind: "epilogue", key: "epilogue", title, label: "Epilogue" })
+    state.tocEntryCount += 1
+    return true
+  }
+
+  const partMatch = trimmed.match(PART_TOC_LINE_REGEX)
+  if (partMatch) {
+    const key = partMatch[1].toLowerCase()
+    const subtitle = titleCaseTocTitle(partMatch[2])
+    const label = `Part ${partMatch[1]}`
+    state.parts.set(key, subtitle)
+    state.ordered.push({ kind: "part", key, title: subtitle, label })
+    state.tocEntryCount += 1
+    return true
+  }
+
+  const chapterMatch = trimmed.match(CHAPTER_TOC_LINE_REGEX)
+  if (chapterMatch) {
+    const key = chapterMatch[1]
+    const title = titleCaseTocTitle(chapterMatch[2])
+    const label = `Chapter ${key}`
+    state.chapters.set(key, title)
+    state.ordered.push({ kind: "chapter", key, title, label })
+    state.tocEntryCount += 1
+    return true
+  }
+
+  const interludeMatch = trimmed.match(INTERLUDE_TOC_LINE_REGEX)
+  if (interludeMatch) {
+    const interludeNum = interludeMatch[1] ?? interludeMatch[3]
+    const key = `1-${interludeNum}`
+    const title = titleCaseTocTitle(interludeMatch[4])
+    const label = `Interlude I-${interludeNum}`
+    state.interludes.set(key, title)
+    state.ordered.push({ kind: "interlude", key, title, label })
+    state.tocEntryCount += 1
+    return true
+  }
+
+  const listingMatch = trimmed.match(CHAPTER_LISTING_TOC_REGEX)
+  if (listingMatch) {
+    const key = listingMatch[1]
+    const title = titleCaseTocTitle(listingMatch[2])
+    const label = `Chapter ${key}`
+    state.chapters.set(key, title)
+    state.ordered.push({ kind: "chapter", key, title, label })
+    state.tocEntryCount += 1
+    return true
+  }
+
+  return state.inTocSection
+}
+
+function createPrintedTocState() {
+  return {
+    chapters: new Map(),
+    interludes: new Map(),
+    sections: new Map(),
+    parts: new Map(),
+    ordered: [],
+    inTocSection: false,
+    tocEntryCount: 0,
+  }
+}
+
+function finalizePrintedTocState(state) {
+  if (state.tocEntryCount < 5) {
+    return null
+  }
+
+  return {
+    chapters: state.chapters,
+    interludes: state.interludes,
+    sections: state.sections,
+    parts: state.parts,
+    ordered: state.ordered,
+  }
+}
+
+/**
+ * Scan raw PDF page lines before block building (TOC lines may never become blocks).
+ * @param {Array<{ lines?: Array<{ text?: string }> }>} pageData
+ */
+function extractPrintedTocFromPageData(pageData) {
+  if (!Array.isArray(pageData) || pageData.length === 0) {
+    return null
+  }
+
+  const state = createPrintedTocState()
+
+  for (const page of pageData) {
+    for (const line of page?.lines ?? []) {
+      ingestPrintedTocLine(line?.text, state)
+    }
+  }
+
+  return finalizePrintedTocState(state)
+}
+
 /**
  * @param {Array<{ text?: string }>} blocks
  */
@@ -64,98 +203,13 @@ function extractPrintedTocLookup(blocks) {
     return null
   }
 
-  const chapters = new Map()
-  const interludes = new Map()
-  const sections = new Map()
-  const ordered = []
-
-  let inTocSection = false
-  let tocEntryCount = 0
+  const state = createPrintedTocState()
 
   for (const block of blocks) {
-    const text = normalizeLine(block?.text)
-    if (!text) {
-      continue
-    }
-
-    if (/^contents$/i.test(text)) {
-      inTocSection = true
-      continue
-    }
-
-    if (!inTocSection && !isPrintedTocSectionLine(text)) {
-      continue
-    }
-
-    if (!inTocSection && isPrintedTocSectionLine(text)) {
-      inTocSection = true
-    }
-
-    if (PRELUDE_TOC_REGEX.test(text)) {
-      const title = "Prelude to the Stormlight Archive"
-      sections.set("prelude", title)
-      ordered.push({ kind: "prelude", key: "prelude", title, label: "Prelude" })
-      tocEntryCount += 1
-      continue
-    }
-
-    const prologueMatch = text.match(PROLOGUE_TOC_REGEX)
-    if (prologueMatch) {
-      const title = titleCaseTocTitle(prologueMatch[1])
-      sections.set("prologue", title)
-      ordered.push({ kind: "prologue", key: "prologue", title, label: "Prologue" })
-      tocEntryCount += 1
-      continue
-    }
-
-    const epilogueMatch = text.match(EPILOGUE_TOC_REGEX)
-    if (epilogueMatch) {
-      const title = titleCaseTocTitle(epilogueMatch[1])
-      sections.set("epilogue", title)
-      ordered.push({ kind: "epilogue", key: "epilogue", title, label: "Epilogue" })
-      tocEntryCount += 1
-      continue
-    }
-
-    const chapterMatch = text.match(CHAPTER_TOC_LINE_REGEX)
-    if (chapterMatch) {
-      const key = chapterMatch[1]
-      const title = titleCaseTocTitle(chapterMatch[2])
-      const label = `Chapter ${key}`
-      chapters.set(key, title)
-      ordered.push({ kind: "chapter", key, title, label })
-      tocEntryCount += 1
-      continue
-    }
-
-    const interludeMatch = text.match(INTERLUDE_TOC_LINE_REGEX)
-    if (interludeMatch) {
-      const interludeNum = interludeMatch[1] ?? interludeMatch[3]
-      const key = `1-${interludeNum}`
-      const title = titleCaseTocTitle(interludeMatch[4])
-      const label = `Interlude I-${interludeNum}`
-      interludes.set(key, title)
-      ordered.push({ kind: "interlude", key, title, label })
-      tocEntryCount += 1
-      continue
-    }
-
-    const listingMatch = text.match(CHAPTER_LISTING_TOC_REGEX)
-    if (listingMatch) {
-      const key = listingMatch[1]
-      const title = titleCaseTocTitle(listingMatch[2])
-      const label = `Chapter ${key}`
-      chapters.set(key, title)
-      ordered.push({ kind: "chapter", key, title, label })
-      tocEntryCount += 1
-    }
+    ingestPrintedTocLine(block?.text, state)
   }
 
-  if (tocEntryCount < 5) {
-    return null
-  }
-
-  return { chapters, interludes, sections, ordered }
+  return finalizePrintedTocState(state)
 }
 
 function parseChapterNumberKey(numberLabel) {
@@ -264,6 +318,7 @@ function lookupPrintedTocNumberLabel(
 
 export {
   extractPrintedTocLookup,
+  extractPrintedTocFromPageData,
   lookupPrintedTocTitle,
   lookupPrintedTocNumberLabel,
   titleCaseTocTitle,
