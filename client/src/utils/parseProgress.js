@@ -42,6 +42,43 @@ const KNOWN_PARSE_PHASES = new Set([
   "error",
 ])
 
+function clampMonotonicProgress(base, candidate) {
+  if (!candidate) {
+    return base ?? null
+  }
+
+  if (!base) {
+    return candidate
+  }
+
+  if (candidate.phase === "ready" || candidate.phase === "error") {
+    return candidate
+  }
+
+  const merged = { ...base, ...candidate }
+
+  for (const [key, value] of Object.entries(candidate)) {
+    if (value === null) {
+      delete merged[key]
+    }
+  }
+
+  if (base.phase === candidate.phase && candidate.phase === "extracting") {
+    const baseCurrent = typeof base.current === "number" ? base.current : 0
+    const candidateCurrent =
+      typeof candidate.current === "number" ? candidate.current : baseCurrent
+
+    merged.current = Math.max(baseCurrent, candidateCurrent)
+    merged.percent = Math.max(base.percent ?? 0, candidate.percent ?? 0)
+
+    if (typeof candidate.batchEnd === "number" && candidate.batchEnd < merged.current) {
+      delete merged.batchEnd
+    }
+  }
+
+  return merged
+}
+
 function inferPhaseFromPercent(percent = 0) {
   for (const { min, phase } of PARSE_PERCENT_PHASE_THRESHOLDS) {
     if (percent >= min) {
@@ -99,24 +136,16 @@ export function mergeParseProgressUpdate(previous, update) {
   }
 
   if (update.phase && update.phase !== "processing" && KNOWN_PARSE_PHASES.has(update.phase)) {
-    const merged = { ...base, ...update }
-    for (const [key, value] of Object.entries(update)) {
-      if (value === null) {
-        delete merged[key]
-      }
-    }
-    return merged
+    return clampMonotonicProgress(base, update)
   }
 
-  const merged = {
-    ...base,
+  const merged = clampMonotonicProgress(base, {
     ...update,
-    phase: base.phase,
-  }
-
-  if (!base.phase || base.phase === "processing") {
-    merged.phase = inferPhaseFromPercent(update.percent ?? base.percent ?? 0)
-  }
+    phase:
+      base.phase && base.phase !== "processing"
+        ? base.phase
+        : inferPhaseFromPercent(update.percent ?? base.percent ?? 0),
+  })
 
   return merged
 }
@@ -166,15 +195,16 @@ export function getParseProgressDetail(parseProgress) {
 
   if (phase === "extracting") {
     if (total > 0) {
-      const pct = Math.round((current / total) * 100)
+      const pageCurrent = Math.min(current, total)
+      const pct = Math.round((pageCurrent / total) * 100)
       const batchEnd = progress.batchEnd
-      if (typeof batchEnd === "number" && batchEnd > current) {
-        return `Reading pages ${current + 1}–${batchEnd} of ${total} (${pct}% of PDF scan). Heavily illustrated pages can take a few seconds each.`
+      if (typeof batchEnd === "number" && batchEnd > pageCurrent) {
+        return `Reading pages ${pageCurrent + 1}–${batchEnd} of ${total} (${pct}% of PDF scan). Heavily illustrated pages can take a few seconds each.`
       }
       if (progress.extractSubphase === "deduplicating") {
         return `Analyzing extracted pages (${current} of ${total}) — almost done with the PDF scan.`
       }
-      return `Reading page ${current} of ${total} (${pct}% of PDF scan).`
+      return `Reading page ${pageCurrent} of ${total} (${pct}% of PDF scan).`
     }
     return "Scanning pages for text, headings, and embedded artwork."
   }
@@ -282,7 +312,8 @@ export function getCombinedProcessingPercent(
   }
 
   if (progress.phase === "extracting" && progress.total > 0) {
-    const pageFraction = Math.min(1, progress.current / progress.total)
+    const pageCurrent = Math.min(progress.current ?? 0, progress.total)
+    const pageFraction = pageCurrent / progress.total
     return Math.round(
       base + pageFraction * PARSE_PROGRESS_EXTRACT_MAX_PERCENT * processingShare
     )

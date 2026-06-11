@@ -65,7 +65,6 @@ const backgroundParseInFlight = new Set()
 const documentParseProgress = new Map()
 const parseProgressDbWriteAt = new Map()
 const PARSE_PROGRESS_DB_WRITE_MS = 1500
-const PARSE_PROGRESS_EXTRACT_PERSIST_EVERY_PAGES = 3
 const PDF_PAGE_EXTRACTION_CONCURRENCY = 6
 
 const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 58
@@ -76,29 +75,50 @@ const PARSE_PROGRESS_UPLOAD_MAX_PERCENT = 93
 const PARSE_PROGRESS_FINALIZE_PERCENT = 96
 const PARSE_PROGRESS_SAVE_PERCENT = 98
 
+function mergeParseProgressSnapshot(previous, next) {
+  if (!next) {
+    return previous ?? null
+  }
+
+  if (!previous) {
+    return next
+  }
+
+  if (previous.phase === next.phase && next.phase === "extracting") {
+    const current = Math.max(previous.current ?? 0, next.current ?? 0)
+    return {
+      ...next,
+      current,
+      percent: Math.max(previous.percent ?? 0, next.percent ?? 0),
+      total: next.total ?? previous.total,
+    }
+  }
+
+  return next
+}
+
 function setDocumentParseProgress(documentId, progress) {
   const previous = documentParseProgress.get(documentId)
-  documentParseProgress.set(documentId, progress)
+  const merged = mergeParseProgressSnapshot(previous, progress)
+  documentParseProgress.set(documentId, merged)
 
   const now = Date.now()
   const lastWrite = parseProgressDbWriteAt.get(documentId) ?? 0
-  const phaseChanged = previous?.phase !== progress?.phase
+  const phaseChanged = previous?.phase !== merged?.phase
   const extractPagePersist =
-    progress?.phase === "extracting" &&
-    typeof progress.current === "number" &&
-    progress.current !== previous?.current &&
-    (progress.current % PARSE_PROGRESS_EXTRACT_PERSIST_EVERY_PAGES === 0 ||
-      progress.current === progress.total)
+    merged?.phase === "extracting" &&
+    typeof merged.current === "number" &&
+    merged.current !== previous?.current
   const shouldPersist =
     phaseChanged ||
     extractPagePersist ||
-    progress?.phase === "error" ||
-    progress?.phase === "saving" ||
+    merged?.phase === "error" ||
+    merged?.phase === "saving" ||
     now - lastWrite >= PARSE_PROGRESS_DB_WRITE_MS
 
   if (shouldPersist) {
     parseProgressDbWriteAt.set(documentId, now)
-    void persistDocumentParseProgress(documentId, progress)
+    void persistDocumentParseProgress(documentId, merged)
   }
 }
 
@@ -235,8 +255,10 @@ app.get("/documents/:id/status", requireAuth, async (req, res) => {
     }
 
     const parseStatus = data.parse_status ?? PARSE_STATUS.READY
-    const liveProgress =
-      getDocumentParseProgress(data.id) ?? data.parse_progress ?? null
+    const liveProgress = mergeParseProgressSnapshot(
+      data.parse_progress ?? null,
+      getDocumentParseProgress(data.id)
+    )
 
     res.json({
       success: true,
@@ -6447,6 +6469,7 @@ async function parsePdfBuffer(
   })
 
   const puaReplacementMap = buildDefaultPuaReplacementMap(buffer)
+  let lastExtractPage = 0
 
   const { pageData, headingStrings, numPages, pdfInfo, pageImageCandidates } =
     await extractPdfStructure(buffer, {
@@ -6460,14 +6483,22 @@ async function parsePdfBuffer(
         reportProgress({
           phase: "extracting",
           label: "Reading PDF pages",
-          current: Math.max(0, batchStart - 1),
+          current: lastExtractPage,
           batchEnd,
           total: totalPages,
-          percent: extractPercent,
+          percent: Math.max(
+            extractPercent,
+            totalPages > 0
+              ? Math.round(
+                  (lastExtractPage / totalPages) * PARSE_PROGRESS_EXTRACT_MAX_PERCENT
+                )
+              : 0
+          ),
         })
       },
       onPageProcessed(pageNumber, totalPages) {
         onPageProcessed?.(pageNumber, totalPages)
+        lastExtractPage = pageNumber
 
         const extractPercent =
           totalPages > 0
@@ -6487,6 +6518,8 @@ async function parsePdfBuffer(
         })
       },
       onPostProcessProgress(currentPage, totalPages) {
+        lastExtractPage = Math.max(lastExtractPage, currentPage)
+
         const extractPercent =
           totalPages > 0
             ? Math.round(
