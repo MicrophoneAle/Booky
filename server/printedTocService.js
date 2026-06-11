@@ -4,7 +4,7 @@
  * Used as fallback when illustration OCR cannot read a title.
  */
 
-const CHAPTER_TOC_LINE_REGEX = /^(\d{1,3}):\s+([A-Z][A-Z0-9\s'’\-]+)$/
+const CHAPTER_TOC_LINE_REGEX = /^(\d{1,3}):\s+([A-Z][A-Z0-9\s'’.,\-]+)(?:[.?!])?$/
 const INTERLUDE_TOC_LINE_REGEX = /^(?:I-(\d{1,2})|(\d)-(\d{1,2})):\s+(.+)$/i
 const PART_TOC_LINE_REGEX =
   /^Part\s+((?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)|[IVXLCDM]+|\d+):\s*(.+)$/i

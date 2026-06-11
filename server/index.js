@@ -21,7 +21,7 @@ import {
   lookupPrintedTocTitle,
 } from "./printedTocService.js"
 
-const PARSER_VERSION = 51
+const PARSER_VERSION = 52
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -1067,6 +1067,134 @@ function translatePuaCharacters(text, replacementByPua = null) {
   return normalized.replace(/[\uE000-\uF8FF]/g, "")
 }
 
+const STORMLIGHT_TOC_CHAPTER_LINE_REGEX =
+  /^\d{1,3}:\s+[A-Z][A-Z0-9\s'’.,\-]+(?:[.?!])?$/
+
+const STORMLIGHT_TOC_INTERLUDE_LINE_REGEX = /^\d-\d{1,2}:\s+[A-Z]/i
+
+const STORMLIGHT_TOC_PART_LINE_REGEX =
+  /^Part\s+(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[IVXLCDM]+|\d+):/i
+
+const STORMLIGHT_PRELUDE_OPENING_REGEX = /^Kalak rounded\b/i
+
+const ILLUSTRATIONS_LIST_ENTRY_REGEX =
+  /^(?:Map of\b|Prime Map of\b|Sketchbook:|Navani['\u2019]?s Notebook:|Relief of\b|Historical Greatshell|The History of Man\b|Detail of the|The Alethi Codes of War\b|Map of Four Cities\b|Shallan['\u2019]?s Sketchbook:)/i
+
+function isIllustrationsListLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (isIllustrationsListEntryLine(trimmed)) {
+    return true
+  }
+  return /^Shallan['\u2019]?s Sketchbook:\s+/i.test(trimmed)
+}
+
+function countStormlightTocMarkers(text) {
+  const pattern = /\b\d{1,3}:\s+[A-Z][A-Z0-9\s'’.,\-]+/g
+  let count = 0
+  while (pattern.exec(text ?? "")) {
+    count += 1
+  }
+  return count
+}
+
+function isStormlightPrintedTocLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  if (STORMLIGHT_TOC_CHAPTER_LINE_REGEX.test(trimmed)) {
+    return true
+  }
+
+  if (STORMLIGHT_TOC_INTERLUDE_LINE_REGEX.test(trimmed)) {
+    return true
+  }
+
+  if (STORMLIGHT_TOC_PART_LINE_REGEX.test(trimmed)) {
+    return true
+  }
+
+  if (/^Prelude to the Stormlight Archive$/i.test(trimmed)) {
+    return true
+  }
+
+  if (/^Book One of the Stormlight Archive$/i.test(trimmed)) {
+    return true
+  }
+
+  if (/^Book One:\s+/i.test(trimmed)) {
+    return true
+  }
+
+  if (/^Prologue:\s+/i.test(trimmed)) {
+    return true
+  }
+
+  if (/^Epilogue:\s+/i.test(trimmed)) {
+    return true
+  }
+
+  if (/^Ars Arcanum$/i.test(trimmed)) {
+    return true
+  }
+
+  if (/^Interludes$/i.test(trimmed)) {
+    return true
+  }
+
+  if (countStormlightTocMarkers(trimmed) >= 2) {
+    return true
+  }
+
+  return false
+}
+
+function isIllustrationsListEntryLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  if (/^ILLUSTRATIONS$/i.test(trimmed)) {
+    return true
+  }
+
+  return ILLUSTRATIONS_LIST_ENTRY_REGEX.test(trimmed)
+}
+
+function isPublisherBibliographyHeaderLine(text) {
+  return /^TOR BOOKS BY\b/i.test((text ?? "").trim())
+}
+
+function isBibliographySeriesTitleLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 72) {
+    return false
+  }
+
+  return /^(?:The )?(?:Mistborn Trilogy|Stormlight Archive|Wheel of Time)$/i.test(trimmed)
+}
+
+function isTitlePageBookLabelLine(text) {
+  const trimmed = (text ?? "").trim()
+  return (
+    /^Book One of\.?$/i.test(trimmed) ||
+    /^THE STORMLIGHT ARCHIVE$/i.test(trimmed) ||
+    /^A TOM DOHERTY ASSOCIATES BOOK/i.test(trimmed)
+  )
+}
+
+function stripEmbeddedRunningHeader(text) {
+  return (text ?? "")
+    .replace(/\s+THE WAY OF KINGS\s*$/i, "")
+    .replace(/\s+THE STORMLIGHT ARCHIVE\s*$/i, "")
+    .trim()
+}
+
 function isPrintedTocHeading(text) {
   const trimmed = (text ?? "").trim()
   return /^(?:contents|table of contents)$/i.test(trimmed)
@@ -1076,6 +1204,9 @@ function isPrintedTocEntryLine(text) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
     return false
+  }
+  if (isStormlightPrintedTocLine(trimmed)) {
+    return true
   }
   if (isPrintedTocHeading(trimmed)) {
     return true
@@ -1127,6 +1258,9 @@ function isMergedPrintedTocBlock(text) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
     return false
+  }
+  if (countStormlightTocMarkers(trimmed) >= 2) {
+    return true
   }
   if (countPrintedTocRomanEntries(trimmed) >= 2) {
     return true
@@ -1236,6 +1370,367 @@ function mergeEndOfPartBlocks(blocks) {
   return merged
 }
 
+function normalizePublisherBibliographyBlocks(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  let inBibliography = false
+
+  return blocks.map((block) => {
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      return block
+    }
+
+    const text = (block?.text ?? "").trim()
+
+    if (isTitlePageBookLabelLine(text) || /^ACKNOWLEDGMENTS$/i.test(text)) {
+      inBibliography = false
+    }
+
+    if (isPublisherBibliographyHeaderLine(text)) {
+      inBibliography = true
+      return {
+        ...block,
+        isHeading: false,
+        fontSize: 12,
+        textAlign: "center",
+      }
+    }
+
+    if (!inBibliography || !block?.isHeading) {
+      return block
+    }
+
+    if (isBibliographySeriesTitleLine(text)) {
+      return {
+        ...block,
+        isHeading: false,
+        fontSize: 13,
+        bold: true,
+        textAlign: "center",
+      }
+    }
+
+    if (text.length <= 48 && !CHAPTER_PATTERN.test(text)) {
+      return {
+        ...block,
+        isHeading: false,
+        fontSize: 12,
+        textAlign: "center",
+      }
+    }
+
+    return block
+  })
+}
+
+function demoteTitlePageLabelHeadings(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  return blocks.map((block) => {
+    const text = (block?.text ?? "").trim()
+    if (block?.isHeading && isTitlePageBookLabelLine(text)) {
+      return {
+        ...block,
+        isHeading: false,
+        fontSize: 12,
+        textAlign: "center",
+      }
+    }
+    return block
+  })
+}
+
+function demoteIllustrationsListBlocks(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  let inIllustrationsList = false
+  const result = []
+
+  for (const block of blocks) {
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      if (inIllustrationsList) {
+        inIllustrationsList = false
+      }
+      result.push(block)
+      continue
+    }
+
+    const stripped = stripEmbeddedRunningHeader(block?.text ?? "")
+    const text = stripped.trim()
+
+    if (block?.isHeading && isIllustrationsListLine(text)) {
+      result.push({
+        ...block,
+        text,
+        isHeading: false,
+        fontSize: 12,
+        textAlign: "center",
+      })
+      continue
+    }
+
+    if (/^ILLUSTRATIONS$/i.test(text)) {
+      inIllustrationsList = true
+      result.push({
+        ...block,
+        text,
+        isHeading: false,
+        fontSize: 12,
+        textAlign: "center",
+      })
+      continue
+    }
+
+    if (inIllustrationsList) {
+      if (
+        STORMLIGHT_PRELUDE_OPENING_REGEX.test(text) ||
+        /^THE STORMLIGHT ARCHIVE$/i.test(text)
+      ) {
+        inIllustrationsList = false
+      } else if (isIllustrationsListEntryLine(text) || block?.isHeading) {
+        result.push({
+          ...block,
+          text,
+          isHeading: false,
+          fontSize: 12,
+          textAlign: "center",
+        })
+        continue
+      } else if (text.length > 80) {
+        inIllustrationsList = false
+      }
+    }
+
+    if (stripped !== (block?.text ?? "").trim()) {
+      result.push({ ...block, text: stripped })
+    } else {
+      result.push(block)
+    }
+  }
+
+  return result
+}
+
+function injectStormlightPreludeHeading(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  const result = []
+  let injected = false
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    const text = stripEmbeddedRunningHeader(block?.text ?? "").trim()
+
+    if (
+      !injected &&
+      block?.type !== "image" &&
+      block?.type !== "image_candidate" &&
+      STORMLIGHT_PRELUDE_OPENING_REGEX.test(text)
+    ) {
+      if (result.length > 0) {
+        const previous = result[result.length - 1]
+        const previousText = (previous?.text ?? "").trim()
+        if (
+          previous?.type !== "image" &&
+          /^THE STORMLIGHT ARCHIVE$/i.test(previousText)
+        ) {
+          result.pop()
+        }
+      }
+
+      const hasPrelude = result
+        .slice(-6)
+        .some((entry) =>
+          /^Prelude to the Stormlight Archive$/i.test((entry?.text ?? "").trim())
+        )
+
+      if (!hasPrelude) {
+        result.push({
+          text: "Prelude to the Stormlight Archive",
+          isHeading: true,
+          fontSize: 15,
+          isChapterStart: true,
+          chapterId: null,
+          chapterTitle: "Prelude to the Stormlight Archive",
+          sourcePdfPageIndex: block.sourcePdfPageIndex ?? null,
+        })
+      }
+
+      injected = true
+      result.push({ ...block, text, isHeading: false, fontSize: 12 })
+      continue
+    }
+
+    if (
+      /^THE STORMLIGHT ARCHIVE$/i.test(text) &&
+      blocks[index + 1] &&
+      STORMLIGHT_PRELUDE_OPENING_REGEX.test(
+        stripEmbeddedRunningHeader(blocks[index + 1]?.text ?? "")
+      )
+    ) {
+      continue
+    }
+
+    if (text !== (block?.text ?? "").trim()) {
+      result.push({ ...block, text })
+    } else {
+      result.push(block)
+    }
+  }
+
+  return result
+}
+
+function normalizeBiographyAppendixBlocks(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  const result = []
+  let inAppendix = false
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    const text = (block?.text ?? "").trim()
+
+    if (/^THE END\.?$/i.test(text)) {
+      inAppendix = true
+      result.push(block)
+      continue
+    }
+
+    if (!inAppendix || block?.type === "image" || block?.type === "image_candidate") {
+      result.push(block)
+      continue
+    }
+
+    if (/For Whom the Bell$/i.test(text)) {
+      const nextBlock = blocks[index + 1]
+      const nextText = (nextBlock?.text ?? "").trim()
+      if (/^Tolls$/i.test(nextText)) {
+        result.push({
+          ...block,
+          text: `${text} ${nextText}`,
+          isHeading: false,
+          fontSize: 12,
+        })
+        index += 1
+        continue
+      }
+    }
+
+    if (/^Works$/i.test(text)) {
+      const nextText = (blocks[index + 1]?.text ?? "").trim()
+      if (/^Novels\/Novellas$/i.test(nextText)) {
+        result.push({
+          ...block,
+          text: "Works — Novels/Novellas",
+          isHeading: true,
+          fontSize: 13,
+          textAlign: "center",
+        })
+        index += 1
+        continue
+      }
+    }
+
+    if (/^•\s/.test(text) && /\s•\s/.test(text)) {
+      const parts = text
+        .split(/\s•\s/)
+        .map((part) => part.trim())
+        .filter(Boolean)
+      for (const part of parts) {
+        result.push({
+          ...block,
+          text: part.startsWith("•") ? part : `• ${part}`,
+          isHeading: false,
+          fontSize: 12,
+        })
+      }
+      continue
+    }
+
+    if (/^[A-Z][a-z]+\s+[A-Z][a-z]+,\s+(Writer|Author|Novelist)$/.test(text)) {
+      result.push({
+        ...block,
+        isHeading: true,
+        fontSize: 13,
+        textAlign: "center",
+      })
+      continue
+    }
+
+    result.push(block)
+  }
+
+  return result
+}
+
+function stripResidualFrontMatterBlocks(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  const preludeIndex = blocks.findIndex(
+    (block) =>
+      block?.type !== "image" &&
+      block?.type !== "image_candidate" &&
+      (STORMLIGHT_PRELUDE_OPENING_REGEX.test(stripEmbeddedRunningHeader(block?.text ?? "")) ||
+        /^Prelude to the Stormlight Archive$/i.test((block?.text ?? "").trim()))
+  )
+
+  if (preludeIndex <= 0) {
+    return blocks
+  }
+
+  return blocks.filter((block, index) => {
+    if (index >= preludeIndex) {
+      return true
+    }
+
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      return true
+    }
+
+    const text = (block?.text ?? "").trim()
+    if (!text) {
+      return false
+    }
+
+    if (isStormlightPrintedTocLine(text) || isMergedPrintedTocBlock(text)) {
+      return false
+    }
+
+    if (
+      /^THE (?:WAY OF KINGS|STORMLIGHT ARCHIVE)$/i.test(text) &&
+      index >= preludeIndex - 6 &&
+      index < preludeIndex
+    ) {
+      return false
+    }
+
+    return true
+  })
+}
+
+function normalizeFrontAndBackMatterBlocks(blocks) {
+  return stripResidualFrontMatterBlocks(
+    normalizeBiographyAppendixBlocks(
+      demoteIllustrationsListBlocks(
+        demoteTitlePageLabelHeadings(normalizePublisherBibliographyBlocks(blocks))
+      )
+    )
+  )
+}
+
 function promoteStructuralSectionHeadings(blocks) {
   if (!Array.isArray(blocks) || blocks.length === 0) {
     return blocks
@@ -1266,6 +1761,11 @@ function excludePrintedTocBlocks(blocks) {
   const dropIndices = new Set()
   let inPrintedTocSection = false
   const firstChapterIndex = findFirstChapterBlockIndex(blocks)
+  const preludeIndex = blocks.findIndex((block) =>
+    STORMLIGHT_PRELUDE_OPENING_REGEX.test(stripEmbeddedRunningHeader(block?.text ?? ""))
+  )
+  const frontMatterEndIndex =
+    preludeIndex > 0 ? preludeIndex : firstChapterIndex > 0 ? firstChapterIndex : blocks.length
 
   for (let index = 0; index < blocks.length; index += 1) {
     const text = (blocks[index]?.text ?? "").trim()
@@ -1281,6 +1781,13 @@ function excludePrintedTocBlocks(blocks) {
         continue
       }
       inPrintedTocSection = false
+    }
+
+    if (
+      index < frontMatterEndIndex &&
+      (isStormlightPrintedTocLine(text) || isMergedPrintedTocBlock(text))
+    ) {
+      dropIndices.add(index)
     }
   }
 
@@ -2172,6 +2679,16 @@ function isProminentDisplayTitleLine(text, line, entry = null) {
   if (CHAPTER_PATTERN.test(trimmed) || isAuthorStructuralLine(trimmed)) {
     return false
   }
+  if (
+    isIllustrationsListEntryLine(trimmed) ||
+    isIllustrationsListLine(trimmed) ||
+    isBibliographySeriesTitleLine(trimmed) ||
+    isStormlightPrintedTocLine(trimmed) ||
+    isTitlePageBookLabelLine(trimmed) ||
+    isPublisherBibliographyHeaderLine(trimmed)
+  ) {
+    return false
+  }
 
   const words = trimmed.split(/\s+/).filter(Boolean)
   if (words.length < 2 || words.length > 12) {
@@ -2632,6 +3149,14 @@ function isCleanStructuralHeadingText(text, line = null) {
   if (isHeaderPageMarkerLine(raw)) {
     return false
   }
+  if (
+    isStormlightPrintedTocLine(raw) ||
+    isIllustrationsListEntryLine(raw) ||
+    isBibliographySeriesTitleLine(raw) ||
+    isTitlePageBookLabelLine(raw)
+  ) {
+    return false
+  }
 
   const trimmed = normalizeHeadingCandidate(raw)
   if (!trimmed) {
@@ -2651,6 +3176,9 @@ function isCleanStructuralHeadingText(text, line = null) {
     return true
   }
   if (STRUCTURAL_HEADING_PREFIX_REGEX.test(trimmed)) {
+    if (/^book\s+one\s+of\.?$/i.test(trimmed)) {
+      return false
+    }
     if (/[;,]/.test(trimmed)) {
       return false
     }
@@ -4307,6 +4835,15 @@ function isChapterHeading(block) {
     return true
   }
 
+  if (
+    isStormlightPrintedTocLine(text) ||
+    isIllustrationsListEntryLine(text) ||
+    isBibliographySeriesTitleLine(text) ||
+    isTitlePageBookLabelLine(text)
+  ) {
+    return false
+  }
+
   const blocklist = ["and", "or", "but", "the", "a", "an", "to", "by", "and."]
   if (blocklist.includes(text.toLowerCase())) {
     return false
@@ -4913,6 +5450,13 @@ function isTocHeadingCandidate(text, line, headingStrings, lineIndex, entry = nu
   if (isTocChapterListingLine(text)) {
     return true
   }
+  if (
+    isStormlightPrintedTocLine(text) ||
+    isIllustrationsListEntryLine(text) ||
+    isBibliographySeriesTitleLine(text)
+  ) {
+    return false
+  }
   return isHeadingLine(text, line, headingStrings, entry)
 }
 
@@ -5142,6 +5686,15 @@ function buildBlocksFromLines(pageData, headingStrings) {
       }
     }
 
+    if (
+      isStormlightPrintedTocLine(text) ||
+      isIllustrationsListLine(text)
+    ) {
+      pendingConnective = null
+      index += 1
+      continue
+    }
+
     if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
       const previousBlock = blocks[blocks.length - 1] ?? null
 
@@ -5199,6 +5752,15 @@ function buildBlocksFromLines(pageData, headingStrings) {
     }
 
     if (lineIndex < EARLY_TOC_SCAN_LINE_LIMIT && isTocChapterListingLine(text)) {
+      pendingConnective = null
+      index += 1
+      continue
+    }
+
+    if (
+      lineIndex < EARLY_TOC_SCAN_LINE_LIMIT &&
+      isStormlightPrintedTocLine(text)
+    ) {
       pendingConnective = null
       index += 1
       continue
@@ -5798,6 +6360,8 @@ async function parsePdfBuffer(
   blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle)
   const printedToc = extractPrintedTocLookup(blocks)
   blocks = excludePrintedTocBlocks(blocks)
+  blocks = normalizeFrontAndBackMatterBlocks(blocks)
+  blocks = injectStormlightPreludeHeading(blocks)
 
   blocks = interleaveImageCandidateBlocks(blocks, pageImageCandidates, pageData)
 

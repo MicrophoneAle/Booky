@@ -8,7 +8,7 @@ export const AUTHOR_LINE_REGEX = /^(by|written by|translated by)\s+/i
 export const DEDICATION_SUBTITLE_REGEX = /^To\s+[A-Z]/i
 
 export const TOC_CHAPTER_LISTING_REGEX =
-  /^Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:\s+\S/i
+  /^(?:Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:\s+\S|\d{1,3}:\s+[A-Z][A-Z0-9\s'’.,\-]+)$/i
 
 export const CHAPTER_BOUNDARY_REGEX =
   /^(?:(?:chapter|letter|part|section|book|volume|preface|introduction|prologue|epilogue|conclusion|appendix|stave)\s+(?:\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|(?:preface|introduction|prologue|epilogue|conclusion|dedication))\.?$/i
