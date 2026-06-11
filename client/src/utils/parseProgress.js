@@ -32,6 +32,55 @@ function phaseRank(phase) {
 }
 
 /**
+ * Merge status poll payloads without wiping page counters on partial updates.
+ * @param {object|null|undefined} previous
+ * @param {object|null|undefined} update
+ */
+export function mergePollProgressUpdate(previous, update) {
+  if (!update) {
+    return previous ?? null
+  }
+
+  if (update.phase === "ready" || update.phase === "error") {
+    return update
+  }
+
+  if (!previous) {
+    return update
+  }
+
+  const merged = { ...previous, ...update }
+
+  if (typeof update.percent === "number") {
+    merged.percent = Math.max(previous.percent ?? 0, update.percent)
+  }
+
+  if (typeof update.current === "number") {
+    merged.current = Math.max(previous.current ?? 0, update.current)
+  }
+
+  if (update.total > 0) {
+    merged.total = update.total
+  } else if (previous.total > 0) {
+    merged.total = previous.total
+  }
+
+  if (previous.phase && previous.phase !== "starting" && (!update.phase || update.phase === "processing")) {
+    merged.phase = previous.phase
+  }
+
+  if (previous.extractSubphase && !update.extractSubphase) {
+    merged.extractSubphase = previous.extractSubphase
+  }
+
+  if (previous.usingPrintedToc && update.usingPrintedToc == null) {
+    merged.usingPrintedToc = previous.usingPrintedToc
+  }
+
+  return merged
+}
+
+/**
  * @param {object|null|undefined} parseProgress
  * @returns {string}
  */

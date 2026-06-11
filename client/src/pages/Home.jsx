@@ -14,6 +14,7 @@ import {
   getParsePipelineStepStates,
   getParseProgressDetail,
   getParseProgressHeadline,
+  mergePollProgressUpdate,
 } from "../utils/parseProgress"
 import "./Home.css"
 
@@ -98,6 +99,7 @@ async function fetchWithRetry(url, options, retries = 4) {
 
 async function pollDocumentParseStatus(documentId, getToken, onProgress) {
   const startedAt = Date.now()
+  let lastProgress = null
 
   while (Date.now() - startedAt < PARSE_POLL_TIMEOUT_MS) {
     const token = await getToken()
@@ -129,15 +131,15 @@ async function pollDocumentParseStatus(documentId, getToken, onProgress) {
     }
 
     if (data.parse_progress) {
-      onProgress(data.parse_progress)
+      lastProgress = mergePollProgressUpdate(lastProgress, data.parse_progress)
     } else if (typeof data.parse_percent === "number") {
-      onProgress({
-        phase: "extracting",
-        label: "Reading PDF pages",
-        current: 0,
-        total: 0,
+      lastProgress = mergePollProgressUpdate(lastProgress, {
         percent: data.parse_percent,
       })
+    }
+
+    if (lastProgress) {
+      onProgress(lastProgress)
     }
 
     if (data.parse_status === "ready") {
