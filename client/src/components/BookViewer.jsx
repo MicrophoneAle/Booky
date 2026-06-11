@@ -98,11 +98,17 @@ function layoutPaginationSettingsEqual(previous, next) {
     return false
   }
 
+  const prevLayout = getLayoutPaginationSettings(previous)
+  const nextLayout = getLayoutPaginationSettings(next)
+
   return (
-    previous.fontSize === next.fontSize &&
-    previous.fontStyle === next.fontStyle &&
-    previous.lineSpacing === next.lineSpacing &&
-    previous.margins === next.margins
+    prevLayout.fontSize === nextLayout.fontSize &&
+    prevLayout.fontStyle === nextLayout.fontStyle &&
+    prevLayout.lineSpacing === nextLayout.lineSpacing &&
+    prevLayout.margins === nextLayout.margins &&
+    prevLayout.customFontSizePx === nextLayout.customFontSizePx &&
+    prevLayout.customLineSpacing === nextLayout.customLineSpacing &&
+    prevLayout.customMarginRem === nextLayout.customMarginRem
   )
 }
 
@@ -132,6 +138,9 @@ function getLayoutPaginationSettings(settings) {
     fontStyle: settings?.fontStyle ?? DEFAULT_SETTINGS.fontStyle,
     lineSpacing: settings?.lineSpacing ?? DEFAULT_SETTINGS.lineSpacing,
     margins: settings?.margins ?? DEFAULT_SETTINGS.margins,
+    customFontSizePx: sanitizeCustomFontSizePx(settings?.customFontSizePx),
+    customLineSpacing: sanitizeCustomLineSpacing(settings?.customLineSpacing),
+    customMarginRem: sanitizeCustomMarginRem(settings?.customMarginRem),
   }
 }
 
@@ -148,9 +157,12 @@ function buildPaginationCacheKey(
     parserVersion,
     PAGINATION_MEASUREMENT_VERSION,
     layoutSettings.fontSize,
+    layoutSettings.customFontSizePx,
     layoutSettings.fontStyle,
     layoutSettings.lineSpacing,
+    layoutSettings.customLineSpacing,
     layoutSettings.margins,
+    layoutSettings.customMarginRem,
     pageWidth,
     pageHeight,
   ].join("|")
@@ -880,7 +892,14 @@ const DEFAULT_SETTINGS = {
   fontStyle: "lora",
   lineSpacing: "normal",
   margins: "normal",
+  customFontSizePx: 10,
+  customLineSpacing: 1.15,
+  customMarginRem: 0.75,
 }
+
+const CUSTOM_FONT_SIZE_LIMITS = { min: 8, max: 22 }
+const CUSTOM_LINE_SPACING_LIMITS = { min: 1, max: 2, step: 0.05 }
+const CUSTOM_MARGIN_REM_LIMITS = { min: 0, max: 2, step: 0.05 }
 
 const FONT_SIZE_MAP = {
   small: { body: 9, heading: 13, title: 19 },
@@ -930,36 +949,117 @@ const MARGIN_MAP = {
   wide: "1.25rem",
 }
 
-function formatFontSizeChipLabel(size) {
-  const name =
-    size === "xlarge" ? "XL" : size.charAt(0).toUpperCase() + size.slice(1)
-  const bodyPx = FONT_SIZE_MAP[size]?.body ?? FONT_SIZE_MAP.medium.body
-  return `${name} ${bodyPx}px`
+function roundToStep(value, step) {
+  return Math.round(value / step) * step
 }
 
-function formatLineSpacingChipLabel(spacing) {
-  const name = spacing.charAt(0).toUpperCase() + spacing.slice(1)
-  const lineHeight =
-    LINE_HEIGHT_MAP[spacing]?.body ?? LINE_HEIGHT_MAP.normal.body
-  return `${name} ${lineHeight}`
+function sanitizeCustomFontSizePx(
+  value,
+  fallback = DEFAULT_SETTINGS.customFontSizePx
+) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback
+  }
+  return Math.min(
+    CUSTOM_FONT_SIZE_LIMITS.max,
+    Math.max(CUSTOM_FONT_SIZE_LIMITS.min, Math.round(parsed))
+  )
 }
 
-function formatMarginChipLabel(margin) {
-  const name = margin.charAt(0).toUpperCase() + margin.slice(1)
-  return `${name} ${MARGIN_MAP[margin] ?? MARGIN_MAP.normal}`
+function sanitizeCustomLineSpacing(
+  value,
+  fallback = DEFAULT_SETTINGS.customLineSpacing
+) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback
+  }
+  const clamped = Math.min(
+    CUSTOM_LINE_SPACING_LIMITS.max,
+    Math.max(CUSTOM_LINE_SPACING_LIMITS.min, parsed)
+  )
+  return roundToStep(clamped, CUSTOM_LINE_SPACING_LIMITS.step)
 }
 
-function getPageMarginPx(marginSetting) {
+function sanitizeCustomMarginRem(
+  value,
+  fallback = DEFAULT_SETTINGS.customMarginRem
+) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return fallback
+  }
+  const clamped = Math.min(
+    CUSTOM_MARGIN_REM_LIMITS.max,
+    Math.max(CUSTOM_MARGIN_REM_LIMITS.min, parsed)
+  )
+  return roundToStep(clamped, CUSTOM_MARGIN_REM_LIMITS.step)
+}
+
+function normalizeReaderSettings(settings) {
+  return {
+    ...DEFAULT_SETTINGS,
+    ...settings,
+    customFontSizePx: sanitizeCustomFontSizePx(settings?.customFontSizePx),
+    customLineSpacing: sanitizeCustomLineSpacing(settings?.customLineSpacing),
+    customMarginRem: sanitizeCustomMarginRem(settings?.customMarginRem),
+  }
+}
+
+function deriveFontMetricsFromBody(bodyPx) {
+  const body = sanitizeCustomFontSizePx(bodyPx)
+  return {
+    body,
+    heading: body + 5,
+    title: body + 12,
+  }
+}
+
+function resolveFontMetrics(settings) {
+  if (settings?.fontSize === "custom") {
+    return deriveFontMetricsFromBody(settings.customFontSizePx)
+  }
+  return FONT_SIZE_MAP[settings?.fontSize] ?? FONT_SIZE_MAP.medium
+}
+
+function resolveLineHeight(settings) {
+  if (settings?.lineSpacing === "custom") {
+    const body = sanitizeCustomLineSpacing(settings.customLineSpacing)
+    const heading = sanitizeCustomLineSpacing(
+      Math.min(body + 0.05, body * 1.08),
+      body
+    )
+    return { body, heading }
+  }
+  return LINE_HEIGHT_MAP[settings?.lineSpacing] ?? LINE_HEIGHT_MAP.normal
+}
+
+function resolveMarginCss(settingsOrKey) {
+  if (typeof settingsOrKey === "string") {
+    return MARGIN_MAP[settingsOrKey] ?? MARGIN_MAP.normal
+  }
+
+  const marginKey = settingsOrKey?.margins ?? DEFAULT_SETTINGS.margins
+  if (marginKey === "custom") {
+    const rem = sanitizeCustomMarginRem(settingsOrKey?.customMarginRem)
+    return rem <= 0 ? "0px" : `${rem}rem`
+  }
+
+  return MARGIN_MAP[marginKey] ?? MARGIN_MAP.normal
+}
+
+function getPageMarginPx(settingsOrKey) {
   const remPx =
     typeof document !== "undefined"
       ? parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
       : 16
-  const raw = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
+  const raw = resolveMarginCss(settingsOrKey)
   return raw === "0px" ? 0 : parseFloat(raw) * remPx
 }
 
-function getPagePaddingStyle(marginSetting) {
-  const pad = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
+function getPagePaddingStyle(settingsOrKey) {
+  const pad = resolveMarginCss(settingsOrKey)
   if (pad === "0px") {
     return { padding: 0 }
   }
@@ -971,20 +1071,51 @@ function getPagePaddingStyle(marginSetting) {
   }
 }
 
+function formatFontSizeChipLabel(size, settings) {
+  if (size === "custom") {
+    const bodyPx = sanitizeCustomFontSizePx(settings?.customFontSizePx)
+    return `Custom ${bodyPx}px`
+  }
+  const name =
+    size === "xlarge" ? "XL" : size.charAt(0).toUpperCase() + size.slice(1)
+  const bodyPx = FONT_SIZE_MAP[size]?.body ?? FONT_SIZE_MAP.medium.body
+  return `${name} ${bodyPx}px`
+}
+
+function formatLineSpacingChipLabel(spacing, settings) {
+  if (spacing === "custom") {
+    const lineHeight = sanitizeCustomLineSpacing(settings?.customLineSpacing)
+    return `Custom ${lineHeight}`
+  }
+  const name = spacing.charAt(0).toUpperCase() + spacing.slice(1)
+  const lineHeight =
+    LINE_HEIGHT_MAP[spacing]?.body ?? LINE_HEIGHT_MAP.normal.body
+  return `${name} ${lineHeight}`
+}
+
+function formatMarginChipLabel(margin, settings) {
+  if (margin === "custom") {
+    const rem = sanitizeCustomMarginRem(settings?.customMarginRem)
+    return rem <= 0 ? "Custom 0px" : `Custom ${rem}rem`
+  }
+  const name = margin.charAt(0).toUpperCase() + margin.slice(1)
+  return `${name} ${MARGIN_MAP[margin] ?? MARGIN_MAP.normal}`
+}
+
 /** Non-fullscreen chrome: margins + exact paginated body height (matches measurement). */
-function getPageContentHeightPx(marginSetting, isMobileViewport = false) {
+function getPageContentHeightPx(settingsOrKey, isMobileViewport = false) {
   const { contentMaxHeight } = getLayoutHeights(
     undefined,
-    marginSetting,
+    settingsOrKey,
     getPageNumberReservedPx(isMobileViewport, false),
     { pageInsetTopPx: 0, pageInsetBottomPx: PAGE_BOTTOM_INSET_PX }
   )
   return contentMaxHeight
 }
 
-function getPageChromeStyle(marginSetting, isMobileViewport = false) {
-  const pad = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
-  const contentHeightPx = getPageContentHeightPx(marginSetting, isMobileViewport)
+function getPageChromeStyle(settingsOrKey, isMobileViewport = false) {
+  const pad = resolveMarginCss(settingsOrKey)
+  const contentHeightPx = getPageContentHeightPx(settingsOrKey, isMobileViewport)
   return {
     "--page-footer-reserve": `${PAGE_FOOTER_RESERVE_PX}px`,
     "--page-content-h": `${contentHeightPx}px`,
@@ -1393,7 +1524,7 @@ function getLayoutHeights(
 ) {
   const remPx =
     parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-  const rawMargin = MARGIN_MAP[marginSetting ?? "normal"] ?? MARGIN_MAP.normal
+  const rawMargin = resolveMarginCss(marginSetting)
   const marginPx = rawMargin === "0px" ? 0 : parseFloat(rawMargin) * remPx
   const pageHeight = pageHeightOverride ?? PAGE_HEIGHT_PX
   const contentMaxHeight =
@@ -1475,7 +1606,7 @@ function setupMeasureElements(
   mobileFS,
   mobileFullscreenPageHeight = MOBILE_FULLSCREEN_PAGE_HEIGHT_PX
 ) {
-  const marginSetting = mobileFS ? "none" : paginationSettings.margins
+  const marginSettings = mobileFS ? { margins: "none" } : paginationSettings
   const pageHeightToUse = mobileFS ? mobileFullscreenPageHeight : undefined
   const pageNumberReservedPx = getPageNumberReservedPx(mobileViewport, mobileFS)
   const pageInsetTopPx = mobileFS ? MOBILE_FULLSCREEN_TOP_INSET_PX : 0
@@ -1484,7 +1615,7 @@ function setupMeasureElements(
     : PAGE_BOTTOM_INSET_PX
   const { pageOuterHeight, contentMaxHeight } = getLayoutHeights(
     pageHeightToUse,
-    marginSetting,
+    marginSettings,
     pageNumberReservedPx,
     { pageInsetTopPx, pageInsetBottomPx }
   )
@@ -1514,7 +1645,7 @@ function setupMeasureElements(
     page.style.setProperty("--mobile-fs-content-h", `${contentMaxHeight}px`)
     page.style.setProperty("--mobile-fs-footer-block", `${MOBILE_FULLSCREEN_FOOTER_BLOCK_PX}px`)
   } else {
-    const pageChrome = getPageChromeStyle(paginationSettings.margins, mobileViewport)
+    const pageChrome = getPageChromeStyle(paginationSettings, mobileViewport)
     page.style.paddingTop = pageChrome.paddingTop ?? "0"
     page.style.paddingRight = pageChrome.paddingRight ?? "0"
     page.style.paddingLeft = pageChrome.paddingLeft ?? "0"
@@ -1535,9 +1666,8 @@ function setupMeasureElements(
   body.style.height = "auto"
   body.style.maxHeight = `${contentMaxHeight}px`
 
-  const font = FONT_SIZE_MAP[paginationSettings.fontSize] ?? FONT_SIZE_MAP.medium
-  const line =
-    LINE_HEIGHT_MAP[paginationSettings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
+  const font = resolveFontMetrics(paginationSettings)
+  const line = resolveLineHeight(paginationSettings)
   const family =
     FONT_FAMILY_MAP[paginationSettings.fontStyle] ?? FONT_FAMILY_MAP.lora
   const pageLayout = {
@@ -2969,12 +3099,11 @@ function BookPageContent({
     .filter(Boolean)
     .join(" ")
 
-  const marginSetting = settings?.margins ?? DEFAULT_SETTINGS.margins
   const fsMetrics =
     mobileFullscreenMetrics ?? getMobileFullscreenLayoutMetrics(MOBILE_FULLSCREEN_PAGE_HEIGHT_PX)
   const pageContentHeightPx = isMobileFullscreen
     ? fsMetrics.contentMaxHeight
-    : getPageContentHeightPx(marginSetting, isMobileViewport)
+    : getPageContentHeightPx(settings, isMobileViewport)
 
   const pageStyle = isMobileFullscreen
     ? {
@@ -2986,7 +3115,7 @@ function BookPageContent({
         paddingTop: `${fsMetrics.pageInsetTopPx}px`,
         paddingBottom: `${fsMetrics.pageInsetBottomPx}px`,
       }
-    : getPageChromeStyle(marginSetting, isMobileViewport)
+    : getPageChromeStyle(settings, isMobileViewport)
 
   const bodyStyle =
     !isMobileFullscreen && !page?.centerTitlePage
@@ -3501,10 +3630,10 @@ export default function BookViewer({
     try {
       const saved = localStorage.getItem("booky-settings")
       return saved
-        ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
-        : DEFAULT_SETTINGS
+        ? normalizeReaderSettings(JSON.parse(saved))
+        : normalizeReaderSettings(DEFAULT_SETTINGS)
     } catch {
-      return DEFAULT_SETTINGS
+      return normalizeReaderSettings(DEFAULT_SETTINGS)
     }
   }
 
@@ -4496,9 +4625,9 @@ export default function BookViewer({
     return resolvePageByCharOffset(pages, offset)
   }, [bookmarkPage, mobileFullscreenActive, pages])
 
-  const font = FONT_SIZE_MAP[uiSettings.fontSize] ?? FONT_SIZE_MAP.medium
+  const font = resolveFontMetrics(uiSettings)
   const family = FONT_FAMILY_MAP[uiSettings.fontStyle] ?? FONT_FAMILY_MAP.lora
-  const line = LINE_HEIGHT_MAP[uiSettings.lineSpacing] ?? LINE_HEIGHT_MAP.normal
+  const line = resolveLineHeight(uiSettings)
 
   const isFinalOddSpreadSingle =
     isSpreadView && totalPages % 2 === 1 && Boolean(leftPage) && !rightPage
@@ -5995,7 +6124,7 @@ export default function BookViewer({
           <div className="book-viewer__settings-section">
             <p className="book-viewer__settings-label">Font Size</p>
             <div className="book-viewer__settings-row">
-              {["small", "medium", "large", "xlarge"].map((size) => (
+              {["small", "medium", "large", "xlarge", "custom"].map((size) => (
                 <button
                   key={size}
                   type="button"
@@ -6008,13 +6137,40 @@ export default function BookViewer({
                     setUiSettings((s) => ({
                       ...s,
                       fontSize: size,
+                      customFontSizePx: sanitizeCustomFontSizePx(s.customFontSizePx),
                     }))
                   }
                 >
-                  {formatFontSizeChipLabel(size)}
+                  {formatFontSizeChipLabel(size, uiSettings)}
                 </button>
               ))}
             </div>
+            {uiSettings.fontSize === "custom" && (
+              <label className="book-viewer__settings-custom">
+                <span className="book-viewer__settings-custom-label">
+                  Body size ({CUSTOM_FONT_SIZE_LIMITS.min}–{CUSTOM_FONT_SIZE_LIMITS.max} px)
+                </span>
+                <input
+                  type="number"
+                  className="book-viewer__settings-custom-input"
+                  min={CUSTOM_FONT_SIZE_LIMITS.min}
+                  max={CUSTOM_FONT_SIZE_LIMITS.max}
+                  step={1}
+                  value={uiSettings.customFontSizePx}
+                  onChange={(event) => {
+                    const next = sanitizeCustomFontSizePx(
+                      event.target.value,
+                      uiSettings.customFontSizePx
+                    )
+                    setUiSettings((s) => ({
+                      ...s,
+                      fontSize: "custom",
+                      customFontSizePx: next,
+                    }))
+                  }}
+                />
+              </label>
+            )}
           </div>
 
           <div className="book-viewer__settings-section">
@@ -6045,7 +6201,7 @@ export default function BookViewer({
           <div className="book-viewer__settings-section">
             <p className="book-viewer__settings-label">Line Spacing</p>
             <div className="book-viewer__settings-row">
-              {["compact", "normal", "relaxed", "airy"].map((sp) => (
+              {["compact", "normal", "relaxed", "airy", "custom"].map((sp) => (
                 <button
                   key={sp}
                   type="button"
@@ -6058,19 +6214,46 @@ export default function BookViewer({
                     setUiSettings((s) => ({
                       ...s,
                       lineSpacing: sp,
+                      customLineSpacing: sanitizeCustomLineSpacing(s.customLineSpacing),
                     }))
                   }
                 >
-                  {formatLineSpacingChipLabel(sp)}
+                  {formatLineSpacingChipLabel(sp, uiSettings)}
                 </button>
               ))}
             </div>
+            {uiSettings.lineSpacing === "custom" && (
+              <label className="book-viewer__settings-custom">
+                <span className="book-viewer__settings-custom-label">
+                  Line height ({CUSTOM_LINE_SPACING_LIMITS.min}–{CUSTOM_LINE_SPACING_LIMITS.max})
+                </span>
+                <input
+                  type="number"
+                  className="book-viewer__settings-custom-input"
+                  min={CUSTOM_LINE_SPACING_LIMITS.min}
+                  max={CUSTOM_LINE_SPACING_LIMITS.max}
+                  step={CUSTOM_LINE_SPACING_LIMITS.step}
+                  value={uiSettings.customLineSpacing}
+                  onChange={(event) => {
+                    const next = sanitizeCustomLineSpacing(
+                      event.target.value,
+                      uiSettings.customLineSpacing
+                    )
+                    setUiSettings((s) => ({
+                      ...s,
+                      lineSpacing: "custom",
+                      customLineSpacing: next,
+                    }))
+                  }}
+                />
+              </label>
+            )}
           </div>
 
           <div className="book-viewer__settings-section">
             <p className="book-viewer__settings-label">Margins</p>
             <div className="book-viewer__settings-row">
-              {["none", "narrow", "normal", "wide"].map((m) => (
+              {["none", "narrow", "normal", "wide", "custom"].map((m) => (
                 <button
                   key={m}
                   type="button"
@@ -6083,20 +6266,47 @@ export default function BookViewer({
                     setUiSettings((s) => ({
                       ...s,
                       margins: m,
+                      customMarginRem: sanitizeCustomMarginRem(s.customMarginRem),
                     }))
                   }
                 >
-                  {formatMarginChipLabel(m)}
+                  {formatMarginChipLabel(m, uiSettings)}
                 </button>
               ))}
             </div>
+            {uiSettings.margins === "custom" && (
+              <label className="book-viewer__settings-custom">
+                <span className="book-viewer__settings-custom-label">
+                  Page margin ({CUSTOM_MARGIN_REM_LIMITS.min}–{CUSTOM_MARGIN_REM_LIMITS.max} rem)
+                </span>
+                <input
+                  type="number"
+                  className="book-viewer__settings-custom-input"
+                  min={CUSTOM_MARGIN_REM_LIMITS.min}
+                  max={CUSTOM_MARGIN_REM_LIMITS.max}
+                  step={CUSTOM_MARGIN_REM_LIMITS.step}
+                  value={uiSettings.customMarginRem}
+                  onChange={(event) => {
+                    const next = sanitizeCustomMarginRem(
+                      event.target.value,
+                      uiSettings.customMarginRem
+                    )
+                    setUiSettings((s) => ({
+                      ...s,
+                      margins: "custom",
+                      customMarginRem: next,
+                    }))
+                  }}
+                />
+              </label>
+            )}
           </div>
 
           <div className="book-viewer__settings-section">
             <button
               type="button"
               className="book-viewer__settings-reset"
-              onClick={() => setUiSettings(DEFAULT_SETTINGS)}
+              onClick={() => setUiSettings(normalizeReaderSettings(DEFAULT_SETTINGS))}
             >
               Reset to defaults
             </button>

@@ -940,6 +940,37 @@
   color: var(--color-ui-gold-hot);
 }
 
+.book-viewer__settings-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.55rem;
+}
+
+.book-viewer__settings-custom-label {
+  color: var(--color-ui-accent);
+  font-family: system-ui, sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.book-viewer__settings-custom-input {
+  width: 5.5rem;
+  background: var(--color-ui-hover);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  color: var(--color-ui-gold);
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+  padding: 0.3rem 0.45rem;
+}
+
+.book-viewer__settings-custom-input:focus {
+  border-color: var(--color-ui-gold-hot);
+  outline: none;
+}
+
 .book-viewer__settings-reset {
   background: transparent;
   border: 1px solid var(--color-border);
