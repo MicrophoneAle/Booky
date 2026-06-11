@@ -893,8 +893,28 @@ const FONT_FAMILY_MAP = {
   lora: { body: "'Lora', Georgia, serif", heading: "'EB Garamond', Georgia, serif" },
   garamond: { body: "'EB Garamond', Georgia, serif", heading: "'EB Garamond', Georgia, serif" },
   georgia: { body: "Georgia, serif", heading: "Georgia, serif" },
-  palatino: { body: "'Palatino Linotype', Palatino, serif", heading: "'Palatino Linotype', Palatino, serif" },
+  palatino: {
+    body: "'Palatino Linotype', 'Book Antiqua', Palatino, serif",
+    heading: "'Palatino Linotype', 'Book Antiqua', Palatino, serif",
+  },
+  times: {
+    body: "'Times New Roman', Times, serif",
+    heading: "'Times New Roman', Times, serif",
+  },
+  calibri: {
+    body: "Calibri, 'Segoe UI', sans-serif",
+    heading: "Calibri, 'Segoe UI', sans-serif",
+  },
 }
+
+const FONT_STYLE_OPTIONS = [
+  { id: "lora", label: "Lora" },
+  { id: "garamond", label: "Garamond" },
+  { id: "georgia", label: "Georgia" },
+  { id: "palatino", label: "Palatino" },
+  { id: "times", label: "Times New Roman" },
+  { id: "calibri", label: "Calibri" },
+]
 
 const LINE_HEIGHT_MAP = {
   compact: { body: 1.1, heading: 1.1 },
@@ -5983,12 +6003,7 @@ export default function BookViewer({
           <div className="book-viewer__settings-section">
             <p className="book-viewer__settings-label">Typeface</p>
             <div className="book-viewer__settings-row">
-              {[
-                { id: "lora", label: "Lora" },
-                { id: "garamond", label: "Garamond" },
-                { id: "georgia", label: "Georgia" },
-                { id: "palatino", label: "Palatino" },
-              ].map((fontOption) => (
+              {FONT_STYLE_OPTIONS.map((fontOption) => (
                 <button
                   key={fontOption.id}
                   type="button"
