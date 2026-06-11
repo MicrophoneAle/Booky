@@ -949,8 +949,18 @@ const MARGIN_MAP = {
   wide: "1.25rem",
 }
 
+function getStepDecimalPlaces(step) {
+  const stepText = String(step)
+  if (!stepText.includes(".")) {
+    return 0
+  }
+  return stepText.split(".")[1].length
+}
+
 function roundToStep(value, step) {
-  return Math.round(value / step) * step
+  const decimals = getStepDecimalPlaces(step)
+  const rounded = Math.round(value / step) * step
+  return Number(rounded.toFixed(decimals))
 }
 
 function sanitizeCustomFontSizePx(
