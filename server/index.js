@@ -4434,6 +4434,8 @@ async function finalizeIllustrationBlocks(
           total: totalCandidates,
           percent: illustrationPercent,
           usingPrintedToc: Boolean(printedToc),
+          illustrationCurrent: processedCandidates,
+          illustrationTotal: totalCandidates,
         })
       }
     }
@@ -4814,17 +4816,20 @@ async function extractPdfStructure(
       }
 
       const batchResults = await Promise.all(
-        batchPageNumbers.map((pageNumber) =>
-          extractPdfPageTextOnly(pdf, pageNumber, headingStrings)
-        )
+        batchPageNumbers.map(async (pageNumber) => {
+          const lines = await extractPdfPageTextOnly(pdf, pageNumber, headingStrings)
+
+          if (onPageProcessed) {
+            onPageProcessed(pageNumber, totalPages, { extractSubphase: "text" })
+          }
+
+          return lines
+        })
       )
 
       for (let index = 0; index < batchPageNumbers.length; index += 1) {
-        const pageNumber = batchPageNumbers[index]
-        pagesBeforeFilter[pageNumber - 1] = { lines: batchResults[index] }
-
-        if (onPageProcessed) {
-          onPageProcessed(pageNumber, totalPages, { extractSubphase: "text" })
+        pagesBeforeFilter[batchPageNumbers[index] - 1] = {
+          lines: batchResults[index],
         }
       }
     }
@@ -4842,18 +4847,19 @@ async function extractPdfStructure(
       }
 
       const batchResults = await Promise.all(
-        batchPageNumbers.map((pageNumber) =>
-          extractPdfPageImagesOnly(pdf, pageNumber)
-        )
+        batchPageNumbers.map(async (pageNumber) => {
+          const candidates = await extractPdfPageImagesOnly(pdf, pageNumber)
+
+          if (onPageProcessed) {
+            onPageProcessed(pageNumber, totalPages, { extractSubphase: "images" })
+          }
+
+          return candidates
+        })
       )
 
       for (let index = 0; index < batchPageNumbers.length; index += 1) {
-        const pageNumber = batchPageNumbers[index]
-        pageImageCandidates[pageNumber - 1] = batchResults[index]
-
-        if (onPageProcessed) {
-          onPageProcessed(pageNumber, totalPages, { extractSubphase: "images" })
-        }
+        pageImageCandidates[batchPageNumbers[index] - 1] = batchResults[index]
       }
     }
   } finally {
@@ -6647,6 +6653,8 @@ async function parsePdfBuffer(
     total: illustrationCandidateCount,
     percent: PARSE_PROGRESS_ILLUSTRATION_START_PERCENT,
     usingPrintedToc: Boolean(printedToc),
+    illustrationCurrent: 0,
+    illustrationTotal: illustrationCandidateCount,
   })
 
   blocks = await finalizeIllustrationBlocks(blocks, {

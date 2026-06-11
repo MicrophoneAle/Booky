@@ -31,6 +31,24 @@ function phaseRank(phase) {
   return index >= 0 ? index + 1 : -1
 }
 
+function isPartialProgressUpdate(update) {
+  if (!update || update.phase === "ready" || update.phase === "error") {
+    return false
+  }
+
+  const keys = Object.keys(update)
+  return keys.length > 0 && keys.every((key) => key === "percent" || key === "label")
+}
+
+function progressPhaseRank(phase) {
+  if (!phase || phase === "starting") {
+    return 0
+  }
+
+  const index = PARSE_PIPELINE_STEPS.findIndex((step) => step.phase === phase)
+  return index >= 0 ? index + 1 : -1
+}
+
 /**
  * Merge status poll payloads without wiping page counters on partial updates.
  * @param {object|null|undefined} previous
@@ -49,32 +67,91 @@ export function mergePollProgressUpdate(previous, update) {
     return update
   }
 
+  if (isPartialProgressUpdate(update)) {
+    const merged = { ...previous }
+    if (typeof update.percent === "number") {
+      merged.percent = Math.max(previous.percent ?? 0, update.percent)
+    }
+    if (update.label) {
+      merged.label = update.label
+    }
+    return merged
+  }
+
   const merged = { ...previous, ...update }
+  const phaseChanged =
+    update.phase && update.phase !== previous.phase && update.phase !== "processing"
+  const phaseAdvanced =
+    phaseChanged &&
+    progressPhaseRank(update.phase) > progressPhaseRank(previous.phase)
+  const countersCorrupt =
+    previous.total > 0 &&
+    typeof previous.current === "number" &&
+    previous.current > previous.total
 
   if (typeof update.percent === "number") {
     merged.percent = Math.max(previous.percent ?? 0, update.percent)
   }
 
-  if (typeof update.current === "number") {
-    merged.current = Math.max(previous.current ?? 0, update.current)
+  if (phaseAdvanced || countersCorrupt) {
+    if (typeof update.current === "number") {
+      merged.current = update.current
+    }
+    if (update.total > 0) {
+      merged.total = update.total
+    }
+    if (previous.phase === "extracting" && update.phase !== "extracting") {
+      delete merged.extractSubphase
+    }
+  } else if (update.phase === previous.phase || !update.phase || update.phase === "processing") {
+    if (typeof update.current === "number") {
+      merged.current = Math.max(previous.current ?? 0, update.current)
+    }
+    if (update.total > 0) {
+      merged.total = update.total
+    } else if (previous.total > 0) {
+      merged.total = previous.total
+    }
+  } else {
+    if (typeof update.current === "number") {
+      merged.current = update.current
+    }
+    if (update.total > 0) {
+      merged.total = update.total
+    }
   }
 
-  if (update.total > 0) {
-    merged.total = update.total
-  } else if (previous.total > 0) {
-    merged.total = previous.total
-  }
-
-  if (previous.phase && previous.phase !== "starting" && (!update.phase || update.phase === "processing")) {
+  if (
+    previous.phase &&
+    previous.phase !== "starting" &&
+    (!update.phase || update.phase === "processing")
+  ) {
     merged.phase = previous.phase
   }
 
-  if (previous.extractSubphase && !update.extractSubphase) {
+  if (
+    merged.phase === "extracting" &&
+    previous.extractSubphase &&
+    !update.extractSubphase
+  ) {
     merged.extractSubphase = previous.extractSubphase
   }
 
   if (previous.usingPrintedToc && update.usingPrintedToc == null) {
     merged.usingPrintedToc = previous.usingPrintedToc
+  }
+
+  if (update.illustrationTotal > 0) {
+    merged.illustrationTotal = update.illustrationTotal
+  } else if (previous.illustrationTotal > 0) {
+    merged.illustrationTotal = previous.illustrationTotal
+  }
+
+  if (typeof update.illustrationCurrent === "number") {
+    merged.illustrationCurrent = Math.max(
+      previous.illustrationCurrent ?? 0,
+      update.illustrationCurrent
+    )
   }
 
   return merged
@@ -147,7 +224,7 @@ export function getParseProgressDetail(parseProgress) {
 
   if (phase === "classifying_illustrations") {
     if (parseProgress.usingPrintedToc && total > 0) {
-      return `Applying printed table of contents (${current} of ${total} illustrations).`
+      return `Applying printed table of contents (${current} of ${total} chapter headers).`
     }
     if (total > 0) {
       return `Classifying illustration ${current} of ${total} (chapter headers and full-page art).`
@@ -247,6 +324,24 @@ export function getCombinedProcessingPercent(
     const fraction = parseProgress.current / parseProgress.total
     const extractMax = 58
     return Math.round(base + fraction * extractMax * processingShare)
+  }
+
+  const itemPhases = {
+    classifying_illustrations: { start: 63, end: 80 },
+    ocr_illustrations: { start: 63, end: 80 },
+    uploading_assets: { start: 80, end: 93 },
+  }
+  const itemBand = itemPhases[parseProgress.phase]
+
+  if (
+    itemBand &&
+    parseProgress.total > 0 &&
+    typeof parseProgress.current === "number" &&
+    parseProgress.current <= parseProgress.total
+  ) {
+    const fraction = parseProgress.current / parseProgress.total
+    const bandPercent = itemBand.start + fraction * (itemBand.end - itemBand.start)
+    return Math.round(base + bandPercent * processingShare)
   }
 
   return Math.round(base + (parseProgress.percent ?? 0) * processingShare)
