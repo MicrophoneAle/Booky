@@ -20,11 +20,15 @@
   --color-ui-panel:      #1c1713;
   --color-ui-input:      var(--color-chrome-field);
   --color-ui-hover:      #242019;
-  --color-ui-text:       #f6ede4;
-  --color-ui-text-dim:   #d4c4b2;
-  --color-ui-accent:     #e8c88a;
-  --color-ui-gold:       #f5d98a;
-  --color-ui-gold-hot:   #ffe49a;
+  --color-ui-text:       #e0d2c4;
+  --color-ui-text-dim:   #a89480;
+  --color-ui-accent:     #c9a86e;
+  --color-ui-gold:       #d4b06a;
+  --color-ui-gold-hot:   #dfc078;
+
+  /* Library folio face — warm lighter brown, distinct from the desk */
+  --color-folio-face:    #524638;
+  --color-folio-face-hi: #5e5244;
 
   /* Typography */
   --font-heading:      'EB Garamond', Georgia, serif;
