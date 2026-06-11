@@ -64,6 +64,10 @@ const PARSE_STATUS = {
 const backgroundParseInFlight = new Set()
 const documentParseProgress = new Map()
 const PDF_PAGE_EXTRACTION_CONCURRENCY = 6
+const PDF_TEXT_EXTRACTION_CONCURRENCY = 8
+const PDF_IMAGE_EXTRACTION_CONCURRENCY = 4
+const EXTRACT_PROGRESS_TEXT_SHARE = 0.62
+const EXTRACT_PROGRESS_IMAGE_SHARE = 0.38
 
 const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 58
 const PARSE_PROGRESS_STRUCTURE_PERCENT = 62
@@ -4657,6 +4661,63 @@ async function buildPdfPageLines(page, headingStrings) {
   return buildPdfPageLinesFromTextContent(textContent, headingStrings)
 }
 
+async function loadPdfDocument(buffer) {
+  const loadingTask = getDocument({
+    data: new Uint8Array(buffer),
+    disableFontFace: true,
+    useSystemFonts: false,
+  })
+  return loadingTask.promise
+}
+
+function extractPhasePercent(pageNumber, totalPages, extractSubphase = "text") {
+  if (totalPages <= 0) {
+    return 0
+  }
+
+  const fraction = pageNumber / totalPages
+  if (extractSubphase === "images") {
+    return Math.round(
+      PARSE_PROGRESS_EXTRACT_MAX_PERCENT * EXTRACT_PROGRESS_TEXT_SHARE +
+        fraction * PARSE_PROGRESS_EXTRACT_MAX_PERCENT * EXTRACT_PROGRESS_IMAGE_SHARE
+    )
+  }
+
+  return Math.round(
+    fraction * PARSE_PROGRESS_EXTRACT_MAX_PERCENT * EXTRACT_PROGRESS_TEXT_SHARE
+  )
+}
+
+async function extractPdfPageTextOnly(pdf, pageNumber, headingStrings) {
+  const page = await pdf.getPage(pageNumber)
+
+  try {
+    const textContent = await page.getTextContent()
+    return buildPdfPageLinesFromTextContent(textContent, headingStrings)
+  } finally {
+    if (typeof page.cleanup === "function") {
+      page.cleanup()
+    }
+  }
+}
+
+async function extractPdfPageImagesOnly(pdf, pageNumber) {
+  const page = await pdf.getPage(pageNumber)
+
+  try {
+    const operatorList = await page.getOperatorList({ intent: "display" })
+    return extractPdfPageImageCandidatesFromOperatorList(
+      page,
+      pageNumber,
+      operatorList
+    )
+  } finally {
+    if (typeof page.cleanup === "function") {
+      page.cleanup()
+    }
+  }
+}
+
 async function extractPdfPageContent(pdf, pageNumber, headingStrings) {
   const page = await pdf.getPage(pageNumber)
 
@@ -4679,13 +4740,11 @@ async function extractPdfPageContent(pdf, pageNumber, headingStrings) {
   }
 }
 
-async function extractPdfStructure(buffer, { onPageProcessed, onExtractReady, puaReplacementMap } = {}) {
-  const loadingTask = getDocument({
-    data: new Uint8Array(buffer),
-    disableFontFace: true,
-    useSystemFonts: false,
-  })
-  const pdf = await loadingTask.promise
+async function extractPdfStructure(
+  buffer,
+  { onPageProcessed, onExtractReady, puaReplacementMap, pdf: pdfInput = null } = {}
+) {
+  const pdf = pdfInput ?? (await loadPdfDocument(buffer))
   const puaMap = puaReplacementMap ?? buildDefaultPuaReplacementMap(buffer)
   const headingStrings = new Set()
   const pdfInfo = await readPdfInfo(pdf)
@@ -4697,19 +4756,18 @@ async function extractPdfStructure(buffer, { onPageProcessed, onExtractReady, pu
 
   const pagesBeforeFilter = new Array(totalPages)
   const pageImageCandidates = new Array(totalPages)
-  const pageExtractionConcurrency =
-    totalPages > 400 ? 4 : PDF_PAGE_EXTRACTION_CONCURRENCY
+  const textConcurrency =
+    totalPages > 400 ? PDF_TEXT_EXTRACTION_CONCURRENCY : PDF_PAGE_EXTRACTION_CONCURRENCY
+  const imageConcurrency =
+    totalPages > 400 ? PDF_IMAGE_EXTRACTION_CONCURRENCY : PDF_PAGE_EXTRACTION_CONCURRENCY
 
   try {
     for (
       let batchStart = 1;
       batchStart <= totalPages;
-      batchStart += pageExtractionConcurrency
+      batchStart += textConcurrency
     ) {
-      const batchEnd = Math.min(
-        batchStart + pageExtractionConcurrency - 1,
-        totalPages
-      )
+      const batchEnd = Math.min(batchStart + textConcurrency - 1, totalPages)
       const batchPageNumbers = []
 
       for (let pageNumber = batchStart; pageNumber <= batchEnd; pageNumber += 1) {
@@ -4718,22 +4776,49 @@ async function extractPdfStructure(buffer, { onPageProcessed, onExtractReady, pu
 
       const batchResults = await Promise.all(
         batchPageNumbers.map((pageNumber) =>
-          extractPdfPageContent(pdf, pageNumber, headingStrings)
+          extractPdfPageTextOnly(pdf, pageNumber, headingStrings)
         )
       )
 
       for (let index = 0; index < batchPageNumbers.length; index += 1) {
         const pageNumber = batchPageNumbers[index]
-        pagesBeforeFilter[pageNumber - 1] = { lines: batchResults[index].lines }
-        pageImageCandidates[pageNumber - 1] = batchResults[index].images
+        pagesBeforeFilter[pageNumber - 1] = { lines: batchResults[index] }
 
         if (onPageProcessed) {
-          onPageProcessed(pageNumber, totalPages)
+          onPageProcessed(pageNumber, totalPages, { extractSubphase: "text" })
+        }
+      }
+    }
+
+    for (
+      let batchStart = 1;
+      batchStart <= totalPages;
+      batchStart += imageConcurrency
+    ) {
+      const batchEnd = Math.min(batchStart + imageConcurrency - 1, totalPages)
+      const batchPageNumbers = []
+
+      for (let pageNumber = batchStart; pageNumber <= batchEnd; pageNumber += 1) {
+        batchPageNumbers.push(pageNumber)
+      }
+
+      const batchResults = await Promise.all(
+        batchPageNumbers.map((pageNumber) =>
+          extractPdfPageImagesOnly(pdf, pageNumber)
+        )
+      )
+
+      for (let index = 0; index < batchPageNumbers.length; index += 1) {
+        const pageNumber = batchPageNumbers[index]
+        pageImageCandidates[pageNumber - 1] = batchResults[index]
+
+        if (onPageProcessed) {
+          onPageProcessed(pageNumber, totalPages, { extractSubphase: "images" })
         }
       }
     }
   } finally {
-    if (typeof pdf.destroy === "function") {
+    if (!pdfInput && typeof pdf.destroy === "function") {
       await pdf.destroy()
     }
   }
@@ -6382,46 +6467,64 @@ async function parsePdfBuffer(
   }
 
   reportProgress({
-    phase: "extracting",
-    label: "Reading PDF pages",
+    phase: "starting",
+    label: "Opening PDF",
     current: 0,
     total: 0,
     percent: 0,
   })
 
-  const puaReplacementMap = buildDefaultPuaReplacementMap(buffer)
+  const [puaReplacementMap, pdf] = await Promise.all([
+    Promise.resolve(buildDefaultPuaReplacementMap(buffer)),
+    loadPdfDocument(buffer),
+  ])
 
-  const { pageData, headingStrings, numPages, pdfInfo, pageImageCandidates } =
-    await extractPdfStructure(buffer, {
+  reportProgress({
+    phase: "extracting",
+    label: "Reading PDF pages",
+    current: 0,
+    total: pdf.numPages,
+    percent: 0,
+    extractSubphase: "text",
+  })
+
+  let pageData
+  let headingStrings
+  let numPages
+  let pdfInfo
+  let pageImageCandidates
+
+  try {
+    ;({
+      pageData,
+      headingStrings,
+      numPages,
+      pdfInfo,
+      pageImageCandidates,
+    } = await extractPdfStructure(buffer, {
+      pdf,
       puaReplacementMap,
-      onExtractReady(totalPages) {
-        reportProgress({
-          phase: "extracting",
-          label: "Reading PDF pages",
-          current: 0,
-          total: totalPages,
-          percent: 0,
-        })
-      },
-      onPageProcessed(pageNumber, totalPages) {
+      onPageProcessed(pageNumber, totalPages, { extractSubphase = "text" } = {}) {
         onPageProcessed?.(pageNumber, totalPages)
 
-        const extractPercent =
-          totalPages > 0
-            ? Math.round(
-                (pageNumber / totalPages) * PARSE_PROGRESS_EXTRACT_MAX_PERCENT
-              )
-            : 0
-
         reportProgress({
           phase: "extracting",
-          label: "Reading PDF pages",
+          label:
+            extractSubphase === "images"
+              ? "Scanning page artwork"
+              : "Reading PDF pages",
           current: pageNumber,
           total: totalPages,
-          percent: extractPercent,
+          extractSubphase,
+          percent: extractPhasePercent(pageNumber, totalPages, extractSubphase),
         })
       },
-    })
+    }))
+  } finally {
+    if (typeof pdf.destroy === "function") {
+      await pdf.destroy()
+    }
+  }
 
   const parsedText = {
     numpages: numPages,

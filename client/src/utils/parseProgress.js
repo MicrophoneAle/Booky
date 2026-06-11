@@ -48,6 +48,10 @@ export function getParseProgressHeadline(parseProgress) {
     return "Reading part and interlude dividers…"
   }
 
+  if (parseProgress.phase === "extracting" && parseProgress.extractSubphase === "images") {
+    return "Scanning page artwork…"
+  }
+
   if (parseProgress.label && parseProgress.phase !== "error") {
     const mapped = PHASE_HEADLINES[parseProgress.phase]
     if (mapped) {
@@ -80,9 +84,12 @@ export function getParseProgressDetail(parseProgress) {
   if (phase === "extracting") {
     if (total > 0) {
       const pct = Math.round((current / total) * 100)
+      if (parseProgress.extractSubphase === "images") {
+        return `Scanning artwork on page ${current} of ${total} (${pct}% of PDF scan).`
+      }
       return `Reading page ${current} of ${total} (${pct}% of PDF scan).`
     }
-    return "Scanning pages for text, headings, and embedded artwork."
+    return "Opening PDF and preparing the page scanner…"
   }
 
   if (phase === "structuring") {
@@ -173,4 +180,25 @@ export function getParseProgressPercent(parseProgress) {
     return null
   }
   return Math.max(0, Math.min(100, Math.round(parseProgress.percent)))
+}
+
+/** Combined upload weight + parse percent for the main progress bar. */
+export function getCombinedProcessingPercent(
+  parseProgress,
+  uploadWeight = 0.12
+) {
+  const processingShare = 1 - uploadWeight
+  const base = 100 * uploadWeight
+
+  if (!parseProgress) {
+    return Math.round(base)
+  }
+
+  if (parseProgress.phase === "extracting" && parseProgress.total > 0) {
+    const fraction = parseProgress.current / parseProgress.total
+    const extractMax = 58
+    return Math.round(base + fraction * extractMax * processingShare)
+  }
+
+  return Math.round(base + (parseProgress.percent ?? 0) * processingShare)
 }

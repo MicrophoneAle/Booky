@@ -10,6 +10,7 @@ import {
 } from "@clerk/clerk-react"
 import FullscreenButton from "../components/FullscreenButton"
 import {
+  getCombinedProcessingPercent,
   getParsePipelineStepStates,
   getParseProgressDetail,
   getParseProgressHeadline,
@@ -61,11 +62,7 @@ function overallUploadProgress(phase, uploadPercent, parseProgress) {
   }
 
   if (phase === "processing") {
-    const parsePercent = parseProgress?.percent ?? 0
-    const processingShare = 1 - UPLOAD_PROGRESS_WEIGHT
-    return Math.round(
-      100 * UPLOAD_PROGRESS_WEIGHT + parsePercent * processingShare
-    )
+    return getCombinedProcessingPercent(parseProgress, UPLOAD_PROGRESS_WEIGHT)
   }
 
   if (phase === "done") {
