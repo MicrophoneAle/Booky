@@ -4,7 +4,7 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: var(--color-muted);
+  color: var(--color-ui-text-dim);
   cursor: pointer;
   padding: 0;
   line-height: 0;
@@ -12,5 +12,5 @@
 }
 
 .fullscreen-button:hover {
-  color: var(--color-gold);
+  color: var(--color-ui-gold);
 }

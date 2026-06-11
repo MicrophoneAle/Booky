@@ -1,14 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700&family=Lora:wght@400;500;600&display=swap');
 
 :root {
-  /* Colours */
-  --color-shell:   #0d0b0a;
-  --color-surface: #14110f;
-  --color-border:  #26201b;
-  --color-gold:    #c5a059;
-  --color-muted:   #73604f;
-  --color-page:    #ffffff;
-  --color-ink:     #1c1917;
+  /* Paper & in-book typography (unchanged — reading experience) */
+  --color-page:        #ffffff;
+  --color-ink:         #1c1917;
+  --color-paper-muted: #73604f;
+  --color-paper-gold:  #c5a059;
+  --color-muted:       var(--color-paper-muted);
+  --color-gold:        var(--color-paper-gold);
+
+  /* App chrome — brighter desk, nav, and UI text */
+  --color-shell:        #1e1a17;
+  --color-surface:      #2e2824;
+  --color-border:       #4a4038;
+  --color-nav:          #352f2a;
+  --color-ui-panel:     #3a342f;
+  --color-ui-input:     #403932;
+  --color-ui-hover:     #484139;
+  --color-ui-text:      #ddd0c4;
+  --color-ui-text-dim:  #b8a896;
+  --color-ui-accent:    #c4a878;
+  --color-ui-gold:      #e8c878;
+  --color-ui-gold-hot:  #f2d88a;
 
   /* Typography */
   --font-heading:      'EB Garamond', Georgia, serif;
@@ -26,7 +39,7 @@
   --radius-lg:         12px;
   --nav-height:        44px;
 
-  /* Mahogany desk surface (public/wood_desk_texture.jpg) */
-  --bg-desk: linear-gradient(rgba(13, 11, 10, 0.75), rgba(13, 11, 10, 0.85)),
+  /* Mahogany desk surface — lighter overlay so wood reads brighter */
+  --bg-desk: linear-gradient(rgba(34, 30, 26, 0.38), rgba(34, 30, 26, 0.52)),
     url('/wood_desk_texture.jpg');
 }
