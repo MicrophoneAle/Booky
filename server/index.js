@@ -63,8 +63,6 @@ const PARSE_STATUS = {
 
 const backgroundParseInFlight = new Set()
 const documentParseProgress = new Map()
-const parseProgressDbWriteAt = new Map()
-const PARSE_PROGRESS_DB_WRITE_MS = 1500
 const PDF_PAGE_EXTRACTION_CONCURRENCY = 6
 
 const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 58
@@ -75,88 +73,8 @@ const PARSE_PROGRESS_UPLOAD_MAX_PERCENT = 93
 const PARSE_PROGRESS_FINALIZE_PERCENT = 96
 const PARSE_PROGRESS_SAVE_PERCENT = 98
 
-function mergeParseProgressSnapshot(previous, next) {
-  if (!next) {
-    return previous ?? null
-  }
-
-  if (!previous) {
-    return next
-  }
-
-  if (previous.phase === next.phase && next.phase === "extracting") {
-    const current = Math.max(previous.current ?? 0, next.current ?? 0)
-    const activePage =
-      next.activePage === null
-        ? 0
-        : Math.max(previous.activePage ?? 0, next.activePage ?? 0)
-    const batchEnd =
-      next.batchEnd === null
-        ? 0
-        : Math.max(previous.batchEnd ?? 0, next.batchEnd ?? 0)
-    const merged = {
-      ...next,
-      current,
-      percent: Math.max(previous.percent ?? 0, next.percent ?? 0),
-      total: next.total ?? previous.total,
-    }
-
-    if (activePage > 0) {
-      merged.activePage = activePage
-    } else {
-      delete merged.activePage
-    }
-
-    if (batchEnd > current) {
-      merged.batchEnd = batchEnd
-    } else {
-      delete merged.batchEnd
-    }
-
-    return merged
-  }
-
-  return next
-}
-
-function setDocumentParseProgress(documentId, progress, { forcePersist = false } = {}) {
-  const previous = documentParseProgress.get(documentId)
-  const merged = mergeParseProgressSnapshot(previous, progress)
-  documentParseProgress.set(documentId, merged)
-
-  const now = Date.now()
-  const lastWrite = parseProgressDbWriteAt.get(documentId) ?? 0
-  const phaseChanged = previous?.phase !== merged?.phase
-  const extractPagePersist =
-    merged?.phase === "extracting" &&
-    typeof merged.current === "number" &&
-    merged.current !== previous?.current
-  const shouldPersist =
-    forcePersist ||
-    phaseChanged ||
-    extractPagePersist ||
-    merged?.phase === "error" ||
-    merged?.phase === "saving" ||
-    now - lastWrite >= PARSE_PROGRESS_DB_WRITE_MS
-
-  if (shouldPersist) {
-    parseProgressDbWriteAt.set(documentId, now)
-    void persistDocumentParseProgress(documentId, merged)
-  }
-}
-
-async function persistDocumentParseProgress(documentId, progress) {
-  try {
-    await supabase
-      .from("documents")
-      .update({ parse_progress: progress })
-      .eq("id", documentId)
-  } catch (error) {
-    console.warn(
-      `[parse-progress] Failed to persist progress for ${documentId}:`,
-      error instanceof Error ? error.message : String(error)
-    )
-  }
+function setDocumentParseProgress(documentId, progress) {
+  documentParseProgress.set(documentId, progress)
 }
 
 function getDocumentParseProgress(documentId) {
@@ -165,11 +83,6 @@ function getDocumentParseProgress(documentId) {
 
 function clearDocumentParseProgress(documentId) {
   documentParseProgress.delete(documentId)
-  parseProgressDbWriteAt.delete(documentId)
-  void supabase
-    .from("documents")
-    .update({ parse_progress: null })
-    .eq("id", documentId)
 }
 
 const supabase = createClient(
@@ -267,7 +180,7 @@ app.get("/documents/:id/status", requireAuth, async (req, res) => {
 
     const { data, error } = await supabase
       .from("documents")
-      .select("id, parse_status, parse_progress")
+      .select("id, parse_status")
       .eq("id", id)
       .eq("user_id", req.userId)
       .single()
@@ -278,10 +191,7 @@ app.get("/documents/:id/status", requireAuth, async (req, res) => {
     }
 
     const parseStatus = data.parse_status ?? PARSE_STATUS.READY
-    const liveProgress = mergeParseProgressSnapshot(
-      data.parse_progress ?? null,
-      getDocumentParseProgress(data.id)
-    )
+    const liveProgress = getDocumentParseProgress(data.id)
 
     res.json({
       success: true,
@@ -4769,10 +4679,7 @@ async function extractPdfPageContent(pdf, pageNumber, headingStrings) {
   }
 }
 
-async function extractPdfStructure(
-  buffer,
-  { onPageProcessed, onBatchStarted, onPostProcessProgress, puaReplacementMap } = {}
-) {
+async function extractPdfStructure(buffer, { onPageProcessed, onExtractReady, puaReplacementMap } = {}) {
   const loadingTask = getDocument({
     data: new Uint8Array(buffer),
     disableFontFace: true,
@@ -4783,6 +4690,10 @@ async function extractPdfStructure(
   const headingStrings = new Set()
   const pdfInfo = await readPdfInfo(pdf)
   const totalPages = pdf.numPages
+
+  if (onExtractReady) {
+    onExtractReady(totalPages)
+  }
 
   const pagesBeforeFilter = new Array(totalPages)
   const pageImageCandidates = new Array(totalPages)
@@ -4805,21 +4716,21 @@ async function extractPdfStructure(
         batchPageNumbers.push(pageNumber)
       }
 
-      if (onBatchStarted) {
-        onBatchStarted(batchStart, batchEnd, totalPages)
-      }
-
-      await Promise.all(
-        batchPageNumbers.map(async (pageNumber) => {
-          const result = await extractPdfPageContent(pdf, pageNumber, headingStrings)
-          pagesBeforeFilter[pageNumber - 1] = { lines: result.lines }
-          pageImageCandidates[pageNumber - 1] = result.images
-
-          if (onPageProcessed) {
-            onPageProcessed(pageNumber, totalPages)
-          }
-        })
+      const batchResults = await Promise.all(
+        batchPageNumbers.map((pageNumber) =>
+          extractPdfPageContent(pdf, pageNumber, headingStrings)
+        )
       )
+
+      for (let index = 0; index < batchPageNumbers.length; index += 1) {
+        const pageNumber = batchPageNumbers[index]
+        pagesBeforeFilter[pageNumber - 1] = { lines: batchResults[index].lines }
+        pageImageCandidates[pageNumber - 1] = batchResults[index].images
+
+        if (onPageProcessed) {
+          onPageProcessed(pageNumber, totalPages)
+        }
+      }
     }
   } finally {
     if (typeof pdf.destroy === "function") {
@@ -4831,15 +4742,6 @@ async function extractPdfStructure(
   const lineOccurrencesPerPage = new Map()
   const lineFirstPageIndex = new Map()
   for (let pageIndex = 0; pageIndex < pagesBeforeFilter.length; pageIndex += 1) {
-    if (
-      onPostProcessProgress &&
-      (pageIndex === 0 ||
-        pageIndex === pagesBeforeFilter.length - 1 ||
-        pageIndex % 25 === 0)
-    ) {
-      onPostProcessProgress(pageIndex + 1, pagesBeforeFilter.length, "indexing")
-    }
-
     for (const line of pagesBeforeFilter[pageIndex].lines) {
       if (!lineDistinctPages.has(line.text)) {
         lineDistinctPages.set(line.text, new Set())
@@ -4855,15 +4757,6 @@ async function extractPdfStructure(
   const pageData = []
 
   for (let pageIndex = 0; pageIndex < pagesBeforeFilter.length; pageIndex += 1) {
-    if (
-      onPostProcessProgress &&
-      (pageIndex === 0 ||
-        pageIndex === pagesBeforeFilter.length - 1 ||
-        pageIndex % 50 === 0)
-    ) {
-      onPostProcessProgress(pageIndex + 1, pagesBeforeFilter.length)
-    }
-
     const page = pagesBeforeFilter[pageIndex]
     const lines = []
 
@@ -6370,12 +6263,6 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
   })
 
   const parseStartedAt = Date.now()
-  const extractHeartbeat = setInterval(() => {
-    const progress = getDocumentParseProgress(documentId)
-    if (progress?.phase === "extracting") {
-      setDocumentParseProgress(documentId, progress, { forcePersist: true })
-    }
-  }, 2000)
 
   try {
     const { parsedText, chapters, contentWithChapters, wordCount, bookTitle } =
@@ -6454,7 +6341,6 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
       .eq("id", documentId)
       .eq("user_id", userId)
   } finally {
-    clearInterval(extractHeartbeat)
     backgroundParseInFlight.delete(documentId)
   }
 }
@@ -6504,88 +6390,35 @@ async function parsePdfBuffer(
   })
 
   const puaReplacementMap = buildDefaultPuaReplacementMap(buffer)
-  let lastExtractPage = 0
-  let batchPagesRemaining = 0
-  let currentBatchEnd = 0
 
   const { pageData, headingStrings, numPages, pdfInfo, pageImageCandidates } =
     await extractPdfStructure(buffer, {
       puaReplacementMap,
-      onBatchStarted(batchStart, batchEnd, totalPages) {
-        batchPagesRemaining = batchEnd - batchStart + 1
-        currentBatchEnd = batchEnd
-
-        const extractPercent =
-          totalPages > 0
-            ? Math.round((batchStart / totalPages) * PARSE_PROGRESS_EXTRACT_MAX_PERCENT)
-            : 0
-
+      onExtractReady(totalPages) {
         reportProgress({
           phase: "extracting",
           label: "Reading PDF pages",
-          current: lastExtractPage,
-          activePage: batchStart,
-          batchEnd: currentBatchEnd,
+          current: 0,
           total: totalPages,
-          percent: Math.max(
-            extractPercent,
-            totalPages > 0
-              ? Math.round(
-                  (lastExtractPage / totalPages) * PARSE_PROGRESS_EXTRACT_MAX_PERCENT
-                )
-              : 0
-          ),
+          percent: 0,
         })
       },
       onPageProcessed(pageNumber, totalPages) {
         onPageProcessed?.(pageNumber, totalPages)
-        lastExtractPage = Math.max(lastExtractPage, pageNumber)
-        batchPagesRemaining = Math.max(0, batchPagesRemaining - 1)
 
         const extractPercent =
           totalPages > 0
             ? Math.round(
-                (lastExtractPage / totalPages) * PARSE_PROGRESS_EXTRACT_MAX_PERCENT
+                (pageNumber / totalPages) * PARSE_PROGRESS_EXTRACT_MAX_PERCENT
               )
             : 0
-
-        const batchStillRunning = batchPagesRemaining > 0
 
         reportProgress({
           phase: "extracting",
           label: "Reading PDF pages",
-          current: lastExtractPage,
+          current: pageNumber,
           total: totalPages,
           percent: extractPercent,
-          activePage: batchStillRunning
-            ? Math.min(currentBatchEnd, lastExtractPage + 1)
-            : null,
-          batchEnd: batchStillRunning ? currentBatchEnd : null,
-          extractSubphase: null,
-        })
-      },
-      onPostProcessProgress(currentPage, totalPages, subphase = "deduplicating") {
-        lastExtractPage = Math.max(lastExtractPage, currentPage)
-
-        const extractPercent =
-          totalPages > 0
-            ? Math.round(
-                (currentPage / totalPages) * PARSE_PROGRESS_EXTRACT_MAX_PERCENT * 0.98
-              )
-            : 0
-
-        reportProgress({
-          phase: "extracting",
-          extractSubphase: subphase,
-          label:
-            subphase === "indexing"
-              ? "Indexing extracted text"
-              : "Analyzing extracted pages",
-          current: currentPage,
-          total: totalPages,
-          percent: extractPercent,
-          activePage: null,
-          batchEnd: null,
         })
       },
     })

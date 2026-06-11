@@ -10,20 +10,16 @@ import {
 } from "@clerk/clerk-react"
 import FullscreenButton from "../components/FullscreenButton"
 import {
-  getCombinedProcessingPercent,
   getParsePipelineStepStates,
   getParseProgressDetail,
   getParseProgressHeadline,
-  isExtractInFlight,
-  mergeParseProgressUpdate,
-  normalizeParseProgress,
 } from "../utils/parseProgress"
 import "./Home.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 
 const LARGE_FILE_BYTES = 15 * 1024 * 1024
-const PARSE_POLL_INTERVAL_MS = 500
+const PARSE_POLL_INTERVAL_MS = 1000
 const PARSE_POLL_TIMEOUT_MS = 20 * 60 * 1000
 const UPLOAD_PROGRESS_WEIGHT = 0.12
 
@@ -65,7 +61,11 @@ function overallUploadProgress(phase, uploadPercent, parseProgress) {
   }
 
   if (phase === "processing") {
-    return getCombinedProcessingPercent(parseProgress, UPLOAD_PROGRESS_WEIGHT)
+    const parsePercent = parseProgress?.percent ?? 0
+    const processingShare = 1 - UPLOAD_PROGRESS_WEIGHT
+    return Math.round(
+      100 * UPLOAD_PROGRESS_WEIGHT + parsePercent * processingShare
+    )
   }
 
   if (phase === "done") {
@@ -101,12 +101,6 @@ async function fetchWithRetry(url, options, retries = 4) {
 
 async function pollDocumentParseStatus(documentId, getToken, onProgress) {
   const startedAt = Date.now()
-  let lastProgress = {
-    phase: "starting",
-    current: 0,
-    total: 0,
-    percent: 0,
-  }
 
   while (Date.now() - startedAt < PARSE_POLL_TIMEOUT_MS) {
     const token = await getToken()
@@ -138,14 +132,16 @@ async function pollDocumentParseStatus(documentId, getToken, onProgress) {
     }
 
     if (data.parse_progress) {
-      lastProgress = mergeParseProgressUpdate(lastProgress, data.parse_progress)
+      onProgress(data.parse_progress)
     } else if (typeof data.parse_percent === "number") {
-      lastProgress = mergeParseProgressUpdate(lastProgress, {
+      onProgress({
+        phase: "extracting",
+        label: "Reading PDF pages",
+        current: 0,
+        total: 0,
         percent: data.parse_percent,
       })
     }
-
-    onProgress(normalizeParseProgress(lastProgress))
 
     if (data.parse_status === "ready") {
       onProgress({ phase: "ready", current: 0, total: 0, percent: 100 })
@@ -494,14 +490,7 @@ export default function Home() {
                 {(uploadState.phase === "uploading" ||
                   uploadState.phase === "processing" ||
                   uploadState.phase === "done") && (
-                  <div
-                    className={`home__progress-bar-wrap${
-                      uploadState.phase === "processing" &&
-                      isExtractInFlight(uploadState.parseProgress)
-                        ? " home__progress-bar-wrap--active"
-                        : ""
-                    }`}
-                  >
+                  <div className="home__progress-bar-wrap">
                     <div
                       className="home__progress-bar-fill"
                       style={{ width: `${uploadState.progress}%` }}

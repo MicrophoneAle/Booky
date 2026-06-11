@@ -439,20 +439,6 @@
   transition: width 0.2s ease;
 }
 
-.home__progress-bar-wrap--active .home__progress-bar-fill {
-  animation: extract-pulse 1.6s ease-in-out infinite;
-}
-
-@keyframes extract-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.72;
-  }
-}
-
 .home__progress-bar-fill--indeterminate {
   width: 40%;
   animation: indeterminate 1.4s ease-in-out infinite;
