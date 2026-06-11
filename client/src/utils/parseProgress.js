@@ -29,6 +29,30 @@ function pipelinePhaseForDisplay(phase) {
   return phase
 }
 
+/** Raw phase including structuring (before pipeline mapping). */
+export function getRawProcessingPhase(parseProgress) {
+  if (!parseProgress?.phase) {
+    return "starting"
+  }
+
+  const pages = resolveCounters(parseProgress).pages
+  if (
+    parseProgress.phase === "extracting" &&
+    parseProgress.extractSubphase === "images" &&
+    pages.total > 0 &&
+    pages.current >= pages.total
+  ) {
+    return "structuring"
+  }
+
+  return parseProgress.phase
+}
+
+/** Phase used for pipeline step highlighting. */
+export function getEffectiveDisplayPhase(parseProgress) {
+  return pipelinePhaseForDisplay(getRawProcessingPhase(parseProgress))
+}
+
 function phaseRank(phase) {
   if (phase === "starting") {
     return 0
@@ -116,7 +140,7 @@ function resolveCounters(raw) {
 }
 
 function activeCountersForPhase(phase, counters) {
-  if (phase === "extracting") {
+  if (phase === "extracting" || phase === "structuring") {
     return counters.pages
   }
   if (phase === "classifying_illustrations") {
@@ -151,7 +175,7 @@ function mergeCounterSnapshot(previous, update) {
     ),
   }
 
-  if (effectivePhase === "extracting") {
+  if (effectivePhase === "extracting" || effectivePhase === "structuring") {
     counters.pages = bumpCounter(counters.pages, update?.current, update?.total)
   }
   if (effectivePhase === "classifying_illustrations") {
@@ -195,7 +219,11 @@ export function getPhaseCounters(parseProgress) {
   }
 
   const counters = resolveCounters(parseProgress)
-  return activeCountersForPhase(parseProgress.phase, counters)
+  const phase = parseProgress.phase
+  if (phase === "extracting" || phase === "structuring") {
+    return counters.pages
+  }
+  return activeCountersForPhase(phase, counters)
 }
 
 /**
@@ -260,6 +288,12 @@ export function mergePollProgressUpdate(previous, update) {
       phase === "extracting"
         ? update.extractSubphase ?? previous.extractSubphase
         : undefined,
+    structureStep:
+      phase === "structuring" ||
+      phase === "classifying_illustrations" ||
+      previous.structureStep
+        ? update.structureStep ?? previous.structureStep
+        : undefined,
     usingPrintedToc:
       update.usingPrintedToc == null ? previous.usingPrintedToc : update.usingPrintedToc,
     pageCurrent: counters.pages.current,
@@ -277,18 +311,41 @@ export function mergePollProgressUpdate(previous, update) {
  * @param {object|null|undefined} parseProgress
  * @returns {string}
  */
+const STRUCTURE_STEP_HEADLINES = {
+  lines: "Organizing book text…",
+  transform: "Merging chapters and paragraphs…",
+  outline: "Reading chapter outline…",
+  interleave: "Placing illustrations in layout…",
+}
+
+const STRUCTURE_STEP_DETAILS = {
+  lines: (current, total) =>
+    total > 0
+      ? `Organizing text from page ${current} of ${total}.`
+      : "Organizing extracted text into paragraphs and headings.",
+  transform: () => "Merging chapter titles, dialogue, and section breaks.",
+  outline: () => "Reading the book outline from the table of contents.",
+  interleave: (current, total) =>
+    total > 0
+      ? `Placing illustrations on page ${current} of ${total}.`
+      : "Weaving illustrations into the page layout.",
+}
+
 export function getParseProgressHeadline(parseProgress) {
   if (!parseProgress?.phase) {
     return "Preparing your book…"
   }
 
-  const phase = pipelinePhaseForDisplay(parseProgress.phase)
+  const rawPhase = getRawProcessingPhase(parseProgress)
+
+  if (rawPhase === "structuring") {
+    const step = parseProgress.structureStep ?? "lines"
+    return STRUCTURE_STEP_HEADLINES[step] ?? "Preparing chapter headers…"
+  }
+
+  const phase = getEffectiveDisplayPhase(parseProgress)
 
   if (phase === "extracting" && parseProgress.extractSubphase === "images") {
-    const { current, total } = getPhaseCounters(parseProgress)
-    if (total > 0 && current >= total) {
-      return "Preparing chapter headers…"
-    }
     return "Scanning page artwork…"
   }
 
@@ -296,7 +353,7 @@ export function getParseProgressHeadline(parseProgress) {
     return "Preparing chapter headers…"
   }
 
-  return PHASE_HEADLINES[phase] ?? "Processing your book…"
+  return PHASE_HEADLINES[phase] ?? PHASE_HEADLINES[parseProgress.phase] ?? "Processing your book…"
 }
 
 /**
@@ -308,7 +365,8 @@ export function getParseProgressDetail(parseProgress) {
     return "Large illustrated books can take several minutes — especially when uploading artwork."
   }
 
-  const phase = pipelinePhaseForDisplay(parseProgress?.phase)
+  const rawPhase = getRawProcessingPhase(parseProgress)
+  const phase = getEffectiveDisplayPhase(parseProgress)
   const { current, total } = getPhaseCounters(parseProgress)
   const { label } = parseProgress
   const illustrationCounters = resolveCounters(parseProgress).illustrations
@@ -321,13 +379,16 @@ export function getParseProgressDetail(parseProgress) {
     return "Loading the file and preparing the parser."
   }
 
+  if (rawPhase === "structuring") {
+    const step = parseProgress.structureStep ?? "lines"
+    const detailFn = STRUCTURE_STEP_DETAILS[step]
+    return detailFn ? detailFn(current, total) : "Preparing the book layout."
+  }
+
   if (phase === "extracting") {
     if (total > 0) {
       const pct = Math.round((current / total) * 100)
       if (parseProgress.extractSubphase === "images") {
-        if (current >= total) {
-          return "PDF scan complete — matching chapter headers to the book outline."
-        }
         return `Scanning artwork on page ${current} of ${total} (${pct}% of PDF scan).`
       }
       return `Reading page ${current} of ${total} (${pct}% of PDF scan).`
@@ -387,7 +448,7 @@ export function getParseProgressDetail(parseProgress) {
  * @returns {Array<{ phase: string, label: string, status: 'done'|'active'|'pending' }>}
  */
 export function getParsePipelineStepStates(parseProgress) {
-  const activePhase = pipelinePhaseForDisplay(parseProgress?.phase ?? "starting")
+  const activePhase = getEffectiveDisplayPhase(parseProgress)
   const activeRank = phaseRank(activePhase)
 
   return PARSE_PIPELINE_STEPS.map((step) => {
@@ -432,12 +493,22 @@ export function getCombinedProcessingPercent(
   }
 
   const { current, total } = getPhaseCounters(parseProgress)
-  const displayPhase = pipelinePhaseForDisplay(parseProgress.phase)
+  const rawPhase = getRawProcessingPhase(parseProgress)
+  const displayPhase = getEffectiveDisplayPhase(parseProgress)
 
   if (displayPhase === "extracting" && total > 0) {
     const fraction = current / total
     const extractMax = 58
     return Math.round(base + fraction * extractMax * processingShare)
+  }
+
+  if (rawPhase === "structuring" && total > 0) {
+    const structureMax = 62
+    const structureMin = 58
+    const fraction = current / total
+    const band =
+      structureMin + fraction * (structureMax - structureMin)
+    return Math.round(base + band * processingShare)
   }
 
   const itemPhases = {

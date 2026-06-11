@@ -85,6 +85,25 @@ const PARSE_PROGRESS_UPLOAD_MAX_PERCENT = 93
 const PARSE_PROGRESS_FINALIZE_PERCENT = 96
 const PARSE_PROGRESS_SAVE_PERCENT = 98
 
+function structurePhasePercent(structureStep, current = 0, total = 0) {
+  const base = PARSE_PROGRESS_EXTRACT_MAX_PERCENT
+  const span = PARSE_PROGRESS_STRUCTURE_PERCENT - base
+
+  if (structureStep === "lines" && total > 0) {
+    return Math.round(base + (current / total) * span * 0.45)
+  }
+  if (structureStep === "transform") {
+    return Math.round(base + span * 0.55)
+  }
+  if (structureStep === "outline") {
+    return Math.round(base + span * 0.75)
+  }
+  if (structureStep === "interleave" && total > 0) {
+    return Math.round(base + span * (0.8 + (current / total) * 0.2))
+  }
+  return Math.round(base + span * 0.5)
+}
+
 function parseProgressPhaseRank(phase) {
   const ranks = {
     starting: 0,
@@ -123,6 +142,9 @@ function bumpParseCounter(counter, current, total) {
 
 function activeCountersForPhase(phase, counters) {
   if (phase === "extracting") {
+    return counters.pages
+  }
+  if (phase === "structuring") {
     return counters.pages
   }
   if (phase === "classifying_illustrations") {
@@ -172,7 +194,7 @@ function mergeParseProgressSnapshot(previous, patch) {
 
   const effectivePhase = patch.phase ?? prev.phase
 
-  if (effectivePhase === "extracting") {
+  if (effectivePhase === "extracting" || effectivePhase === "structuring") {
     counters.pages = bumpParseCounter(counters.pages, patch.current, patch.total)
   }
 
@@ -213,6 +235,10 @@ function mergeParseProgressSnapshot(previous, patch) {
       phase === "extracting"
         ? patch.extractSubphase ?? prev.extractSubphase
         : undefined,
+    structureStep:
+      phase === "structuring" || phase === "classifying_illustrations"
+        ? patch.structureStep ?? prev.structureStep
+        : undefined,
     usingPrintedToc:
       patch.usingPrintedToc == null ? prev.usingPrintedToc : patch.usingPrintedToc,
     illustrationCurrent: counters.illustrations.current,
@@ -234,14 +260,22 @@ function setDocumentParseProgress(documentId, progress) {
   const now = Date.now()
   const lastWrite = parseProgressDbWriteAt.get(documentId) ?? 0
   const phaseChanged = previous?.phase !== merged?.phase
+  const structureStepChanged = previous?.structureStep !== merged?.structureStep
   const pageChanged =
-    merged?.phase === "extracting" &&
+    (merged?.phase === "extracting" || merged?.phase === "structuring") &&
     typeof merged.pageCurrent === "number" &&
     merged.pageCurrent !== previous?.pageCurrent
+  const illustrationChanged =
+    (merged?.phase === "classifying_illustrations" ||
+      merged?.phase === "ocr_illustrations") &&
+    typeof merged.illustrationCurrent === "number" &&
+    merged.illustrationCurrent !== previous?.illustrationCurrent
 
   if (
     phaseChanged ||
+    structureStepChanged ||
     pageChanged ||
+    illustrationChanged ||
     merged?.phase === "error" ||
     merged?.phase === "saving" ||
     now - lastWrite >= PARSE_PROGRESS_DB_WRITE_MS
@@ -4373,7 +4407,12 @@ function mapTextBlocksToPagePositions(blocks, pageData) {
   })
 }
 
-function interleaveImageCandidateBlocks(textBlocks, pageImageCandidates, pageData) {
+function interleaveImageCandidateBlocks(
+  textBlocks,
+  pageImageCandidates,
+  pageData,
+  { onProgress } = {}
+) {
   const eligibleImages = (pageImageCandidates ?? [])
     .flat()
     .filter(
@@ -4409,6 +4448,7 @@ function interleaveImageCandidateBlocks(textBlocks, pageImageCandidates, pageDat
   )
 
   const interleaved = []
+  const totalPages = maxPageIndex + 1
 
   for (let pageIndex = 0; pageIndex <= maxPageIndex; pageIndex += 1) {
     const pageImages = [...(imagesByPage.get(pageIndex) ?? [])].sort(
@@ -4419,6 +4459,10 @@ function interleaveImageCandidateBlocks(textBlocks, pageImageCandidates, pageDat
     const pageTextBlocks = textBlocksByPage.get(pageIndex) ?? []
 
     interleaved.push(...pageImages, ...pageTextBlocks)
+
+    if (onProgress && (pageIndex % 25 === 0 || pageIndex === maxPageIndex)) {
+      onProgress(pageIndex + 1, totalPages)
+    }
   }
 
   return interleaved
@@ -5971,9 +6015,10 @@ function splitDialogueHeavyBlocks(blocks) {
   return result
 }
 
-function buildBlocksFromLines(pageData, headingStrings) {
+function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
   const blocks = []
   const allLines = []
+  const totalPages = pageData.length
 
   for (let pageIndex = 0; pageIndex < pageData.length; pageIndex += 1) {
     const pageLines = pageData[pageIndex].lines ?? []
@@ -5985,6 +6030,13 @@ function buildBlocksFromLines(pageData, headingStrings) {
       if (text) {
         allLines.push({ line, text, pageIndex, pageMetrics })
       }
+    }
+
+    if (
+      onProgress &&
+      (pageIndex % 20 === 0 || pageIndex === totalPages - 1)
+    ) {
+      onProgress(pageIndex + 1, totalPages)
     }
   }
 
@@ -6776,24 +6828,45 @@ async function parsePdfBuffer(
   }
 
   reportProgress({
-    phase: "classifying_illustrations",
-    label: "Preparing chapter headers",
+    phase: "structuring",
+    label: "Organizing book text",
+    structureStep: "lines",
     current: 0,
-    total: 0,
-    percent: PARSE_PROGRESS_EXTRACT_MAX_PERCENT,
+    total: numPages,
+    percent: structurePhasePercent("lines", 0, numPages),
     counters: {
-      pages: { current: numPages, total: numPages },
+      pages: { current: 0, total: numPages },
       illustrations: { current: 0, total: 0 },
       ocr: { current: 0, total: 0 },
       uploads: { current: 0, total: 0 },
     },
-    pageCurrent: numPages,
+    pageCurrent: 0,
     pageTotal: numPages,
   })
 
   let blocks = applyBlockTransformPipeline(
-    buildBlocksFromLines(pageData, headingStrings)
+    buildBlocksFromLines(pageData, headingStrings, {
+      onProgress(current, total) {
+        reportProgress({
+          phase: "structuring",
+          label: "Organizing book text",
+          structureStep: "lines",
+          current,
+          total,
+          percent: structurePhasePercent("lines", current, total),
+        })
+      },
+    })
   )
+
+  reportProgress({
+    phase: "structuring",
+    label: "Merging chapters and paragraphs",
+    structureStep: "transform",
+    current: numPages,
+    total: numPages,
+    percent: structurePhasePercent("transform"),
+  })
 
   const bookTitle = resolveBookTitle(parsedText, fileName, blocks)
 
@@ -6830,13 +6903,43 @@ async function parsePdfBuffer(
   }
 
   blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle)
+
+  reportProgress({
+    phase: "structuring",
+    label: "Reading chapter outline",
+    structureStep: "outline",
+    current: numPages,
+    total: numPages,
+    percent: structurePhasePercent("outline"),
+  })
+
   const printedToc =
     extractPrintedTocFromPageData(pageData) ?? extractPrintedTocLookup(blocks)
   blocks = excludePrintedTocBlocks(blocks)
   blocks = normalizeFrontAndBackMatterBlocks(blocks)
   blocks = injectStormlightPreludeHeading(blocks)
 
-  blocks = interleaveImageCandidateBlocks(blocks, pageImageCandidates, pageData)
+  reportProgress({
+    phase: "structuring",
+    label: "Placing illustrations in layout",
+    structureStep: "interleave",
+    current: 0,
+    total: numPages,
+    percent: structurePhasePercent("interleave", 0, numPages),
+  })
+
+  blocks = interleaveImageCandidateBlocks(blocks, pageImageCandidates, pageData, {
+    onProgress(current, total) {
+      reportProgress({
+        phase: "structuring",
+        label: "Placing illustrations in layout",
+        structureStep: "interleave",
+        current,
+        total,
+        percent: structurePhasePercent("interleave", current, total),
+      })
+    },
+  })
 
   const illustrationCandidateCount = blocks.filter(
     (block) => block?.type === "image_candidate" && block.isCandidate

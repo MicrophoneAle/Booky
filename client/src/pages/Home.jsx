@@ -21,7 +21,7 @@ import "./Home.css"
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
 
 const LARGE_FILE_BYTES = 15 * 1024 * 1024
-const PARSE_POLL_INTERVAL_MS = 1000
+const PARSE_POLL_INTERVAL_MS = 500
 const PARSE_POLL_TIMEOUT_MS = 20 * 60 * 1000
 const UPLOAD_PROGRESS_WEIGHT = 0.12
 
