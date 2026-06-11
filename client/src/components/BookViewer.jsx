@@ -3607,6 +3607,64 @@ function flattenListText(nodes = []) {
   return nodes.flatMap((node) => [node.text, ...flattenListText(node.children ?? [])])
 }
 
+function InlineCustomSettingChip({
+  field,
+  editingField,
+  editInputRef,
+  isActive,
+  displayLabel,
+  draft,
+  staticPrefix = "Custom",
+  staticSuffix = "",
+  onStartEdit,
+  onDraftChange,
+  onCommit,
+  onCancel,
+}) {
+  if (editingField === field) {
+    return (
+      <span className="book-viewer__settings-chip book-viewer__settings-chip--active book-viewer__settings-chip--edit">
+        <span className="book-viewer__settings-chip-static">{staticPrefix}</span>
+        <input
+          ref={editInputRef}
+          type="text"
+          inputMode="decimal"
+          className="book-viewer__settings-chip-input"
+          value={draft}
+          aria-label={`${staticPrefix} value`}
+          onChange={(event) => onDraftChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault()
+              onCommit()
+            }
+            if (event.key === "Escape") {
+              event.preventDefault()
+              onCancel()
+            }
+          }}
+          onBlur={onCommit}
+        />
+        {staticSuffix ? (
+          <span className="book-viewer__settings-chip-static">{staticSuffix}</span>
+        ) : null}
+      </span>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      className={`book-viewer__settings-chip ${
+        isActive ? "book-viewer__settings-chip--active" : ""
+      }`}
+      onClick={onStartEdit}
+    >
+      {displayLabel}
+    </button>
+  )
+}
+
 export default function BookViewer({
   document: bookDocument,
   initialPage = 1,
@@ -3668,6 +3726,9 @@ export default function BookViewer({
   const fullscreenSwapAtRef = useRef(0)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [customEditField, setCustomEditField] = useState(null)
+  const [customEditDraft, setCustomEditDraft] = useState("")
+  const customEditInputRef = useRef(null)
   const [tocOpen, setTocOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -3706,6 +3767,122 @@ export default function BookViewer({
     if (desktopSpreadBehavior && clamped % 2 === 0) return Math.max(1, clamped - 1)
     return clamped
   }, [])
+
+  const cancelCustomEdit = useCallback(() => {
+    setCustomEditField(null)
+    setCustomEditDraft("")
+  }, [])
+
+  const commitCustomFontSizeEdit = useCallback(() => {
+    if (customEditField !== "fontSize") return
+    const nextPx = sanitizeCustomFontSizePx(
+      customEditDraft,
+      uiSettings.customFontSizePx
+    )
+    setUiSettings((s) => ({
+      ...s,
+      fontSize: "custom",
+      customFontSizePx: nextPx,
+    }))
+    setCustomEditField(null)
+    setCustomEditDraft("")
+  }, [customEditField, customEditDraft, uiSettings.customFontSizePx])
+
+  const commitCustomLineSpacingEdit = useCallback(() => {
+    if (customEditField !== "lineSpacing") return
+    const nextSpacing = sanitizeCustomLineSpacing(
+      customEditDraft,
+      uiSettings.customLineSpacing
+    )
+    setUiSettings((s) => ({
+      ...s,
+      lineSpacing: "custom",
+      customLineSpacing: nextSpacing,
+    }))
+    setCustomEditField(null)
+    setCustomEditDraft("")
+  }, [customEditField, customEditDraft, uiSettings.customLineSpacing])
+
+  const commitCustomMarginEdit = useCallback(() => {
+    if (customEditField !== "margins") return
+    const nextMargin = sanitizeCustomMarginRem(
+      customEditDraft,
+      uiSettings.customMarginRem
+    )
+    setUiSettings((s) => ({
+      ...s,
+      margins: "custom",
+      customMarginRem: nextMargin,
+    }))
+    setCustomEditField(null)
+    setCustomEditDraft("")
+  }, [customEditField, customEditDraft, uiSettings.customMarginRem])
+
+  const startCustomFontSizeEdit = useCallback(() => {
+    const nextPx = sanitizeCustomFontSizePx(uiSettings.customFontSizePx)
+    setUiSettings((s) => ({
+      ...s,
+      fontSize: "custom",
+      customFontSizePx: nextPx,
+    }))
+    setCustomEditField("fontSize")
+    setCustomEditDraft(String(nextPx))
+  }, [uiSettings.customFontSizePx])
+
+  const startCustomLineSpacingEdit = useCallback(() => {
+    const nextSpacing = sanitizeCustomLineSpacing(uiSettings.customLineSpacing)
+    setUiSettings((s) => ({
+      ...s,
+      lineSpacing: "custom",
+      customLineSpacing: nextSpacing,
+    }))
+    setCustomEditField("lineSpacing")
+    setCustomEditDraft(String(nextSpacing))
+  }, [uiSettings.customLineSpacing])
+
+  const startCustomMarginEdit = useCallback(() => {
+    const nextMargin = sanitizeCustomMarginRem(uiSettings.customMarginRem)
+    setUiSettings((s) => ({
+      ...s,
+      margins: "custom",
+      customMarginRem: nextMargin,
+    }))
+    setCustomEditField("margins")
+    setCustomEditDraft(String(nextMargin))
+  }, [uiSettings.customMarginRem])
+
+  useEffect(() => {
+    if (!customEditField) {
+      return undefined
+    }
+
+    const frameId = requestAnimationFrame(() => {
+      customEditInputRef.current?.focus()
+      customEditInputRef.current?.select()
+    })
+
+    return () => cancelAnimationFrame(frameId)
+  }, [customEditField])
+
+  useEffect(() => {
+    if (settingsOpen || !customEditField) {
+      return
+    }
+
+    if (customEditField === "fontSize") {
+      commitCustomFontSizeEdit()
+    } else if (customEditField === "lineSpacing") {
+      commitCustomLineSpacingEdit()
+    } else if (customEditField === "margins") {
+      commitCustomMarginEdit()
+    }
+  }, [
+    settingsOpen,
+    customEditField,
+    commitCustomFontSizeEdit,
+    commitCustomLineSpacingEdit,
+    commitCustomMarginEdit,
+  ])
 
   useEffect(() => {
     currentPageRef.current = currentPage
@@ -6134,7 +6311,7 @@ export default function BookViewer({
           <div className="book-viewer__settings-section">
             <p className="book-viewer__settings-label">Font Size</p>
             <div className="book-viewer__settings-row">
-              {["small", "medium", "large", "xlarge", "custom"].map((size) => (
+              {["small", "medium", "large", "xlarge"].map((size) => (
                 <button
                   key={size}
                   type="button"
@@ -6143,44 +6320,31 @@ export default function BookViewer({
                       ? "book-viewer__settings-chip--active"
                       : ""
                   }`}
-                  onClick={() =>
+                  onClick={() => {
+                    cancelCustomEdit()
                     setUiSettings((s) => ({
                       ...s,
                       fontSize: size,
-                      customFontSizePx: sanitizeCustomFontSizePx(s.customFontSizePx),
                     }))
-                  }
+                  }}
                 >
                   {formatFontSizeChipLabel(size, uiSettings)}
                 </button>
               ))}
+              <InlineCustomSettingChip
+                field="fontSize"
+                editingField={customEditField}
+                editInputRef={customEditInputRef}
+                isActive={uiSettings.fontSize === "custom"}
+                displayLabel={formatFontSizeChipLabel("custom", uiSettings)}
+                draft={customEditDraft}
+                staticSuffix="px"
+                onStartEdit={startCustomFontSizeEdit}
+                onDraftChange={setCustomEditDraft}
+                onCommit={commitCustomFontSizeEdit}
+                onCancel={cancelCustomEdit}
+              />
             </div>
-            {uiSettings.fontSize === "custom" && (
-              <label className="book-viewer__settings-custom">
-                <span className="book-viewer__settings-custom-label">
-                  Body size ({CUSTOM_FONT_SIZE_LIMITS.min}–{CUSTOM_FONT_SIZE_LIMITS.max} px)
-                </span>
-                <input
-                  type="number"
-                  className="book-viewer__settings-custom-input"
-                  min={CUSTOM_FONT_SIZE_LIMITS.min}
-                  max={CUSTOM_FONT_SIZE_LIMITS.max}
-                  step={1}
-                  value={uiSettings.customFontSizePx}
-                  onChange={(event) => {
-                    const next = sanitizeCustomFontSizePx(
-                      event.target.value,
-                      uiSettings.customFontSizePx
-                    )
-                    setUiSettings((s) => ({
-                      ...s,
-                      fontSize: "custom",
-                      customFontSizePx: next,
-                    }))
-                  }}
-                />
-              </label>
-            )}
           </div>
 
           <div className="book-viewer__settings-section">
@@ -6211,7 +6375,7 @@ export default function BookViewer({
           <div className="book-viewer__settings-section">
             <p className="book-viewer__settings-label">Line Spacing</p>
             <div className="book-viewer__settings-row">
-              {["compact", "normal", "relaxed", "airy", "custom"].map((sp) => (
+              {["compact", "normal", "relaxed", "airy"].map((sp) => (
                 <button
                   key={sp}
                   type="button"
@@ -6220,50 +6384,36 @@ export default function BookViewer({
                       ? "book-viewer__settings-chip--active"
                       : ""
                   }`}
-                  onClick={() =>
+                  onClick={() => {
+                    cancelCustomEdit()
                     setUiSettings((s) => ({
                       ...s,
                       lineSpacing: sp,
-                      customLineSpacing: sanitizeCustomLineSpacing(s.customLineSpacing),
                     }))
-                  }
+                  }}
                 >
                   {formatLineSpacingChipLabel(sp, uiSettings)}
                 </button>
               ))}
+              <InlineCustomSettingChip
+                field="lineSpacing"
+                editingField={customEditField}
+                editInputRef={customEditInputRef}
+                isActive={uiSettings.lineSpacing === "custom"}
+                displayLabel={formatLineSpacingChipLabel("custom", uiSettings)}
+                draft={customEditDraft}
+                onStartEdit={startCustomLineSpacingEdit}
+                onDraftChange={setCustomEditDraft}
+                onCommit={commitCustomLineSpacingEdit}
+                onCancel={cancelCustomEdit}
+              />
             </div>
-            {uiSettings.lineSpacing === "custom" && (
-              <label className="book-viewer__settings-custom">
-                <span className="book-viewer__settings-custom-label">
-                  Line height ({CUSTOM_LINE_SPACING_LIMITS.min}–{CUSTOM_LINE_SPACING_LIMITS.max})
-                </span>
-                <input
-                  type="number"
-                  className="book-viewer__settings-custom-input"
-                  min={CUSTOM_LINE_SPACING_LIMITS.min}
-                  max={CUSTOM_LINE_SPACING_LIMITS.max}
-                  step={CUSTOM_LINE_SPACING_LIMITS.step}
-                  value={uiSettings.customLineSpacing}
-                  onChange={(event) => {
-                    const next = sanitizeCustomLineSpacing(
-                      event.target.value,
-                      uiSettings.customLineSpacing
-                    )
-                    setUiSettings((s) => ({
-                      ...s,
-                      lineSpacing: "custom",
-                      customLineSpacing: next,
-                    }))
-                  }}
-                />
-              </label>
-            )}
           </div>
 
           <div className="book-viewer__settings-section">
             <p className="book-viewer__settings-label">Margins</p>
             <div className="book-viewer__settings-row">
-              {["none", "narrow", "normal", "wide", "custom"].map((m) => (
+              {["none", "narrow", "normal", "wide"].map((m) => (
                 <button
                   key={m}
                   type="button"
@@ -6272,51 +6422,41 @@ export default function BookViewer({
                       ? "book-viewer__settings-chip--active"
                       : ""
                   }`}
-                  onClick={() =>
+                  onClick={() => {
+                    cancelCustomEdit()
                     setUiSettings((s) => ({
                       ...s,
                       margins: m,
-                      customMarginRem: sanitizeCustomMarginRem(s.customMarginRem),
                     }))
-                  }
+                  }}
                 >
                   {formatMarginChipLabel(m, uiSettings)}
                 </button>
               ))}
+              <InlineCustomSettingChip
+                field="margins"
+                editingField={customEditField}
+                editInputRef={customEditInputRef}
+                isActive={uiSettings.margins === "custom"}
+                displayLabel={formatMarginChipLabel("custom", uiSettings)}
+                draft={customEditDraft}
+                staticSuffix="rem"
+                onStartEdit={startCustomMarginEdit}
+                onDraftChange={setCustomEditDraft}
+                onCommit={commitCustomMarginEdit}
+                onCancel={cancelCustomEdit}
+              />
             </div>
-            {uiSettings.margins === "custom" && (
-              <label className="book-viewer__settings-custom">
-                <span className="book-viewer__settings-custom-label">
-                  Page margin ({CUSTOM_MARGIN_REM_LIMITS.min}–{CUSTOM_MARGIN_REM_LIMITS.max} rem)
-                </span>
-                <input
-                  type="number"
-                  className="book-viewer__settings-custom-input"
-                  min={CUSTOM_MARGIN_REM_LIMITS.min}
-                  max={CUSTOM_MARGIN_REM_LIMITS.max}
-                  step={CUSTOM_MARGIN_REM_LIMITS.step}
-                  value={uiSettings.customMarginRem}
-                  onChange={(event) => {
-                    const next = sanitizeCustomMarginRem(
-                      event.target.value,
-                      uiSettings.customMarginRem
-                    )
-                    setUiSettings((s) => ({
-                      ...s,
-                      margins: "custom",
-                      customMarginRem: next,
-                    }))
-                  }}
-                />
-              </label>
-            )}
           </div>
 
           <div className="book-viewer__settings-section">
             <button
               type="button"
               className="book-viewer__settings-reset"
-              onClick={() => setUiSettings(normalizeReaderSettings(DEFAULT_SETTINGS))}
+              onClick={() => {
+                cancelCustomEdit()
+                setUiSettings(normalizeReaderSettings(DEFAULT_SETTINGS))
+              }}
             >
               Reset to defaults
             </button>
