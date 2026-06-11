@@ -318,17 +318,13 @@
     ),
     linear-gradient(
       168deg,
-      var(--color-folio-face-hi) 0%,
-      var(--color-folio-face) 48%,
-      var(--color-folio-face-lo) 100%
+      color-mix(in srgb, var(--color-folio-face-hi) 86%, transparent) 0%,
+      color-mix(in srgb, var(--color-folio-face) 88%, transparent) 48%,
+      color-mix(in srgb, var(--color-folio-face-lo) 90%, transparent) 100%
     ),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 3px,
-      rgba(42, 24, 14, 0.08) 3px,
-      rgba(42, 24, 14, 0.08) 4px
-    );
+    url('../assets/leather_book_texture.jpg');
+  background-size: auto, auto, cover;
+  background-position: center, center, center;
   border: 1px solid rgba(108, 62, 32, 0.58);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   box-shadow:
@@ -347,12 +343,16 @@
   inset: 10px;
   pointer-events: none;
   background-color: var(--color-folio-inset);
-  background-image: linear-gradient(
-    168deg,
-    color-mix(in srgb, var(--color-folio-inset) 72%, black 28%) 0%,
-    var(--color-folio-inset) 45%,
-    color-mix(in srgb, var(--color-folio-inset) 82%, black 18%) 100%
-  );
+  background-image:
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--color-folio-inset) 78%, black 22%) 0%,
+      color-mix(in srgb, var(--color-folio-inset) 92%, transparent) 45%,
+      color-mix(in srgb, var(--color-folio-inset) 84%, black 16%) 100%
+    ),
+    url('../assets/leather_book_texture.jpg');
+  background-size: auto, cover;
+  background-position: center, center;
   border: 1px solid rgba(92, 54, 28, 0.46);
   border-radius: 0 1px 1px 0;
   box-shadow:
@@ -601,6 +601,15 @@
   min-height: 196px;
   padding: 1.5rem;
   background-color: var(--color-folio-face);
+  background-image:
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--color-folio-face-hi) 88%, transparent) 0%,
+      color-mix(in srgb, var(--color-folio-face-lo) 90%, transparent) 100%
+    ),
+    url('../assets/leather_book_texture.jpg');
+  background-size: auto, cover;
+  background-position: center, center;
   border: 1px solid rgba(108, 62, 32, 0.58);
   border-radius: var(--radius-md);
   box-shadow:
