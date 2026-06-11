@@ -52,6 +52,9 @@ const MIN_CHAPTER_HEADING_BANNER_PAGE = 20
 /** Ignore part/interlude-divider art in front matter (maps, printed TOC graphics). */
 const MIN_SECTION_BOUNDARY_PAGE = 28
 
+const FLASHBACK_TIMESTAMP_REGEX =
+  /^FIVE (?:AND A HALF )?YEARS (?:LATER|AGO)|^TWO YEARS AGO|^ONE YEAR LATER/i
+
 function normalizeNullableString(value) {
   if (value == null) {
     return null
@@ -212,6 +215,56 @@ function extractChapterMetadata(
   }
 }
 
+function isFlashbackChapterHeading(imageBlock, blocks, blockIndex) {
+  for (const { text } of collectFollowingTextBlocks(blocks, blockIndex, 8)) {
+    const trimmed = (text ?? "").trim()
+    if (!trimmed) {
+      continue
+    }
+
+    if (FLASHBACK_TIMESTAMP_REGEX.test(trimmed)) {
+      return true
+    }
+
+    if (/YEARS (?:LATER|AGO)/i.test(trimmed) && trimmed.length <= 40) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function analyzeFlashbackTimestampHeading(imageBlock, blocks, blockIndex) {
+  if (!isFlashbackChapterHeading(imageBlock, blocks, blockIndex)) {
+    return null
+  }
+
+  for (const { text } of collectFollowingTextBlocks(blocks, blockIndex, 8)) {
+    const trimmed = (text ?? "").trim()
+    if (!trimmed) {
+      continue
+    }
+
+    if (FLASHBACK_TIMESTAMP_REGEX.test(trimmed) || /YEARS (?:LATER|AGO)/i.test(trimmed)) {
+      logChapterGraphicDecision("flashback_timestamp_heading", {
+        pageNumber: imageBlock.pageNumber,
+        text: trimmed,
+      })
+
+      return {
+        isChapterBoundary: true,
+        includeInToc: false,
+        boundaryKind: "flashback",
+        title: trimmed,
+        number: null,
+        rawText: trimmed,
+      }
+    }
+  }
+
+  return null
+}
+
 function shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex) {
   if (isCoverPageImage(imageBlock)) {
     logChapterGraphicDecision("skip_cover", { pageNumber: imageBlock.pageNumber })
@@ -346,6 +399,10 @@ function mergeOcrIntoAnalysis(
     const section = analyzeFullPageSectionDivider(ocrMetadata, imageBlock)
     if (section.isChapterBoundary) {
       return section
+    }
+
+    if (printedToc && ocrMetadata.boundaryKind === "chapter") {
+      return { ...SAFE_FALLBACK }
     }
   }
 
@@ -517,12 +574,14 @@ function analyzeChapterGraphicFromContext({
   let analysisResult = { ...SAFE_FALLBACK }
 
   if (imageBlock.imageRole === "chapter_heading") {
-    analysisResult = analyzeChapterHeadingBanner({
-      imageBlock,
-      blocks,
-      blockIndex,
-      chapterSequence,
-    })
+    analysisResult =
+      analyzeFlashbackTimestampHeading(imageBlock, blocks, blockIndex) ??
+      analyzeChapterHeadingBanner({
+        imageBlock,
+        blocks,
+        blockIndex,
+        chapterSequence,
+      })
   } else if (imageBlock.imageRole === "full_page_illustration") {
     analysisResult = analyzeFullPageIllustration({
       imageBlock,
@@ -565,6 +624,10 @@ async function analyzeChapterGraphic(_base64Image, context = {}) {
 export {
   analyzeChapterGraphic,
   analyzeChapterGraphicFromContext,
+  analyzeChapterHeadingBanner,
+  analyzeFlashbackTimestampHeading,
+  isFlashbackChapterHeading,
   mergeOcrIntoAnalysis,
+  shouldSkipChapterGraphicAnalysis,
   SAFE_FALLBACK,
 }

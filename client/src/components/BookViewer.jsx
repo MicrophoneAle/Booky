@@ -2239,6 +2239,10 @@ function pageOnlyFrontMatter(placeables) {
 }
 
 function getChapterItemFromPlaceable(placeable) {
+  if (placeable.type === "image" && placeable.item?.isChapterBoundary) {
+    return placeable.item
+  }
+
   if (isHeadingPlaceable(placeable)) {
     return placeable.item
   }
@@ -3127,7 +3131,48 @@ function resolveNavChapterTitlesForPageIndex(pages, pageIndex) {
   return []
 }
 
-function formatNavChapterTitle(pages, currentPage, isSpreadView) {
+function normalizeTocTitleKey(title) {
+  return (title ?? "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/^chapter\s+\d+\s*:\s*/i, "")
+    .trim()
+}
+
+function dedupeTocEntries(entries) {
+  const seenPageTitle = new Set()
+  const deduped = []
+
+  for (const entry of entries) {
+    const pageKey = entry.pageNum ?? "unknown"
+    const titleKey = normalizeTocTitleKey(entry.title)
+    const dedupeKey = `${pageKey}:${titleKey}`
+    if (seenPageTitle.has(dedupeKey)) {
+      continue
+    }
+    seenPageTitle.add(dedupeKey)
+    deduped.push(entry)
+  }
+
+  return deduped
+}
+
+function resolveNavChapterTitlesFromToc(tocEntries, pageNumber) {
+  if (!pageNumber || tocEntries.length === 0) {
+    return []
+  }
+
+  let activeTitle = null
+  for (const entry of tocEntries) {
+    if (entry.pageNum != null && entry.pageNum <= pageNumber) {
+      activeTitle = entry.title
+    }
+  }
+
+  return activeTitle ? [activeTitle] : []
+}
+
+function formatNavChapterTitle(pages, currentPage, isSpreadView, tocEntries = []) {
   const pageIndices = [currentPage - 1]
 
   if (isSpreadView && currentPage < pages.length) {
@@ -3147,6 +3192,25 @@ function formatNavChapterTitle(pages, currentPage, isSpreadView) {
   }
 
   const result = titles.join(" · ").trim()
+  if (!result && tocEntries.length > 0) {
+    const pageIndices = [currentPage - 1]
+    if (isSpreadView && currentPage < pages.length) {
+      pageIndices.push(currentPage)
+    }
+
+    const fallbackTitles = []
+    for (const pageIndex of pageIndices) {
+      const pageNumber = pages[pageIndex]?.pageNumber ?? pageIndex + 1
+      for (const title of resolveNavChapterTitlesFromToc(tocEntries, pageNumber)) {
+        if (title && !fallbackTitles.includes(title)) {
+          fallbackTitles.push(title)
+        }
+      }
+    }
+
+    return fallbackTitles.join(" · ").trim()
+  }
+
   if (!result) {
     return ""
   }
@@ -4400,7 +4464,42 @@ export default function BookViewer({
   const isFinalOddSpreadSingle =
     isSpreadView && totalPages % 2 === 1 && Boolean(leftPage) && !rightPage
   const showSpreadLayout = isSpreadView && !isFinalOddSpreadSingle
-  const navChapterTitle = formatNavChapterTitle(pages, currentPage, showSpreadLayout)
+  const tocEntries = useMemo(() => {
+    const imageEntries = extractImageChapterTocEntries(bookDocument).map((entry) => ({
+      id: entry.id,
+      title: formatTocChapterTitle(formatImageChapterTocTitle(entry.chapterMetadata)),
+      pageNum: chapterPageMap[entry.id] ?? null,
+    }))
+
+    const textEntries = (bookDocument?.chapters ?? []).map((chapter) => ({
+      id: chapter.id,
+      title: formatTocChapterTitle(chapter.title),
+      pageNum: chapterPageMap[chapter.id] ?? null,
+    }))
+
+    const combined =
+      imageEntries.length >= 10
+        ? imageEntries
+        : [...textEntries, ...imageEntries]
+
+    return dedupeTocEntries(
+      combined.sort((left, right) => {
+        const leftPage = left.pageNum ?? Number.MAX_SAFE_INTEGER
+        const rightPage = right.pageNum ?? Number.MAX_SAFE_INTEGER
+        if (leftPage !== rightPage) {
+          return leftPage - rightPage
+        }
+        return 0
+      })
+    )
+  }, [bookDocument, chapterPageMap])
+
+  const navChapterTitle = formatNavChapterTitle(
+    pages,
+    currentPage,
+    showSpreadLayout,
+    tocEntries
+  )
   const progressPercent = totalPages > 0 ? (currentPage / totalPages) * 100 : 0
 
   const jumpToPage = useCallback(
@@ -4427,29 +4526,6 @@ export default function BookViewer({
     }
     return active
   }, [currentPage, chapterPageMap])
-
-  const tocEntries = useMemo(() => {
-    const textEntries = (bookDocument?.chapters ?? []).map((chapter) => ({
-      id: chapter.id,
-      title: formatTocChapterTitle(chapter.title),
-      pageNum: chapterPageMap[chapter.id] ?? null,
-    }))
-
-    const imageEntries = extractImageChapterTocEntries(bookDocument).map((entry) => ({
-      id: entry.id,
-      title: formatTocChapterTitle(formatImageChapterTocTitle(entry.chapterMetadata)),
-      pageNum: chapterPageMap[entry.id] ?? null,
-    }))
-
-    return [...textEntries, ...imageEntries].sort((left, right) => {
-      const leftPage = left.pageNum ?? Number.MAX_SAFE_INTEGER
-      const rightPage = right.pageNum ?? Number.MAX_SAFE_INTEGER
-      if (leftPage !== rightPage) {
-        return leftPage - rightPage
-      }
-      return 0
-    })
-  }, [bookDocument, chapterPageMap])
 
   useEffect(() => {
     const recomputeScale = () => {

@@ -9,7 +9,13 @@ import { createClient } from "@supabase/supabase-js"
 import crypto from "node:crypto"
 import { getDocument, OPS, ImageKind } from "pdfjs-dist/legacy/build/pdf.mjs"
 import { createCanvas } from "@napi-rs/canvas/node-canvas.js"
-import { analyzeChapterGraphicFromContext } from "./chapterGraphicService.js"
+import {
+  analyzeChapterGraphicFromContext,
+  analyzeChapterHeadingBanner,
+  isFlashbackChapterHeading,
+  shouldSkipChapterGraphicAnalysis,
+  SAFE_FALLBACK,
+} from "./chapterGraphicService.js"
 import {
   countInterludeNamesInDivider,
   ocrIllustrationMetadata,
@@ -4120,9 +4126,9 @@ function shouldOcrFullPageIllustration(block, pageTextCharCounts) {
   return true
 }
 
-function shouldRunIllustrationOcr(block, ocrMetadata, pageTextCharCounts) {
+function shouldRunIllustrationOcr(block, ocrMetadata, pageTextCharCounts, printedToc = null) {
   if (block.imageRole === "chapter_heading") {
-    return !ocrMetadata
+    return !ocrMetadata && !printedToc
   }
 
   return shouldOcrFullPageIllustration(block, pageTextCharCounts)
@@ -4150,19 +4156,50 @@ function peekNextNonPartTocEntry(printedToc, tocOrderCursor) {
   return null
 }
 
-function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, printedToc) {
+function shouldAssignPrintedTocToHeading(block, blocks, blockIndex, printedToc, forceInterludeBoundary) {
+  if (!printedToc || block.imageRole !== "chapter_heading") {
+    return false
+  }
+
+  if (shouldSkipChapterGraphicAnalysis(block, blocks, blockIndex)) {
+    return false
+  }
+
+  if (isFlashbackChapterHeading(block, blocks, blockIndex)) {
+    return false
+  }
+
+  const preview = analyzeChapterHeadingBanner({
+    imageBlock: block,
+    blocks,
+    blockIndex,
+    chapterSequence: 1,
+  })
+
+  return preview.isChapterBoundary === true || forceInterludeBoundary
+}
+
+function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, printedToc, blocks) {
   let chapterSequence = 0
   let interludeSequence = 0
   let pendingInterludes = 0
   let count = 0
   const tocOrderCursor = printedToc ? { index: 0 } : null
 
-  for (const { block } of candidateEntries) {
+  for (const { block, index: blockIndex } of candidateEntries) {
     const forceInterludeBoundary =
       pendingInterludes > 0 && block.imageRole === "chapter_heading"
 
     let tocMetadata = null
-    if (block.imageRole === "chapter_heading" && printedToc) {
+    if (
+      shouldAssignPrintedTocToHeading(
+        block,
+        blocks,
+        blockIndex,
+        printedToc,
+        forceInterludeBoundary
+      )
+    ) {
       tocMetadata = buildOcrMetadataFromPrintedToc(printedToc, {
         tocOrderCursor,
         forceInterludeBoundary,
@@ -4171,7 +4208,7 @@ function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, printedToc
 
     const willRunOcr =
       Boolean(extractImageBlockPayload(block)) &&
-      shouldRunIllustrationOcr(block, tocMetadata, pageTextCharCounts)
+      shouldRunIllustrationOcr(block, tocMetadata, pageTextCharCounts, printedToc)
 
     if (willRunOcr) {
       count += 1
@@ -4484,7 +4521,8 @@ async function finalizeIllustrationBlocks(
   const plannedOcrTotal = countPlannedOcrEntries(
     candidateEntries,
     pageTextCharCounts,
-    printedToc
+    printedToc,
+    blocks
   )
 
   const finalizedByIndex = new Map()
@@ -4492,22 +4530,38 @@ async function finalizeIllustrationBlocks(
   try {
     for (const { block, index } of candidateEntries) {
       const imageBuffer = base64PayloadToImageBuffer(extractImageBlockPayload(block))
-      let ocrMetadata = null
-
       const forceInterludeBoundary =
         pendingInterludes > 0 && block.imageRole === "chapter_heading"
 
-      if (block.imageRole === "chapter_heading" && printedToc) {
-        ocrMetadata = buildOcrMetadataFromPrintedToc(printedToc, {
+      let tocMetadata = null
+      if (
+        shouldAssignPrintedTocToHeading(
+          block,
+          blocks,
+          index,
+          printedToc,
+          forceInterludeBoundary
+        )
+      ) {
+        tocMetadata = buildOcrMetadataFromPrintedToc(printedToc, {
           tocOrderCursor,
           forceInterludeBoundary,
         })
       }
 
+      let ocrMetadata = tocMetadata
+
+      if (block.imageRole === "chapter_heading" && printedToc && !tocMetadata) {
+        finalizedByIndex.set(index, finalizeVisionImageBlock(block, SAFE_FALLBACK))
+        processedCandidates += 1
+        continue
+      }
+
       const shouldRunOcr = shouldRunIllustrationOcr(
         block,
         ocrMetadata,
-        pageTextCharCounts
+        pageTextCharCounts,
+        printedToc
       )
 
       if (imageBuffer?.length && shouldRunOcr) {
@@ -6722,24 +6776,24 @@ async function parsePdfBuffer(
   }
 
   reportProgress({
-    phase: "structuring",
-    label: "Building book structure",
+    phase: "classifying_illustrations",
+    label: "Preparing chapter headers",
     current: 0,
     total: 0,
-    percent: PARSE_PROGRESS_EXTRACT_MAX_PERCENT + 1,
+    percent: PARSE_PROGRESS_EXTRACT_MAX_PERCENT,
+    counters: {
+      pages: { current: numPages, total: numPages },
+      illustrations: { current: 0, total: 0 },
+      ocr: { current: 0, total: 0 },
+      uploads: { current: 0, total: 0 },
+    },
+    pageCurrent: numPages,
+    pageTotal: numPages,
   })
 
   let blocks = applyBlockTransformPipeline(
     buildBlocksFromLines(pageData, headingStrings)
   )
-
-  reportProgress({
-    phase: "structuring",
-    label: "Building book structure",
-    current: 0,
-    total: 0,
-    percent: PARSE_PROGRESS_STRUCTURE_PERCENT,
-  })
 
   const bookTitle = resolveBookTitle(parsedText, fileName, blocks)
 

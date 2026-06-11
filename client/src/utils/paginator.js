@@ -205,6 +205,10 @@ export function formatImageChapterTocTitle(chapterMetadata) {
     return number || title || "Interlude"
   }
 
+  if (boundaryKind === "flashback") {
+    return title || number || "Flashback"
+  }
+
   if (number && title) {
     const numberLower = number.toLowerCase()
     const titleLower = title.toLowerCase()

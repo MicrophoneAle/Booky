@@ -2,7 +2,6 @@
 export const PARSE_PIPELINE_STEPS = [
   { phase: "starting", label: "Open PDF" },
   { phase: "extracting", label: "Read pages" },
-  { phase: "structuring", label: "Structure text" },
   { phase: "classifying_illustrations", label: "Classify art" },
   { phase: "ocr_illustrations", label: "Read headers" },
   { phase: "uploading_assets", label: "Upload art" },
@@ -23,11 +22,19 @@ const PHASE_HEADLINES = {
   error: "Processing failed",
 }
 
+function pipelinePhaseForDisplay(phase) {
+  if (phase === "structuring") {
+    return "classifying_illustrations"
+  }
+  return phase
+}
+
 function phaseRank(phase) {
   if (phase === "starting") {
     return 0
   }
-  const index = PARSE_PIPELINE_STEPS.findIndex((step) => step.phase === phase)
+  const normalized = pipelinePhaseForDisplay(phase)
+  const index = PARSE_PIPELINE_STEPS.findIndex((step) => step.phase === normalized)
   return index >= 0 ? index + 1 : -1
 }
 
@@ -275,11 +282,21 @@ export function getParseProgressHeadline(parseProgress) {
     return "Preparing your book…"
   }
 
-  if (parseProgress.phase === "extracting" && parseProgress.extractSubphase === "images") {
+  const phase = pipelinePhaseForDisplay(parseProgress.phase)
+
+  if (phase === "extracting" && parseProgress.extractSubphase === "images") {
+    const { current, total } = getPhaseCounters(parseProgress)
+    if (total > 0 && current >= total) {
+      return "Preparing chapter headers…"
+    }
     return "Scanning page artwork…"
   }
 
-  return PHASE_HEADLINES[parseProgress.phase] ?? "Processing your book…"
+  if (phase === "classifying_illustrations" && (parseProgress.total ?? 0) === 0) {
+    return "Preparing chapter headers…"
+  }
+
+  return PHASE_HEADLINES[phase] ?? "Processing your book…"
 }
 
 /**
@@ -291,8 +308,9 @@ export function getParseProgressDetail(parseProgress) {
     return "Large illustrated books can take several minutes — especially when uploading artwork."
   }
 
-  const { phase, label } = parseProgress
+  const phase = pipelinePhaseForDisplay(parseProgress?.phase)
   const { current, total } = getPhaseCounters(parseProgress)
+  const { label } = parseProgress
   const illustrationCounters = resolveCounters(parseProgress).illustrations
 
   if (phase === "error") {
@@ -307,6 +325,9 @@ export function getParseProgressDetail(parseProgress) {
     if (total > 0) {
       const pct = Math.round((current / total) * 100)
       if (parseProgress.extractSubphase === "images") {
+        if (current >= total) {
+          return "PDF scan complete — matching chapter headers to the book outline."
+        }
         return `Scanning artwork on page ${current} of ${total} (${pct}% of PDF scan).`
       }
       return `Reading page ${current} of ${total} (${pct}% of PDF scan).`
@@ -314,15 +335,11 @@ export function getParseProgressDetail(parseProgress) {
     return "Opening PDF and preparing the page scanner…"
   }
 
-  if (phase === "structuring") {
-    return "Merging paragraphs, chapter titles, and dialogue blocks."
-  }
-
   if (phase === "classifying_illustrations") {
     if (total > 0) {
       return `Processing chapter header ${current} of ${total}.`
     }
-    return "Identifying full-page art and chapter heading banners."
+    return "Matching chapter headers to the book outline."
   }
 
   if (phase === "ocr_illustrations") {
@@ -370,7 +387,7 @@ export function getParseProgressDetail(parseProgress) {
  * @returns {Array<{ phase: string, label: string, status: 'done'|'active'|'pending' }>}
  */
 export function getParsePipelineStepStates(parseProgress) {
-  const activePhase = parseProgress?.phase ?? "starting"
+  const activePhase = pipelinePhaseForDisplay(parseProgress?.phase ?? "starting")
   const activeRank = phaseRank(activePhase)
 
   return PARSE_PIPELINE_STEPS.map((step) => {
@@ -415,8 +432,9 @@ export function getCombinedProcessingPercent(
   }
 
   const { current, total } = getPhaseCounters(parseProgress)
+  const displayPhase = pipelinePhaseForDisplay(parseProgress.phase)
 
-  if (parseProgress.phase === "extracting" && total > 0) {
+  if (displayPhase === "extracting" && total > 0) {
     const fraction = current / total
     const extractMax = 58
     return Math.round(base + fraction * extractMax * processingShare)
@@ -427,7 +445,7 @@ export function getCombinedProcessingPercent(
     ocr_illustrations: { start: 63, end: 80 },
     uploading_assets: { start: 80, end: 93 },
   }
-  const itemBand = itemPhases[parseProgress.phase]
+  const itemBand = itemPhases[displayPhase]
 
   if (itemBand && total > 0 && current <= total) {
     const fraction = current / total
