@@ -259,7 +259,7 @@
 }
 
 .library-card:hover .library-card__content {
-  border-color: rgba(180, 115, 62, 0.55);
+  border-color: rgba(155, 92, 48, 0.62);
   box-shadow:
     inset 0 1px 0 rgba(220, 168, 110, 0.16),
     inset 0 -8px 20px rgba(30, 16, 8, 0.26),
@@ -329,7 +329,7 @@
       rgba(42, 24, 14, 0.08) 3px,
       rgba(42, 24, 14, 0.08) 4px
     );
-  border: 1px solid rgba(130, 78, 42, 0.48);
+  border: 1px solid rgba(108, 62, 32, 0.58);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   box-shadow:
     inset 0 1px 0 rgba(180, 130, 80, 0.08),
@@ -353,7 +353,7 @@
     var(--color-folio-inset) 45%,
     color-mix(in srgb, var(--color-folio-inset) 82%, black 18%) 100%
   );
-  border: 1px solid rgba(120, 72, 38, 0.35);
+  border: 1px solid rgba(92, 54, 28, 0.46);
   border-radius: 0 1px 1px 0;
   box-shadow:
     inset 0 3px 14px rgba(0, 0, 0, 0.42),
@@ -601,7 +601,7 @@
   min-height: 196px;
   padding: 1.5rem;
   background-color: var(--color-folio-face);
-  border: 1px solid rgba(160, 98, 52, 0.35);
+  border: 1px solid rgba(108, 62, 32, 0.58);
   border-radius: var(--radius-md);
   box-shadow:
     inset 0 -8px 20px rgba(30, 16, 8, 0.2),
