@@ -259,11 +259,12 @@
 }
 
 .library-card:hover .library-card__content {
-  border-color: rgba(212, 176, 106, 0.45);
+  border-color: rgba(180, 115, 62, 0.55);
   box-shadow:
-    inset 0 0 18px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(220, 168, 110, 0.16),
+    inset 0 -8px 20px rgba(30, 16, 8, 0.26),
     0 16px 32px rgba(0, 0, 0, 0.45),
-    4px 0 0 color-mix(in srgb, var(--color-folio-face) 85%, black 15%);
+    4px 0 0 var(--color-folio-face-lo);
 }
 
 .library-card__spine {
@@ -310,33 +311,31 @@
   padding: 1.5rem;
   background-color: var(--color-folio-face);
   background-image:
+    radial-gradient(
+      ellipse 120% 80% at 18% 12%,
+      rgba(196, 132, 72, 0.14) 0%,
+      transparent 55%
+    ),
     linear-gradient(
-      165deg,
+      168deg,
       var(--color-folio-face-hi) 0%,
-      var(--color-folio-face) 55%,
-      color-mix(in srgb, var(--color-folio-face) 88%, black 12%) 100%
+      var(--color-folio-face) 48%,
+      var(--color-folio-face-lo) 100%
     ),
     repeating-linear-gradient(
       0deg,
       transparent,
-      transparent 2px,
-      rgba(0, 0, 0, 0.04) 2px,
-      rgba(0, 0, 0, 0.04) 3px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 2px,
-      rgba(255, 255, 255, 0.04) 2px,
-      rgba(255, 255, 255, 0.04) 3px
+      transparent 3px,
+      rgba(42, 24, 14, 0.08) 3px,
+      rgba(42, 24, 14, 0.08) 4px
     );
-  border: 1px solid rgba(212, 176, 106, 0.28);
+  border: 1px solid rgba(160, 98, 52, 0.42);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 0 14px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(220, 168, 110, 0.12),
+    inset 0 -8px 20px rgba(30, 16, 8, 0.22),
     0 10px 22px rgba(0, 0, 0, 0.38),
-    3px 0 0 color-mix(in srgb, var(--color-folio-face) 85%, black 15%);
+    3px 0 0 var(--color-folio-face-lo);
   transition:
     border-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
     box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -347,9 +346,9 @@
   position: absolute;
   inset: 10px;
   pointer-events: none;
-  border: 1px solid rgba(212, 176, 106, 0.16);
+  border: 1px solid rgba(160, 98, 52, 0.22);
   border-radius: 0 2px 2px 0;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 0 12px rgba(30, 16, 8, 0.18);
   z-index: 0;
 }
 
@@ -593,12 +592,12 @@
   min-height: 196px;
   padding: 1.5rem;
   background-color: var(--color-folio-face);
-  border: 1px solid rgba(212, 176, 106, 0.22);
+  border: 1px solid rgba(160, 98, 52, 0.35);
   border-radius: var(--radius-md);
   box-shadow:
-    inset 0 0 14px rgba(0, 0, 0, 0.15),
+    inset 0 -8px 20px rgba(30, 16, 8, 0.2),
     0 10px 20px rgba(0, 0, 0, 0.32),
-    3px 0 0 color-mix(in srgb, var(--color-folio-face) 85%, black 15%);
+    3px 0 0 var(--color-folio-face-lo);
 }
 
 .library-card--skeleton:hover {

@@ -26,9 +26,10 @@
   --color-ui-gold:       #d4b06a;
   --color-ui-gold-hot:   #dfc078;
 
-  /* Library folio face — warm lighter brown, distinct from the desk */
-  --color-folio-face:    #524638;
-  --color-folio-face-hi: #5e5244;
+  /* Library folio face — mid leather brown, warm red undertone */
+  --color-folio-face:    #5a3d2c;
+  --color-folio-face-hi: #6d4a36;
+  --color-folio-face-lo: #452a1e;
 
   /* Typography */
   --font-heading:      'EB Garamond', Georgia, serif;
