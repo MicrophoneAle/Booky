@@ -9,19 +9,22 @@
   --color-muted:       var(--color-paper-muted);
   --color-gold:        var(--color-paper-gold);
 
-  /* App chrome — brighter desk, nav, and UI text */
-  --color-shell:        #1e1a17;
-  --color-surface:      #2e2824;
-  --color-border:       #4a4038;
-  --color-nav:          #352f2a;
-  --color-ui-panel:     #3a342f;
-  --color-ui-input:     #403932;
-  --color-ui-hover:     #484139;
-  --color-ui-text:      #ddd0c4;
-  --color-ui-text-dim:  #b8a896;
-  --color-ui-accent:    #c4a878;
-  --color-ui-gold:      #e8c878;
-  --color-ui-gold-hot:  #f2d88a;
+  /* App chrome — dark panels, bright text */
+  --color-shell:         #0f0c0a;
+  --color-chrome-bar:    #100d0b;
+  --color-chrome-field:  #14100d;
+  --color-chrome-card:   #181310;
+  --color-surface:       var(--color-chrome-field);
+  --color-nav:           var(--color-chrome-bar);
+  --color-border:        #3a322c;
+  --color-ui-panel:      #1c1713;
+  --color-ui-input:      var(--color-chrome-field);
+  --color-ui-hover:      #242019;
+  --color-ui-text:       #f6ede4;
+  --color-ui-text-dim:   #d4c4b2;
+  --color-ui-accent:     #e8c88a;
+  --color-ui-gold:       #f5d98a;
+  --color-ui-gold-hot:   #ffe49a;
 
   /* Typography */
   --font-heading:      'EB Garamond', Georgia, serif;
@@ -39,7 +42,7 @@
   --radius-lg:         12px;
   --nav-height:        44px;
 
-  /* Mahogany desk surface — lighter overlay so wood reads brighter */
-  --bg-desk: linear-gradient(rgba(34, 30, 26, 0.38), rgba(34, 30, 26, 0.52)),
+  /* Mahogany desk — heavier overlay to dim the wood */
+  --bg-desk: linear-gradient(rgba(12, 9, 7, 0.62), rgba(12, 9, 7, 0.74)),
     url('/wood_desk_texture.jpg');
 }

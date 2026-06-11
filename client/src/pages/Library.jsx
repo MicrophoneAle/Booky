@@ -56,16 +56,21 @@ function formatWordCount(document) {
 }
 
 const SPINE_COLORS = [
-  "#3a1a1a",
-  "#1c2e24",
-  "#2a2418",
-  "#1a2438",
-  "#3a2a1a",
-  "#2e1a3a",
-  "#1a2e2e",
-  "#3a2818",
-  "#24241a",
-  "#1a1f3a",
+  "#a83232",
+  "#2d8a5e",
+  "#c9782a",
+  "#3a62b8",
+  "#8e44ad",
+  "#c45c2a",
+  "#1f8a8a",
+  "#6b4226",
+  "#4a8c3a",
+  "#b83d6b",
+  "#2563a8",
+  "#8a7a28",
+  "#5c3d8a",
+  "#2a6b4a",
+  "#c43a5a",
 ]
 
 function getSpineColor(documentId) {

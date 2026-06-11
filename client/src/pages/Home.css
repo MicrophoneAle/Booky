@@ -5,7 +5,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  color: var(--color-ui-text-dim);
+  color: var(--color-ui-text);
   font-family: var(--font-ui);
 }
 
@@ -53,7 +53,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-ui-text-dim);
+  color: var(--color-ui-text);
   font-size: 0.7rem;
   line-height: 1;
   text-decoration: none;
@@ -157,7 +157,7 @@
 
 .home-hero p {
   margin: 0.7rem 0 0;
-  color: var(--color-ui-text-dim);
+  color: var(--color-ui-text);
   font-size: 1rem;
   font-family: var(--font-body);
 }
@@ -172,11 +172,11 @@
   height: 260px;
   border-radius: var(--radius-md);
   border: 2px dashed var(--color-ui-accent);
-  background: var(--color-surface);
+  background: var(--color-chrome-field);
   box-shadow:
-    inset 0 4px 20px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 4px 16px rgba(0, 0, 0, 0.22);
+    inset 0 4px 28px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 16px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -192,7 +192,7 @@
 
 .upload-zone.dragging {
   border-color: var(--color-ui-gold);
-  background: var(--color-ui-panel);
+  background: var(--color-chrome-card);
   transform: translateY(-1px);
   box-shadow:
     inset 0 6px 28px rgba(0, 0, 0, 0.55),
@@ -203,12 +203,12 @@
 .upload-icon {
   font-size: 2rem;
   margin-bottom: 0.25rem;
-  color: var(--color-ui-text-dim);
+  color: var(--color-ui-text);
 }
 
 .upload-text {
   margin: 0;
-  color: var(--color-ui-text-dim);
+  color: var(--color-ui-text);
   font-family: var(--font-heading);
   font-size: 1rem;
   font-variant: small-caps;
@@ -219,7 +219,7 @@
   margin: 0;
   border: none;
   background: transparent;
-  color: var(--color-ui-gold);
+  color: var(--color-ui-gold-hot);
   font-family: var(--font-body);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -258,7 +258,7 @@
 
 .file-size {
   margin: 0.25rem 0 0;
-  color: var(--color-ui-text-dim);
+  color: var(--color-ui-text);
   font-family: var(--font-body);
   font-size: 0.85rem;
 }
@@ -280,7 +280,7 @@
 
 .upload-note {
   margin: 0.55rem 0 0;
-  color: var(--color-ui-text-dim);
+  color: var(--color-ui-text);
   font-size: 0.9rem;
 }
 
@@ -407,7 +407,7 @@
 .home__upload-percent {
   margin: 0.35rem 0 0;
   font-size: 0.8rem;
-  color: var(--color-ui-text-dim);
+  color: var(--color-ui-text);
   font-variant-numeric: tabular-nums;
 }
 
