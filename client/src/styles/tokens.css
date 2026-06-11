@@ -53,3 +53,9 @@
   --bg-desk: linear-gradient(rgba(12, 9, 7, 0.62), rgba(12, 9, 7, 0.74)),
     url('/wood_desk_texture.jpg');
 }
+
+@media (max-width: 767px) {
+  :root {
+    --nav-height: 40px;
+  }
+}

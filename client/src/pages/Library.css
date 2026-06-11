@@ -25,8 +25,8 @@
   align-items: center;
   justify-content: flex-start;
   gap: 2rem;
-  min-height: 48px;
-  height: 48px;
+  min-height: var(--nav-height);
+  height: var(--nav-height);
   padding: 0 3rem 0 1.25rem;
   background: var(--color-nav);
   border-bottom: 1px solid var(--color-border);
@@ -712,6 +712,26 @@
 @media (max-width: 900px) {
   .library-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .library-nav {
+    min-height: var(--nav-height);
+    height: var(--nav-height);
+    padding: 0 1rem 0 0.75rem;
+  }
+
+  .library-page__fullscreen {
+    height: var(--nav-height);
+  }
+
+  .library-main {
+    padding-top: 0.75rem;
+  }
+
+  .library-header {
+    margin-bottom: 1.25rem;
   }
 }
 
