@@ -113,7 +113,7 @@ export function getParseProgressDetail(parseProgress) {
     if (total > 0) {
       const remaining = Math.max(0, total - current)
       if (remaining > 0 && current > 0) {
-        return `Uploading illustration ${current} of ${total} (${remaining} remaining, 4 at a time).`
+        return `Uploading illustration ${current} of ${total} (${remaining} remaining, 5 at a time).`
       }
       return `Uploading illustration ${current} of ${total} to storage.`
     }

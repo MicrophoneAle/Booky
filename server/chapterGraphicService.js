@@ -91,8 +91,13 @@ function collectFollowingTextBlocks(blocks, blockIndex, limit = 10) {
   return results
 }
 
-function countSamePageTextChars(blocks, imageBlock) {
+function countSamePageTextChars(blocks, imageBlock, precomputedPageCharCounts = null) {
   const pageIndex = Math.max(0, (imageBlock?.pageNumber ?? 1) - 1)
+
+  if (precomputedPageCharCounts instanceof Map) {
+    return precomputedPageCharCounts.get(pageIndex) ?? 0
+  }
+
   let total = 0
 
   for (const block of blocks) {
@@ -419,13 +424,18 @@ function analyzeFullPageIllustration({
   blocks,
   blockIndex,
   chapterSequence = 1,
+  precomputedPageCharCounts = null,
 }) {
   if (shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex)) {
     return { ...SAFE_FALLBACK }
   }
 
   const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex)
-  const samePageTextChars = countSamePageTextChars(blocks, imageBlock)
+  const samePageTextChars = countSamePageTextChars(
+    blocks,
+    imageBlock,
+    precomputedPageCharCounts
+  )
 
   if (samePageTextChars > 220) {
     logChapterGraphicDecision("skip_text_heavy_page", {
@@ -491,6 +501,7 @@ function analyzeChapterGraphicFromContext({
   ocrMetadata = null,
   printedToc = null,
   forceInterludeBoundary = false,
+  precomputedPageCharCounts = null,
 }) {
   if (!imageBlock || imageBlock.type !== "image_candidate") {
     return { ...SAFE_FALLBACK }
@@ -518,6 +529,7 @@ function analyzeChapterGraphicFromContext({
       blocks,
       blockIndex,
       chapterSequence,
+      precomputedPageCharCounts,
     })
   }
 

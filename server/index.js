@@ -977,10 +977,15 @@ function buildPuaReplacementMapFromCMaps(buffer) {
   return replacementByPua
 }
 
+function hasPuaContentInBuffer(buffer) {
+  return pdfBufferLikelyContainsToUnicodeCMaps(buffer)
+}
+
 function buildDefaultPuaReplacementMap(buffer = null) {
-  const replacementByPua = buffer
-    ? buildPuaReplacementMapFromCMaps(buffer)
-    : new Map()
+  const replacementByPua =
+    buffer && hasPuaContentInBuffer(buffer)
+      ? buildPuaReplacementMapFromCMaps(buffer)
+      : new Map()
 
   for (let digit = 0; digit <= 9; digit += 1) {
     replacementByPua.set(PUA_DIGIT_BLOCK_START + digit, String(digit))
@@ -3794,11 +3799,14 @@ function resolvePdfImageBuffer(imageObject) {
   return rawPdfPixelsToJpegBuffer(imageObject)
 }
 
-async function extractPdfPageImageCandidates(page, pageNumber) {
+async function extractPdfPageImageCandidatesFromOperatorList(
+  page,
+  pageNumber,
+  operatorList
+) {
   const viewport = page.getViewport({ scale: 1 })
   const pageWidth = viewport.width
   const pageHeight = viewport.height
-  const operatorList = await page.getOperatorList({ intent: "display" })
   const candidates = []
 
   let transform = [1, 0, 0, 1, 0, 0]
@@ -3871,6 +3879,11 @@ async function extractPdfPageImageCandidates(page, pageNumber) {
   }
 
   return candidates
+}
+
+async function extractPdfPageImageCandidates(page, pageNumber) {
+  const operatorList = await page.getOperatorList({ intent: "display" })
+  return extractPdfPageImageCandidatesFromOperatorList(page, pageNumber, operatorList)
 }
 
 function buildPageTextCharCounts(blocks) {
@@ -3972,6 +3985,10 @@ function buildOcrMetadataFromPrintedToc(
     boundaryKind,
     chapterSequence: lookupSequence,
   })
+
+  if (!number) {
+    return null
+  }
 
   return {
     boundaryKind,
@@ -4256,6 +4273,7 @@ async function finalizeIllustrationBlocks(
         ocrMetadata,
         printedToc,
         forceInterludeBoundary,
+        precomputedPageCharCounts: pageTextCharCounts,
       })
 
       if (analysisResult.boundaryKind === "interlude_divider") {
@@ -4447,7 +4465,7 @@ async function uploadBookAssets(bookId, blocks, { onProgress } = {}) {
   const totalImages = uploadableIndices.length
   let uploadedImages = 0
 
-  await runWithConcurrency(uploadableIndices, 4, async (index) => {
+  await runWithConcurrency(uploadableIndices, 5, async (index) => {
     const block = nextBlocks[index]
     const blockId = block.id ?? `image-${index + 1}`
     const imageBuffer = base64PayloadToImageBuffer(extractImageBase64Payload(block))
@@ -4515,8 +4533,7 @@ async function readPdfInfo(pdf) {
   }
 }
 
-async function buildPdfPageLines(page, headingStrings) {
-  const textContent = await page.getTextContent()
+function buildPdfPageLinesFromTextContent(textContent, headingStrings) {
   const pageItems = []
 
   for (const item of textContent.items) {
@@ -4562,12 +4579,25 @@ async function buildPdfPageLines(page, headingStrings) {
   return dropMarginCalloutLines(rawLines)
 }
 
+async function buildPdfPageLines(page, headingStrings) {
+  const textContent = await page.getTextContent()
+  return buildPdfPageLinesFromTextContent(textContent, headingStrings)
+}
+
 async function extractPdfPageContent(pdf, pageNumber, headingStrings) {
   const page = await pdf.getPage(pageNumber)
 
   try {
-    const lines = await buildPdfPageLines(page, headingStrings)
-    const images = await extractPdfPageImageCandidates(page, pageNumber)
+    const [textContent, operatorList] = await Promise.all([
+      page.getTextContent(),
+      page.getOperatorList({ intent: "display" }),
+    ])
+    const lines = buildPdfPageLinesFromTextContent(textContent, headingStrings)
+    const images = await extractPdfPageImageCandidatesFromOperatorList(
+      page,
+      pageNumber,
+      operatorList
+    )
     return { lines, images }
   } finally {
     if (typeof page.cleanup === "function") {
@@ -4591,7 +4621,7 @@ async function extractPdfStructure(buffer, { onPageProcessed, puaReplacementMap 
   const pagesBeforeFilter = new Array(totalPages)
   const pageImageCandidates = new Array(totalPages)
   const pageExtractionConcurrency =
-    totalPages > 500 ? 3 : PDF_PAGE_EXTRACTION_CONCURRENCY
+    totalPages > 400 ? 4 : PDF_PAGE_EXTRACTION_CONCURRENCY
 
   try {
     for (
@@ -6238,6 +6268,20 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
   }
 }
 
+function applyBlockTransformPipeline(blocks) {
+  return promoteStructuralSectionHeadings(
+    mergeEndOfPartBlocks(
+      mergeTrailingChapterTitleFragments(
+        mergeInlineChapterLabelTitles(
+          mergeChapterSubtitleBlocks(
+            mergeMultilineChapterTitleBlocks(splitDialogueHeavyBlocks(blocks))
+          )
+        )
+      )
+    )
+  )
+}
+
 function blocksToContent(blocks, blocksPerPage = 40) {
   const content = []
 
@@ -6307,13 +6351,9 @@ async function parsePdfBuffer(
     percent: PARSE_PROGRESS_EXTRACT_MAX_PERCENT + 1,
   })
 
-  let blocks = splitDialogueHeavyBlocks(buildBlocksFromLines(pageData, headingStrings))
-  blocks = mergeMultilineChapterTitleBlocks(blocks)
-  blocks = mergeChapterSubtitleBlocks(blocks)
-  blocks = mergeInlineChapterLabelTitles(blocks)
-  blocks = mergeTrailingChapterTitleFragments(blocks)
-  blocks = mergeEndOfPartBlocks(blocks)
-  blocks = promoteStructuralSectionHeadings(blocks)
+  let blocks = applyBlockTransformPipeline(
+    buildBlocksFromLines(pageData, headingStrings)
+  )
 
   reportProgress({
     phase: "structuring",
@@ -6388,6 +6428,8 @@ async function parsePdfBuffer(
       end: PARSE_PROGRESS_ILLUSTRATION_END_PERCENT,
     },
   })
+
+  await terminateOcrWorker()
 
   const imageBlockCount = blocks.filter((block) => block?.type === "image").length
   if (documentId && imageBlockCount > 0) {

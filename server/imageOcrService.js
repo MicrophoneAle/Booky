@@ -181,7 +181,10 @@ function preprocessImageData(imageData) {
 
 async function prepareScaledCanvas(imageBuffer, minWidth = 800) {
   const source = await loadImage(imageBuffer)
-  const scale = Math.min(2.5, minWidth / Math.max(1, source.width))
+  const scale = Math.min(
+    3.0,
+    Math.max(1.5, minWidth / Math.max(1, source.width))
+  )
   const width = Math.max(3, Math.round(source.width * scale))
   const height = Math.max(3, Math.round(source.height * scale))
   const canvas = createCanvas(width, height)
@@ -464,7 +467,7 @@ function parseChapterHeadingBannerText(bannerText) {
 }
 
 async function ocrChapterHeading(imageBuffer) {
-  const scaledCanvas = await prepareScaledCanvas(imageBuffer, 800)
+  const scaledCanvas = await prepareScaledCanvas(imageBuffer, 900)
   const bannerRegion = { left: 0.04, top: 0, width: 0.92, height: 0.58 }
 
   const bannerText = await recognizeRegion(scaledCanvas, bannerRegion, {
@@ -477,7 +480,7 @@ async function ocrChapterHeading(imageBuffer) {
 }
 
 async function ocrFullPageSection(imageBuffer) {
-  const scaledCanvas = await prepareScaledCanvas(imageBuffer, 1000)
+  const scaledCanvas = await prepareScaledCanvas(imageBuffer, 1100)
   const bodyRegion = { left: 0.06, top: 0.08, width: 0.88, height: 0.84 }
 
   const combined = await recognizeRegion(scaledCanvas, bodyRegion, {
