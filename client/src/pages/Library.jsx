@@ -55,22 +55,23 @@ function formatWordCount(document) {
   return `${(count / 1000).toFixed(1)}k words`
 }
 
+/** Saturated spine hues only — no browns (folio face is already leather brown). */
 const SPINE_COLORS = [
-  "#a83232",
-  "#2d8a5e",
-  "#c9782a",
-  "#3a62b8",
-  "#8e44ad",
-  "#c45c2a",
-  "#1f8a8a",
-  "#6b4226",
-  "#4a8c3a",
-  "#b83d6b",
-  "#2563a8",
-  "#8a7a28",
-  "#5c3d8a",
-  "#2a6b4a",
-  "#c43a5a",
+  "#a83232", // crimson
+  "#2d8a5e", // emerald
+  "#3a62b8", // sapphire
+  "#8e44ad", // plum
+  "#1f8a8a", // teal
+  "#4a8c3a", // forest
+  "#b83d6b", // rose
+  "#2563a8", // ocean
+  "#5c3d8a", // violet
+  "#2a6b4a", // pine
+  "#c43a5a", // cherry
+  "#6a3ecf", // purple
+  "#2a9eae", // cyan
+  "#d44d8f", // magenta
+  "#3d7adb", // cobalt
 ]
 
 function getSpineColor(documentId) {
