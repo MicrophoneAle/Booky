@@ -195,7 +195,22 @@ function mergeParseProgressSnapshot(previous, patch) {
   const effectivePhase = patch.phase ?? prev.phase
 
   if (effectivePhase === "extracting" || effectivePhase === "structuring") {
-    counters.pages = bumpParseCounter(counters.pages, patch.current, patch.total)
+    const subphase = patch?.extractSubphase ?? prev?.extractSubphase
+    if (subphase === "images") {
+      const imageBase =
+        prev?.extractSubphase === "images"
+          ? counters.pages
+          : { current: 0, total: patch?.total ?? counters.pages.total }
+      counters.pages = bumpParseCounter(imageBase, patch.current, patch.total)
+    } else if (subphase === "filtering") {
+      const filterBase =
+        prev?.extractSubphase === "filtering"
+          ? counters.pages
+          : { current: 0, total: patch?.total ?? counters.pages.total }
+      counters.pages = bumpParseCounter(filterBase, patch.current, patch.total)
+    } else {
+      counters.pages = bumpParseCounter(counters.pages, patch.current, patch.total)
+    }
   }
 
   if (effectivePhase === "classifying_illustrations") {
@@ -278,6 +293,7 @@ function setDocumentParseProgress(documentId, progress) {
     extractSubphaseChanged ||
     pageChanged ||
     illustrationChanged ||
+    merged?.phase === "extracting" ||
     merged?.phase === "error" ||
     merged?.phase === "saving" ||
     now - lastWrite >= PARSE_PROGRESS_DB_WRITE_MS
@@ -4958,22 +4974,30 @@ function extractPhasePercent(pageNumber, totalPages, extractSubphase = "text") {
     return 0
   }
 
-  const pageShare = 1 / totalPages
-  let completedShare = (pageNumber - 1) / totalPages
+  const fraction = pageNumber / totalPages
 
-  if (extractSubphase === "text") {
-    completedShare += pageShare * EXTRACT_PROGRESS_TEXT_SHARE
-  } else if (extractSubphase === "images") {
-    completedShare += pageShare * (EXTRACT_PROGRESS_TEXT_SHARE + EXTRACT_PROGRESS_IMAGE_SHARE)
-  } else if (extractSubphase === "filtering") {
-    completedShare =
-      EXTRACT_PROGRESS_TEXT_SHARE +
-      EXTRACT_PROGRESS_IMAGE_SHARE +
-      (pageNumber / totalPages) * 0.05
+  if (extractSubphase === "images") {
+    return Math.round(
+      PARSE_PROGRESS_EXTRACT_MAX_PERCENT * EXTRACT_PROGRESS_TEXT_SHARE +
+        fraction * PARSE_PROGRESS_EXTRACT_MAX_PERCENT * EXTRACT_PROGRESS_IMAGE_SHARE
+    )
+  }
+
+  if (extractSubphase === "text_complete") {
+    return Math.round(
+      PARSE_PROGRESS_EXTRACT_MAX_PERCENT * EXTRACT_PROGRESS_TEXT_SHARE
+    )
+  }
+
+  if (extractSubphase === "filtering") {
+    return Math.round(
+      PARSE_PROGRESS_EXTRACT_MAX_PERCENT *
+        (0.97 + fraction * 0.03)
+    )
   }
 
   return Math.round(
-    Math.min(1, completedShare) * PARSE_PROGRESS_EXTRACT_MAX_PERCENT
+    fraction * PARSE_PROGRESS_EXTRACT_MAX_PERCENT * EXTRACT_PROGRESS_TEXT_SHARE
   )
 }
 
@@ -5045,26 +5069,79 @@ async function extractPdfStructure(
 
   const pagesBeforeFilter = new Array(totalPages)
   const pageImageCandidates = new Array(totalPages)
-  const pageConcurrency =
+  const textConcurrency =
+    totalPages > 400 ? PDF_TEXT_EXTRACTION_CONCURRENCY : PDF_PAGE_EXTRACTION_CONCURRENCY
+  const imageConcurrency =
     totalPages > 400 ? PDF_IMAGE_EXTRACTION_CONCURRENCY : PDF_PAGE_EXTRACTION_CONCURRENCY
-  const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1)
 
   try {
-    await runWithConcurrency(pageNumbers, pageConcurrency, async (pageNumber) => {
-      const lines = await extractPdfPageTextOnly(pdf, pageNumber, headingStrings)
-      pagesBeforeFilter[pageNumber - 1] = { lines }
+    for (
+      let batchStart = 1;
+      batchStart <= totalPages;
+      batchStart += textConcurrency
+    ) {
+      const batchEnd = Math.min(batchStart + textConcurrency - 1, totalPages)
+      const batchPageNumbers = []
 
-      if (onPageProcessed) {
-        onPageProcessed(pageNumber, totalPages, { extractSubphase: "text" })
+      for (let pageNumber = batchStart; pageNumber <= batchEnd; pageNumber += 1) {
+        batchPageNumbers.push(pageNumber)
       }
 
-      const candidates = await extractPdfPageImagesOnly(pdf, pageNumber)
-      pageImageCandidates[pageNumber - 1] = candidates
+      const batchResults = await Promise.all(
+        batchPageNumbers.map(async (pageNumber) => {
+          const lines = await extractPdfPageTextOnly(pdf, pageNumber, headingStrings)
 
-      if (onPageProcessed) {
-        onPageProcessed(pageNumber, totalPages, { extractSubphase: "images" })
+          if (onPageProcessed) {
+            onPageProcessed(pageNumber, totalPages, { extractSubphase: "text" })
+          }
+
+          return lines
+        })
+      )
+
+      for (let index = 0; index < batchPageNumbers.length; index += 1) {
+        pagesBeforeFilter[batchPageNumbers[index] - 1] = {
+          lines: batchResults[index],
+        }
       }
-    })
+    }
+
+    if (onPageProcessed) {
+      onPageProcessed(totalPages, totalPages, { extractSubphase: "text_complete" })
+    }
+
+    for (
+      let batchStart = 1;
+      batchStart <= totalPages;
+      batchStart += imageConcurrency
+    ) {
+      const batchEnd = Math.min(batchStart + imageConcurrency - 1, totalPages)
+      const batchPageNumbers = []
+
+      for (let pageNumber = batchStart; pageNumber <= batchEnd; pageNumber += 1) {
+        batchPageNumbers.push(pageNumber)
+      }
+
+      if (onPageProcessed && batchStart === 1) {
+        onPageProcessed(0, totalPages, { extractSubphase: "images" })
+      }
+
+      const batchResults = await Promise.all(
+        batchPageNumbers.map(async (pageNumber) => {
+          const candidates = await extractPdfPageImagesOnly(pdf, pageNumber)
+
+          if (onPageProcessed) {
+            onPageProcessed(pageNumber, totalPages, { extractSubphase: "images" })
+          }
+
+          return candidates
+        })
+      )
+
+      for (let index = 0; index < batchPageNumbers.length; index += 1) {
+        pageImageCandidates[batchPageNumbers[index] - 1] = batchResults[index]
+      }
+    }
   } finally {
     if (!pdfInput && typeof pdf.destroy === "function") {
       await pdf.destroy()
@@ -6615,6 +6692,12 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
   })
 
   const parseStartedAt = Date.now()
+  const progressHeartbeat = setInterval(() => {
+    const live = getDocumentParseProgress(documentId)
+    if (live?.phase === "extracting" || live?.phase === "structuring") {
+      setDocumentParseProgress(documentId, live)
+    }
+  }, 2000)
 
   try {
     const { parsedText, chapters, contentWithChapters, wordCount, bookTitle } =
@@ -6693,6 +6776,7 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
       .eq("id", documentId)
       .eq("user_id", userId)
   } finally {
+    clearInterval(progressHeartbeat)
     backgroundParseInFlight.delete(documentId)
   }
 }
@@ -6776,14 +6860,18 @@ async function parsePdfBuffer(
       onPageProcessed(pageNumber, totalPages, { extractSubphase = "text" } = {}) {
         onPageProcessed?.(pageNumber, totalPages)
 
-        reportProgress({
-          phase: "extracting",
-          label:
-            extractSubphase === "filtering"
-              ? "Cleaning extracted text"
+        const label =
+          extractSubphase === "filtering"
+            ? "Cleaning extracted text"
+            : extractSubphase === "text_complete"
+              ? "Text scan complete"
               : extractSubphase === "images"
                 ? "Scanning page artwork"
-                : "Reading PDF pages",
+                : "Reading PDF pages"
+
+        reportProgress({
+          phase: "extracting",
+          label,
           current: pageNumber,
           total: totalPages,
           extractSubphase,

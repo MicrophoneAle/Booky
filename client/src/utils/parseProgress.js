@@ -175,17 +175,31 @@ function mergeCounterSnapshot(previous, update) {
     ),
   }
 
-  if (effectivePhase === "extracting" || effectivePhase === "structuring") {
+  if (effectivePhase === "extracting") {
+    const subphase = update?.extractSubphase ?? previous?.extractSubphase
+    if (subphase === "images") {
+      const imageBase =
+        previous?.extractSubphase === "images"
+          ? prevCounters.pages
+          : { current: 0, total: update?.total ?? prevCounters.pages.total }
+      counters.pages = bumpCounter(imageBase, update?.current, update?.total)
+    } else if (subphase === "filtering") {
+      counters.pages = bumpCounter(
+        previous?.extractSubphase === "filtering"
+          ? prevCounters.pages
+          : { current: 0, total: update?.total ?? prevCounters.pages.total },
+        update?.current,
+        update?.total
+      )
+    } else {
+      counters.pages = bumpCounter(
+        { current: 0, total: update?.total ?? prevCounters.pages.total },
+        update?.current,
+        update?.total
+      )
+    }
+  } else if (effectivePhase === "structuring") {
     counters.pages = bumpCounter(counters.pages, update?.current, update?.total)
-  }
-
-  if (
-    effectivePhase === "extracting" &&
-    update?.extractSubphase &&
-    update.extractSubphase !== previous?.extractSubphase &&
-    typeof update.current === "number"
-  ) {
-    counters.pages = bumpCounter(counters.pages, update.current, update.total)
   }
   if (effectivePhase === "classifying_illustrations") {
     counters.illustrations = bumpCounter(
@@ -292,7 +306,10 @@ export function mergePollProgressUpdate(previous, update) {
     counters,
     current: active.current,
     total: active.total,
-    percent: Math.max(previous.percent ?? 0, update.percent ?? previous.percent ?? 0),
+    percent:
+      update.extractSubphase === "images" && update.current === 0
+        ? Math.max(previous.percent ?? 0, update.percent ?? 0)
+        : Math.max(previous.percent ?? 0, update.percent ?? previous.percent ?? 0),
     extractSubphase:
       phase === "extracting"
         ? update.extractSubphase ?? previous.extractSubphase
@@ -359,6 +376,9 @@ export function getParseProgressHeadline(parseProgress) {
     if (subphase === "filtering") {
       return "Cleaning extracted text…"
     }
+    if (subphase === "text_complete" || (subphase === "images" && (parseProgress.current ?? 0) === 0)) {
+      return "Starting artwork scan…"
+    }
     if (subphase === "images") {
       return "Scanning page artwork…"
     }
@@ -402,22 +422,23 @@ export function getParseProgressDetail(parseProgress) {
   }
 
   if (phase === "extracting") {
-    const serverPercent =
-      typeof parseProgress.percent === "number"
-        ? Math.round(parseProgress.percent)
-        : null
     const subphase = parseProgress.extractSubphase ?? "text"
 
     if (subphase === "filtering" && total > 0) {
-      return `Cleaning extracted text — pass ${current} of ${total} (${serverPercent ?? 0}% overall).`
+      const pct = Math.round((current / total) * 100)
+      return `Cleaning extracted text — page ${current} of ${total} (${pct}%).`
+    }
+
+    if (subphase === "text_complete" || (subphase === "images" && current === 0)) {
+      return `Text scan complete — starting artwork scan (${total} pages).`
     }
 
     if (total > 0) {
-      const overall = serverPercent ?? Math.round((current / total) * 100)
+      const pct = Math.round((current / total) * 100)
       if (subphase === "images") {
-        return `Processing page ${current} of ${total} — scanning artwork (${overall}% overall).`
+        return `Scanning artwork on page ${current} of ${total} (${pct}% of PDF scan).`
       }
-      return `Processing page ${current} of ${total} — reading text (${overall}% overall).`
+      return `Reading page ${current} of ${total} (${pct}% of PDF scan).`
     }
     return "Opening PDF and preparing the page scanner…"
   }
