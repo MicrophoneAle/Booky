@@ -930,6 +930,25 @@ const MARGIN_MAP = {
   wide: "1.25rem",
 }
 
+function formatFontSizeChipLabel(size) {
+  const name =
+    size === "xlarge" ? "XL" : size.charAt(0).toUpperCase() + size.slice(1)
+  const bodyPx = FONT_SIZE_MAP[size]?.body ?? FONT_SIZE_MAP.medium.body
+  return `${name} ${bodyPx}px`
+}
+
+function formatLineSpacingChipLabel(spacing) {
+  const name = spacing.charAt(0).toUpperCase() + spacing.slice(1)
+  const lineHeight =
+    LINE_HEIGHT_MAP[spacing]?.body ?? LINE_HEIGHT_MAP.normal.body
+  return `${name} ${lineHeight}`
+}
+
+function formatMarginChipLabel(margin) {
+  const name = margin.charAt(0).toUpperCase() + margin.slice(1)
+  return `${name} ${MARGIN_MAP[margin] ?? MARGIN_MAP.normal}`
+}
+
 function getPageMarginPx(marginSetting) {
   const remPx =
     typeof document !== "undefined"
@@ -5992,9 +6011,7 @@ export default function BookViewer({
                     }))
                   }
                 >
-                  {size === "xlarge"
-                    ? "XL"
-                    : size.charAt(0).toUpperCase() + size.slice(1)}
+                  {formatFontSizeChipLabel(size)}
                 </button>
               ))}
             </div>
@@ -6044,7 +6061,7 @@ export default function BookViewer({
                     }))
                   }
                 >
-                  {sp.charAt(0).toUpperCase() + sp.slice(1)}
+                  {formatLineSpacingChipLabel(sp)}
                 </button>
               ))}
             </div>
@@ -6069,7 +6086,7 @@ export default function BookViewer({
                     }))
                   }
                 >
-                  {m.charAt(0).toUpperCase() + m.slice(1)}
+                  {formatMarginChipLabel(m)}
                 </button>
               ))}
             </div>
