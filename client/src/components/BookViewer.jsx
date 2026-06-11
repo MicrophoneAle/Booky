@@ -5707,6 +5707,15 @@ export default function BookViewer({
           }
           break
 
+        case "b":
+        case "B":
+          if (!event.metaKey && !event.ctrlKey && !event.altKey) {
+            event.preventDefault()
+            persistReadingPosition()
+            navigate("/library")
+          }
+          break
+
         default:
           break
       }
@@ -5732,6 +5741,8 @@ export default function BookViewer({
     setSettingsOpen,
     setSearchQuery,
     setSearchResults,
+    persistReadingPosition,
+    navigate,
   ])
 
   const showFullscreenPrepareScreen =
@@ -6479,6 +6490,7 @@ export default function BookViewer({
                 { keys: ["F"], label: "Fullscreen" },
                 { keys: ["T"], label: "Contents" },
                 { keys: ["S"], label: "Search" },
+                { keys: ["B"], label: "Library" },
                 { keys: ["Esc"], label: "Close / Exit" },
               ].map(({ keys, label }) => (
                 <div key={label} className="book-viewer__kb-row">
