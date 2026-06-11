@@ -3619,6 +3619,7 @@ function InlineCustomSettingChip({
   onStartEdit,
   onDraftChange,
   onCommit,
+  onBlurCommit,
   onCancel,
 }) {
   if (editingField === field) {
@@ -3643,7 +3644,7 @@ function InlineCustomSettingChip({
               onCancel()
             }
           }}
-          onBlur={onCommit}
+          onBlur={onBlurCommit}
         />
         {staticSuffix ? (
           <span className="book-viewer__settings-chip-static">{staticSuffix}</span>
@@ -3729,6 +3730,7 @@ export default function BookViewer({
   const [customEditField, setCustomEditField] = useState(null)
   const [customEditDraft, setCustomEditDraft] = useState("")
   const customEditInputRef = useRef(null)
+  const customEditSuppressCommitRef = useRef(false)
   const [tocOpen, setTocOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -3773,80 +3775,89 @@ export default function BookViewer({
     setCustomEditDraft("")
   }, [])
 
+  const commitCustomEditForField = useCallback(
+    (field, draft) => {
+      if (field === "fontSize") {
+        const nextPx = sanitizeCustomFontSizePx(draft, uiSettings.customFontSizePx)
+        setUiSettings((s) => ({
+          ...s,
+          fontSize: "custom",
+          customFontSizePx: nextPx,
+        }))
+      } else if (field === "lineSpacing") {
+        const nextSpacing = sanitizeCustomLineSpacing(
+          draft,
+          uiSettings.customLineSpacing
+        )
+        setUiSettings((s) => ({
+          ...s,
+          lineSpacing: "custom",
+          customLineSpacing: nextSpacing,
+        }))
+      } else if (field === "margins") {
+        const nextMargin = sanitizeCustomMarginRem(draft, uiSettings.customMarginRem)
+        setUiSettings((s) => ({
+          ...s,
+          margins: "custom",
+          customMarginRem: nextMargin,
+        }))
+      }
+
+      setCustomEditField(null)
+      setCustomEditDraft("")
+    },
+    [
+      uiSettings.customFontSizePx,
+      uiSettings.customLineSpacing,
+      uiSettings.customMarginRem,
+    ]
+  )
+
   const commitCustomFontSizeEdit = useCallback(() => {
-    if (customEditField !== "fontSize") return
-    const nextPx = sanitizeCustomFontSizePx(
-      customEditDraft,
-      uiSettings.customFontSizePx
-    )
-    setUiSettings((s) => ({
-      ...s,
-      fontSize: "custom",
-      customFontSizePx: nextPx,
-    }))
-    setCustomEditField(null)
-    setCustomEditDraft("")
-  }, [customEditField, customEditDraft, uiSettings.customFontSizePx])
+    commitCustomEditForField("fontSize", customEditDraft)
+  }, [commitCustomEditForField, customEditDraft])
 
   const commitCustomLineSpacingEdit = useCallback(() => {
-    if (customEditField !== "lineSpacing") return
-    const nextSpacing = sanitizeCustomLineSpacing(
-      customEditDraft,
-      uiSettings.customLineSpacing
-    )
-    setUiSettings((s) => ({
-      ...s,
-      lineSpacing: "custom",
-      customLineSpacing: nextSpacing,
-    }))
-    setCustomEditField(null)
-    setCustomEditDraft("")
-  }, [customEditField, customEditDraft, uiSettings.customLineSpacing])
+    commitCustomEditForField("lineSpacing", customEditDraft)
+  }, [commitCustomEditForField, customEditDraft])
 
   const commitCustomMarginEdit = useCallback(() => {
-    if (customEditField !== "margins") return
-    const nextMargin = sanitizeCustomMarginRem(
-      customEditDraft,
-      uiSettings.customMarginRem
-    )
-    setUiSettings((s) => ({
-      ...s,
-      margins: "custom",
-      customMarginRem: nextMargin,
-    }))
-    setCustomEditField(null)
-    setCustomEditDraft("")
-  }, [customEditField, customEditDraft, uiSettings.customMarginRem])
+    commitCustomEditForField("margins", customEditDraft)
+  }, [commitCustomEditForField, customEditDraft])
+
+  const deferCustomBlurCommit = useCallback(
+    (field) => {
+      const draft = customEditDraft
+      window.setTimeout(() => {
+        if (customEditSuppressCommitRef.current) {
+          customEditSuppressCommitRef.current = false
+          return
+        }
+        commitCustomEditForField(field, draft)
+      }, 0)
+    },
+    [commitCustomEditForField, customEditDraft]
+  )
+
+  const prepareCustomEditCancel = useCallback(() => {
+    customEditSuppressCommitRef.current = true
+    cancelCustomEdit()
+  }, [cancelCustomEdit])
 
   const startCustomFontSizeEdit = useCallback(() => {
     const nextPx = sanitizeCustomFontSizePx(uiSettings.customFontSizePx)
-    setUiSettings((s) => ({
-      ...s,
-      fontSize: "custom",
-      customFontSizePx: nextPx,
-    }))
     setCustomEditField("fontSize")
     setCustomEditDraft(String(nextPx))
   }, [uiSettings.customFontSizePx])
 
   const startCustomLineSpacingEdit = useCallback(() => {
     const nextSpacing = sanitizeCustomLineSpacing(uiSettings.customLineSpacing)
-    setUiSettings((s) => ({
-      ...s,
-      lineSpacing: "custom",
-      customLineSpacing: nextSpacing,
-    }))
     setCustomEditField("lineSpacing")
     setCustomEditDraft(String(nextSpacing))
   }, [uiSettings.customLineSpacing])
 
   const startCustomMarginEdit = useCallback(() => {
     const nextMargin = sanitizeCustomMarginRem(uiSettings.customMarginRem)
-    setUiSettings((s) => ({
-      ...s,
-      margins: "custom",
-      customMarginRem: nextMargin,
-    }))
     setCustomEditField("margins")
     setCustomEditDraft(String(nextMargin))
   }, [uiSettings.customMarginRem])
@@ -3869,20 +3880,8 @@ export default function BookViewer({
       return
     }
 
-    if (customEditField === "fontSize") {
-      commitCustomFontSizeEdit()
-    } else if (customEditField === "lineSpacing") {
-      commitCustomLineSpacingEdit()
-    } else if (customEditField === "margins") {
-      commitCustomMarginEdit()
-    }
-  }, [
-    settingsOpen,
-    customEditField,
-    commitCustomFontSizeEdit,
-    commitCustomLineSpacingEdit,
-    commitCustomMarginEdit,
-  ])
+    commitCustomEditForField(customEditField, customEditDraft)
+  }, [settingsOpen, customEditField, customEditDraft, commitCustomEditForField])
 
   useEffect(() => {
     currentPageRef.current = currentPage
@@ -6320,13 +6319,13 @@ export default function BookViewer({
                       ? "book-viewer__settings-chip--active"
                       : ""
                   }`}
-                  onClick={() => {
-                    cancelCustomEdit()
+                  onMouseDown={prepareCustomEditCancel}
+                  onClick={() =>
                     setUiSettings((s) => ({
                       ...s,
                       fontSize: size,
                     }))
-                  }}
+                  }
                 >
                   {formatFontSizeChipLabel(size, uiSettings)}
                 </button>
@@ -6335,13 +6334,16 @@ export default function BookViewer({
                 field="fontSize"
                 editingField={customEditField}
                 editInputRef={customEditInputRef}
-                isActive={uiSettings.fontSize === "custom"}
+                isActive={
+                  uiSettings.fontSize === "custom" || customEditField === "fontSize"
+                }
                 displayLabel={formatFontSizeChipLabel("custom", uiSettings)}
                 draft={customEditDraft}
                 staticSuffix="px"
                 onStartEdit={startCustomFontSizeEdit}
                 onDraftChange={setCustomEditDraft}
                 onCommit={commitCustomFontSizeEdit}
+                onBlurCommit={() => deferCustomBlurCommit("fontSize")}
                 onCancel={cancelCustomEdit}
               />
             </div>
@@ -6384,13 +6386,13 @@ export default function BookViewer({
                       ? "book-viewer__settings-chip--active"
                       : ""
                   }`}
-                  onClick={() => {
-                    cancelCustomEdit()
+                  onMouseDown={prepareCustomEditCancel}
+                  onClick={() =>
                     setUiSettings((s) => ({
                       ...s,
                       lineSpacing: sp,
                     }))
-                  }}
+                  }
                 >
                   {formatLineSpacingChipLabel(sp, uiSettings)}
                 </button>
@@ -6399,12 +6401,16 @@ export default function BookViewer({
                 field="lineSpacing"
                 editingField={customEditField}
                 editInputRef={customEditInputRef}
-                isActive={uiSettings.lineSpacing === "custom"}
+                isActive={
+                  uiSettings.lineSpacing === "custom" ||
+                  customEditField === "lineSpacing"
+                }
                 displayLabel={formatLineSpacingChipLabel("custom", uiSettings)}
                 draft={customEditDraft}
                 onStartEdit={startCustomLineSpacingEdit}
                 onDraftChange={setCustomEditDraft}
                 onCommit={commitCustomLineSpacingEdit}
+                onBlurCommit={() => deferCustomBlurCommit("lineSpacing")}
                 onCancel={cancelCustomEdit}
               />
             </div>
@@ -6422,13 +6428,13 @@ export default function BookViewer({
                       ? "book-viewer__settings-chip--active"
                       : ""
                   }`}
-                  onClick={() => {
-                    cancelCustomEdit()
+                  onMouseDown={prepareCustomEditCancel}
+                  onClick={() =>
                     setUiSettings((s) => ({
                       ...s,
                       margins: m,
                     }))
-                  }}
+                  }
                 >
                   {formatMarginChipLabel(m, uiSettings)}
                 </button>
@@ -6437,13 +6443,16 @@ export default function BookViewer({
                 field="margins"
                 editingField={customEditField}
                 editInputRef={customEditInputRef}
-                isActive={uiSettings.margins === "custom"}
+                isActive={
+                  uiSettings.margins === "custom" || customEditField === "margins"
+                }
                 displayLabel={formatMarginChipLabel("custom", uiSettings)}
                 draft={customEditDraft}
                 staticSuffix="rem"
                 onStartEdit={startCustomMarginEdit}
                 onDraftChange={setCustomEditDraft}
                 onCommit={commitCustomMarginEdit}
+                onBlurCommit={() => deferCustomBlurCommit("margins")}
                 onCancel={cancelCustomEdit}
               />
             </div>
@@ -6453,10 +6462,10 @@ export default function BookViewer({
             <button
               type="button"
               className="book-viewer__settings-reset"
-              onClick={() => {
-                cancelCustomEdit()
+              onMouseDown={prepareCustomEditCancel}
+              onClick={() =>
                 setUiSettings(normalizeReaderSettings(DEFAULT_SETTINGS))
-              }}
+              }
             >
               Reset to defaults
             </button>
