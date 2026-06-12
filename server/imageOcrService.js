@@ -280,11 +280,12 @@ function parseChapterNumberToken(token) {
     return { kind: "interlude", label: `Interlude I-${dashInterludeMatch[2]}` }
   }
 
-  if (/^\d{1,2}$/.test(trimmed)) {
-    const parsed = Number.parseInt(trimmed, 10)
-    if (parsed >= 1 && parsed <= 75) {
-      return { kind: "chapter", label: `Chapter ${parsed}` }
-    }
+  if (/^\d{1,3}$/.test(trimmed)) {
+    return { kind: "chapter", label: `Chapter ${trimmed}` }
+  }
+
+  if (/^[IVXLCDM]+$/i.test(trimmed)) {
+    return { kind: "chapter", label: `Chapter ${trimmed.toUpperCase()}` }
   }
 
   const lower = trimmed.toLowerCase()
@@ -294,125 +295,6 @@ function parseChapterNumberToken(token) {
   }
 
   return null
-}
-
-const OCR_TITLE_STOP_WORDS = new Set([
-  "THE",
-  "AND",
-  "FOR",
-  "OF",
-  "TO",
-  "IN",
-  "A",
-  "AN",
-  "OR",
-  "AT",
-  "BY",
-  "ON",
-  "AS",
-  "IS",
-  "IT",
-  "BE",
-  "HE",
-  "SHE",
-  "WE",
-  "ME",
-  "MY",
-  "LE",
-  "EL",
-  "EE",
-  "TY",
-  "SA",
-  "OM",
-  "FR",
-  "NP",
-  "BCA",
-  "MA",
-  "FAE",
-  "OS",
-  "AW",
-  "AE",
-  "AR",
-  "ENA",
-  "NAN",
-  "BAC",
-  "VU",
-  "BN",
-  "JA",
-  "ZZ",
-  "NS",
-  "GI",
-  "PAN",
-  "RE",
-  "ARS",
-  "BWI",
-  "AEP",
-  "LIA",
-  "FA",
-  "OE",
-  "BA",
-  "ND",
-  "PR",
-  "NL",
-  "SY",
-  "CL",
-  "LO",
-  "BEEN",
-  "HEXEN",
-  "OER",
-  "BRIDGEFOUR",
-  "STORMLIGHT",
-  "ARCHIVE",
-  "SANDERSON",
-  "PART",
-  "CHAPTER",
-  "INTERLUDE",
-  "INTERLUDES",
-  "PRELUDE",
-  "PROLOGUE",
-  "EPILOGUE",
-])
-
-function trimTitleNoiseWords(title) {
-  const words = (title ?? "").split(/\s+/).filter(Boolean)
-  if (words.length <= 1) {
-    return title
-  }
-
-  const kept = []
-  for (const word of words) {
-    const previous = kept[kept.length - 1] ?? ""
-    if (
-      kept.length >= 2 &&
-      word.length <= 4 &&
-      previous.length >= 5 &&
-      !TITLE_CONNECTOR_WORDS.has(word.toUpperCase())
-    ) {
-      break
-    }
-
-    kept.push(word)
-  }
-
-  return kept.join(" ")
-}
-
-function titleCaseBannerTitle(text) {
-  const trimmed = (text ?? "").replace(/\s+/g, " ").trim()
-  if (!trimmed) {
-    return null
-  }
-
-  return trimmed
-    .toLowerCase()
-    .split(/\s+/)
-    .map((word) => {
-      if (/^i{1,3}$/i.test(word)) {
-        return word.toUpperCase()
-      }
-      return word.charAt(0).toUpperCase() + word.slice(1)
-    })
-    .join(" ")
 }
 
 function isPlausibleTitle(text) {
@@ -430,215 +312,35 @@ function isPlausibleTitle(text) {
     return false
   }
 
-  const meaningfulWords = words.filter((word) => !OCR_TITLE_STOP_WORDS.has(word.toUpperCase()))
-  if (meaningfulWords.length === 0) {
-    return false
-  }
-
-  const longWords = meaningfulWords.filter(
-    (word) => word.replace(/[^A-Za-z]/g, "").length >= 4
-  )
-  const meaningfulAlpha = meaningfulWords.join("").replace(/[^A-Za-z]/g, "")
-  if (longWords.length === 0 && meaningfulAlpha.length < 7) {
+  const longWords = words.filter((word) => word.replace(/[^A-Za-z]/g, "").length >= 4)
+  if (longWords.length === 0) {
     return false
   }
 
   const shortWords = words.filter((word) => word.length <= 2)
-  if (shortWords.length / words.length > 0.45) {
+  if (shortWords.length / words.length > 0.35) {
     return false
   }
 
   const alpha = cleaned.replace(/[^A-Za-z]/g, "")
-  if (longWords.length > 0) {
-    const longAlpha = longWords.join("").replace(/[^A-Za-z]/g, "")
-    if (longAlpha.length < alpha.length * 0.45) {
-      return false
-    }
+  const longAlpha = longWords.join("").replace(/[^A-Za-z]/g, "")
+  if (longAlpha.length < alpha.length * 0.65) {
+    return false
   }
 
-  for (const word of longWords) {
+  for (const word of words) {
     const letters = word.replace(/[^A-Za-z]/g, "")
-    if (letters.length >= 5 && !/[AEIOUaeiou]/i.test(letters)) {
+    if (letters.length >= 4 && !/[AEIOUaeiou]/.test(letters)) {
       return false
     }
   }
 
   const uppercaseLetters = alpha.replace(/[^A-Z]/g, "").length
-  if (alpha.length >= 6 && uppercaseLetters < alpha.length * 0.35) {
+  if (alpha.length >= 6 && uppercaseLetters < alpha.length * 0.45) {
     return false
   }
 
   return true
-}
-
-const TITLE_CONNECTOR_WORDS = new Set(["OF", "THE", "A", "AN", "AND", "IN", "ON", "TO"])
-
-function extractUppercaseTitleRuns(text) {
-  const normalized = normalizeOcrLine(text).replace(/[^A-Za-z0-9'\-\s]/g, " ")
-  const regexRuns =
-    normalized.match(/\b(?:[A-Z][A-Z'\-]{2,})(?:\s+(?:[A-Z][A-Z'\-]{2,}))*\b/g) ?? []
-
-  const tokenRuns = []
-  const tokens = normalized.split(/\s+/).filter(Boolean)
-  let current = []
-
-  for (const token of tokens) {
-    const upper = token.toUpperCase()
-    const isCapsToken = /^[A-Z][A-Z'\-]*$/.test(upper) && upper.length >= 2
-
-    if (isCapsToken && (upper.length >= 3 || TITLE_CONNECTOR_WORDS.has(upper))) {
-      if (TITLE_CONNECTOR_WORDS.has(upper) && current.length === 0) {
-        continue
-      }
-      current.push(upper)
-      continue
-    }
-
-    if (current.length > 0) {
-      tokenRuns.push(current.join(" "))
-      current = []
-    }
-  }
-
-  if (current.length > 0) {
-    tokenRuns.push(current.join(" "))
-  }
-
-  return [...regexRuns, ...tokenRuns]
-    .map((run) => run.replace(/\s+/g, " ").trim())
-    .filter((run) => run.length >= 4)
-}
-
-function scoreTitleCandidate(candidate) {
-  const words = candidate.split(/\s+/).filter(Boolean)
-  const contentWords = words.filter(
-    (word) => !TITLE_CONNECTOR_WORDS.has(word.toUpperCase())
-  )
-  if (contentWords.length === 0) {
-    return 0
-  }
-
-  const alpha = candidate.replace(/[^A-Za-z]/g, "")
-  const uppercaseRatio = alpha.length > 0 ? alpha.replace(/[^A-Z]/g, "").length / alpha.length : 0
-  let score = candidate.length
-
-  if (contentWords.length >= 2) {
-    score += 14
-  }
-
-  if (contentWords.some((word) => word.length >= 6)) {
-    score += 10
-  }
-
-  if (uppercaseRatio >= 0.7) {
-    score += 8
-  }
-
-  if (candidate.length >= 8 && candidate.length <= 40) {
-    score += 6
-  }
-
-  return score
-}
-
-function pickBestTitleCandidate(candidates) {
-  const ranked = [...new Set(candidates)]
-    .map((candidate) => ({
-      candidate,
-      score: scoreTitleCandidate(candidate),
-    }))
-    .filter((entry) => entry.score > 0 && isPlausibleTitle(entry.candidate))
-    .sort((left, right) => right.score - left.score)
-
-  return ranked[0]?.candidate ?? null
-}
-
-function extractTitleFromNoisyOcr(...texts) {
-  const candidates = []
-
-  for (const text of texts) {
-    if (!text) {
-      continue
-    }
-
-    for (const line of text.split(/\n+/)) {
-      const parsed = parseTitleLine(line)
-      if (parsed) {
-        candidates.push(parsed)
-      }
-    }
-
-    candidates.push(...extractUppercaseTitleRuns(text))
-  }
-
-  const best = pickBestTitleCandidate(candidates)
-  return best ? trimTitleNoiseWords(titleCaseBannerTitle(best)) : null
-}
-
-function extractPlaqueChapterNumber(numberText) {
-  const compact = normalizeOcrLine(numberText).replace(/\s+/g, "")
-  if (!compact) {
-    return null
-  }
-
-  const digitMatch = compact.match(/^(\d{1,2})$/)
-  if (digitMatch) {
-    const parsed = Number.parseInt(digitMatch[1], 10)
-    if (parsed >= 1 && parsed <= 75) {
-      return { kind: "chapter", label: `Chapter ${parsed}` }
-    }
-  }
-
-  return null
-}
-
-function extractSectionLabelFromText(text) {
-  const combined = normalizeOcrLine(text)
-  if (!combined) {
-    return null
-  }
-
-  if (/\bPRELUDE\b/i.test(combined)) {
-    return { kind: "prelude", label: "Prelude" }
-  }
-
-  if (/\bPROLOGUE\b/i.test(combined)) {
-    return { kind: "prologue", label: "Prologue" }
-  }
-
-  if (/\bEPILOGUE\b/i.test(combined)) {
-    return { kind: "epilogue", label: "Epilogue" }
-  }
-
-  const interludeMatch = combined.match(/\bI[\s\-–—]*(\d{1,2})\b/i)
-  if (interludeMatch) {
-    return { kind: "interlude", label: `Interlude I-${interludeMatch[1]}` }
-  }
-
-  for (const token of combined.split(/\s+/)) {
-    const sectionLabel = parseSectionLabelToken(token)
-    if (sectionLabel) {
-      return sectionLabel
-    }
-  }
-
-  return null
-}
-
-function extractLooseChapterNumber(numberText, ...fallbackTexts) {
-  const plaqueNumber = extractPlaqueChapterNumber(numberText)
-  if (plaqueNumber) {
-    return plaqueNumber
-  }
-
-  for (const text of fallbackTexts) {
-    const sectionLabel = extractSectionLabelFromText(text)
-    if (sectionLabel) {
-      return sectionLabel
-    }
-  }
-
-  return null
 }
 
 function parseTitleLine(text) {
@@ -730,72 +432,51 @@ function buildChapterHeadingMetadata({ number, title }) {
   }
 }
 
-function parseChapterHeadingFromOcrTexts({
-  numberText = "",
-  titleText = "",
-  sectionText = "",
-  bannerText = "",
-} = {}) {
-  let number = extractLooseChapterNumber(numberText, sectionText, bannerText)
-  let title = extractTitleFromNoisyOcr(titleText, sectionText, bannerText)
+function parseChapterHeadingBannerText(bannerText) {
+  const lines = bannerText
+    .split(/\n/)
+    .map((line) => normalizeOcrLine(line))
+    .filter((line) => line.length > 0)
 
-  if (!title) {
-    title = extractTitleFromNoisyOcr(bannerText)
+  let number = null
+  let title = null
+
+  for (const line of lines) {
+    const parsedNumber = parseChapterNumberToken(line)
+    if (!number && parsedNumber) {
+      number = parsedNumber
+      continue
+    }
+
+    const parsedTitle = parseTitleLine(line)
+    if (!title && parsedTitle) {
+      title = parsedTitle
+      continue
+    }
+
+    const inlineNumber = line.match(/^(\d{1,3})\s+(.+)$/)
+    if (!number && inlineNumber) {
+      number = parseChapterNumberToken(inlineNumber[1])
+      if (!title) {
+        title = parseTitleLine(inlineNumber[2])
+      }
+    }
   }
 
   return buildChapterHeadingMetadata({ number, title })
 }
 
-function parseChapterHeadingBannerText(bannerText) {
-  return parseChapterHeadingFromOcrTexts({ bannerText })
-}
-
 async function ocrChapterHeading(imageBuffer) {
-  const scaledCanvas = await prepareScaledCanvas(imageBuffer, 1400)
-  const numberRegion = { left: 0.38, top: 0.03, width: 0.24, height: 0.14 }
-  const numberRegionWide = { left: 0.3, top: 0.02, width: 0.4, height: 0.18 }
-  const titleRegion = { left: 0.05, top: 0.2, width: 0.9, height: 0.36 }
-  const sectionRegion = { left: 0.08, top: 0.18, width: 0.84, height: 0.42 }
+  const scaledCanvas = await prepareScaledCanvas(imageBuffer, 900)
   const bannerRegion = { left: 0.04, top: 0, width: 0.92, height: 0.58 }
 
-  const [numberText, numberTextWide, titleText, sectionText, bannerText] =
-    await Promise.all([
-      recognizeRegion(scaledCanvas, numberRegion, {
-        psm: "8",
-        whitelist: "0123456789",
-      }),
-      recognizeRegion(scaledCanvas, numberRegionWide, {
-        psm: "7",
-        whitelist: "0123456789",
-      }),
-      recognizeRegion(scaledCanvas, titleRegion, {
-        psm: "7",
-      }),
-      recognizeRegion(scaledCanvas, sectionRegion, {
-        psm: "6",
-      }),
-      recognizeRegion(scaledCanvas, bannerRegion, {
-        psm: "6",
-      }),
-    ])
-
-  const resolvedNumberText = [numberText, numberTextWide].find((text) =>
-    /^\d{1,2}$/.test(normalizeOcrLine(text).replace(/\s+/g, ""))
-  )
-
-  logOcr("chapter_heading_banner", {
-    numberText: resolvedNumberText ?? numberText,
-    titleText,
-    sectionText,
-    bannerText,
+  const bannerText = await recognizeRegion(scaledCanvas, bannerRegion, {
+    psm: "6",
   })
 
-  return parseChapterHeadingFromOcrTexts({
-    numberText: resolvedNumberText ?? numberTextWide ?? numberText,
-    titleText,
-    sectionText,
-    bannerText,
-  })
+  logOcr("chapter_heading_banner", { bannerText })
+
+  return parseChapterHeadingBannerText(bannerText)
 }
 
 async function ocrFullPageSection(imageBuffer) {
@@ -854,12 +535,7 @@ async function ocrIllustrationMetadata(imageBuffer, imageRole) {
     }
 
     if (imageRole === "full_page_illustration") {
-      const sectionMetadata = await ocrFullPageSection(imageBuffer)
-      if (sectionMetadata) {
-        return sectionMetadata
-      }
-
-      return await ocrChapterHeading(imageBuffer)
+      return await ocrFullPageSection(imageBuffer)
     }
   } catch (error) {
     logOcr("ocr_failed", {
@@ -887,13 +563,10 @@ function countInterludeNamesInDivider(ocrMetadata) {
 
 export {
   ocrIllustrationMetadata,
-  parseChapterHeadingFromOcrTexts,
   parseChapterNumberToken,
   parseSectionLabelToken,
   parsePartLabel,
   isPlausibleTitle,
-  extractTitleFromNoisyOcr,
-  extractLooseChapterNumber,
   countInterludeNamesInDivider,
   terminateOcrWorker,
 }

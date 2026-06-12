@@ -4,9 +4,7 @@
  */
 
 const DEATH_RATTLE_ATTRIBUTION_REGEX =
-  /^[\u2014\u2013\-?]?\s*(?:Collected|Dated|Noted|Purports|Though|Kakashah|Tanatanev|Tanatesach|Kaktach)/i
-
-const INTERSTITIAL_TITLE_REGEX = /^[A-Z][A-Z0-9\s'?\-]{3,}$/
+  /^ΓÇö(?:Collected|Dated|Noted|Purports|Though|Kakashah|Tanatanev|Tanatesach|Kaktach)/i
 
 /** @type {Array<{ chapterKey: string, prefix: string }>} */
 const WAY_OF_KINGS_DEATH_RATTLE_PREFIXES = [
@@ -467,98 +465,8 @@ function supplementBannerlessPrintedChapters(blocks, printedToc) {
   return updated
 }
 
-function titleCaseInterstitialTitle(text) {
-  const trimmed = (text ?? "").replace(/\s+/g, " ").trim()
-  if (!trimmed) {
-    return null
-  }
-
-  return trimmed
-    .toLowerCase()
-    .split(/\s+/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ")
-}
-
-function findInterstitialTitleAfterEpigraph(followingTextBlocks) {
-  let pastAttribution = false
-
-  for (const text of followingTextBlocks) {
-    for (const line of text.split(/\n+/)) {
-      const trimmed = line.trim()
-      if (!trimmed) {
-        continue
-      }
-
-      if (DEATH_RATTLE_ATTRIBUTION_REGEX.test(trimmed)) {
-        pastAttribution = true
-        continue
-      }
-
-      if (
-        pastAttribution &&
-        trimmed.length <= 60 &&
-        INTERSTITIAL_TITLE_REGEX.test(trimmed) &&
-        !/^THE\s+STORMLIGHT ARCHIVE$/i.test(trimmed)
-      ) {
-        return titleCaseInterstitialTitle(trimmed)
-      }
-    }
-  }
-
-  for (const text of followingTextBlocks) {
-    for (const line of text.split(/\n+/)) {
-      const trimmed = line.trim()
-      if (
-        trimmed.length >= 4 &&
-        trimmed.length <= 50 &&
-        INTERSTITIAL_TITLE_REGEX.test(trimmed) &&
-        !/^THE\s+STORMLIGHT ARCHIVE$/i.test(trimmed) &&
-        !DEATH_RATTLE_ATTRIBUTION_REGEX.test(trimmed)
-      ) {
-        return titleCaseInterstitialTitle(trimmed)
-      }
-    }
-  }
-
-  return null
-}
-
-/**
- * Identify bannerless Stormlight chapters (52+) from death-rattle epigraph text.
- * Does not use the printed table of contents for titles.
- */
-function buildDeathRattleBoundaryMetadata(blocks, blockIndex) {
-  if (!Array.isArray(blocks) || blockIndex == null) {
-    return null
-  }
-
-  if (hasBackMatterHeadingText(blocks, blockIndex)) {
-    return null
-  }
-
-  const followingText = collectFollowingTextBlocks(blocks, blockIndex)
-  const quote = extractDeathRattleQuoteFromFollowingText(followingText)
-  const chapterKey = matchDeathRattleChapterKey(quote)
-
-  if (!chapterKey) {
-    return null
-  }
-
-  const title = findInterstitialTitleAfterEpigraph(followingText)
-  const number = `Chapter ${chapterKey}`
-
-  return {
-    boundaryKind: "chapter",
-    number,
-    title,
-    rawText: title ? `${number}: ${title}` : number,
-  }
-}
-
 export {
   WAY_OF_KINGS_DEATH_RATTLE_PREFIXES,
-  buildDeathRattleBoundaryMetadata,
   buildTocMetadataForChapterHeading,
   collectFollowingTextBlocks,
   extractDeathRattleQuoteFromFollowingText,

@@ -4,7 +4,10 @@
  */
 
 import { isPlausibleTitle } from "./imageOcrService.js"
-import { buildDeathRattleBoundaryMetadata } from "./stormlightEpigraphService.js"
+import {
+  lookupPrintedTocNumberLabel,
+  lookupPrintedTocTitle,
+} from "./printedTocService.js"
 
 const SAFE_FALLBACK = Object.freeze({
   isChapterBoundary: false,
@@ -394,8 +397,6 @@ function mergeOcrIntoAnalysis(
     interludeSequence = 1,
     imageBlock = null,
     forceInterludeBoundary = false,
-    blocks = null,
-    blockIndex = null,
   } = {}
 ) {
   if (analysisResult?.boundaryKind === "flashback") {
@@ -409,41 +410,6 @@ function mergeOcrIntoAnalysis(
     ) {
       return analyzeFullPageSectionDivider(ocrMetadata, imageBlock)
     }
-
-    if (
-      ocrMetadata &&
-      (ocrMetadata.boundaryKind === "prelude" ||
-        ocrMetadata.boundaryKind === "prologue" ||
-        ocrMetadata.boundaryKind === "epilogue" ||
-        (ocrMetadata.boundaryKind === "chapter" &&
-          (ocrMetadata.number || ocrMetadata.title)))
-    ) {
-      return {
-        isChapterBoundary: true,
-        includeInToc: true,
-        boundaryKind: ocrMetadata.boundaryKind,
-        number: ocrMetadata.number,
-        title: parseTitleFromOcr(ocrMetadata.title),
-        rawText: ocrMetadata.rawText,
-      }
-    }
-
-    const deathRattleMetadata =
-      blocks != null && blockIndex != null
-        ? buildDeathRattleBoundaryMetadata(blocks, blockIndex)
-        : null
-
-    if (deathRattleMetadata) {
-      return {
-        isChapterBoundary: true,
-        includeInToc: true,
-        boundaryKind: deathRattleMetadata.boundaryKind,
-        number: deathRattleMetadata.number,
-        title: deathRattleMetadata.title,
-        rawText: deathRattleMetadata.rawText,
-      }
-    }
-
     return { ...SAFE_FALLBACK }
   }
 
@@ -452,22 +418,13 @@ function mergeOcrIntoAnalysis(
     if (section.isChapterBoundary) {
       return section
     }
+
+    if (printedToc && ocrMetadata.boundaryKind === "chapter") {
+      return { ...SAFE_FALLBACK }
+    }
   }
 
-  let resolvedOcrMetadata = ocrMetadata
-
-  if (
-    printedToc &&
-    imageRole === "chapter_heading" &&
-    !resolvedOcrMetadata?.number &&
-    !resolvedOcrMetadata?.title &&
-    blocks != null &&
-    blockIndex != null
-  ) {
-    resolvedOcrMetadata = buildDeathRattleBoundaryMetadata(blocks, blockIndex)
-  }
-
-  if (!resolvedOcrMetadata && !analysisResult?.isChapterBoundary) {
+  if (!ocrMetadata && !analysisResult?.isChapterBoundary) {
     return analysisResult
   }
 
@@ -477,16 +434,33 @@ function mergeOcrIntoAnalysis(
 
   const boundaryKind = forceInterludeBoundary
     ? "interlude"
-    : resolvedOcrMetadata?.boundaryKind ??
+    : ocrMetadata?.boundaryKind ??
       analysisResult.boundaryKind ??
       (imageRole === "chapter_heading" ? "chapter" : null)
 
-  let number = resolvedOcrMetadata?.number ?? analysisResult.number ?? null
-  let title =
-    parseTitleFromOcr(resolvedOcrMetadata?.title) ?? analysisResult.title ?? null
+  let number = ocrMetadata?.number ?? analysisResult.number ?? null
+  let title = parseTitleFromOcr(ocrMetadata?.title) ?? analysisResult.title ?? null
 
-  if (printedToc && imageRole === "chapter_heading" && !number && !title) {
-    return { ...SAFE_FALLBACK }
+  const lookupSequence =
+    boundaryKind === "interlude" ? interludeSequence : chapterSequence
+
+  if (!title && !printedToc) {
+    title = lookupPrintedTocTitle(printedToc, {
+      number,
+      boundaryKind,
+      chapterSequence: lookupSequence,
+    })
+  }
+
+  if ((!number || /^chapter$/i.test(number)) && !printedToc) {
+    const tocNumber = lookupPrintedTocNumberLabel(printedToc, {
+      number,
+      boundaryKind,
+      chapterSequence: lookupSequence,
+    })
+    if (tocNumber) {
+      number = tocNumber
+    }
   }
 
   const rawText =
@@ -645,8 +619,6 @@ function analyzeChapterGraphicFromContext({
     interludeSequence,
     imageBlock,
     forceInterludeBoundary,
-    blocks,
-    blockIndex,
   })
 }
 
