@@ -330,6 +330,7 @@ export function mergePollProgressUpdate(previous, update) {
     ocrTotal: counters.ocr.total,
     uploadCurrent: counters.uploads.current,
     uploadTotal: counters.uploads.total,
+    updatedAt: update.updatedAt ?? previous.updatedAt ?? Date.now(),
   }
 }
 
@@ -577,4 +578,23 @@ export function getCombinedProcessingPercent(
   }
 
   return Math.round(base + (parseProgress.percent ?? 0) * processingShare)
+}
+
+/**
+ * @param {object|null|undefined} parseProgress
+ * @returns {string|null}
+ */
+export function getParseProgressStaleHint(parseProgress) {
+  if (!parseProgress || parseProgress.phase !== "extracting") {
+    return null
+  }
+
+  const total = parseProgress.pageTotal ?? parseProgress.total ?? 0
+  const current = parseProgress.pageCurrent ?? parseProgress.current ?? 0
+
+  if (total < 400 || current <= 0) {
+    return null
+  }
+
+  return `Large books take a few minutes on the server. The page counter may pause while a complex spread is scanned — still working on page ${current} of ${total}.`
 }

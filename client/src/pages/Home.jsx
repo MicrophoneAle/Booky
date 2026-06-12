@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
 import {
   SignedIn,
@@ -14,6 +14,7 @@ import {
   getParsePipelineStepStates,
   getParseProgressDetail,
   getParseProgressHeadline,
+  getParseProgressStaleHint,
   mergePollProgressUpdate,
 } from "../utils/parseProgress"
 import "./Home.css"
@@ -330,6 +331,33 @@ export default function Home() {
   const [largeFileWarning, setLargeFileWarning] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [uploadState, setUploadState] = useState(EMPTY_UPLOAD_STATE)
+  const [showStaleParseHint, setShowStaleParseHint] = useState(false)
+  const parseProgressRef = useRef({ key: "", at: Date.now() })
+
+  useEffect(() => {
+    if (uploadState.phase !== "processing") {
+      setShowStaleParseHint(false)
+      return undefined
+    }
+
+    const progress = uploadState.parseProgress
+    const progressKey = [
+      progress?.phase,
+      progress?.extractSubphase,
+      progress?.pageCurrent ?? progress?.current,
+    ].join(":")
+
+    if (progressKey !== parseProgressRef.current.key) {
+      parseProgressRef.current = { key: progressKey, at: Date.now() }
+      setShowStaleParseHint(false)
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowStaleParseHint(true)
+    }, 20000)
+
+    return () => window.clearTimeout(timer)
+  }, [uploadState.phase, uploadState.parseProgress])
 
   const startUpload = useCallback(async (selectedFile) => {
     setFile(selectedFile)
@@ -544,6 +572,11 @@ export default function Home() {
                     <p className="home__upload-sublabel">
                       {getParseProgressDetail(uploadState.parseProgress)}
                     </p>
+                    {showStaleParseHint && getParseProgressStaleHint(uploadState.parseProgress) ? (
+                      <p className="home__upload-sublabel home__upload-sublabel--stale">
+                        {getParseProgressStaleHint(uploadState.parseProgress)}
+                      </p>
+                    ) : null}
                   </>
                 ) : (
                   PHASE_SUBLABELS[uploadState.phase] && (

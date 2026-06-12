@@ -346,6 +346,11 @@
   font-style: italic;
 }
 
+.home__upload-sublabel--stale {
+  color: var(--color-ui-gold);
+  margin-top: 0.35rem;
+}
+
 .home__parse-steps {
   display: flex;
   flex-wrap: wrap;
