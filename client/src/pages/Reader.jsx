@@ -140,7 +140,7 @@ export default function Reader() {
     return (
       <div className="reader-screen">
         <div className="reader-screen__content">
-          <p className="reader-screen__message">Could not load document.</p>
+          <p className="reader-screen__message">{error}</p>
           <button
             type="button"
             className="reader-screen__link"

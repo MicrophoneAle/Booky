@@ -891,72 +891,26 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
     }
 
     if (documentNeedsReparse(data)) {
-      const cachedWhileStale = readParsedCache(data)
-      const hasServingContent =
-        Boolean(cachedWhileStale) ||
-        (Array.isArray(data.content) && data.content.length > 0)
+      const storedContent = readStoredDocumentContent(data)
 
-      // Do not block the open request on a full PDF re-parse (Monte Cristo can take minutes).
-      // Return existing content immediately and refresh parser output in the background.
-      if (hasServingContent) {
+      // Never block open on a full PDF re-parse (large books can take minutes).
+      if (storedContent) {
         void reparseDocumentInBackgroundFromRow(data)
-
-        if (cachedWhileStale) {
-          res.json({
-            success: true,
-            document: buildOpenDocumentPayload(data, cachedWhileStale),
-          })
-          return
-        }
-
         res.json({
           success: true,
-          document: {
-            id: data.id,
-            name: data.name,
-            total_pages: data.total_pages,
-            chapters: data.chapters,
-            content: data.content,
-            parser_version: data.parser_version ?? PARSER_VERSION,
-          },
+          document: buildOpenDocumentPayload(data, storedContent),
         })
         return
       }
 
-      await reparseDocumentIfOutdated(data)
-
-      const { data: refreshed, error: refreshError } = await supabase
-        .from("documents")
-        .select(
-          "id, name, total_pages, chapters, content, parser_version, parsed_cache, parsed_cache_version"
-        )
-        .eq("id", id)
-        .eq("user_id", req.userId)
-        .single()
-
-      if (refreshError || !refreshed) {
-        res.status(500).json({ success: false, error: "Failed to load document." })
-        return
-      }
-
-      const refreshedCache = readParsedCache(refreshed)
-      if (refreshedCache) {
-        res.json({
-          success: true,
-          document: buildOpenDocumentPayload(refreshed, refreshedCache),
-        })
-        return
-      }
-
+      void reparseDocumentInBackgroundFromRow(data)
       res.json({
         success: true,
         document: {
-          id: refreshed.id,
-          name: refreshed.name,
-          total_pages: refreshed.total_pages,
-          chapters: refreshed.chapters,
-          content: refreshed.content,
-          parser_version: refreshed.parser_version ?? PARSER_VERSION,
+          id: data.id,
+          name: data.name,
+          parse_status: PARSE_STATUS.PENDING,
+          total_pages: data.total_pages ?? 0,
         },
       })
       return
@@ -6481,23 +6435,11 @@ function toPublicDocument(documentRow, wordCount) {
 }
 
 function hasValidParsedCache(documentRow) {
-  if (Number(documentRow?.parsed_cache_version) !== PARSER_VERSION) {
-    return false
-  }
-
-  if (Array.isArray(documentRow?.content) && documentRow.content.length > 0) {
-    return true
-  }
-
-  return Boolean(documentRow?.parsed_cache)
+  return Boolean(readStoredDocumentContent(documentRow))
 }
 
-function readParsedCache(documentRow) {
-  if (!hasValidParsedCache(documentRow)) {
-    return null
-  }
-
-  if (Array.isArray(documentRow.content) && documentRow.content.length > 0) {
+function readStoredDocumentContent(documentRow) {
+  if (Array.isArray(documentRow?.content) && documentRow.content.length > 0) {
     return {
       parsedText: {
         numpages: documentRow.total_pages ?? documentRow.content.length,
@@ -6510,7 +6452,7 @@ function readParsedCache(documentRow) {
 
   try {
     const cached =
-      typeof documentRow.parsed_cache === "string"
+      typeof documentRow?.parsed_cache === "string"
         ? JSON.parse(documentRow.parsed_cache)
         : documentRow.parsed_cache
     if (!cached || !Array.isArray(cached.contentWithChapters)) {
@@ -6520,6 +6462,10 @@ function readParsedCache(documentRow) {
   } catch {
     return null
   }
+}
+
+function readParsedCache(documentRow) {
+  return readStoredDocumentContent(documentRow)
 }
 
 function buildParsedCacheFields() {
@@ -6536,7 +6482,7 @@ function buildOpenDocumentPayload(documentRow, cached) {
     total_pages: cached.parsedText?.numpages ?? documentRow.total_pages,
     chapters: cached.chapters,
     content: cached.contentWithChapters,
-    parser_version: PARSER_VERSION,
+    parser_version: documentRow.parser_version ?? PARSER_VERSION,
   }
 }
 
@@ -6983,7 +6929,12 @@ function documentNeedsReparse(documentRow, { force = false } = {}) {
   if (!documentRow.storage_path) {
     return false
   }
-  if ((documentRow.parser_version ?? 0) < PARSER_VERSION) {
+
+  const documentParserVersion = Number(documentRow.parser_version ?? 0)
+  if (documentParserVersion > PARSER_VERSION) {
+    return false
+  }
+  if (documentParserVersion < PARSER_VERSION) {
     return true
   }
   return contentLooksStale(documentRow.content)
