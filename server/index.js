@@ -26,7 +26,7 @@ import {
   extractPrintedTocFromPageData,
 } from "./printedTocService.js"
 
-const PARSER_VERSION = 55
+const PARSER_VERSION = 56
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -4186,6 +4186,14 @@ function shouldRunIllustrationOcr(block, _ocrMetadata, pageTextCharCounts) {
     return true
   }
 
+  if (block.imageRole === "full_page_illustration") {
+    const pageNumber = block.pageNumber ?? 0
+    const samePageTextChars = getSamePageTextChars(pageTextCharCounts, block)
+    if (pageNumber >= 28 && samePageTextChars <= 80) {
+      return true
+    }
+  }
+
   return shouldOcrFullPageIllustration(block, pageTextCharCounts)
 }
 
@@ -4371,6 +4379,22 @@ function interleaveImageCandidateBlocks(
 }
 
 function extractImageBlockPayload(block) {
+  if (Buffer.isBuffer(block?.buffer) && block.buffer.length > 0) {
+    return block.buffer
+  }
+
+  if (typeof block?.imgData === "object" && block.imgData?.buffer != null) {
+    return Buffer.from(
+      block.imgData.buffer,
+      block.imgData.byteOffset ?? 0,
+      block.imgData.byteLength ?? block.imgData.length ?? 0
+    )
+  }
+
+  if (typeof block?.imgData === "string" && block.imgData.length > 0) {
+    return block.imgData
+  }
+
   return block?.buffer ?? block?.imgData ?? ""
 }
 
