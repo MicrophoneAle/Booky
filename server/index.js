@@ -28,7 +28,7 @@ import {
   lookupPrintedTocTitle,
 } from "./printedTocService.js"
 
-const PARSER_VERSION = 52
+const PARSER_VERSION = 53
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(

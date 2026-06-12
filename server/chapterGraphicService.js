@@ -583,13 +583,15 @@ function analyzeChapterGraphicFromContext({
         chapterSequence,
       })
   } else if (imageBlock.imageRole === "full_page_illustration") {
-    analysisResult = analyzeFullPageIllustration({
-      imageBlock,
-      blocks,
-      blockIndex,
-      chapterSequence,
-      precomputedPageCharCounts,
-    })
+    if (!printedToc) {
+      analysisResult = analyzeFullPageIllustration({
+        imageBlock,
+        blocks,
+        blockIndex,
+        chapterSequence,
+        precomputedPageCharCounts,
+      })
+    }
   }
 
   return mergeOcrIntoAnalysis(analysisResult, ocrMetadata, imageBlock.imageRole, {
