@@ -254,6 +254,7 @@ export function extractImageChapterTocEntries(document) {
       entries.push({
         id: block.id,
         chapterMetadata: metadata,
+        sourcePageNumber: block.pageNumber ?? null,
       })
     }
   }

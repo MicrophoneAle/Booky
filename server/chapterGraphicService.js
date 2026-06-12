@@ -288,6 +288,10 @@ function shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex) {
   }
 
   if (isSpreadContinuation(blocks, blockIndex, imageBlock)) {
+    if (imageBlock.imageRole === "chapter_heading") {
+      return false
+    }
+
     logChapterGraphicDecision("skip_spread_continuation", {
       pageNumber: imageBlock.pageNumber,
     })
@@ -395,6 +399,20 @@ function mergeOcrIntoAnalysis(
     forceInterludeBoundary = false,
   } = {}
 ) {
+  if (analysisResult?.boundaryKind === "flashback") {
+    return analysisResult
+  }
+
+  if (imageRole === "full_page_illustration" && printedToc) {
+    if (
+      ocrMetadata?.boundaryKind === "part" ||
+      ocrMetadata?.boundaryKind === "interlude_divider"
+    ) {
+      return analyzeFullPageSectionDivider(ocrMetadata, imageBlock)
+    }
+    return { ...SAFE_FALLBACK }
+  }
+
   if (imageRole === "full_page_illustration" && ocrMetadata) {
     const section = analyzeFullPageSectionDivider(ocrMetadata, imageBlock)
     if (section.isChapterBoundary) {
@@ -452,7 +470,8 @@ function mergeOcrIntoAnalysis(
 
   return {
     isChapterBoundary: true,
-    includeInToc: boundaryKind !== "interlude_divider",
+    includeInToc:
+      boundaryKind !== "interlude_divider" && boundaryKind !== "flashback",
     boundaryKind,
     number,
     title,

@@ -27,8 +27,13 @@ import {
   lookupPrintedTocNumberLabel,
   lookupPrintedTocTitle,
 } from "./printedTocService.js"
+import {
+  buildTocMetadataForChapterHeading,
+  hasBackMatterHeadingText,
+  supplementBannerlessPrintedChapters,
+} from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 53
+const PARSER_VERSION = 54
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -3829,7 +3834,7 @@ function classifyPdfImageRole(metrics) {
     height >= CHAPTER_HEADING_MIN_HEIGHT_PX &&
     heightRatio >= 0.06 &&
     heightRatio < 0.35 &&
-    width / height >= 1.2
+    width / height >= 1.05
   ) {
     return PDF_IMAGE_ROLE.CHAPTER_HEADING
   }
@@ -4221,14 +4226,7 @@ function shouldAssignPrintedTocToHeading(block, blocks, blockIndex, printedToc, 
     return false
   }
 
-  const preview = analyzeChapterHeadingBanner({
-    imageBlock: block,
-    blocks,
-    blockIndex,
-    chapterSequence: 1,
-  })
-
-  return preview.isChapterBoundary === true || forceInterludeBoundary
+  return true
 }
 
 function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, printedToc, blocks) {
@@ -4252,9 +4250,14 @@ function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, printedToc
         forceInterludeBoundary
       )
     ) {
-      tocMetadata = buildOcrMetadataFromPrintedToc(printedToc, {
+      tocMetadata = buildTocMetadataForChapterHeading(blocks, blockIndex, printedToc, {
         tocOrderCursor,
         forceInterludeBoundary,
+        buildSequentialEntry: () =>
+          buildOcrMetadataFromPrintedToc(printedToc, {
+            tocOrderCursor,
+            forceInterludeBoundary,
+          }),
       })
     }
 
@@ -4605,15 +4608,27 @@ async function finalizeIllustrationBlocks(
           forceInterludeBoundary
         )
       ) {
-        tocMetadata = buildOcrMetadataFromPrintedToc(printedToc, {
+        tocMetadata = buildTocMetadataForChapterHeading(blocks, index, printedToc, {
           tocOrderCursor,
           forceInterludeBoundary,
+          buildSequentialEntry: () =>
+            buildOcrMetadataFromPrintedToc(printedToc, {
+              tocOrderCursor,
+              forceInterludeBoundary,
+            }),
         })
       }
 
       let ocrMetadata = tocMetadata
 
-      if (block.imageRole === "chapter_heading" && printedToc && !tocMetadata) {
+      if (
+        block.imageRole === "chapter_heading" &&
+        printedToc &&
+        !tocMetadata &&
+        (hasBackMatterHeadingText(blocks, index) ||
+          isFlashbackChapterHeading(block, blocks, index) ||
+          shouldSkipChapterGraphicAnalysis(block, blocks, index))
+      ) {
         finalizedByIndex.set(index, finalizeVisionImageBlock(block, SAFE_FALLBACK))
         processedCandidates += 1
         continue
@@ -7030,6 +7045,10 @@ async function parsePdfBuffer(
       end: PARSE_PROGRESS_ILLUSTRATION_END_PERCENT,
     },
   })
+
+  if (printedToc) {
+    blocks = supplementBannerlessPrintedChapters(blocks, printedToc)
+  }
 
   await terminateOcrWorker()
 

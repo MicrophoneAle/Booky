@@ -79,7 +79,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 53
+const PARSER_VERSION = 54
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -4823,6 +4823,7 @@ export default function BookViewer({
       id: entry.id,
       title: formatTocChapterTitle(formatImageChapterTocTitle(entry.chapterMetadata)),
       pageNum: chapterPageMap[entry.id] ?? null,
+      sourcePageNumber: entry.sourcePageNumber ?? null,
     }))
 
     const textEntries = (bookDocument?.chapters ?? []).map((chapter) => ({
@@ -4838,8 +4839,10 @@ export default function BookViewer({
 
     return dedupeTocEntries(
       combined.sort((left, right) => {
-        const leftPage = left.pageNum ?? Number.MAX_SAFE_INTEGER
-        const rightPage = right.pageNum ?? Number.MAX_SAFE_INTEGER
+        const leftPage =
+          left.pageNum ?? left.sourcePageNumber ?? Number.MAX_SAFE_INTEGER
+        const rightPage =
+          right.pageNum ?? right.sourcePageNumber ?? Number.MAX_SAFE_INTEGER
         if (leftPage !== rightPage) {
           return leftPage - rightPage
         }
