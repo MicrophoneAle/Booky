@@ -161,6 +161,43 @@ async function pollDocumentParseStatus(documentId, getToken, onProgress) {
   throw new Error("Processing timed out. Try again in a few minutes.")
 }
 
+const UPLOAD_RETRIES = 3
+const UPLOAD_RETRY_DELAY_MS = 4000
+const RENDER_WAKE_MESSAGE =
+  "Could not reach the server. Wait ~30 seconds for Render to wake up, then try again."
+
+function uploadPdfOnce(file, token, setUploadState) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    const formData = new FormData()
+    formData.append("file", file)
+
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        const pct = Math.round((event.loaded / event.total) * 100)
+        setUploadState((state) => ({ ...state, progress: pct }))
+      }
+    })
+
+    xhr.addEventListener("load", () => {
+      resolve(xhr)
+    })
+
+    xhr.addEventListener("error", () => {
+      reject(new Error("network"))
+    })
+
+    xhr.addEventListener("timeout", () => {
+      reject(new Error("timeout"))
+    })
+
+    xhr.timeout = 120000
+    xhr.open("POST", `${API_URL}/upload`)
+    xhr.setRequestHeader("Authorization", `Bearer ${token}`)
+    xhr.send(formData)
+  })
+}
+
 function doUpload(file, getToken, setUploadState, navigate) {
   return (async () => {
     const token = await getToken()
@@ -175,123 +212,111 @@ function doUpload(file, getToken, setUploadState, navigate) {
 
     setUploadState((state) => ({ ...state, phase: "uploading", progress: 0 }))
 
-  return new Promise((resolve) => {
-    const xhr = new XMLHttpRequest()
-    const formData = new FormData()
-    formData.append("file", file)
-
-    xhr.upload.addEventListener("progress", (event) => {
-      if (event.lengthComputable) {
-        const pct = Math.round((event.loaded / event.total) * 100)
-        setUploadState((state) => ({ ...state, progress: pct }))
-      }
-    })
-
-    xhr.addEventListener("load", async () => {
+    let xhr = null
+    for (let attempt = 1; attempt <= UPLOAD_RETRIES; attempt += 1) {
       try {
-        const data = JSON.parse(xhr.responseText)
-        if (xhr.status >= 200 && xhr.status < 300 && data.success) {
-          const documentId = data.document?.id
-          const isPending = data.document?.status === "pending"
+        xhr = await uploadPdfOnce(file, token, setUploadState)
+        break
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "network"
+        if (attempt < UPLOAD_RETRIES && (reason === "network" || reason === "timeout")) {
+          setUploadState((state) => ({
+            ...state,
+            phase: "uploading",
+            progress: 0,
+          }))
+          await new Promise((resolve) => setTimeout(resolve, UPLOAD_RETRY_DELAY_MS))
+          continue
+        }
 
-          if (isPending && documentId) {
+        setUploadState((state) => ({
+          ...state,
+          phase: "error",
+          errorMessage:
+            reason === "timeout" ? "Request timed out" : RENDER_WAKE_MESSAGE,
+        }))
+        return
+      }
+    }
+
+    if (!xhr) {
+      return
+    }
+
+    try {
+      const data = JSON.parse(xhr.responseText)
+      if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+        const documentId = data.document?.id
+        const isPending = data.document?.status === "pending"
+
+        if (isPending && documentId) {
+          setUploadState((state) => ({
+            ...state,
+            phase: "processing",
+            progress: Math.round(100 * UPLOAD_PROGRESS_WEIGHT),
+            documentId,
+            parseProgress: {
+              phase: "starting",
+              current: 0,
+              total: 0,
+              percent: 0,
+            },
+          }))
+
+          try {
+            await pollDocumentParseStatus(documentId, getToken, (parseProgress) => {
+              setUploadState((state) => ({
+                ...state,
+                phase: "processing",
+                parseProgress,
+                progress: overallUploadProgress(
+                  "processing",
+                  100,
+                  parseProgress
+                ),
+              }))
+            })
+
             setUploadState((state) => ({
               ...state,
-              phase: "processing",
-              progress: Math.round(100 * UPLOAD_PROGRESS_WEIGHT),
-              documentId,
-              parseProgress: {
-                phase: "starting",
-                current: 0,
-                total: 0,
-                percent: 0,
-              },
+              phase: "done",
+              progress: 100,
+              parseProgress: { phase: "ready", current: 0, total: 0, percent: 100 },
             }))
-
-            try {
-              await pollDocumentParseStatus(documentId, getToken, (parseProgress) => {
-                setUploadState((state) => ({
-                  ...state,
-                  phase: "processing",
-                  parseProgress,
-                  progress: overallUploadProgress(
-                    "processing",
-                    100,
-                    parseProgress
-                  ),
-                }))
-              })
-
-              setUploadState((state) => ({
-                ...state,
-                phase: "done",
-                progress: 100,
-                parseProgress: { phase: "ready", current: 0, total: 0, percent: 100 },
-              }))
-              setTimeout(() => navigate(`/read/${documentId}`), 600)
-            } catch (pollError) {
-              const message =
-                pollError instanceof Error ? pollError.message : "Processing failed"
-              setUploadState((state) => ({
-                ...state,
-                phase: "error",
-                errorMessage:
-                  message === "Failed to fetch"
-                    ? "Could not reach the server. Wait ~30 seconds for Render to wake up, then try again."
-                    : message,
-              }))
-            }
-
-            resolve()
-            return
-          }
-
-          if (documentId) {
-            setUploadState((state) => ({ ...state, phase: "done" }))
             setTimeout(() => navigate(`/read/${documentId}`), 600)
+          } catch (pollError) {
+            const message =
+              pollError instanceof Error ? pollError.message : "Processing failed"
+            setUploadState((state) => ({
+              ...state,
+              phase: "error",
+              errorMessage:
+                message === "Failed to fetch" ? RENDER_WAKE_MESSAGE : message,
+            }))
           }
-          resolve()
+
           return
         }
-        setUploadState((state) => ({
-          ...state,
-          phase: "error",
-          errorMessage: data.error ?? "Upload failed",
-        }))
-        resolve()
-      } catch {
-        setUploadState((state) => ({
-          ...state,
-          phase: "error",
-          errorMessage: "Unexpected server response",
-        }))
-        resolve()
+
+        if (documentId) {
+          setUploadState((state) => ({ ...state, phase: "done" }))
+          setTimeout(() => navigate(`/read/${documentId}`), 600)
+        }
+        return
       }
-    })
 
-    xhr.addEventListener("error", () => {
       setUploadState((state) => ({
         ...state,
         phase: "error",
-        errorMessage: "Network error — check your connection",
+        errorMessage: data.error ?? "Upload failed",
       }))
-      resolve()
-    })
-
-    xhr.addEventListener("timeout", () => {
+    } catch {
       setUploadState((state) => ({
         ...state,
         phase: "error",
-        errorMessage: "Request timed out",
+        errorMessage: "Unexpected server response",
       }))
-      resolve()
-    })
-
-    xhr.timeout = 120000
-    xhr.open("POST", `${API_URL}/upload`)
-    xhr.setRequestHeader("Authorization", `Bearer ${token}`)
-    xhr.send(formData)
-  })
+    }
   })()
 }
 
