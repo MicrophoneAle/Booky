@@ -82,21 +82,6 @@ const PDF_IMAGE_EXTRACTION_CONCURRENCY = 4
 const EXTRACT_PROGRESS_TEXT_SHARE = 0.62
 const EXTRACT_PROGRESS_IMAGE_SHARE = 0.38
 
-function resolvePdfExtractionConcurrency(totalPages) {
-  if (totalPages > 900) {
-    return { text: 2, image: 2 }
-  }
-
-  if (totalPages > 400) {
-    return { text: 4, image: 2 }
-  }
-
-  return {
-    text: PDF_PAGE_EXTRACTION_CONCURRENCY,
-    image: PDF_PAGE_EXTRACTION_CONCURRENCY,
-  }
-}
-
 const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 58
 const PARSE_PROGRESS_STRUCTURE_PERCENT = 62
 const PARSE_PROGRESS_ILLUSTRATION_START_PERCENT = 63
@@ -5104,8 +5089,10 @@ async function extractPdfStructure(
 
   const pagesBeforeFilter = new Array(totalPages)
   const pageImageCandidates = new Array(totalPages)
-  const { text: textConcurrency, image: imageConcurrency } =
-    resolvePdfExtractionConcurrency(totalPages)
+  const textConcurrency =
+    totalPages > 400 ? PDF_TEXT_EXTRACTION_CONCURRENCY : PDF_PAGE_EXTRACTION_CONCURRENCY
+  const imageConcurrency =
+    totalPages > 400 ? PDF_IMAGE_EXTRACTION_CONCURRENCY : PDF_PAGE_EXTRACTION_CONCURRENCY
 
   try {
     for (
