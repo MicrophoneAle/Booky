@@ -13,8 +13,8 @@ const PHASE_HEADLINES = {
   starting: "Opening your PDF…",
   extracting: "Reading PDF pages…",
   structuring: "Building book structure…",
-  classifying_illustrations: "Processing chapter headers…",
-  ocr_illustrations: "Reading section dividers…",
+  classifying_illustrations: "Classifying artwork…",
+  ocr_illustrations: "Reading chapter headers…",
   uploading_assets: "Uploading illustrations…",
   finalizing: "Detecting chapters…",
   saving: "Saving to your library…",
@@ -446,18 +446,14 @@ export function getParseProgressDetail(parseProgress) {
 
   if (phase === "classifying_illustrations") {
     if (total > 0) {
-      return `Processing chapter header ${current} of ${total}.`
+      return `Classifying artwork ${current} of ${total}.`
     }
-    return "Matching chapter headers to the book outline."
+    return "Identifying chapter headers and illustrations."
   }
 
   if (phase === "ocr_illustrations") {
     if (total > 0) {
-      const reviewed = illustrationCounters.total
-      if (reviewed > 0 && illustrationCounters.current > 0) {
-        return `Reading section divider ${current} of ${total} (${illustrationCounters.current} of ${reviewed} headers reviewed).`
-      }
-      return `Reading section divider ${current} of ${total}.`
+      return `Reading chapter header ${current} of ${total}.`
     }
     return "Extracting chapter numbers and titles from header artwork."
   }
@@ -586,6 +582,11 @@ export function getCombinedProcessingPercent(
  */
 export function getParseProgressStaleHint(parseProgress) {
   if (!parseProgress || parseProgress.phase !== "extracting") {
+    return null
+  }
+
+  const subphase = parseProgress.extractSubphase ?? "text"
+  if (subphase === "images" || subphase === "filtering" || subphase === "text_complete") {
     return null
   }
 

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Match Stormlight Archive chapter banners to printed TOC entries using
  * death-rattle epigraph text that follows each banner in the PDF text layer.
  */

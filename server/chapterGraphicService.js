@@ -384,8 +384,8 @@ function analyzeFullPageSectionDivider(ocrMetadata, imageBlock = null) {
 }
 
 /**
- * Merge illustration OCR with printed TOC fallback.
- * OCR titles from header images take priority; TOC fills gaps only.
+ * Merge illustration OCR with optional printed TOC fallback (non-illustrated books only).
+ * When printedToc is set, chapter titles come from header OCR — not the PDF contents page.
  */
 function mergeOcrIntoAnalysis(
   analysisResult,
@@ -444,7 +444,7 @@ function mergeOcrIntoAnalysis(
   const lookupSequence =
     boundaryKind === "interlude" ? interludeSequence : chapterSequence
 
-  if (!title) {
+  if (!title && !printedToc) {
     title = lookupPrintedTocTitle(printedToc, {
       number,
       boundaryKind,
@@ -452,7 +452,7 @@ function mergeOcrIntoAnalysis(
     })
   }
 
-  if (!number || /^chapter$/i.test(number)) {
+  if ((!number || /^chapter$/i.test(number)) && !printedToc) {
     const tocNumber = lookupPrintedTocNumberLabel(printedToc, {
       number,
       boundaryKind,
