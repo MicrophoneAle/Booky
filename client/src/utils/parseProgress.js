@@ -437,7 +437,8 @@ export function getParseProgressDetail(parseProgress) {
     const { current, total } = getPhaseCounters(parseProgress)
 
     if (subphase === "filtering" && total > 0) {
-      return `Cleaning extracted text — page ${current} of ${total}.`
+      const pct = Math.round((current / total) * 100)
+      return `Cleaning extracted text — page ${current} of ${total} (${pct}%).`
     }
 
     if (subphase === "text_complete" || (subphase === "images" && current === 0)) {
@@ -445,10 +446,11 @@ export function getParseProgressDetail(parseProgress) {
     }
 
     if (total > 0) {
+      const pct = Math.round((current / total) * 100)
       if (subphase === "images") {
-        return `Scanning artwork page ${current} of ${total}.`
+        return `Scanning artwork page ${current} of ${total} (${pct}%).`
       }
-      return `Reading page ${current} of ${total}.`
+      return `Reading page ${current} of ${total} (${pct}%).`
     }
     return "Opening PDF and preparing the page scanner…"
   }
@@ -456,7 +458,8 @@ export function getParseProgressDetail(parseProgress) {
   if (phase === "classifying_illustrations") {
     const { current, total } = getPhaseCounters(parseProgress)
     if (total > 0) {
-      return `Classifying artwork ${current} of ${total}.`
+      const pct = Math.round((current / total) * 100)
+      return `Classifying artwork ${current} of ${total} (${pct}%).`
     }
     return "Identifying chapter headers and illustrations."
   }
@@ -464,18 +467,16 @@ export function getParseProgressDetail(parseProgress) {
   if (phase === "ocr_illustrations") {
     const { current, total } = getPhaseCounters(parseProgress)
     if (total > 0) {
-      return `Reading chapter header ${current} of ${total}.`
+      const pct = Math.round((current / total) * 100)
+      return `Reading chapter header ${current} of ${total} (${pct}%).`
     }
     return "Extracting chapter numbers and titles from header artwork."
   }
 
   if (phase === "uploading_assets") {
     if (total > 0) {
-      const remaining = Math.max(0, total - current)
-      if (remaining > 0 && current > 0) {
-        return `Uploading illustration ${current} of ${total} (${remaining} remaining, 5 at a time).`
-      }
-      return `Uploading illustration ${current} of ${total} to storage.`
+      const pct = Math.round((current / total) * 100)
+      return `Uploading illustration ${current} of ${total} (${pct}%).`
     }
     if (label) {
       return label
@@ -606,7 +607,7 @@ export function getParseProgressStaleHint(parseProgress) {
   }
 
   if (subphase === "images") {
-    return `Scanning artwork on a ${total.toLocaleString()}-page book can pause on image-heavy spreads — still working (page ${current} of ${total}).`
+    return null
   }
 
   if (subphase === "filtering" || subphase === "text_complete") {
