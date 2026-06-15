@@ -103,15 +103,99 @@ function extractChapterKeyFromOcrNumber(ocrNumberLabel) {
   return value >= 1 && value <= 75 ? String(value) : null
 }
 
-function findChapterEntryByKeyFromCursor(printedToc, tocOrderCursor, key) {
-  for (let index = tocOrderCursor.index; index < printedToc.ordered.length; index += 1) {
-    const entry = printedToc.ordered[index]
-    if (entry.kind === "chapter" && String(entry.key) === key) {
-      return { entry, index }
-    }
+function extractTocAnchorFromOcrLabel(ocrNumberLabel) {
+  const label = (ocrNumberLabel ?? "").trim()
+  if (!label) {
+    return null
+  }
+
+  if (/^prelude$/i.test(label)) {
+    return { kind: "prelude", key: "prelude" }
+  }
+  if (/^prologue$/i.test(label)) {
+    return { kind: "prologue", key: "prologue" }
+  }
+  if (/^epilogue$/i.test(label)) {
+    return { kind: "epilogue", key: "epilogue" }
+  }
+
+  const interludeMatch = label.match(/interlude\s+i[\s-]*(\d{1,2})/i)
+  if (interludeMatch) {
+    return { kind: "interlude", key: interludeMatch[1] }
+  }
+
+  const chapterKey = extractChapterKeyFromOcrNumber(label)
+  if (chapterKey) {
+    return { kind: "chapter", key: chapterKey }
   }
 
   return null
+}
+
+function findTocEntryByAnchorFromCursor(printedToc, tocOrderCursor, anchor) {
+  if (!printedToc?.ordered?.length || !tocOrderCursor || !anchor) {
+    return null
+  }
+
+  for (let index = tocOrderCursor.index; index < printedToc.ordered.length; index += 1) {
+    const entry = printedToc.ordered[index]
+    if (entry.kind !== anchor.kind) {
+      continue
+    }
+
+    if (entry.kind === "chapter" || entry.kind === "interlude") {
+      if (String(entry.key) === String(anchor.key)) {
+        return { entry, index }
+      }
+      continue
+    }
+
+    return { entry, index }
+  }
+
+  return null
+}
+
+function peekExpectedTocAnchor(printedToc, tocOrderCursor) {
+  const entry = peekNextNonPartTocEntry(printedToc, tocOrderCursor)
+  if (!entry) {
+    return null
+  }
+
+  if (entry.kind === "interlude") {
+    const interludeNum = String(entry.key).split("-").pop()
+    return { kind: "interlude", key: interludeNum }
+  }
+
+  return { kind: entry.kind, key: entry.key }
+}
+
+function shouldAcceptTocReanchor(expected, anchor, located, tocOrderCursor) {
+  if (!located || located.index < tocOrderCursor.index) {
+    return false
+  }
+
+  if (!expected || !anchor || expected.kind !== anchor.kind) {
+    return Boolean(located)
+  }
+
+  if (expected.kind === "chapter") {
+    const expectedNum = Number.parseInt(expected.key, 10)
+    const anchorNum = Number.parseInt(anchor.key, 10)
+    if (Number.isFinite(expectedNum) && Number.isFinite(anchorNum)) {
+      return anchorNum >= expectedNum && anchorNum <= expectedNum + 2
+    }
+  }
+
+  if (expected.kind === "interlude") {
+    const expectedNum = Number.parseInt(expected.key, 10)
+    const anchorNum = Number.parseInt(anchor.key, 10)
+    if (Number.isFinite(expectedNum) && Number.isFinite(anchorNum)) {
+      return anchorNum >= expectedNum && anchorNum <= expectedNum + 1
+    }
+  }
+
+  return true
 }
 
 function buildTocMetadataForChapterHeading(
@@ -138,15 +222,14 @@ function buildTocMetadataForChapterHeading(
   }
 
   if (tocOrderCursor) {
-    const key = extractChapterKeyFromOcrNumber(ocrNumberLabel)
-    if (key) {
-      const located = findChapterEntryByKeyFromCursor(printedToc, tocOrderCursor, key)
-      if (located) {
+    const anchor = extractTocAnchorFromOcrLabel(ocrNumberLabel)
+    if (anchor) {
+      const expected = peekExpectedTocAnchor(printedToc, tocOrderCursor)
+      const located = findTocEntryByAnchorFromCursor(printedToc, tocOrderCursor, anchor)
+      if (located && shouldAcceptTocReanchor(expected, anchor, located, tocOrderCursor)) {
         tocOrderCursor.index = located.index + 1
         return printedTocEntryToOcrMetadata(located.entry)
       }
-
-      return null
     }
   }
 
@@ -163,6 +246,28 @@ function takeNextSequentialTocEntry(printedToc, tocOrderCursor) {
   return printedTocEntryToOcrMetadata(entry)
 }
 
+/** Prelude/prologue are text-detected; skip them when assigning printed TOC slots to banners. */
+function takeNextSequentialTocEntryForImageBanner(printedToc, tocOrderCursor) {
+  if (!printedToc?.ordered?.length || !tocOrderCursor) {
+    return null
+  }
+
+  while (true) {
+    const entry = peekNextNonPartTocEntry(printedToc, tocOrderCursor)
+    if (!entry) {
+      return null
+    }
+
+    advanceTocCursorAfterEntry(printedToc, tocOrderCursor, entry)
+
+    if (entry.kind === "prelude" || entry.kind === "prologue") {
+      continue
+    }
+
+    return printedTocEntryToOcrMetadata(entry)
+  }
+}
+
 function supplementBannerlessPrintedChapters(blocks, _printedToc) {
   return blocks
 }
@@ -171,7 +276,9 @@ export {
   buildTocMetadataForChapterHeading,
   collectFollowingTextBlocks,
   extractChapterKeyFromOcrNumber,
+  extractTocAnchorFromOcrLabel,
   hasBackMatterHeadingText,
   supplementBannerlessPrintedChapters,
   takeNextSequentialTocEntry,
+  takeNextSequentialTocEntryForImageBanner,
 }

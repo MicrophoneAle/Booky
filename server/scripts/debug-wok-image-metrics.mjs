@@ -11,7 +11,7 @@ if (!existsSync(pdfPath)) {
 }
 
 const { getDocument, OPS } = await import("pdfjs-dist/legacy/build/pdf.mjs")
-const { classifyPdfImageRole, PDF_IMAGE_ROLE } = await import("../index.js")
+const { classifyPdfImageRole, PDF_IMAGE_ROLE } = await import("../pdfImageRoleUtils.js")
 
 function imageMetricsFromTransform(transform, pageWidth, pageHeight) {
   const width = Math.hypot(transform[0], transform[1])
@@ -118,5 +118,15 @@ console.log("\n--- chapter_heading candidates ---")
 for (const img of byRole[PDF_IMAGE_ROLE.CHAPTER_HEADING].slice(0, 20)) {
   console.log(
     `p${img.pageNumber} w=${img.width.toFixed(0)} h=${img.height.toFixed(0)} wr=${img.widthRatio.toFixed(2)} hr=${img.heightRatio.toFixed(2)}`
+  )
+}
+
+console.log("\n--- pages 276-295 and 820-885 ---")
+for (const img of allImages.filter((item) => 
+  (item.pageNumber >= 276 && item.pageNumber <= 295) ||
+  (item.pageNumber >= 820 && item.pageNumber <= 885)
+)) {
+  console.log(
+    `p${img.pageNumber} role=${img.role ?? "null"} wr=${img.widthRatio.toFixed(2)} hr=${img.heightRatio.toFixed(2)} ar=${img.aspectRatio.toFixed(2)}`
   )
 }

@@ -25,11 +25,12 @@ import {
   extractPrintedTocFromPageData,
 } from "./printedTocService.js"
 import {
+  extractChapterKeyFromOcrNumber,
   supplementBannerlessPrintedChapters,
-  takeNextSequentialTocEntry,
+  takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 59
+const PARSER_VERSION = 62
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -3909,49 +3910,13 @@ function imageMetricsFromTransform(transform, pageWidth, pageHeight) {
   }
 }
 
-const PDF_IMAGE_ROLE = Object.freeze({
-  FULL_PAGE_ILLUSTRATION: "full_page_illustration",
-  CHAPTER_HEADING: "chapter_heading",
-})
-
-/** Minimum rendered height (px) for a wide banner to count as a chapter heading graphic. */
-const CHAPTER_HEADING_MIN_HEIGHT_PX = 36
-
-/**
- * Classify extracted PDF images into illustration roles.
- * Full-page art and wide chapter-heading banners (e.g. Stormlight arch headers) are kept;
- * small decorations and narrow clips are dropped.
- *
- * @returns {"full_page_illustration"|"chapter_heading"|null}
- */
-function classifyPdfImageRole(metrics) {
-  const { width, height, pageHeight, pageWidth } = metrics ?? {}
-  if (!pageHeight || !pageWidth || !width || !height) {
-    return null
-  }
-
-  const widthRatio = width / pageWidth
-  const heightRatio = height / pageHeight
-
-  if (widthRatio < 0.35) {
-    return null
-  }
-
-  if (heightRatio >= 0.35) {
-    return PDF_IMAGE_ROLE.FULL_PAGE_ILLUSTRATION
-  }
-
-  if (
-    height >= CHAPTER_HEADING_MIN_HEIGHT_PX &&
-    heightRatio >= 0.06 &&
-    heightRatio < 0.35 &&
-    width / height >= 1.05
-  ) {
-    return PDF_IMAGE_ROLE.CHAPTER_HEADING
-  }
-
-  return null
-}
+import {
+  classifyPdfImageRole,
+  isChapterLikeOcrMetadata,
+  isFullPageSpreadHalf,
+  isLikelyChapterArchBannerBlock,
+  PDF_IMAGE_ROLE,
+} from "./pdfImageRoleUtils.js"
 
 /** @deprecated Use classifyPdfImageRole — kept for regression scripts. */
 function isChapterHeaderCandidate(metrics) {
@@ -4275,6 +4240,10 @@ function shouldOcrFullPageIllustration(block, pageTextCharCounts) {
     return false
   }
 
+  if (isLikelyChapterArchBannerBlock(block)) {
+    return false
+  }
+
   const pageNumber = block.pageNumber ?? 0
   if (pageNumber < FULL_PAGE_OCR_MIN_PAGE) {
     return false
@@ -4295,11 +4264,23 @@ function shouldOcrFullPageIllustration(block, pageTextCharCounts) {
 }
 
 function shouldRunIllustrationOcr(block, _ocrMetadata, pageTextCharCounts) {
-  if (block.imageRole === "chapter_heading") {
+  if (block.imageRole === "chapter_heading" || isLikelyChapterArchBannerBlock(block)) {
     return true
   }
 
   return shouldOcrFullPageIllustration(block, pageTextCharCounts)
+}
+
+function resolveIllustrationOcrRole(block) {
+  if (block.imageRole === "chapter_heading" || isLikelyChapterArchBannerBlock(block)) {
+    return "chapter_heading"
+  }
+
+  return block.imageRole ?? null
+}
+
+function isChapterBannerCandidate(block) {
+  return block.imageRole === "chapter_heading" || isLikelyChapterArchBannerBlock(block)
 }
 
 function getSamePageTextChars(pageTextCharCounts, imageBlock) {
@@ -4321,6 +4302,13 @@ function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, blocks) {
 
     if (block.imageRole === "chapter_heading") {
       if (!shouldSkipChapterHeadingCandidate(block, blocks, blockIndex)) {
+        count += 1
+      }
+      continue
+    }
+
+    if (isLikelyChapterArchBannerBlock(block)) {
+      if (!shouldSkipChapterGraphicAnalysis(block, blocks, blockIndex)) {
         count += 1
       }
       continue
@@ -4575,6 +4563,11 @@ async function finalizeIllustrationBlocks(
         block.isCandidate === true &&
         Boolean(extractImageBlockPayload(block))
     )
+    .sort(
+      (left, right) =>
+        (left.block.pageNumber ?? 0) - (right.block.pageNumber ?? 0) ||
+        (left.block.streamIndex ?? 0) - (right.block.streamIndex ?? 0)
+    )
 
   let chapterSequence = 0
   let interludeSequence = 0
@@ -4595,10 +4588,36 @@ async function finalizeIllustrationBlocks(
 
   const finalizedByIndex = new Map()
   const tocOrderCursor = printedToc ? { index: 0 } : null
+  const assignedBoundaryKeys = new Set()
+  let pastEpilogue = false
   const buildSequentialTocEntry =
     printedToc && tocOrderCursor
-      ? () => takeNextSequentialTocEntry(printedToc, tocOrderCursor)
+      ? () => takeNextSequentialTocEntryForImageBanner(printedToc, tocOrderCursor)
       : null
+
+  function boundaryDedupeKey(analysisResult) {
+    const kind = analysisResult?.boundaryKind
+    const number = (analysisResult?.number ?? "").trim()
+    if (!kind || kind === "flashback" || kind === "part" || kind === "interlude_divider") {
+      return null
+    }
+
+    if (kind === "chapter") {
+      const chapterKey = extractChapterKeyFromOcrNumber(number)
+      return chapterKey ? `chapter:${chapterKey}` : null
+    }
+
+    if (kind === "interlude") {
+      const match = number.match(/I-(\d{1,2})/i)
+      return match ? `interlude:${match[1]}` : null
+    }
+
+    if (kind === "prelude" || kind === "prologue" || kind === "epilogue") {
+      return kind
+    }
+
+    return null
+  }
 
   function reportCandidateProgress({
     block,
@@ -4644,12 +4663,24 @@ async function finalizeIllustrationBlocks(
     for (const { block, index } of candidateEntries) {
       const imageBuffer = base64PayloadToImageBuffer(extractImageBlockPayload(block))
       const forceInterludeBoundary =
-        pendingInterludes > 0 && block.imageRole === "chapter_heading"
+        pendingInterludes > 0 && isChapterBannerCandidate(block)
 
       if (
-        block.imageRole === "chapter_heading" &&
+        isChapterBannerCandidate(block) &&
         shouldSkipChapterHeadingCandidate(block, blocks, index)
       ) {
+        finalizedByIndex.set(index, finalizeVisionImageBlock(block, SAFE_FALLBACK))
+        releaseImageBlockBinary(blocks[index])
+        processedCandidates += 1
+        reportCandidateProgress({
+          block,
+          shouldRunOcr: false,
+          imageBuffer: null,
+        })
+        continue
+      }
+
+      if (pastEpilogue && isChapterBannerCandidate(block)) {
         finalizedByIndex.set(index, finalizeVisionImageBlock(block, SAFE_FALLBACK))
         releaseImageBlockBinary(blocks[index])
         processedCandidates += 1
@@ -4665,9 +4696,14 @@ async function finalizeIllustrationBlocks(
       const shouldRunOcr = shouldRunIllustrationOcr(block, null, pageTextCharCounts)
 
       if (imageBuffer?.length && shouldRunOcr) {
-        ocrMetadata = await ocrIllustrationMetadata(imageBuffer, block.imageRole ?? null)
+        ocrMetadata = await ocrIllustrationMetadata(
+          imageBuffer,
+          resolveIllustrationOcrRole(block)
+        )
         ocrCompleted += 1
       }
+
+      const tocCursorBefore = tocOrderCursor?.index ?? 0
 
       const analysisResult = analyzeChapterGraphicFromContext({
         imageBlock: block,
@@ -4683,26 +4719,43 @@ async function finalizeIllustrationBlocks(
         buildSequentialTocEntry,
       })
 
-      if (analysisResult.boundaryKind === "interlude_divider") {
+      let finalResult = analysisResult
+      const dedupeKey = boundaryDedupeKey(analysisResult)
+      if (
+        dedupeKey &&
+        analysisResult.isChapterBoundary &&
+        assignedBoundaryKeys.has(dedupeKey)
+      ) {
+        finalResult = { ...SAFE_FALLBACK }
+        if (tocOrderCursor) {
+          tocOrderCursor.index = tocCursorBefore
+        }
+      } else if (dedupeKey && analysisResult.isChapterBoundary) {
+        assignedBoundaryKeys.add(dedupeKey)
+      }
+
+      if (finalResult.boundaryKind === "interlude_divider") {
         pendingInterludes = countInterludeNamesInDivider(ocrMetadata) || 3
-      } else if (analysisResult.boundaryKind === "interlude") {
+      } else if (finalResult.boundaryKind === "interlude") {
         interludeSequence += 1
         pendingInterludes = Math.max(0, pendingInterludes - 1)
-      } else if (analysisResult.boundaryKind === "chapter") {
+      } else if (finalResult.boundaryKind === "chapter") {
         chapterSequence += 1
         pendingInterludes = 0
       } else if (
-        analysisResult.boundaryKind === "prelude" ||
-        analysisResult.boundaryKind === "prologue" ||
-        analysisResult.boundaryKind === "epilogue"
+        finalResult.boundaryKind === "prelude" ||
+        finalResult.boundaryKind === "prologue" ||
+        finalResult.boundaryKind === "epilogue"
       ) {
         chapterSequence += 1
         pendingInterludes = 0
-      } else if (analysisResult.boundaryKind === "part") {
+      } else if (finalResult.boundaryKind === "part") {
         pendingInterludes = 0
+      } else if (finalResult.boundaryKind === "epilogue") {
+        pastEpilogue = true
       }
 
-      finalizedByIndex.set(index, finalizeVisionImageBlock(block, analysisResult))
+      finalizedByIndex.set(index, finalizeVisionImageBlock(block, finalResult))
       releaseImageBlockBinary(blocks[index])
 
       processedCandidates += 1

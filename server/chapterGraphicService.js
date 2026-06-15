@@ -5,10 +5,20 @@
 
 import { isPlausibleTitle } from "./imageOcrService.js"
 import {
+  isChapterLikeOcrMetadata,
+  isFullPageSpreadHalf,
+  isLikelyChapterArchBannerBlock,
+  isLikelyHorizontalChapterStrip,
+  isTallChapterArchBannerBlock,
+} from "./pdfImageRoleUtils.js"
+import {
   lookupPrintedTocNumberLabel,
   lookupPrintedTocTitle,
 } from "./printedTocService.js"
-import { buildTocMetadataForChapterHeading, extractChapterKeyFromOcrNumber } from "./stormlightEpigraphService.js"
+import {
+  buildTocMetadataForChapterHeading,
+  hasBackMatterHeadingText,
+} from "./stormlightEpigraphService.js"
 
 const SAFE_FALLBACK = Object.freeze({
   isChapterBoundary: false,
@@ -49,9 +59,10 @@ const EPIGRAPH_PREFIX_REGEX = /^["'\u201c\u2018]|^—(?:Collected|Noted|Dated|Pu
 const INTERSTITIAL_TITLE_REGEX = /^[A-Z][A-Z0-9\s'’\-]{3,}$/
 
 const MIN_CHAPTER_ILLUSTRATION_PAGE = 30
-const MIN_CHAPTER_HEADING_BANNER_PAGE = 20
 /** Ignore part/interlude-divider art in front matter (maps, printed TOC graphics). */
 const MIN_SECTION_BOUNDARY_PAGE = 28
+/** Decorative title-spread arches before the narrative begins. */
+const MIN_TALL_CHAPTER_ARCH_BOUNDARY_PAGE = 24
 
 const FLASHBACK_TIMESTAMP_REGEX =
   /^FIVE (?:AND A HALF )?YEARS (?:LATER|AGO)|^TWO YEARS AGO|^ONE YEAR LATER/i
@@ -130,35 +141,134 @@ function isFrontMatterIllustration(followingBlocks) {
 }
 
 function findPreviousImageBlock(blocks, blockIndex) {
-  for (let index = blockIndex - 1; index >= 0; index -= 1) {
+  const originPage = blocks[blockIndex]?.pageNumber ?? 0
+  let closest = null
+  let closestDelta = Infinity
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    if (index === blockIndex) {
+      continue
+    }
+
     const block = blocks[index]
-    if (block?.type === "image" || block?.type === "image_candidate") {
-      return block
+    if (block?.type !== "image" && block?.type !== "image_candidate") {
+      continue
+    }
+
+    const pageDelta = originPage - (block.pageNumber ?? 0)
+    if (pageDelta <= 0 || pageDelta > 2) {
+      continue
+    }
+
+    if (pageDelta < closestDelta) {
+      closest = block
+      closestDelta = pageDelta
     }
   }
 
-  return null
+  return closest
+}
+
+function findNextImageBlock(blocks, blockIndex, maxPageDelta = 2) {
+  const originPage = blocks[blockIndex]?.pageNumber ?? 0
+  let closest = null
+  let closestDelta = Infinity
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    if (index === blockIndex) {
+      continue
+    }
+
+    const block = blocks[index]
+    if (block?.type !== "image" && block?.type !== "image_candidate") {
+      continue
+    }
+
+    const pageDelta = (block.pageNumber ?? 0) - originPage
+    if (pageDelta <= 0 || pageDelta > maxPageDelta) {
+      continue
+    }
+
+    if (pageDelta < closestDelta) {
+      closest = block
+      closestDelta = pageDelta
+    }
+  }
+
+  return closest
+}
+
+function isHorizontalChapterStripBlock(block) {
+  const coords = block?.coordinates ?? {}
+  return isLikelyHorizontalChapterStrip({
+    width: coords.width ?? 0,
+    height: coords.height ?? 0,
+    pageWidth: coords.pageWidth ?? 0,
+    pageHeight: coords.pageHeight ?? 0,
+  })
+}
+
+function isChapterTitleStripBlock(block) {
+  if (isHorizontalChapterStripBlock(block)) {
+    return true
+  }
+
+  const coords = block?.coordinates ?? {}
+  const pageHeight = coords.pageHeight ?? 0
+  const height = coords.height ?? 0
+  if (!pageHeight || !height) {
+    return false
+  }
+
+  return block?.imageRole === "chapter_heading" && height / pageHeight <= 0.25
+}
+
+function isEndOfChapterTallArt(blocks, blockIndex, imageBlock) {
+  if (!isTallChapterArchBannerBlock(imageBlock)) {
+    return false
+  }
+
+  const previousImage = findPreviousImageBlock(blocks, blockIndex)
+  if (isTallChapterArchBannerBlock(previousImage)) {
+    return false
+  }
+
+  const nextImage = findNextImageBlock(blocks, blockIndex, 2)
+  if (!nextImage) {
+    return false
+  }
+
+  if (isHorizontalChapterStripBlock(nextImage)) {
+    return true
+  }
+
+  return false
+}
+
+function isChapterArchSpreadContinuation(blocks, blockIndex, imageBlock) {
+  const previousImage = findPreviousImageBlock(blocks, blockIndex)
+  if (!previousImage) {
+    return false
+  }
+
+  const pageNumber = imageBlock?.pageNumber ?? 0
+  if ((previousImage.pageNumber ?? 0) !== pageNumber - 1) {
+    return false
+  }
+
+  return (
+    isTallChapterArchBannerBlock(imageBlock) &&
+    isTallChapterArchBannerBlock(previousImage)
+  )
 }
 
 function isSpreadContinuation(blocks, blockIndex, imageBlock) {
-  const pageNumber = imageBlock?.pageNumber ?? 0
+  if (isChapterArchSpreadContinuation(blocks, blockIndex, imageBlock)) {
+    return true
+  }
+
   const previousImage = findPreviousImageBlock(blocks, blockIndex)
-
-  if (!previousImage || previousImage.pageNumber !== pageNumber - 1) {
-    return false
-  }
-
-  // Chapter banners after an illustration start a new chapter, not a spread half.
-  if (imageBlock.imageRole === "chapter_heading") {
-    return false
-  }
-
-  // Full-page art on page N-1 (end-of-chapter illustration) is not a spread with page N.
-  if (previousImage.imageRole === "full_page_illustration") {
-    return false
-  }
-
-  return imageBlock.imageRole === "full_page_illustration"
+  return isFullPageSpreadHalf(imageBlock, previousImage)
 }
 
 function hasEpigraphFollowUp(followingBlocks) {
@@ -296,21 +406,35 @@ function shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex) {
   }
 
   if (isFrontMatterIllustration(followingBlocks)) {
-    if (imageBlock.imageRole === "chapter_heading") {
-      return false
-    }
-
     logChapterGraphicDecision("skip_front_matter_illustration", {
       pageNumber: imageBlock.pageNumber,
     })
     return true
   }
 
-  if (isSpreadContinuation(blocks, blockIndex, imageBlock)) {
-    if (imageBlock.imageRole === "chapter_heading") {
-      return false
-    }
+  if (hasBackMatterHeadingText(blocks, blockIndex)) {
+    logChapterGraphicDecision("skip_back_matter_illustration", {
+      pageNumber: imageBlock.pageNumber,
+    })
+    return true
+  }
 
+  const pageNumber = imageBlock.pageNumber ?? 0
+  if (
+    pageNumber < MIN_TALL_CHAPTER_ARCH_BOUNDARY_PAGE &&
+    isTallChapterArchBannerBlock(imageBlock) &&
+    !isHorizontalChapterStripBlock(imageBlock)
+  ) {
+    logChapterGraphicDecision("skip_front_matter_tall_arch", { pageNumber })
+    return true
+  }
+
+  if (isEndOfChapterTallArt(blocks, blockIndex, imageBlock)) {
+    logChapterGraphicDecision("skip_end_of_chapter_tall_art", { pageNumber })
+    return true
+  }
+
+  if (isSpreadContinuation(blocks, blockIndex, imageBlock)) {
     logChapterGraphicDecision("skip_spread_continuation", {
       pageNumber: imageBlock.pageNumber,
     })
@@ -334,12 +458,6 @@ function analyzeChapterHeadingBanner({
     return { ...SAFE_FALLBACK }
   }
 
-  const pageNumber = imageBlock.pageNumber ?? 0
-  if (pageNumber < MIN_CHAPTER_HEADING_BANNER_PAGE) {
-    logChapterGraphicDecision("skip_early_chapter_heading", { pageNumber })
-    return { ...SAFE_FALLBACK }
-  }
-
   const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex)
   let rawText = null
 
@@ -351,7 +469,7 @@ function analyzeChapterHeadingBanner({
   }
 
   logChapterGraphicDecision("chapter_heading_banner", {
-    pageNumber,
+    pageNumber: imageBlock.pageNumber ?? 0,
     chapterSequence,
   })
 
@@ -478,13 +596,14 @@ function mergeOcrIntoAnalysis(
     interludeSequence = 1,
     imageBlock = null,
     forceInterludeBoundary = false,
+    tocAssigned = false,
   } = {}
 ) {
   if (analysisResult?.boundaryKind === "flashback") {
     return analysisResult
   }
 
-  if (imageRole === "full_page_illustration" && printedToc) {
+  if (imageRole === "full_page_illustration" && printedToc && !isChapterLikeOcrMetadata(ocrMetadata)) {
     if (
       ocrMetadata?.boundaryKind === "part" ||
       ocrMetadata?.boundaryKind === "interlude_divider"
@@ -494,13 +613,37 @@ function mergeOcrIntoAnalysis(
     return { ...SAFE_FALLBACK }
   }
 
-  if (imageRole === "full_page_illustration" && ocrMetadata) {
+  const resolvedBoundaryKind =
+    forceInterludeBoundary
+      ? "interlude"
+      : ocrMetadata?.boundaryKind ?? analysisResult?.boundaryKind ?? null
+
+  if (
+    imageBlock &&
+    (resolvedBoundaryKind === "prelude" || resolvedBoundaryKind === "prologue")
+  ) {
+    return { ...SAFE_FALLBACK }
+  }
+
+  if (resolvedBoundaryKind === "interlude") {
+    const interludeMatch = (ocrMetadata?.number ?? "").match(/I-(\d{1,2})/i)
+    const interludeNum = interludeMatch ? Number.parseInt(interludeMatch[1], 10) : NaN
+    if (
+      Number.isFinite(interludeNum) &&
+      interludeNum > 8 &&
+      !isChapterTitleStripBlock(imageBlock)
+    ) {
+      return { ...SAFE_FALLBACK }
+    }
+  }
+
+  if (imageRole === "full_page_illustration" && ocrMetadata && !isChapterLikeOcrMetadata(ocrMetadata)) {
     const section = analyzeFullPageSectionDivider(ocrMetadata, imageBlock)
     if (section.isChapterBoundary) {
       return section
     }
 
-    if (printedToc && ocrMetadata.boundaryKind === "chapter") {
+    if (printedToc) {
       return { ...SAFE_FALLBACK }
     }
   }
@@ -509,7 +652,14 @@ function mergeOcrIntoAnalysis(
     return analysisResult
   }
 
-  if (!analysisResult?.isChapterBoundary && imageRole !== "chapter_heading") {
+  const effectiveImageRole =
+    imageRole === "chapter_heading" ||
+    isChapterLikeOcrMetadata(ocrMetadata) ||
+    isLikelyChapterArchBannerBlock(imageBlock)
+      ? "chapter_heading"
+      : imageRole
+
+  if (!analysisResult?.isChapterBoundary && effectiveImageRole !== "chapter_heading") {
     return analysisResult
   }
 
@@ -522,26 +672,75 @@ function mergeOcrIntoAnalysis(
   let number = ocrMetadata?.number ?? analysisResult.number ?? null
   let title = parseTitleFromOcr(ocrMetadata?.title) ?? analysisResult.title ?? null
 
-  const lookupSequence =
-    boundaryKind === "interlude" ? interludeSequence : chapterSequence
+  let effectiveBoundaryKind = boundaryKind
+  if (
+    boundaryKind === "interlude" &&
+    isChapterTitleStripBlock(imageBlock) &&
+    !forceInterludeBoundary
+  ) {
+    const interludeMatch = (number ?? ocrMetadata?.number ?? "").match(/I-(\d{1,2})/i)
+    const interludeNum = interludeMatch
+      ? Number.parseInt(interludeMatch[1], 10)
+      : NaN
+    if (!Number.isFinite(interludeNum) || interludeNum > 8) {
+      effectiveBoundaryKind = "chapter"
+    }
+  }
 
-  if (!title && printedToc) {
+  const ocrNumber = (number ?? "").trim()
+  const ocrNumberValid = ocrNumber.length > 0 && !/^chapter$/i.test(ocrNumber)
+
+  const lookupSequence =
+    effectiveBoundaryKind === "interlude" ? interludeSequence : chapterSequence
+
+  if (!title && printedToc && tocAssigned) {
     title = lookupPrintedTocTitle(printedToc, {
       number,
-      boundaryKind,
+      boundaryKind: effectiveBoundaryKind,
       chapterSequence: lookupSequence,
     })
   }
 
-  if ((!number || /^chapter$/i.test(number)) && printedToc) {
+  if ((!number || /^chapter$/i.test(number)) && printedToc && tocAssigned) {
     const tocNumber = lookupPrintedTocNumberLabel(printedToc, {
       number,
-      boundaryKind,
+      boundaryKind: effectiveBoundaryKind,
       chapterSequence: lookupSequence,
     })
     if (tocNumber) {
       number = tocNumber
     }
+  }
+
+  if (
+    printedToc &&
+    !tocAssigned &&
+    !ocrNumberValid &&
+    !parseTitleFromOcr(ocrMetadata?.title)
+  ) {
+    if (!isLikelyChapterArchBannerBlock(imageBlock)) {
+      return { ...SAFE_FALLBACK }
+    }
+
+    const fallbackKind =
+      effectiveBoundaryKind === "interlude" ? "interlude" : "chapter"
+    const fallbackNumber = lookupPrintedTocNumberLabel(printedToc, {
+      number: null,
+      boundaryKind: fallbackKind,
+      chapterSequence: lookupSequence,
+    })
+    const fallbackTitle = lookupPrintedTocTitle(printedToc, {
+      number: fallbackNumber,
+      boundaryKind: fallbackKind,
+      chapterSequence: lookupSequence,
+    })
+
+    if (!fallbackNumber && !fallbackTitle) {
+      return { ...SAFE_FALLBACK }
+    }
+
+    number = fallbackNumber ?? number
+    title = fallbackTitle ?? title
   }
 
   const rawText =
@@ -552,8 +751,8 @@ function mergeOcrIntoAnalysis(
   return {
     isChapterBoundary: true,
     includeInToc:
-      boundaryKind !== "flashback",
-    boundaryKind,
+      effectiveBoundaryKind !== "flashback",
+    boundaryKind: effectiveBoundaryKind,
     number,
     title,
     rawText,
@@ -675,8 +874,12 @@ function analyzeChapterGraphicFromContext({
 
   let analysisResult = { ...SAFE_FALLBACK }
 
-  if (imageBlock.imageRole === "chapter_heading") {
-    // Flashback timestamps ("SEVEN YEARS AGO") follow the banner — they are not the chapter start.
+  const isChapterBanner =
+    imageBlock.imageRole === "chapter_heading" ||
+    isChapterLikeOcrMetadata(ocrMetadata) ||
+    isLikelyChapterArchBannerBlock(imageBlock)
+
+  if (isChapterBanner) {
     analysisResult = analyzeChapterHeadingBanner({
       imageBlock,
       blocks,
@@ -696,14 +899,16 @@ function analyzeChapterGraphicFromContext({
   }
 
   let effectiveOcrMetadata = ocrMetadata
+  let tocMetadata = null
+  const tocCursorBefore = tocOrderCursor?.index ?? 0
 
   if (
     printedToc &&
     tocOrderCursor &&
     buildSequentialTocEntry &&
-    imageBlock.imageRole === "chapter_heading"
+    isChapterBanner
   ) {
-    const tocMetadata = buildTocMetadataForChapterHeading(
+    tocMetadata = buildTocMetadataForChapterHeading(
       blocks,
       blockIndex,
       printedToc,
@@ -715,23 +920,23 @@ function analyzeChapterGraphicFromContext({
       }
     )
 
-    if (
-      tocMetadata === null &&
-      extractChapterKeyFromOcrNumber(ocrMetadata?.number ?? null)
-    ) {
-      return { ...SAFE_FALLBACK }
-    }
-
     effectiveOcrMetadata = enrichOcrMetadataFromPrintedToc(ocrMetadata, tocMetadata)
   }
 
-  return mergeOcrIntoAnalysis(analysisResult, effectiveOcrMetadata, imageBlock.imageRole, {
+  const merged = mergeOcrIntoAnalysis(analysisResult, effectiveOcrMetadata, imageBlock.imageRole, {
     printedToc,
     chapterSequence,
     interludeSequence,
     imageBlock,
     forceInterludeBoundary,
+    tocAssigned: Boolean(tocMetadata),
   })
+
+  if (!merged.isChapterBoundary && tocOrderCursor) {
+    tocOrderCursor.index = tocCursorBefore
+  }
+
+  return merged
 }
 
 /**
