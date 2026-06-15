@@ -259,7 +259,11 @@ function parseSectionLabelToken(token) {
   return null
 }
 
-function parseChapterNumberToken(token) {
+function chapterNumberUsesDigits(number) {
+  return /\d/.test(number?.label ?? "")
+}
+
+function parseChapterNumberToken(token, { hasDigitNumber = false } = {}) {
   const trimmed = normalizeOcrLine(token).replace(/\.$/, "")
   if (!trimmed) {
     return null
@@ -284,10 +288,14 @@ function parseChapterNumberToken(token) {
     if (trimmed === "0" || trimmed === "00") {
       return null
     }
+    const value = Number.parseInt(trimmed, 10)
+    if (!Number.isFinite(value) || value < 1 || value > 75) {
+      return null
+    }
     return { kind: "chapter", label: `Chapter ${trimmed}` }
   }
 
-  if (/^[IVXLCDM]+$/i.test(trimmed)) {
+  if (!hasDigitNumber && /^[IVXLCDM]+$/i.test(trimmed)) {
     return { kind: "chapter", label: `Chapter ${trimmed.toUpperCase()}` }
   }
 
@@ -445,9 +453,13 @@ function parseChapterHeadingBannerText(bannerText) {
   let title = null
 
   for (const line of lines) {
-    const parsedNumber = parseChapterNumberToken(line)
-    if (!number && parsedNumber) {
-      number = parsedNumber
+    const parsedNumber = parseChapterNumberToken(line, {
+      hasDigitNumber: chapterNumberUsesDigits(number),
+    })
+    if (parsedNumber) {
+      if (chapterNumberUsesDigits(parsedNumber) || !number) {
+        number = parsedNumber
+      }
       continue
     }
 
@@ -458,8 +470,13 @@ function parseChapterHeadingBannerText(bannerText) {
     }
 
     const inlineNumber = line.match(/^(\d{1,3})\s+(.+)$/)
-    if (!number && inlineNumber) {
-      number = parseChapterNumberToken(inlineNumber[1])
+    if (inlineNumber) {
+      const parsedInline = parseChapterNumberToken(inlineNumber[1], {
+        hasDigitNumber: chapterNumberUsesDigits(number),
+      })
+      if (parsedInline && (chapterNumberUsesDigits(parsedInline) || !number)) {
+        number = parsedInline
+      }
       if (!title) {
         title = parseTitleLine(inlineNumber[2])
       }
@@ -471,17 +488,21 @@ function parseChapterHeadingBannerText(bannerText) {
 
 function resolveBestChapterNumberToken(...regionTexts) {
   const tokens = regionTexts
-    .map((text) => {
-      const trimmed = normalizeOcrLine(text).replace(/\s+/g, "")
-      return /^\d{1,3}$/.test(trimmed) ? trimmed : null
-    })
-    .filter(Boolean)
+    .map((text) => normalizeOcrLine(text).replace(/\s+/g, ""))
+    .filter((trimmed) => /^\d{1,3}$/.test(trimmed))
+    .map((trimmed) => ({ trimmed, value: Number.parseInt(trimmed, 10) }))
+    .filter(({ value }) => value >= 1 && value <= 75)
 
   if (tokens.length === 0) {
     return null
   }
 
-  return tokens.sort((left, right) => right.length - left.length || Number(right) - Number(left))[0]
+  tokens.sort(
+    (left, right) =>
+      right.trimmed.length - left.trimmed.length || left.value - right.value
+  )
+
+  return tokens[0].trimmed
 }
 
 async function ocrChapterHeading(imageBuffer) {

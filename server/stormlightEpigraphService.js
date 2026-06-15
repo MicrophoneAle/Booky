@@ -1,32 +1,7 @@
 /**
- * Match Stormlight Archive chapter banners to printed TOC entries using
- * death-rattle epigraph text that follows each banner in the PDF text layer.
+ * Align Stormlight chapter banners with printed TOC entries using sequential
+ * cursor assignment, re-anchored by OCR'd plaque numbers when confident.
  */
-
-const DEATH_RATTLE_ATTRIBUTION_REGEX =
-  /^ΓÇö(?:Collected|Dated|Noted|Purports|Though|Kakashah|Tanatanev|Tanatesach|Kaktach)/i
-
-/** @type {Array<{ chapterKey: string, prefix: string }>} */
-const WAY_OF_KINGS_DEATH_RATTLE_PREFIXES = [
-  { chapterKey: "52", prefix: "i'm standing over the body of a brother" },
-  { chapterKey: "53", prefix: "he must pick it up, the fallen title" },
-  { chapterKey: "54", prefix: "the burdens of nine become mine" },
-  { chapterKey: "55", prefix: "a woman sits and scratches out her own eyes" },
-  { chapterKey: "56", prefix: "light grows so distant" },
-  { chapterKey: "57", prefix: "i hold the suckling child in my hands" },
-  { chapterKey: "58", prefix: "re-shephir, the midnight mother" },
-  { chapterKey: "59", prefix: "above the final void i hang" },
-  { chapterKey: "60", prefix: "the death is my life, the strength becomes my weakness" },
-  { chapterKey: "61", prefix: "in the storm i awaken, falling, spinning, grieving" },
-  { chapterKey: "62", prefix: "the darkness becomes a palace" },
-  { chapterKey: "63", prefix: "i wish to sleep" },
-  { chapterKey: "64", prefix: "they come from the pit, two dead men" },
-  { chapterKey: "65", prefix: "i see them. they are the rocks" },
-  { chapterKey: "66", prefix: "that chanting, that singing, those rasping voices" },
-  { chapterKey: "67", prefix: "let me no longer hurt" },
-  { chapterKey: "68", prefix: "they named it the final desolation, but they lied" },
-  { chapterKey: "69", prefix: "all is withdrawn for me. i stand against the one who saved my life" },
-]
 
 const BACK_MATTER_HEADING_PATTERNS = [
   /^ARS\s+ARCANUM$/i,
@@ -37,14 +12,6 @@ const BACK_MATTER_HEADING_PATTERNS = [
   /^THE TEN ESSENCES AND THEIR HISTORICAL ASSOCIATIONS$/i,
   /^ON THE CREATION OF FABRIALS$/i,
 ]
-
-function normalizeEpigraphQuote(text) {
-  return (text ?? "")
-    .replace(/[\u2018\u2019\u201a\u02bc`']/g, "'")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase()
-}
 
 function collectFollowingTextBlocks(blocks, blockIndex, limit = 14) {
   const results = []
@@ -62,100 +29,6 @@ function collectFollowingTextBlocks(blocks, blockIndex, limit = 14) {
   }
 
   return results
-}
-
-function extractDeathRattleQuoteFromFollowingText(followingTextBlocks) {
-  const lines = followingTextBlocks.flatMap((text) =>
-    text.split(/\n+/).map((line) => line.trim()).filter(Boolean)
-  )
-
-  for (let index = 0; index < lines.length; index += 1) {
-    if (!DEATH_RATTLE_ATTRIBUTION_REGEX.test(lines[index])) {
-      continue
-    }
-
-    const quoteParts = []
-    for (let quoteIndex = index - 1; quoteIndex >= 0 && quoteIndex >= index - 8; quoteIndex -= 1) {
-      const line = lines[quoteIndex]
-      if (/^[\u201c"\u2018']/.test(line)) {
-        quoteParts.unshift(line)
-        break
-      }
-
-      quoteParts.unshift(line)
-
-      if (quoteParts.join(" ").length >= 120) {
-        break
-      }
-    }
-
-    const quote = normalizeEpigraphQuote(
-      quoteParts.join(" ").replace(/^[\u201c"\u2018']/, "").replace(/[\u201d"\u2019']$/, "")
-    )
-
-    if (quote.length >= 12) {
-      return quote
-    }
-  }
-
-  return null
-}
-
-function matchDeathRattleChapterKey(quote) {
-  if (!quote) {
-    return null
-  }
-
-  for (const { chapterKey, prefix } of WAY_OF_KINGS_DEATH_RATTLE_PREFIXES) {
-    if (quote.startsWith(prefix)) {
-      return chapterKey
-    }
-  }
-
-  return null
-}
-
-function findPrintedTocEntryByChapterKey(printedToc, chapterKey, { kind = "chapter" } = {}) {
-  if (!printedToc?.ordered?.length || !chapterKey) {
-    return null
-  }
-
-  return (
-    printedToc.ordered.find(
-      (entry) => entry.kind === kind && String(entry.key) === String(chapterKey)
-    ) ?? null
-  )
-}
-
-function findPrintedTocEntryIndex(printedToc, entry) {
-  if (!printedToc?.ordered?.length || !entry) {
-    return -1
-  }
-
-  return printedToc.ordered.indexOf(entry)
-}
-
-function advanceTocCursorAfterEntry(printedToc, tocOrderCursor, entry) {
-  if (!printedToc?.ordered?.length || !tocOrderCursor || !entry) {
-    return
-  }
-
-  const index = findPrintedTocEntryIndex(printedToc, entry)
-  if (index >= 0) {
-    tocOrderCursor.index = index + 1
-  }
-}
-
-function lookupDeathRattleChapterEntry(blocks, blockIndex, printedToc) {
-  const followingText = collectFollowingTextBlocks(blocks, blockIndex)
-  const quote = extractDeathRattleQuoteFromFollowingText(followingText)
-  const chapterKey = matchDeathRattleChapterKey(quote)
-
-  if (!chapterKey) {
-    return null
-  }
-
-  return findPrintedTocEntryByChapterKey(printedToc, chapterKey)
 }
 
 function hasBackMatterHeadingText(blocks, blockIndex) {
@@ -179,6 +52,25 @@ function printedTocEntryToOcrMetadata(entry) {
   }
 }
 
+function findPrintedTocEntryIndex(printedToc, entry) {
+  if (!printedToc?.ordered?.length || !entry) {
+    return -1
+  }
+
+  return printedToc.ordered.indexOf(entry)
+}
+
+function advanceTocCursorAfterEntry(printedToc, tocOrderCursor, entry) {
+  if (!printedToc?.ordered?.length || !tocOrderCursor || !entry) {
+    return
+  }
+
+  const index = findPrintedTocEntryIndex(printedToc, entry)
+  if (index >= 0) {
+    tocOrderCursor.index = index + 1
+  }
+}
+
 function peekNextNonPartTocEntry(printedToc, tocOrderCursor) {
   if (!printedToc?.ordered?.length || !tocOrderCursor) {
     return null
@@ -196,25 +88,42 @@ function peekNextNonPartTocEntry(printedToc, tocOrderCursor) {
   return null
 }
 
-function peekNextPrintedTocChapterKey(printedToc, tocOrderCursor) {
-  const entry = peekNextNonPartTocEntry(printedToc, tocOrderCursor)
-  if (!entry || entry.kind !== "chapter") {
+function extractChapterKeyFromOcrNumber(ocrNumberLabel) {
+  const label = (ocrNumberLabel ?? "").trim()
+  if (!label || /interlude|prelude|prologue|epilogue|part/i.test(label)) {
     return null
   }
 
-  const parsed = Number.parseInt(String(entry.key), 10)
-  return Number.isFinite(parsed) ? parsed : null
+  const match = label.match(/\bchapter\s+(\d{1,3})\b/i) ?? label.match(/^(\d{1,3})$/)
+  if (!match) {
+    return null
+  }
+
+  const value = Number.parseInt(match[1], 10)
+  return value >= 1 && value <= 75 ? String(value) : null
 }
 
-/**
- * Prefer death-rattle epigraph matching for Stormlight chapter banners; fall back
- * to sequential printed TOC cursor assignment.
- */
+function findChapterEntryByKeyFromCursor(printedToc, tocOrderCursor, key) {
+  for (let index = tocOrderCursor.index; index < printedToc.ordered.length; index += 1) {
+    const entry = printedToc.ordered[index]
+    if (entry.kind === "chapter" && String(entry.key) === key) {
+      return { entry, index }
+    }
+  }
+
+  return null
+}
+
 function buildTocMetadataForChapterHeading(
   blocks,
   blockIndex,
   printedToc,
-  { tocOrderCursor = null, forceInterludeBoundary = false, buildSequentialEntry = null } = {}
+  {
+    tocOrderCursor = null,
+    forceInterludeBoundary = false,
+    buildSequentialEntry = null,
+    ocrNumberLabel = null,
+  } = {}
 ) {
   if (!printedToc?.ordered?.length) {
     return null
@@ -228,23 +137,17 @@ function buildTocMetadataForChapterHeading(
     return null
   }
 
-  const nextSequentialEntry = peekNextNonPartTocEntry(printedToc, tocOrderCursor)
-  const nextSequentialChapterKey = peekNextPrintedTocChapterKey(printedToc, tocOrderCursor)
+  if (tocOrderCursor) {
+    const key = extractChapterKeyFromOcrNumber(ocrNumberLabel)
+    if (key) {
+      const located = findChapterEntryByKeyFromCursor(printedToc, tocOrderCursor, key)
+      if (located) {
+        tocOrderCursor.index = located.index + 1
+        return printedTocEntryToOcrMetadata(located.entry)
+      }
 
-  const deathRattleEntry = lookupDeathRattleChapterEntry(blocks, blockIndex, printedToc)
-  const deathRattleKey = deathRattleEntry ? Number.parseInt(String(deathRattleEntry.key), 10) : null
-
-  const shouldUseDeathRattleMatch =
-    deathRattleEntry &&
-    Number.isFinite(deathRattleKey) &&
-    deathRattleKey >= 52 &&
-    nextSequentialEntry?.kind === "chapter" &&
-    nextSequentialChapterKey != null &&
-    deathRattleKey !== nextSequentialChapterKey
-
-  if (shouldUseDeathRattleMatch) {
-    advanceTocCursorAfterEntry(printedToc, tocOrderCursor, deathRattleEntry)
-    return printedTocEntryToOcrMetadata(deathRattleEntry)
+      return null
+    }
   }
 
   return buildSequentialEntry?.() ?? null
@@ -261,19 +164,14 @@ function takeNextSequentialTocEntry(printedToc, tocOrderCursor) {
 }
 
 function supplementBannerlessPrintedChapters(blocks, _printedToc) {
-  // Synthetic gap-fill from the printed TOC created reversed, page-less tail entries
-  // when real banner detection missed chapters. Rely on OCR + banner heuristics instead.
   return blocks
 }
 
 export {
-  WAY_OF_KINGS_DEATH_RATTLE_PREFIXES,
   buildTocMetadataForChapterHeading,
   collectFollowingTextBlocks,
-  extractDeathRattleQuoteFromFollowingText,
+  extractChapterKeyFromOcrNumber,
   hasBackMatterHeadingText,
-  lookupDeathRattleChapterEntry,
-  matchDeathRattleChapterKey,
   supplementBannerlessPrintedChapters,
   takeNextSequentialTocEntry,
 }

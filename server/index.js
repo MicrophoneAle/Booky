@@ -29,7 +29,7 @@ import {
   takeNextSequentialTocEntry,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 57
+const PARSER_VERSION = 59
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(

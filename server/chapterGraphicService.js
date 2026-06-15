@@ -8,7 +8,7 @@ import {
   lookupPrintedTocNumberLabel,
   lookupPrintedTocTitle,
 } from "./printedTocService.js"
-import { buildTocMetadataForChapterHeading } from "./stormlightEpigraphService.js"
+import { buildTocMetadataForChapterHeading, extractChapterKeyFromOcrNumber } from "./stormlightEpigraphService.js"
 
 const SAFE_FALLBACK = Object.freeze({
   isChapterBoundary: false,
@@ -410,13 +410,23 @@ function extractChapterNumberDigits(numberLabel) {
 function shouldPreferTocNumberOverOcr(ocrNumber, tocNumber) {
   const ocrDigits = extractChapterNumberDigits(ocrNumber)
   const tocDigits = extractChapterNumberDigits(tocNumber)
-  if (!ocrDigits || !tocDigits || ocrDigits === tocDigits) {
+  if (!tocDigits) {
+    return false
+  }
+  if (!ocrDigits) {
+    return true
+  }
+  if (ocrDigits === tocDigits) {
     return false
   }
 
-  // Narrow OCR crops often clip "51" → "1"; prefer the sequential TOC digit when longer.
+  const ocrValue = Number.parseInt(ocrDigits, 10)
+  if (!Number.isFinite(ocrValue) || ocrValue < 1 || ocrValue > 75) {
+    return true
+  }
+
   if (ocrDigits.length === 1 && tocDigits.length >= 2) {
-    return tocDigits.endsWith(ocrDigits) || Number(tocDigits) > 9
+    return true
   }
 
   return false
@@ -456,7 +466,7 @@ function enrichOcrMetadataFromPrintedToc(ocrMetadata, tocMetadata) {
 }
 
 /**
- * Merge illustration OCR with printed TOC metadata (sequential cursor / death-rattle matching).
+ * Merge illustration OCR with printed TOC metadata (sequential cursor re-anchored by plaque OCR).
  */
 function mergeOcrIntoAnalysis(
   analysisResult,
@@ -701,8 +711,17 @@ function analyzeChapterGraphicFromContext({
         tocOrderCursor,
         forceInterludeBoundary,
         buildSequentialEntry: buildSequentialTocEntry,
+        ocrNumberLabel: ocrMetadata?.number ?? null,
       }
     )
+
+    if (
+      tocMetadata === null &&
+      extractChapterKeyFromOcrNumber(ocrMetadata?.number ?? null)
+    ) {
+      return { ...SAFE_FALLBACK }
+    }
+
     effectiveOcrMetadata = enrichOcrMetadataFromPrintedToc(ocrMetadata, tocMetadata)
   }
 
