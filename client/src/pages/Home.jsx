@@ -690,10 +690,6 @@ export default function Home() {
                   )
                 )}
 
-                {(uploadState.phase === "uploading" || uploadState.phase === "processing") && (
-                  <p className="home__upload-percent">{uploadState.progress}%</p>
-                )}
-
                 {uploadState.fileName && (
                   <p className="home__upload-filename">{uploadState.fileName}</p>
                 )}

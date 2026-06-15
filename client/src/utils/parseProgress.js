@@ -417,7 +417,6 @@ export function getParseProgressDetail(parseProgress) {
   const phase = getEffectiveDisplayPhase(parseProgress)
   const { current, total } = getPhaseCounters(parseProgress)
   const { label } = parseProgress
-  const illustrationCounters = resolveCounters(parseProgress).illustrations
 
   if (phase === "error") {
     return label ?? "Something went wrong while parsing this PDF."
@@ -437,17 +436,8 @@ export function getParseProgressDetail(parseProgress) {
     const subphase = parseProgress.extractSubphase ?? "text"
     const { current, total } = getPhaseCounters(parseProgress)
 
-    if (parseProgress.label && subphase !== "filtering") {
-      if (total > 0) {
-        const pct = Math.round((current / total) * 100)
-        return `${parseProgress.label} (${pct}% of PDF scan).`
-      }
-      return parseProgress.label
-    }
-
     if (subphase === "filtering" && total > 0) {
-      const pct = Math.round((current / total) * 100)
-      return `Cleaning extracted text — page ${current} of ${total} (${pct}%).`
+      return `Cleaning extracted text — page ${current} of ${total}.`
     }
 
     if (subphase === "text_complete" || (subphase === "images" && current === 0)) {
@@ -455,11 +445,10 @@ export function getParseProgressDetail(parseProgress) {
     }
 
     if (total > 0) {
-      const pct = Math.round((current / total) * 100)
       if (subphase === "images") {
-        return `Scanning artwork on page ${current} of ${total} (${pct}% of PDF scan).`
+        return `Scanning artwork page ${current} of ${total}.`
       }
-      return `Reading page ${current} of ${total} (${pct}% of PDF scan).`
+      return `Reading page ${current} of ${total}.`
     }
     return "Opening PDF and preparing the page scanner…"
   }
@@ -467,21 +456,15 @@ export function getParseProgressDetail(parseProgress) {
   if (phase === "classifying_illustrations") {
     const { current, total } = getPhaseCounters(parseProgress)
     if (total > 0) {
-      const pct = Math.round((current / total) * 100)
-      return `Classifying artwork ${current} of ${total} (${pct}%).`
+      return `Classifying artwork ${current} of ${total}.`
     }
     return "Identifying chapter headers and illustrations."
   }
 
   if (phase === "ocr_illustrations") {
     const { current, total } = getPhaseCounters(parseProgress)
-    const illustrations = resolveCounters(parseProgress).illustrations
     if (total > 0) {
-      const pct = Math.round((current / total) * 100)
-      if (illustrations.total > 0) {
-        return `Reading chapter header ${current} of ${total} (${pct}%) — artwork ${illustrations.current} of ${illustrations.total} processed.`
-      }
-      return `Reading chapter header ${current} of ${total} (${pct}%).`
+      return `Reading chapter header ${current} of ${total}.`
     }
     return "Extracting chapter numbers and titles from header artwork."
   }
