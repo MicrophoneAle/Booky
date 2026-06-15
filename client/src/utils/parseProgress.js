@@ -10,6 +10,19 @@ export const PARSE_PIPELINE_STEPS = [
   { phase: "saving", label: "Save" },
 ]
 
+const STARTING_LABEL_HEADLINES = {
+  "Waiting to start": "Waiting for the parser…",
+  "Downloading PDF": "Downloading your PDF…",
+  "Opening PDF": "Opening your PDF…",
+}
+
+const STARTING_LABEL_DETAILS = {
+  "Waiting to start":
+    "Another book is being processed. Your upload will start automatically.",
+  "Downloading PDF": "Fetching the file from storage.",
+  "Opening PDF": "Loading the file and preparing the page scanner.",
+}
+
 const PHASE_HEADLINES = {
   starting: "Opening your PDF…",
   extracting: "Reading PDF pages…",
@@ -401,6 +414,10 @@ export function getParseProgressHeadline(parseProgress) {
     return "Preparing chapter headers…"
   }
 
+  if (phase === "starting" && parseProgress.label) {
+    return STARTING_LABEL_HEADLINES[parseProgress.label] ?? PHASE_HEADLINES.starting
+  }
+
   return PHASE_HEADLINES[phase] ?? PHASE_HEADLINES[parseProgress.phase] ?? "Processing your book…"
 }
 
@@ -423,6 +440,9 @@ export function getParseProgressDetail(parseProgress) {
   }
 
   if (phase === "starting") {
+    if (label && STARTING_LABEL_DETAILS[label]) {
+      return STARTING_LABEL_DETAILS[label]
+    }
     return "Loading the file and preparing the parser."
   }
 
@@ -594,7 +614,15 @@ export function getCombinedProcessingPercent(
  * @returns {string|null}
  */
 export function getParseProgressStaleHint(parseProgress) {
-  if (!parseProgress || parseProgress.phase !== "extracting") {
+  if (!parseProgress) {
+    return null
+  }
+
+  if (parseProgress.phase === "starting") {
+    return "Large PDFs can take a minute to open. Still working…"
+  }
+
+  if (parseProgress.phase !== "extracting") {
     return null
   }
 
