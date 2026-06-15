@@ -4627,11 +4627,16 @@ async function finalizeIllustrationBlocks(
       return [block]
     }
 
-    if (block.isCandidate !== true || !extractImageBlockPayload(block)) {
+    const finalized = finalizedByIndex.get(index)
+    if (finalized) {
+      return [finalized]
+    }
+
+    if (block.isCandidate !== true) {
       return []
     }
 
-    return [finalizedByIndex.get(index)]
+    return []
   })
 }
 
