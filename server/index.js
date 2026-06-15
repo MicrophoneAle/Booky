@@ -38,6 +38,9 @@ const PDF_IMAGE_PAINT_OPS = new Set(
 )
 const PDF_IMAGE_RESOLVE_TIMEOUT_MS = 8000
 const ILLUSTRATION_VISION_CONCURRENCY = 4
+const BOOK_ASSET_UPLOAD_CONCURRENCY = 2
+const BOOK_ASSET_UPLOAD_MAX_RETRIES = 6
+const BOOK_ASSET_UPLOAD_RETRY_BASE_MS = 1200
 const BOOK_ASSETS_BUCKET = "book-assets"
 const BOOK_ASSETS_FALLBACK_BUCKET = process.env.BOOK_ASSETS_FALLBACK_BUCKET ?? "pdfs"
 const BOOK_ASSET_SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 365
@@ -4858,7 +4861,30 @@ async function resolveUploadedImageAssetUrl(bucket, storagePath) {
   return signedData.signedUrl
 }
 
-async function uploadImageAssetBuffer(bookId, blockId, imageBuffer) {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function isRetryableStorageError(message) {
+  const normalized = (message ?? "").toLowerCase()
+  return (
+    normalized.includes("service unavailable") ||
+    normalized.includes("too many requests") ||
+    normalized.includes("rate limit") ||
+    normalized.includes("timeout") ||
+    normalized.includes("timed out") ||
+    normalized.includes("econnreset") ||
+    normalized.includes("etimedout") ||
+    normalized.includes("fetch failed") ||
+    normalized.includes("network") ||
+    normalized.includes("502") ||
+    normalized.includes("503") ||
+    normalized.includes("504") ||
+    normalized.includes("429")
+  )
+}
+
+async function uploadImageAssetBufferOnce(bookId, blockId, imageBuffer) {
   const filePath = buildBookAssetStoragePath(bookId, blockId)
   const uploadOptions = {
     contentType: PDF_IMAGE_JPEG_CONTENT_TYPE,
@@ -4895,6 +4921,34 @@ async function uploadImageAssetBuffer(bookId, blockId, imageBuffer) {
   return resolveUploadedImageAssetUrl(bucket, storagePath)
 }
 
+async function uploadImageAssetBuffer(bookId, blockId, imageBuffer) {
+  let lastError = null
+
+  for (let attempt = 0; attempt < BOOK_ASSET_UPLOAD_MAX_RETRIES; attempt += 1) {
+    try {
+      return await uploadImageAssetBufferOnce(bookId, blockId, imageBuffer)
+    } catch (error) {
+      lastError = error
+      const message = error instanceof Error ? error.message : String(error)
+      const canRetry =
+        attempt < BOOK_ASSET_UPLOAD_MAX_RETRIES - 1 &&
+        isRetryableStorageError(message)
+
+      if (!canRetry) {
+        throw error
+      }
+
+      const delayMs = BOOK_ASSET_UPLOAD_RETRY_BASE_MS * 2 ** attempt
+      console.warn(
+        `[uploadBookAssets] Retrying ${blockId} in ${delayMs}ms (attempt ${attempt + 2}/${BOOK_ASSET_UPLOAD_MAX_RETRIES}): ${message}`
+      )
+      await sleep(delayMs)
+    }
+  }
+
+  throw lastError ?? new Error(`Failed to upload image asset ${blockId}`)
+}
+
 async function uploadBookAssets(bookId, blocks, { onProgress } = {}) {
   if (!bookId) {
     throw new Error("uploadBookAssets requires a bookId")
@@ -4926,8 +4980,9 @@ async function uploadBookAssets(bookId, blocks, { onProgress } = {}) {
 
   const totalImages = uploadableIndices.length
   let uploadedImages = 0
+  let failedUploads = 0
 
-  await runWithConcurrency(uploadableIndices, 5, async (index) => {
+  await runWithConcurrency(uploadableIndices, BOOK_ASSET_UPLOAD_CONCURRENCY, async (index, queueIndex) => {
     const block = nextBlocks[index]
     const blockId = block.id ?? `image-${index + 1}`
     let imageBuffer = base64PayloadToImageBuffer(extractImageBase64Payload(block))
@@ -4943,16 +4998,27 @@ async function uploadBookAssets(bookId, blocks, { onProgress } = {}) {
       return
     }
 
+    if (queueIndex > 0) {
+      await sleep(150 * (queueIndex % BOOK_ASSET_UPLOAD_CONCURRENCY))
+    }
+
     let publicUrl
     try {
       publicUrl = await uploadImageAssetBuffer(bookId, blockId, imageBuffer)
     } catch (error) {
+      failedUploads += 1
       console.error("[uploadBookAssets]", {
         bookId,
         blockId,
         message: error instanceof Error ? error.message : String(error),
       })
-      throw error
+      nextBlocks[index] = stripImageBinaryFields(block)
+      uploadedImages += 1
+      onProgress?.({
+        current: uploadedImages,
+        total: totalImages,
+      })
+      return
     } finally {
       imageBuffer = null
       releaseImageBlockBinary(block)
@@ -4970,6 +5036,12 @@ async function uploadBookAssets(bookId, blocks, { onProgress } = {}) {
       total: totalImages,
     })
   })
+
+  if (failedUploads > 0) {
+    console.warn(
+      `[uploadBookAssets] ${failedUploads}/${totalImages} illustration upload(s) failed after retries for book ${bookId}`
+    )
+  }
 
   for (let index = 0; index < nextBlocks.length; index += 1) {
     const block = nextBlocks[index]
