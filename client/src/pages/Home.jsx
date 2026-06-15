@@ -210,7 +210,7 @@ function uploadPdfOnce(file, token, setUploadState) {
   })
 }
 
-function doUpload(file, getToken, setUploadState, navigate) {
+function doUpload(file, getToken, setUploadState, navigate, setParseStaleSinceMs) {
   return (async () => {
     const token = await getToken()
     if (!token) {
@@ -421,7 +421,7 @@ export default function Home() {
       clearTimeout(wakeTimer)
     }
 
-    await doUpload(selectedFile, getToken, setUploadState, navigate)
+    await doUpload(selectedFile, getToken, setUploadState, navigate, setParseStaleSinceMs)
   }, [getToken, navigate])
 
   const handleRetryParse = useCallback(async () => {
