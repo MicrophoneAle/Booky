@@ -8,6 +8,7 @@ import {
   lookupPrintedTocNumberLabel,
   lookupPrintedTocTitle,
 } from "./printedTocService.js"
+import { buildTocMetadataForChapterHeading } from "./stormlightEpigraphService.js"
 
 const SAFE_FALLBACK = Object.freeze({
   isChapterBoundary: false,
@@ -372,7 +373,7 @@ function analyzeFullPageSectionDivider(ocrMetadata, imageBlock = null) {
   if (ocrMetadata.boundaryKind === "interlude_divider") {
     return {
       isChapterBoundary: true,
-      includeInToc: false,
+      includeInToc: true,
       boundaryKind: "interlude_divider",
       title: ocrMetadata.title ?? null,
       number: ocrMetadata.number ?? null,
@@ -383,9 +384,37 @@ function analyzeFullPageSectionDivider(ocrMetadata, imageBlock = null) {
   return { ...SAFE_FALLBACK }
 }
 
+function enrichOcrMetadataFromPrintedToc(ocrMetadata, tocMetadata) {
+  if (!tocMetadata) {
+    return ocrMetadata ?? null
+  }
+  if (!ocrMetadata) {
+    return tocMetadata
+  }
+
+  const ocrTitle = parseTitleFromOcr(ocrMetadata.title)
+  const tocTitle = tocMetadata.title?.trim() || null
+  const ocrNumber = (ocrMetadata.number ?? "").trim()
+  const tocNumber = (tocMetadata.number ?? "").trim()
+  const ocrNumberValid = ocrNumber.length > 0 && !/^chapter$/i.test(ocrNumber)
+
+  const title = ocrTitle || tocTitle
+  const number = ocrNumberValid ? ocrNumber : tocNumber
+  const boundaryKind = ocrMetadata.boundaryKind ?? tocMetadata.boundaryKind
+
+  return {
+    boundaryKind,
+    number: number || null,
+    title: title || null,
+    rawText:
+      number && title
+        ? `${number}: ${title}`
+        : number || title || ocrMetadata.rawText || tocMetadata.rawText || null,
+  }
+}
+
 /**
- * Merge illustration OCR with optional printed TOC fallback (non-illustrated books only).
- * When printedToc is set, chapter titles come from header OCR — not the PDF contents page.
+ * Merge illustration OCR with printed TOC metadata (sequential cursor / death-rattle matching).
  */
 function mergeOcrIntoAnalysis(
   analysisResult,
@@ -444,7 +473,7 @@ function mergeOcrIntoAnalysis(
   const lookupSequence =
     boundaryKind === "interlude" ? interludeSequence : chapterSequence
 
-  if (!title && !printedToc) {
+  if (!title && printedToc) {
     title = lookupPrintedTocTitle(printedToc, {
       number,
       boundaryKind,
@@ -452,7 +481,7 @@ function mergeOcrIntoAnalysis(
     })
   }
 
-  if ((!number || /^chapter$/i.test(number)) && !printedToc) {
+  if ((!number || /^chapter$/i.test(number)) && printedToc) {
     const tocNumber = lookupPrintedTocNumberLabel(printedToc, {
       number,
       boundaryKind,
@@ -471,7 +500,7 @@ function mergeOcrIntoAnalysis(
   return {
     isChapterBoundary: true,
     includeInToc:
-      boundaryKind !== "interlude_divider" && boundaryKind !== "flashback",
+      boundaryKind !== "flashback",
     boundaryKind,
     number,
     title,
@@ -578,6 +607,8 @@ function analyzeChapterGraphicFromContext({
   printedToc = null,
   forceInterludeBoundary = false,
   precomputedPageCharCounts = null,
+  tocOrderCursor = null,
+  buildSequentialTocEntry = null,
 }) {
   if (!imageBlock || imageBlock.type !== "image_candidate") {
     return { ...SAFE_FALLBACK }
@@ -613,7 +644,28 @@ function analyzeChapterGraphicFromContext({
     }
   }
 
-  return mergeOcrIntoAnalysis(analysisResult, ocrMetadata, imageBlock.imageRole, {
+  let effectiveOcrMetadata = ocrMetadata
+
+  if (
+    printedToc &&
+    tocOrderCursor &&
+    buildSequentialTocEntry &&
+    imageBlock.imageRole === "chapter_heading"
+  ) {
+    const tocMetadata = buildTocMetadataForChapterHeading(
+      blocks,
+      blockIndex,
+      printedToc,
+      {
+        tocOrderCursor,
+        forceInterludeBoundary,
+        buildSequentialEntry: buildSequentialTocEntry,
+      }
+    )
+    effectiveOcrMetadata = enrichOcrMetadataFromPrintedToc(ocrMetadata, tocMetadata)
+  }
+
+  return mergeOcrIntoAnalysis(analysisResult, effectiveOcrMetadata, imageBlock.imageRole, {
     printedToc,
     chapterSequence,
     interludeSequence,

@@ -250,6 +250,16 @@ function buildTocMetadataForChapterHeading(
   return buildSequentialEntry?.() ?? null
 }
 
+function takeNextSequentialTocEntry(printedToc, tocOrderCursor) {
+  const entry = peekNextNonPartTocEntry(printedToc, tocOrderCursor)
+  if (!entry) {
+    return null
+  }
+
+  advanceTocCursorAfterEntry(printedToc, tocOrderCursor, entry)
+  return printedTocEntryToOcrMetadata(entry)
+}
+
 function supplementBannerlessPrintedChapters(blocks, printedToc) {
   if (!printedToc?.ordered?.length || !Array.isArray(blocks) || blocks.length === 0) {
     return blocks
@@ -474,4 +484,5 @@ export {
   lookupDeathRattleChapterEntry,
   matchDeathRattleChapterKey,
   supplementBannerlessPrintedChapters,
+  takeNextSequentialTocEntry,
 }

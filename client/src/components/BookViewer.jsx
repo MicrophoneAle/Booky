@@ -79,7 +79,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 55
+const PARSER_VERSION = 56
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -4832,9 +4832,13 @@ export default function BookViewer({
       pageNum: chapterPageMap[chapter.id] ?? null,
     }))
 
+    const textSectionEntries = textEntries.filter((entry) =>
+      /^(prelude|prologue|epilogue|part\b)/i.test(entry.title ?? "")
+    )
+
     const combined =
       imageEntries.length >= 10
-        ? imageEntries
+        ? [...textSectionEntries, ...imageEntries]
         : [...textEntries, ...imageEntries]
 
     return dedupeTocEntries(
@@ -4873,16 +4877,19 @@ export default function BookViewer({
   )
 
   const activeChapterId = useMemo(() => {
-    const entries = Object.entries(chapterPageMap)
-      .map(([id, pg]) => ({ id, pg }))
+    const entries = tocEntries
+      .filter((entry) => entry.pageNum != null)
+      .map((entry) => ({ id: entry.id, pg: entry.pageNum }))
       .sort((a, b) => a.pg - b.pg)
 
     let active = entries[0]?.id ?? null
     for (const entry of entries) {
-      if (currentPage >= entry.pg) active = entry.id
+      if (currentPage >= entry.pg) {
+        active = entry.id
+      }
     }
     return active
-  }, [currentPage, chapterPageMap])
+  }, [currentPage, tocEntries])
 
   useEffect(() => {
     const recomputeScale = () => {

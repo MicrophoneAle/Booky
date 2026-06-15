@@ -25,8 +25,12 @@ import {
   extractPrintedTocLookup,
   extractPrintedTocFromPageData,
 } from "./printedTocService.js"
+import {
+  supplementBannerlessPrintedChapters,
+  takeNextSequentialTocEntry,
+} from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 55
+const PARSER_VERSION = 56
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -4576,6 +4580,11 @@ async function finalizeIllustrationBlocks(
   )
 
   const finalizedByIndex = new Map()
+  const tocOrderCursor = printedToc ? { index: 0 } : null
+  const buildSequentialTocEntry =
+    printedToc && tocOrderCursor
+      ? () => takeNextSequentialTocEntry(printedToc, tocOrderCursor)
+      : null
 
   function reportCandidateProgress({
     block,
@@ -4656,6 +4665,8 @@ async function finalizeIllustrationBlocks(
         printedToc,
         forceInterludeBoundary,
         precomputedPageCharCounts: pageTextCharCounts,
+        tocOrderCursor,
+        buildSequentialTocEntry,
       })
 
       if (analysisResult.boundaryKind === "interlude_divider") {
@@ -7061,6 +7072,10 @@ async function parsePdfBuffer(
       end: PARSE_PROGRESS_ILLUSTRATION_END_PERCENT,
     },
   })
+
+  if (printedToc) {
+    blocks = supplementBannerlessPrintedChapters(blocks, printedToc)
+  }
 
   await terminateOcrWorker()
 

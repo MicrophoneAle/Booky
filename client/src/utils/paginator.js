@@ -182,13 +182,13 @@ export function formatImageChapterTocTitle(chapterMetadata) {
       return `${number}: ${title}`
     }
     if (title) {
-      return `${number || boundaryKind.charAt(0).toUpperCase() + boundaryKind.slice(1)}: ${title}`
+      return title
     }
     return number || boundaryKind.charAt(0).toUpperCase() + boundaryKind.slice(1)
   }
 
   if (boundaryKind === "interlude_divider") {
-    return title ? `${number || "Interludes"} — ${title}` : number || "Interludes"
+    return number || title || "Interludes"
   }
 
   if (boundaryKind === "part") {
@@ -244,10 +244,6 @@ export function extractImageChapterTocEntries(document) {
 
       const metadata = block.chapterMetadata ?? {}
       if (metadata.includeInToc === false) {
-        continue
-      }
-
-      if (metadata.boundaryKind === "interlude_divider") {
         continue
       }
 
