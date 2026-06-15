@@ -771,15 +771,16 @@ export default function Library() {
             </div>
 
             {loading && (
-              <div className="library-grid" aria-busy="true" aria-label="Loading library">
-                {Array.from({ length: 6 }, (_, index) => (
-                  <div key={index} className="library-card library-card--skeleton">
-                    <div className="skeleton-line skeleton-line--title" />
-                    <div className="skeleton-line skeleton-line--meta" />
-                    <div className="skeleton-line skeleton-line--date" />
-                    <div className="skeleton-line skeleton-line--button" />
-                  </div>
-                ))}
+              <div
+                className="library-loading"
+                aria-busy="true"
+                aria-live="polite"
+                aria-label="Loading library"
+              >
+                <p className="library-loading__text">Loading your library…</p>
+                <div className="library-loading__bar-wrap">
+                  <div className="library-loading__bar-fill" />
+                </div>
               </div>
             )}
 
