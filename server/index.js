@@ -66,6 +66,53 @@ const PARSE_STATUS = {
 }
 
 const backgroundParseInFlight = new Set()
+const MAX_CONCURRENT_FULL_PARSES = 1
+let fullParseActiveCount = 0
+const fullParseWaitQueue = []
+
+function isFullParseGateFree() {
+  return fullParseActiveCount < MAX_CONCURRENT_FULL_PARSES
+}
+
+function releaseFullParseSlot() {
+  fullParseActiveCount = Math.max(0, fullParseActiveCount - 1)
+  const next = fullParseWaitQueue.shift()
+  if (next) {
+    next()
+  }
+}
+
+function tryAcquireFullParseSlot() {
+  if (fullParseActiveCount >= MAX_CONCURRENT_FULL_PARSES) {
+    return null
+  }
+  fullParseActiveCount += 1
+  return releaseFullParseSlot
+}
+
+async function acquireFullParseSlot() {
+  while (fullParseActiveCount >= MAX_CONCURRENT_FULL_PARSES) {
+    await new Promise((resolve) => {
+      fullParseWaitQueue.push(resolve)
+    })
+  }
+  fullParseActiveCount += 1
+  return releaseFullParseSlot
+}
+
+async function runWithFullParseGate(task, { wait = true } = {}) {
+  const release = wait ? await acquireFullParseSlot() : tryAcquireFullParseSlot()
+  if (!release) {
+    return { skipped: true }
+  }
+
+  try {
+    return await task()
+  } finally {
+    release()
+  }
+}
+
 const documentParseProgress = new Map()
 const parseProgressDbWriteAt = new Map()
 const PARSE_PROGRESS_DB_WRITE_MS = 750
@@ -895,7 +942,7 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
 
       // Never block open on a full PDF re-parse (large books can take minutes).
       if (storedContent) {
-        void reparseDocumentInBackgroundFromRow(data)
+        void reparseDocumentInBackgroundFromRow(data, { skipIfParseBusy: true })
         res.json({
           success: true,
           document: buildOpenDocumentPayload(data, storedContent),
@@ -903,7 +950,7 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
         return
       }
 
-      void reparseDocumentInBackgroundFromRow(data)
+      void reparseDocumentInBackgroundFromRow(data, { skipIfParseBusy: false })
       res.json({
         success: true,
         document: {
@@ -4328,6 +4375,20 @@ function extractImageBlockPayload(block) {
   return block?.buffer ?? block?.imgData ?? ""
 }
 
+function releaseImageBlockBinary(block) {
+  if (!block || typeof block !== "object") {
+    return
+  }
+
+  block.buffer = null
+  if (block.imgData != null) {
+    if (typeof block.imgData === "object") {
+      block.imgData.buffer = null
+    }
+    block.imgData = null
+  }
+}
+
 function finalizeNonCandidateImageBlock(block) {
   const { isCandidate: _isCandidate, ...rest } = block
 
@@ -4435,8 +4496,9 @@ async function finalizeIllustrationBlocks(
         block.imageRole === "chapter_heading" &&
         shouldSkipChapterHeadingCandidate(block, blocks, index)
       ) {
-        finalizedByIndex.set(index, finalizeVisionImageBlock(block, SAFE_FALLBACK))
-        processedCandidates += 1
+      finalizedByIndex.set(index, finalizeVisionImageBlock(block, SAFE_FALLBACK))
+      releaseImageBlockBinary(blocks[index])
+      processedCandidates += 1
         continue
       }
 
@@ -4480,6 +4542,7 @@ async function finalizeIllustrationBlocks(
       }
 
       finalizedByIndex.set(index, finalizeVisionImageBlock(block, analysisResult))
+      releaseImageBlockBinary(blocks[index])
 
       processedCandidates += 1
       const illustrationPercent =
@@ -4660,7 +4723,7 @@ async function uploadBookAssets(bookId, blocks, { onProgress } = {}) {
   await runWithConcurrency(uploadableIndices, 5, async (index) => {
     const block = nextBlocks[index]
     const blockId = block.id ?? `image-${index + 1}`
-    const imageBuffer = base64PayloadToImageBuffer(extractImageBase64Payload(block))
+    let imageBuffer = base64PayloadToImageBuffer(extractImageBase64Payload(block))
 
     if (!imageBuffer || imageBuffer.length === 0) {
       console.warn("[uploadBookAssets]", {
@@ -4683,6 +4746,9 @@ async function uploadBookAssets(bookId, blocks, { onProgress } = {}) {
         message: error instanceof Error ? error.message : String(error),
       })
       throw error
+    } finally {
+      imageBuffer = null
+      releaseImageBlockBinary(block)
     }
 
     nextBlocks[index] = {
@@ -6508,60 +6574,60 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
   }, 2000)
 
   try {
-    const { parsedText, chapters, contentWithChapters, wordCount, bookTitle } =
-      await parsePdfBuffer(buffer, fileName, {
-        documentId,
-        onPageProcessed(pageNumber, totalPages) {
-          if (pageNumber % 100 === 0 || pageNumber === totalPages) {
-            console.log(
-              `Parsed ${pageNumber}/${totalPages} pages for document ${documentId}`
-            )
-          }
-        },
-        onProgress(progress) {
-          setDocumentParseProgress(documentId, progress)
-        },
+    await runWithFullParseGate(async () => {
+      const { parsedText, chapters, contentWithChapters, wordCount, bookTitle } =
+        await parsePdfBuffer(buffer, fileName, {
+          documentId,
+          onPageProcessed(pageNumber, totalPages) {
+            if (pageNumber % 100 === 0 || pageNumber === totalPages) {
+              console.log(
+                `Parsed ${pageNumber}/${totalPages} pages for document ${documentId}`
+              )
+            }
+          },
+          onProgress(progress) {
+            setDocumentParseProgress(documentId, progress)
+          },
+        })
+
+      setDocumentParseProgress(documentId, {
+        phase: "saving",
+        label: "Saving to your library",
+        current: 0,
+        total: 0,
+        percent: PARSE_PROGRESS_SAVE_PERCENT,
       })
 
-    setDocumentParseProgress(documentId, {
-      phase: "saving",
-      label: "Saving to your library",
-      current: 0,
-      total: 0,
-      percent: PARSE_PROGRESS_SAVE_PERCENT,
-    })
+      console.log(
+        `Background parse finished for ${documentId} (${parsedText.numpages} PDF pages, ${wordCount.toLocaleString()} words) in ${((Date.now() - parseStartedAt) / 1000).toFixed(1)}s`
+      )
 
-    console.log(
-      `Background parse finished for ${documentId} (${parsedText.numpages} PDF pages, ${wordCount.toLocaleString()} words) in ${((Date.now() - parseStartedAt) / 1000).toFixed(1)}s`
-    )
+      const documentUpdate = {
+        total_pages: parsedText.numpages,
+        chapters,
+        content: contentWithChapters,
+        word_count: wordCount,
+        parser_version: PARSER_VERSION,
+        parse_status: PARSE_STATUS.READY,
+        ...buildParsedCacheFields(),
+      }
 
-    const parseResult = { parsedText, chapters, contentWithChapters, wordCount, bookTitle }
+      if (bookTitle) {
+        documentUpdate.name = bookTitle
+      }
 
-    const documentUpdate = {
-      total_pages: parsedText.numpages,
-      chapters,
-      content: contentWithChapters,
-      word_count: wordCount,
-      parser_version: PARSER_VERSION,
-      parse_status: PARSE_STATUS.READY,
-      ...buildParsedCacheFields(),
-    }
+      const { error: updateError } = await supabase
+        .from("documents")
+        .update(documentUpdate)
+        .eq("id", documentId)
+        .eq("user_id", userId)
 
-    if (bookTitle) {
-      documentUpdate.name = bookTitle
-    }
+      if (updateError) {
+        throw new Error("Failed to save parsed document")
+      }
 
-    const { error: updateError } = await supabase
-      .from("documents")
-      .update(documentUpdate)
-      .eq("id", documentId)
-      .eq("user_id", userId)
-
-    if (updateError) {
-      throw new Error("Failed to save parsed document")
-    }
-
-    clearDocumentParseProgress(documentId)
+      clearDocumentParseProgress(documentId)
+    }, { wait: true })
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error(
@@ -6940,7 +7006,7 @@ function documentNeedsReparse(documentRow, { force = false } = {}) {
   return contentLooksStale(documentRow.content)
 }
 
-async function reparseDocumentInBackgroundFromRow(documentRow) {
+async function reparseDocumentInBackgroundFromRow(documentRow, { skipIfParseBusy = false } = {}) {
   const documentId = documentRow?.id
   if (!documentId || backgroundParseInFlight.has(documentId)) {
     return
@@ -6948,9 +7014,20 @@ async function reparseDocumentInBackgroundFromRow(documentRow) {
 
   backgroundParseInFlight.add(documentId)
   try {
-    await reparseDocumentIfOutdated(documentRow)
+    const result = await reparseDocumentIfOutdated(documentRow, {
+      waitForParseSlot: !skipIfParseBusy,
+    })
+    if (result?.skipped) {
+      console.log(
+        `[parseGate] Skipped background reparse for ${documentId} — another full parse is in progress`
+      )
+    }
   } catch (error) {
     console.error(`Background re-parse failed for ${documentId}:`, error)
+    await supabase
+      .from("documents")
+      .update({ parse_status: PARSE_STATUS.ERROR })
+      .eq("id", documentId)
   } finally {
     backgroundParseInFlight.delete(documentId)
   }
@@ -6961,38 +7038,60 @@ async function reparseDocumentIfOutdated(documentRow, options = {}) {
     return { updated: false }
   }
 
-  const { data: storageFile, error: downloadError } = await supabase.storage
-    .from("pdfs")
-    .download(documentRow.storage_path)
+  const waitForParseSlot = options.waitForParseSlot !== false
+  const gateOutcome = await runWithFullParseGate(
+    () => reparseDocumentIfOutdatedCore(documentRow),
+    { wait: waitForParseSlot }
+  )
 
-  if (downloadError || !storageFile) {
-    throw new Error("Failed to download source PDF")
+  if (gateOutcome?.skipped) {
+    return { updated: false, skipped: true }
   }
 
-  const fileBuffer = Buffer.from(await storageFile.arrayBuffer())
-  const parseResult = await parsePdfBuffer(fileBuffer, documentRow.name ?? "", {
-    documentId: documentRow.id,
-  })
-  const { parsedText, chapters, contentWithChapters, wordCount } = parseResult
+  return gateOutcome
+}
 
-  const { error: updateError } = await supabase
-    .from("documents")
-    .update({
-      total_pages: parsedText.numpages,
-      chapters,
-      content: contentWithChapters,
-      word_count: wordCount,
-      parser_version: PARSER_VERSION,
-      parse_status: PARSE_STATUS.READY,
-      ...buildParsedCacheFields(),
+async function reparseDocumentIfOutdatedCore(documentRow) {
+  try {
+    const { data: storageFile, error: downloadError } = await supabase.storage
+      .from("pdfs")
+      .download(documentRow.storage_path)
+
+    if (downloadError || !storageFile) {
+      throw new Error("Failed to download source PDF")
+    }
+
+    const fileBuffer = Buffer.from(await storageFile.arrayBuffer())
+    const parseResult = await parsePdfBuffer(fileBuffer, documentRow.name ?? "", {
+      documentId: documentRow.id,
     })
-    .eq("id", documentRow.id)
+    const { parsedText, chapters, contentWithChapters, wordCount } = parseResult
 
-  if (updateError) {
-    throw new Error("Failed to update document with re-parsed content")
+    const { error: updateError } = await supabase
+      .from("documents")
+      .update({
+        total_pages: parsedText.numpages,
+        chapters,
+        content: contentWithChapters,
+        word_count: wordCount,
+        parser_version: PARSER_VERSION,
+        parse_status: PARSE_STATUS.READY,
+        ...buildParsedCacheFields(),
+      })
+      .eq("id", documentRow.id)
+
+    if (updateError) {
+      throw new Error("Failed to update document with re-parsed content")
+    }
+
+    return { updated: true }
+  } catch (error) {
+    await supabase
+      .from("documents")
+      .update({ parse_status: PARSE_STATUS.ERROR })
+      .eq("id", documentRow.id)
+    throw error
   }
-
-  return { updated: true }
 }
 
 async function reparseOutdatedDocuments({ limit = 5 } = {}) {
@@ -7040,6 +7139,10 @@ async function reparseOutdatedDocuments({ limit = 5 } = {}) {
         id: documentRow.id,
         error: error instanceof Error ? error.message : "Re-parse failed",
       })
+      await supabase
+        .from("documents")
+        .update({ parse_status: PARSE_STATUS.ERROR })
+        .eq("id", documentRow.id)
     }
   }
 
@@ -7189,20 +7292,22 @@ if (isServerEntryPoint) {
   app.listen(PORT, () => {
     console.log(`Server on port ${PORT}`)
 
-    setTimeout(async () => {
-      try {
-        const summary = await reparseOutdatedDocuments({ limit: 3 })
-        if (summary.reparsed > 0 || summary.failed.length > 0) {
-          console.log(
-            `Background re-parse: ${summary.reparsed} updated, ${summary.failed.length} failed, ${summary.skipped} skipped`
+    if (process.env.BOOKY_REPARSE_ON_BOOT === "1") {
+      setTimeout(async () => {
+        try {
+          const summary = await reparseOutdatedDocuments({ limit: 3 })
+          if (summary.reparsed > 0 || summary.failed.length > 0) {
+            console.log(
+              `Background re-parse: ${summary.reparsed} updated, ${summary.failed.length} failed, ${summary.skipped} skipped`
+            )
+          }
+        } catch (error) {
+          console.error(
+            "Background re-parse failed:",
+            error instanceof Error ? error.message : "Unknown error"
           )
         }
-      } catch (error) {
-        console.error(
-          "Background re-parse failed:",
-          error instanceof Error ? error.message : "Unknown error"
-        )
-      }
-    }, 5_000)
+      }, 5_000)
+    }
   })
 }
