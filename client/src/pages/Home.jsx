@@ -13,6 +13,7 @@ import {
   getCombinedProcessingPercent,
   getParsePipelineStepStates,
   getParseProgressDetail,
+  getParseProgressDeadHint,
   getParseProgressHeadline,
   getParseProgressStaleHint,
   mergePollProgressUpdate,
@@ -98,9 +99,11 @@ async function fetchWithRetry(url, options, retries = 4) {
   throw lastError instanceof Error ? lastError : new Error("Failed to fetch")
 }
 
-async function pollDocumentParseStatus(documentId, getToken, onProgress) {
+async function pollDocumentParseStatus(documentId, getToken, onProgress, onStale) {
   const startedAt = Date.now()
   let lastProgress = null
+  let lastUpdatedAt = null
+  let lastUpdatedAtChangeAt = Date.now()
 
   while (Date.now() - startedAt < PARSE_POLL_TIMEOUT_MS) {
     const token = await getToken()
@@ -141,6 +144,14 @@ async function pollDocumentParseStatus(documentId, getToken, onProgress) {
 
     if (lastProgress) {
       onProgress(lastProgress)
+
+      const progressUpdatedAt = lastProgress.updatedAt ?? null
+      if (progressUpdatedAt !== lastUpdatedAt) {
+        lastUpdatedAt = progressUpdatedAt
+        lastUpdatedAtChangeAt = Date.now()
+      } else {
+        onStale?.(Date.now() - lastUpdatedAtChangeAt)
+      }
     }
 
     if (data.parse_status === "ready") {
@@ -265,18 +276,25 @@ function doUpload(file, getToken, setUploadState, navigate) {
           }))
 
           try {
-            await pollDocumentParseStatus(documentId, getToken, (parseProgress) => {
-              setUploadState((state) => ({
-                ...state,
-                phase: "processing",
-                parseProgress,
-                progress: overallUploadProgress(
-                  "processing",
-                  100,
-                  parseProgress
-                ),
-              }))
-            })
+            await pollDocumentParseStatus(
+              documentId,
+              getToken,
+              (parseProgress) => {
+                setUploadState((state) => ({
+                  ...state,
+                  phase: "processing",
+                  parseProgress,
+                  progress: overallUploadProgress(
+                    "processing",
+                    100,
+                    parseProgress
+                  ),
+                }))
+              },
+              (staleSinceMs) => {
+                setParseStaleSinceMs(staleSinceMs)
+              }
+            )
 
             setUploadState((state) => ({
               ...state,
@@ -332,6 +350,8 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false)
   const [uploadState, setUploadState] = useState(EMPTY_UPLOAD_STATE)
   const [showStaleParseHint, setShowStaleParseHint] = useState(false)
+  const [parseStaleSinceMs, setParseStaleSinceMs] = useState(0)
+  const [retryingParse, setRetryingParse] = useState(false)
   const parseProgressRef = useRef({ key: "", at: Date.now() })
 
   useEffect(() => {
@@ -361,6 +381,8 @@ export default function Home() {
 
   const startUpload = useCallback(async (selectedFile) => {
     setFile(selectedFile)
+    setParseStaleSinceMs(0)
+    setRetryingParse(false)
     setUploadState({
       phase: "waking",
       progress: 0,
@@ -401,6 +423,73 @@ export default function Home() {
 
     await doUpload(selectedFile, getToken, setUploadState, navigate)
   }, [getToken, navigate])
+
+  const handleRetryParse = useCallback(async () => {
+    const documentId = uploadState.documentId
+    if (!documentId || retryingParse) {
+      return
+    }
+
+    setRetryingParse(true)
+    setParseStaleSinceMs(0)
+
+    try {
+      const token = await getToken()
+      if (!token) {
+        throw new Error("Unauthorized")
+      }
+
+      const response = await fetchWithRetry(
+        `${API_URL}/documents/${encodeURIComponent(documentId)}/retry-parse`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error ?? "Retry failed")
+      }
+
+      await pollDocumentParseStatus(
+        documentId,
+        getToken,
+        (parseProgress) => {
+          setUploadState((state) => ({
+            ...state,
+            phase: "processing",
+            parseProgress,
+            progress: overallUploadProgress("processing", 100, parseProgress),
+          }))
+        },
+        (staleSinceMs) => {
+          setParseStaleSinceMs(staleSinceMs)
+        }
+      )
+
+      setUploadState((state) => ({
+        ...state,
+        phase: "done",
+        progress: 100,
+        parseProgress: { phase: "ready", current: 0, total: 0, percent: 100 },
+      }))
+      setTimeout(() => navigate(`/read/${documentId}`), 600)
+    } catch (retryError) {
+      const message =
+        retryError instanceof Error ? retryError.message : "Retry failed"
+      setUploadState((state) => ({
+        ...state,
+        phase: "error",
+        errorMessage: message,
+      }))
+    } finally {
+      setRetryingParse(false)
+    }
+  }, [getToken, navigate, retryingParse, uploadState.documentId])
 
   const handleInvalidFile = useCallback(() => {
     setFile(null)
@@ -576,6 +665,21 @@ export default function Home() {
                       <p className="home__upload-sublabel home__upload-sublabel--stale">
                         {getParseProgressStaleHint(uploadState.parseProgress)}
                       </p>
+                    ) : null}
+                    {getParseProgressDeadHint(parseStaleSinceMs) ? (
+                      <>
+                        <p className="home__upload-sublabel home__upload-sublabel--stale">
+                          {getParseProgressDeadHint(parseStaleSinceMs)}
+                        </p>
+                        <button
+                          type="button"
+                          className="home__upload-retry"
+                          onClick={handleRetryParse}
+                          disabled={retryingParse}
+                        >
+                          {retryingParse ? "Retrying…" : "Retry processing"}
+                        </button>
+                      </>
                     ) : null}
                   </>
                 ) : (

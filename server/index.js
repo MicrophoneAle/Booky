@@ -122,6 +122,34 @@ const PDF_IMAGE_EXTRACTION_CONCURRENCY = 4
 const EXTRACT_PROGRESS_TEXT_SHARE = 0.62
 const EXTRACT_PROGRESS_IMAGE_SHARE = 0.38
 
+function resolvePdfExtractionConcurrency(totalPages) {
+  const configuredText = Number(process.env.BOOKY_TEXT_EXTRACTION_CONCURRENCY)
+  const configuredImage = Number(process.env.BOOKY_IMAGE_EXTRACTION_CONCURRENCY)
+  if (Number.isFinite(configuredText) && configuredText > 0) {
+    return {
+      text: configuredText,
+      image:
+        Number.isFinite(configuredImage) && configuredImage > 0
+          ? configuredImage
+          : PDF_IMAGE_EXTRACTION_CONCURRENCY,
+    }
+  }
+
+  // Large illustrated PDFs on Render free tier (512MB): high concurrency OOMs mid-extract.
+  if (totalPages > 900) {
+    return { text: 4, image: 2 }
+  }
+
+  if (totalPages > 400) {
+    return { text: 6, image: 3 }
+  }
+
+  return {
+    text: PDF_TEXT_EXTRACTION_CONCURRENCY,
+    image: PDF_PAGE_EXTRACTION_CONCURRENCY,
+  }
+}
+
 const PARSE_PROGRESS_EXTRACT_MAX_PERCENT = 58
 const PARSE_PROGRESS_STRUCTURE_PERCENT = 62
 const PARSE_PROGRESS_ILLUSTRATION_START_PERCENT = 63
@@ -1037,6 +1065,60 @@ app.post("/documents/:id/reparse", requireAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Failed to re-parse document.",
+    })
+  }
+})
+
+app.post("/documents/:id/retry-parse", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const { data, error } = await supabase
+      .from("documents")
+      .select("id, name, storage_path, parse_status")
+      .eq("id", id)
+      .eq("user_id", req.userId)
+      .single()
+
+    if (error || !data) {
+      res.status(404).json({ success: false, error: "Document not found" })
+      return
+    }
+
+    if (!data.storage_path) {
+      res.status(422).json({ success: false, error: "No source PDF available to retry." })
+      return
+    }
+
+    const parseStatus = data.parse_status ?? PARSE_STATUS.READY
+    if (parseStatus === PARSE_STATUS.READY) {
+      res.json({ success: true, alreadyReady: true })
+      return
+    }
+
+    if (backgroundParseInFlight.has(id)) {
+      res.json({ success: true, alreadyRunning: true })
+      return
+    }
+
+    await supabase
+      .from("documents")
+      .update({
+        parse_status: PARSE_STATUS.PENDING,
+        parse_progress: null,
+      })
+      .eq("id", id)
+      .eq("user_id", req.userId)
+
+    setImmediate(() => {
+      void parseDocumentInBackground(id, req.userId, data.storage_path, data.name ?? "")
+    })
+
+    res.json({ success: true, retrying: true })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to retry processing.",
     })
   }
 })
@@ -4998,10 +5080,8 @@ async function extractPdfStructure(
 
   const pagesBeforeFilter = new Array(totalPages)
   const pageImageCandidates = new Array(totalPages)
-  const textConcurrency =
-    totalPages > 400 ? PDF_TEXT_EXTRACTION_CONCURRENCY : PDF_PAGE_EXTRACTION_CONCURRENCY
-  const imageConcurrency =
-    totalPages > 400 ? PDF_IMAGE_EXTRACTION_CONCURRENCY : PDF_PAGE_EXTRACTION_CONCURRENCY
+  const { text: textConcurrency, image: imageConcurrency } =
+    resolvePdfExtractionConcurrency(totalPages)
 
   try {
     for (
@@ -5010,6 +5090,15 @@ async function extractPdfStructure(
       batchStart += textConcurrency
     ) {
       const batchEnd = Math.min(batchStart + textConcurrency - 1, totalPages)
+
+      if (onPageProcessed) {
+        onPageProcessed(batchStart, totalPages, {
+          extractSubphase: "text",
+          batchEnd,
+          batchStarted: true,
+        })
+      }
+
       const batchPageNumbers = []
 
       for (let pageNumber = batchStart; pageNumber <= batchEnd; pageNumber += 1) {
@@ -5045,14 +5134,19 @@ async function extractPdfStructure(
       batchStart += imageConcurrency
     ) {
       const batchEnd = Math.min(batchStart + imageConcurrency - 1, totalPages)
+
+      if (onPageProcessed) {
+        onPageProcessed(batchStart, totalPages, {
+          extractSubphase: "images",
+          batchEnd,
+          batchStarted: true,
+        })
+      }
+
       const batchPageNumbers = []
 
       for (let pageNumber = batchStart; pageNumber <= batchEnd; pageNumber += 1) {
         batchPageNumbers.push(pageNumber)
-      }
-
-      if (onPageProcessed && batchStart === 1) {
-        onPageProcessed(0, totalPages, { extractSubphase: "images" })
       }
 
       const batchResults = await Promise.all(
@@ -6599,7 +6693,7 @@ function buildOpenDocumentPayload(documentRow, cached) {
   }
 }
 
-async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
+async function parseDocumentInBackground(documentId, userId, storagePath, fileName) {
   if (backgroundParseInFlight.has(documentId)) {
     return
   }
@@ -6622,6 +6716,16 @@ async function parseDocumentInBackground(documentId, userId, buffer, fileName) {
 
   try {
     await runWithFullParseGate(async () => {
+      const { data: storageFile, error: downloadError } = await supabase.storage
+        .from("pdfs")
+        .download(storagePath)
+
+      if (downloadError || !storageFile) {
+        throw new Error("Failed to download source PDF")
+      }
+
+      const buffer = Buffer.from(await storageFile.arrayBuffer())
+
       const { parsedText, chapters, contentWithChapters, wordCount, bookTitle } =
         await parsePdfBuffer(buffer, fileName, {
           documentId,
@@ -6778,17 +6882,25 @@ async function parsePdfBuffer(
     } = await extractPdfStructure(buffer, {
       pdf,
       puaReplacementMap,
-      onPageProcessed(pageNumber, totalPages, { extractSubphase = "text" } = {}) {
+      onPageProcessed(pageNumber, totalPages, {
+        extractSubphase = "text",
+        batchEnd,
+        batchStarted = false,
+      } = {}) {
         onPageProcessed?.(pageNumber, totalPages)
 
-        const label =
+        let label =
           extractSubphase === "filtering"
             ? "Cleaning extracted text"
             : extractSubphase === "text_complete"
               ? "Text scan complete"
               : extractSubphase === "images"
-                ? "Scanning page artwork"
-                : "Reading PDF pages"
+                ? batchStarted && batchEnd && batchEnd > pageNumber
+                  ? `Scanning artwork on pages ${pageNumber}–${batchEnd}`
+                  : "Scanning page artwork"
+                : batchStarted && batchEnd && batchEnd > pageNumber
+                  ? `Reading pages ${pageNumber}–${batchEnd}`
+                  : "Reading PDF pages"
 
         reportProgress({
           phase: "extracting",
@@ -7261,13 +7373,12 @@ app.post("/upload", requireAuth, (req, res) => {
         return
       }
 
-      const fileBuffer = uploadedFile.buffer
       const documentId = insertedDocument.id
       const userId = req.userId
       const originalName = uploadedFile.originalname
 
       setImmediate(() => {
-        void parseDocumentInBackground(documentId, userId, fileBuffer, originalName)
+        void parseDocumentInBackground(documentId, userId, storageData.path, originalName)
       })
 
       res.json({

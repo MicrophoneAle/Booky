@@ -435,6 +435,15 @@ export function getParseProgressDetail(parseProgress) {
 
   if (phase === "extracting") {
     const subphase = parseProgress.extractSubphase ?? "text"
+    const { current, total } = getPhaseCounters(parseProgress)
+
+    if (parseProgress.label && subphase !== "filtering") {
+      if (total > 0) {
+        const pct = Math.round((current / total) * 100)
+        return `${parseProgress.label} (${pct}% of PDF scan).`
+      }
+      return parseProgress.label
+    }
 
     if (subphase === "filtering" && total > 0) {
       const pct = Math.round((current / total) * 100)
@@ -606,10 +615,6 @@ export function getParseProgressStaleHint(parseProgress) {
   }
 
   const subphase = parseProgress.extractSubphase ?? "text"
-  if (subphase === "images" || subphase === "filtering" || subphase === "text_complete") {
-    return null
-  }
-
   const total = parseProgress.pageTotal ?? parseProgress.total ?? 0
   const current = parseProgress.pageCurrent ?? parseProgress.current ?? 0
 
@@ -617,5 +622,25 @@ export function getParseProgressStaleHint(parseProgress) {
     return null
   }
 
-  return `Large books take a few minutes on the server. The page counter may pause while a complex spread is scanned — still working on page ${current} of ${total}.`
+  if (subphase === "images") {
+    return `Scanning artwork on a ${total.toLocaleString()}-page book can pause on image-heavy spreads — still working (page ${current} of ${total}).`
+  }
+
+  if (subphase === "filtering" || subphase === "text_complete") {
+    return null
+  }
+
+  return `Large books take several minutes. The counter may pause on complex pages — still working on page ${current} of ${total}.`
+}
+
+/**
+ * Shown when server progress timestamps stop advancing (likely OOM restart on Render).
+ * @param {number} staleSinceMs - milliseconds since last updatedAt change
+ */
+export function getParseProgressDeadHint(staleSinceMs) {
+  if (staleSinceMs < 90_000) {
+    return null
+  }
+
+  return "Processing may have stopped (the server can restart on large books). Use Retry below or upload again."
 }
