@@ -2,6 +2,7 @@
 export const PARSE_PIPELINE_STEPS = [
   { phase: "starting", label: "Open PDF" },
   { phase: "extracting", label: "Read pages" },
+  { phase: "structuring", label: "Layout" },
   { phase: "classifying_illustrations", label: "Classify art" },
   { phase: "ocr_illustrations", label: "Read headers" },
   { phase: "uploading_assets", label: "Upload art" },
@@ -23,9 +24,6 @@ const PHASE_HEADLINES = {
 }
 
 function pipelinePhaseForDisplay(phase) {
-  if (phase === "structuring") {
-    return "classifying_illustrations"
-  }
   return phase
 }
 
@@ -209,7 +207,11 @@ function mergeCounterSnapshot(previous, update) {
     )
   }
   if (effectivePhase === "ocr_illustrations") {
-    counters.ocr = bumpCounter(counters.ocr, update?.current, update?.total)
+    counters.ocr = bumpCounter(
+      counters.ocr,
+      update?.ocrCurrent ?? update?.current,
+      update?.ocrTotal ?? update?.total
+    )
     counters.illustrations = bumpCounter(
       counters.illustrations,
       update?.illustrationCurrent,
@@ -246,7 +248,16 @@ export function getPhaseCounters(parseProgress) {
   if (phase === "extracting" || phase === "structuring") {
     return counters.pages
   }
-  return activeCountersForPhase(phase, counters)
+  if (phase === "classifying_illustrations") {
+    return counters.illustrations
+  }
+  if (phase === "ocr_illustrations") {
+    return counters.ocr
+  }
+  if (phase === "uploading_assets") {
+    return counters.uploads
+  }
+  return { current: 0, total: 0 }
 }
 
 /**
@@ -445,15 +456,23 @@ export function getParseProgressDetail(parseProgress) {
   }
 
   if (phase === "classifying_illustrations") {
+    const { current, total } = getPhaseCounters(parseProgress)
     if (total > 0) {
-      return `Classifying artwork ${current} of ${total}.`
+      const pct = Math.round((current / total) * 100)
+      return `Classifying artwork ${current} of ${total} (${pct}%).`
     }
     return "Identifying chapter headers and illustrations."
   }
 
   if (phase === "ocr_illustrations") {
+    const { current, total } = getPhaseCounters(parseProgress)
+    const illustrations = resolveCounters(parseProgress).illustrations
     if (total > 0) {
-      return `Reading chapter header ${current} of ${total}.`
+      const pct = Math.round((current / total) * 100)
+      if (illustrations.total > 0) {
+        return `Reading chapter header ${current} of ${total} (${pct}%) — artwork ${illustrations.current} of ${illustrations.total} processed.`
+      }
+      return `Reading chapter header ${current} of ${total} (${pct}%).`
     }
     return "Extracting chapter numbers and titles from header artwork."
   }
@@ -561,11 +580,12 @@ export function getCombinedProcessingPercent(
   }
 
   const itemPhases = {
+    structuring: { start: 58, end: 63 },
     classifying_illustrations: { start: 63, end: 80 },
     ocr_illustrations: { start: 63, end: 80 },
     uploading_assets: { start: 80, end: 93 },
   }
-  const itemBand = itemPhases[displayPhase]
+  const itemBand = itemPhases[rawPhase] ?? itemPhases[displayPhase]
 
   if (itemBand && total > 0 && current <= total) {
     const fraction = current / total

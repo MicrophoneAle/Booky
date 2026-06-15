@@ -267,7 +267,11 @@ function mergeParseProgressSnapshot(previous, patch) {
   }
 
   if (effectivePhase === "ocr_illustrations") {
-    counters.ocr = bumpParseCounter(counters.ocr, patch.current, patch.total)
+    counters.ocr = bumpParseCounter(
+      counters.ocr,
+      patch.ocrCurrent ?? patch.current,
+      patch.ocrTotal ?? patch.total
+    )
     if (patch.illustrationTotal > 0 || typeof patch.illustrationCurrent === "number") {
       counters.illustrations = bumpParseCounter(
         counters.illustrations,
@@ -327,6 +331,10 @@ function setDocumentParseProgress(documentId, progress) {
     (merged?.phase === "extracting" || merged?.phase === "structuring") &&
     typeof merged.pageCurrent === "number" &&
     merged.pageCurrent !== previous?.pageCurrent
+  const ocrChanged =
+    merged?.phase === "ocr_illustrations" &&
+    typeof merged.ocrCurrent === "number" &&
+    merged.ocrCurrent !== previous?.ocrCurrent
   const illustrationChanged =
     (merged?.phase === "classifying_illustrations" ||
       merged?.phase === "ocr_illustrations") &&
@@ -339,6 +347,7 @@ function setDocumentParseProgress(documentId, progress) {
     extractSubphaseChanged ||
     pageChanged ||
     illustrationChanged ||
+    ocrChanged ||
     merged?.phase === "extracting" ||
     merged?.phase === "error" ||
     merged?.phase === "saving" ||
@@ -4486,6 +4495,46 @@ async function finalizeIllustrationBlocks(
 
   const finalizedByIndex = new Map()
 
+  function reportCandidateProgress({
+    block,
+    shouldRunOcr,
+    imageBuffer,
+  }) {
+    const illustrationPercent =
+      illustrationProgressRange.start +
+      Math.round((processedCandidates / Math.max(1, totalCandidates)) * illustrationSpan)
+
+    if (shouldRunOcr && imageBuffer?.length) {
+      onProgress?.({
+        phase: "ocr_illustrations",
+        label:
+          block.imageRole === "chapter_heading"
+            ? "Reading chapter headers from artwork"
+            : "Reading section dividers from artwork",
+        current: ocrCompleted,
+        total: Math.max(plannedOcrTotal, ocrCompleted),
+        percent: illustrationPercent,
+        usingPrintedToc: Boolean(printedToc),
+        illustrationCurrent: processedCandidates,
+        illustrationTotal: totalCandidates,
+        ocrCurrent: ocrCompleted,
+        ocrTotal: Math.max(plannedOcrTotal, ocrCompleted),
+      })
+      return
+    }
+
+    onProgress?.({
+      phase: "classifying_illustrations",
+      label: "Classifying artwork",
+      current: processedCandidates,
+      total: totalCandidates,
+      percent: illustrationPercent,
+      usingPrintedToc: Boolean(printedToc),
+      illustrationCurrent: processedCandidates,
+      illustrationTotal: totalCandidates,
+    })
+  }
+
   try {
     for (const { block, index } of candidateEntries) {
       const imageBuffer = base64PayloadToImageBuffer(extractImageBlockPayload(block))
@@ -4496,9 +4545,14 @@ async function finalizeIllustrationBlocks(
         block.imageRole === "chapter_heading" &&
         shouldSkipChapterHeadingCandidate(block, blocks, index)
       ) {
-      finalizedByIndex.set(index, finalizeVisionImageBlock(block, SAFE_FALLBACK))
-      releaseImageBlockBinary(blocks[index])
-      processedCandidates += 1
+        finalizedByIndex.set(index, finalizeVisionImageBlock(block, SAFE_FALLBACK))
+        releaseImageBlockBinary(blocks[index])
+        processedCandidates += 1
+        reportCandidateProgress({
+          block,
+          shouldRunOcr: false,
+          imageBuffer: null,
+        })
         continue
       }
 
@@ -4545,36 +4599,24 @@ async function finalizeIllustrationBlocks(
       releaseImageBlockBinary(blocks[index])
 
       processedCandidates += 1
-      const illustrationPercent =
-        illustrationProgressRange.start +
-        Math.round((processedCandidates / Math.max(1, totalCandidates)) * illustrationSpan)
+      reportCandidateProgress({
+        block,
+        shouldRunOcr,
+        imageBuffer,
+      })
+    }
 
-      if (shouldRunOcr && imageBuffer?.length) {
-        onProgress?.({
-          phase: "ocr_illustrations",
-          label:
-            block.imageRole === "chapter_heading"
-              ? "Reading chapter headers from artwork"
-              : "Reading section dividers from artwork",
-          current: ocrCompleted,
-          total: Math.max(plannedOcrTotal, ocrCompleted),
-          percent: illustrationPercent,
-          usingPrintedToc: Boolean(printedToc),
-          illustrationCurrent: processedCandidates,
-          illustrationTotal: totalCandidates,
-        })
-      } else {
-        onProgress?.({
-          phase: "classifying_illustrations",
-          label: "Classifying artwork",
-          current: processedCandidates,
-          total: totalCandidates,
-          percent: illustrationPercent,
-          usingPrintedToc: Boolean(printedToc),
-          illustrationCurrent: processedCandidates,
-          illustrationTotal: totalCandidates,
-        })
-      }
+    if (totalCandidates > 0) {
+      onProgress?.({
+        phase: "classifying_illustrations",
+        label: "Classifying artwork",
+        current: totalCandidates,
+        total: totalCandidates,
+        percent: illustrationProgressRange.end,
+        usingPrintedToc: Boolean(printedToc),
+        illustrationCurrent: totalCandidates,
+        illustrationTotal: totalCandidates,
+      })
     }
   } finally {
     await terminateOcrWorker()
