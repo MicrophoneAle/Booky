@@ -1179,8 +1179,22 @@
 }
 
 .book-page__illustration--full-page {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+.book-page__illustration--full-page .book-page__illustration-wrapper {
+  flex: 0 0 auto;
+}
+
+.book-page__illustration--full-page .book-page__illustration-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .book-page__illustration--chapter-heading + .book-page__text,

@@ -126,16 +126,79 @@ export function normalizeImageDimensions(source) {
   }
 }
 
+export function isFullPageIllustrationItem(item) {
+  if (item?.imageRole === "full_page_illustration") {
+    return true
+  }
+
+  if (item?.isChapterBoundary) {
+    return false
+  }
+
+  const coords = item?.coordinates ?? {}
+  const pageHeight = coords.pageHeight ?? 0
+  const pageWidth = coords.pageWidth ?? 0
+  const height = coords.height ?? 0
+  const width = coords.width ?? 0
+  if (!pageHeight || !pageWidth || !height || !width) {
+    return false
+  }
+
+  const heightRatio = height / pageHeight
+  const widthRatio = width / pageWidth
+  const aspectRatio = width / height
+
+  if (
+    widthRatio >= 0.33 &&
+    heightRatio >= 0.1 &&
+    heightRatio <= 0.28 &&
+    aspectRatio >= 1.45
+  ) {
+    return false
+  }
+
+  return heightRatio >= 0.4 && widthRatio >= 0.35 && aspectRatio >= 0.55 && aspectRatio <= 1.35
+}
+
 export function resolveImageLayoutMetrics(
   item,
   { contentMaxHeight = 0, contentWidth = 328 } = {}
 ) {
   const dimensions = normalizeImageDimensions(item)
   const isChapterHeading = item?.imageRole === "chapter_heading"
+  const isFullPageIllustration = isFullPageIllustrationItem(item)
+  const safeContentWidth = Math.max(120, contentWidth)
+
+  if (isFullPageIllustration && contentMaxHeight > 0) {
+    const maxHeight = Math.round(contentMaxHeight)
+    const widthBasedHeight = safeContentWidth / dimensions.aspectRatio
+    let displayWidth = safeContentWidth
+    let displayHeight = widthBasedHeight
+
+    if (displayHeight > maxHeight) {
+      displayHeight = maxHeight
+      displayWidth = maxHeight * dimensions.aspectRatio
+    }
+
+    const wrapperStyle = {
+      width: `${Math.round(displayWidth)}px`,
+      maxWidth: "100%",
+      height: `${Math.round(displayHeight)}px`,
+      maxHeight: `${maxHeight}px`,
+      marginLeft: "auto",
+      marginRight: "auto",
+    }
+
+    return {
+      dimensions,
+      wrapperStyle,
+      measuredHeight: Math.max(120, Math.round(displayHeight)),
+    }
+  }
+
   const maxHeightFraction = isChapterHeading ? 0.42 : 0.7
   const maxHeightCap =
     contentMaxHeight > 0 ? Math.round(contentMaxHeight * maxHeightFraction) : null
-  const safeContentWidth = Math.max(120, contentWidth)
   let naturalHeight = safeContentWidth / dimensions.aspectRatio
 
   const wrapperStyle = {

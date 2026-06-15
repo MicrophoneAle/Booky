@@ -22,6 +22,7 @@ import {
   groupFrontMatterPlacementUnits,
   inferBlockIsChapterStart,
   isChapterBoundaryText,
+  isFullPageIllustrationItem,
   normalizeImageDimensions,
   resolveImageLayoutMetrics,
   CHAPTER_WITH_SUBTITLE_REGEX,
@@ -2049,7 +2050,7 @@ function illustrationClassNames(item) {
     item?.imageRole === "chapter_heading"
       ? "book-page__illustration--chapter-heading"
       : "",
-    item?.imageRole === "full_page_illustration"
+    isFullPageIllustrationItem(item)
       ? "book-page__illustration--full-page"
       : "",
     item?.isChapterBoundary ? "book-page__illustration--chapter-boundary" : "",
@@ -2404,7 +2405,7 @@ function isChapterHeadingImagePlaceable(placeable) {
 function isFullPageIllustrationPlaceable(placeable) {
   return (
     placeable.type === "image" &&
-    placeable.item?.imageRole === "full_page_illustration"
+    isFullPageIllustrationItem(placeable.item)
   )
 }
 
