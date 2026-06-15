@@ -30,7 +30,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 62
+const PARSER_VERSION = 63
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -4592,6 +4592,20 @@ async function finalizeIllustrationBlocks(
   const finalizedByIndex = new Map()
   const tocOrderCursor = printedToc ? { index: 0 } : null
   const assignedBoundaryKeys = new Set()
+
+  // If the prelude was already emitted as a text heading upstream, don't let a
+  // banner re-emit it. boundaryDedupeKey dedupes prelude/prologue/epilogue by kind.
+  if (
+    blocks.some(
+      (candidate) =>
+        candidate?.type !== "image" &&
+        candidate?.type !== "image_candidate" &&
+        /^Prelude to the Stormlight Archive$/i.test((candidate?.text ?? "").trim())
+    )
+  ) {
+    assignedBoundaryKeys.add("prelude")
+  }
+
   let pastEpilogue = false
   const buildSequentialTocEntry =
     printedToc && tocOrderCursor
@@ -4665,7 +4679,7 @@ async function finalizeIllustrationBlocks(
   try {
     for (const { block, index } of candidateEntries) {
       const imageBuffer = base64PayloadToImageBuffer(extractImageBlockPayload(block))
-      const forceInterludeBoundary =
+      let forceInterludeBoundary =
         pendingInterludes > 0 && isChapterBannerCandidate(block)
 
       if (
@@ -4704,6 +4718,18 @@ async function finalizeIllustrationBlocks(
           resolveIllustrationOcrRole(block)
         )
         ocrCompleted += 1
+      }
+
+      // A confident chapter plaque (1 to 75, no I- prefix) overrides interlude
+      // forcing and ends the run, so a failed part-divider OCR cannot turn the
+      // first chapter of a new part into an interlude. Interlude and section
+      // plaques (I-3, PROLOGUE, ...) return null here and stay forced.
+      if (
+        forceInterludeBoundary &&
+        extractChapterKeyFromOcrNumber(ocrMetadata?.number)
+      ) {
+        forceInterludeBoundary = false
+        pendingInterludes = 0
       }
 
       const tocCursorBefore = tocOrderCursor?.index ?? 0
@@ -4745,16 +4771,14 @@ async function finalizeIllustrationBlocks(
       } else if (finalResult.boundaryKind === "chapter") {
         chapterSequence += 1
         pendingInterludes = 0
-      } else if (
-        finalResult.boundaryKind === "prelude" ||
-        finalResult.boundaryKind === "prologue" ||
-        finalResult.boundaryKind === "epilogue"
-      ) {
-        chapterSequence += 1
+      } else if (finalResult.boundaryKind === "prelude") {
+        pendingInterludes = 0
+      } else if (finalResult.boundaryKind === "prologue") {
         pendingInterludes = 0
       } else if (finalResult.boundaryKind === "part") {
         pendingInterludes = 0
       } else if (finalResult.boundaryKind === "epilogue") {
+        pendingInterludes = 0
         pastEpilogue = true
       }
 
@@ -5527,6 +5551,16 @@ function isChapterHeading(block) {
   }
 
   const text = block.text.trim()
+
+  if (/^Prelude to the Stormlight Archive$/i.test(text)) {
+    return true
+  }
+  if (/^Prologue:\s+/i.test(text)) {
+    return true
+  }
+  if (/^Epilogue:\s+/i.test(text)) {
+    return true
+  }
 
   if (CHAPTER_WITH_SUBTITLE_REGEX.test(text)) {
     return true

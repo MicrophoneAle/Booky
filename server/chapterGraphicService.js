@@ -256,10 +256,41 @@ function isChapterArchSpreadContinuation(blocks, blockIndex, imageBlock) {
     return false
   }
 
-  return (
-    isTallChapterArchBannerBlock(imageBlock) &&
-    isTallChapterArchBannerBlock(previousImage)
-  )
+  if (
+    !isTallChapterArchBannerBlock(imageBlock) ||
+    !isTallChapterArchBannerBlock(previousImage)
+  ) {
+    return false
+  }
+
+  // Two tall arches on consecutive pages are usually two different chapters,
+  // not one image split across the fold. Only treat this as a continuation when
+  // the geometry matches a real across-the-fold spread: the previous half hugs
+  // the right page edge, this half hugs the left edge, and both are the same
+  // height. Independent centered chapter/interlude banners never satisfy this,
+  // so they survive and get their own boundary.
+  const prev = previousImage.coordinates ?? {}
+  const cur = imageBlock.coordinates ?? {}
+
+  const prevPageWidth = prev.pageWidth ?? 0
+  const curPageWidth = cur.pageWidth ?? 0
+  if (prevPageWidth <= 0 || curPageWidth <= 0) {
+    return false
+  }
+
+  const prevRightGap = prevPageWidth - ((prev.x ?? 0) + (prev.width ?? 0))
+  const curLeftGap = cur.x ?? 0
+  const prevHugsRight = prevRightGap <= prevPageWidth * 0.08
+  const curHugsLeft = curLeftGap <= curPageWidth * 0.08
+
+  const prevHeight = prev.height ?? 0
+  const curHeight = cur.height ?? 0
+  const heightsMatch =
+    prevHeight > 0 &&
+    curHeight > 0 &&
+    Math.abs(prevHeight - curHeight) <= Math.max(prevHeight, curHeight) * 0.15
+
+  return prevHugsRight && curHugsLeft && heightsMatch
 }
 
 function isSpreadContinuation(blocks, blockIndex, imageBlock) {
@@ -619,10 +650,24 @@ function mergeOcrIntoAnalysis(
       : ocrMetadata?.boundaryKind ?? analysisResult?.boundaryKind ?? null
 
   if (
-    imageBlock &&
-    (resolvedBoundaryKind === "prelude" || resolvedBoundaryKind === "prologue")
+    resolvedBoundaryKind === "prelude" ||
+    resolvedBoundaryKind === "prologue" ||
+    resolvedBoundaryKind === "epilogue"
   ) {
-    return { ...SAFE_FALLBACK }
+    const label =
+      resolvedBoundaryKind.charAt(0).toUpperCase() + resolvedBoundaryKind.slice(1)
+    const tocTitle = printedToc
+      ? lookupPrintedTocTitle(printedToc, { boundaryKind: resolvedBoundaryKind })
+      : null
+    const title = parseTitleFromOcr(ocrMetadata?.title) ?? tocTitle ?? null
+    return {
+      isChapterBoundary: true,
+      includeInToc: true,
+      boundaryKind: resolvedBoundaryKind,
+      number: label,
+      title,
+      rawText: title ? `${label}: ${title}` : label,
+    }
   }
 
   if (resolvedBoundaryKind === "interlude") {
@@ -684,6 +729,10 @@ function mergeOcrIntoAnalysis(
       : NaN
     if (!Number.isFinite(interludeNum) || interludeNum > 8) {
       effectiveBoundaryKind = "chapter"
+      if (/interlude/i.test(number ?? "")) {
+        number = null
+        title = null
+      }
     }
   }
 
@@ -898,6 +947,11 @@ function analyzeChapterGraphicFromContext({
     }
   }
 
+  const isSectionBanner =
+    ocrMetadata?.boundaryKind === "prelude" ||
+    ocrMetadata?.boundaryKind === "prologue" ||
+    ocrMetadata?.boundaryKind === "epilogue"
+
   let effectiveOcrMetadata = ocrMetadata
   let tocMetadata = null
   const tocCursorBefore = tocOrderCursor?.index ?? 0
@@ -906,7 +960,8 @@ function analyzeChapterGraphicFromContext({
     printedToc &&
     tocOrderCursor &&
     buildSequentialTocEntry &&
-    isChapterBanner
+    isChapterBanner &&
+    !isSectionBanner
   ) {
     tocMetadata = buildTocMetadataForChapterHeading(
       blocks,
