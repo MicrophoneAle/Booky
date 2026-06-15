@@ -144,7 +144,21 @@ function isSpreadContinuation(blocks, blockIndex, imageBlock) {
   const pageNumber = imageBlock?.pageNumber ?? 0
   const previousImage = findPreviousImageBlock(blocks, blockIndex)
 
-  return Boolean(previousImage && previousImage.pageNumber === pageNumber - 1)
+  if (!previousImage || previousImage.pageNumber !== pageNumber - 1) {
+    return false
+  }
+
+  // Chapter banners after an illustration start a new chapter, not a spread half.
+  if (imageBlock.imageRole === "chapter_heading") {
+    return false
+  }
+
+  // Full-page art on page N-1 (end-of-chapter illustration) is not a spread with page N.
+  if (previousImage.imageRole === "full_page_illustration") {
+    return false
+  }
+
+  return imageBlock.imageRole === "full_page_illustration"
 }
 
 function hasEpigraphFollowUp(followingBlocks) {
@@ -282,6 +296,10 @@ function shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex) {
   }
 
   if (isFrontMatterIllustration(followingBlocks)) {
+    if (imageBlock.imageRole === "chapter_heading") {
+      return false
+    }
+
     logChapterGraphicDecision("skip_front_matter_illustration", {
       pageNumber: imageBlock.pageNumber,
     })
@@ -384,6 +402,26 @@ function analyzeFullPageSectionDivider(ocrMetadata, imageBlock = null) {
   return { ...SAFE_FALLBACK }
 }
 
+function extractChapterNumberDigits(numberLabel) {
+  const match = (numberLabel ?? "").match(/(?:chapter\s+)?(\d{1,3})\b/i)
+  return match ? match[1] : null
+}
+
+function shouldPreferTocNumberOverOcr(ocrNumber, tocNumber) {
+  const ocrDigits = extractChapterNumberDigits(ocrNumber)
+  const tocDigits = extractChapterNumberDigits(tocNumber)
+  if (!ocrDigits || !tocDigits || ocrDigits === tocDigits) {
+    return false
+  }
+
+  // Narrow OCR crops often clip "51" → "1"; prefer the sequential TOC digit when longer.
+  if (ocrDigits.length === 1 && tocDigits.length >= 2) {
+    return tocDigits.endsWith(ocrDigits) || Number(tocDigits) > 9
+  }
+
+  return false
+}
+
 function enrichOcrMetadataFromPrintedToc(ocrMetadata, tocMetadata) {
   if (!tocMetadata) {
     return ocrMetadata ?? null
@@ -399,7 +437,11 @@ function enrichOcrMetadataFromPrintedToc(ocrMetadata, tocMetadata) {
   const ocrNumberValid = ocrNumber.length > 0 && !/^chapter$/i.test(ocrNumber)
 
   const title = ocrTitle || tocTitle
-  const number = ocrNumberValid ? ocrNumber : tocNumber
+  const number = shouldPreferTocNumberOverOcr(ocrNumber, tocNumber)
+    ? tocNumber
+    : ocrNumberValid
+      ? ocrNumber
+      : tocNumber
   const boundaryKind = ocrMetadata.boundaryKind ?? tocMetadata.boundaryKind
 
   return {
@@ -624,14 +666,13 @@ function analyzeChapterGraphicFromContext({
   let analysisResult = { ...SAFE_FALLBACK }
 
   if (imageBlock.imageRole === "chapter_heading") {
-    analysisResult =
-      analyzeFlashbackTimestampHeading(imageBlock, blocks, blockIndex) ??
-      analyzeChapterHeadingBanner({
-        imageBlock,
-        blocks,
-        blockIndex,
-        chapterSequence,
-      })
+    // Flashback timestamps ("SEVEN YEARS AGO") follow the banner — they are not the chapter start.
+    analysisResult = analyzeChapterHeadingBanner({
+      imageBlock,
+      blocks,
+      blockIndex,
+      chapterSequence,
+    })
   } else if (imageBlock.imageRole === "full_page_illustration") {
     if (!printedToc) {
       analysisResult = analyzeFullPageIllustration({

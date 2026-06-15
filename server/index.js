@@ -12,7 +12,6 @@ import { createCanvas } from "@napi-rs/canvas/node-canvas.js"
 import {
   analyzeChapterGraphicFromContext,
   analyzeChapterHeadingBanner,
-  isFlashbackChapterHeading,
   shouldSkipChapterGraphicAnalysis,
   SAFE_FALLBACK,
 } from "./chapterGraphicService.js"
@@ -30,7 +29,7 @@ import {
   takeNextSequentialTocEntry,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 56
+const PARSER_VERSION = 57
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -4291,10 +4290,7 @@ function getSamePageTextChars(pageTextCharCounts, imageBlock) {
 }
 
 function shouldSkipChapterHeadingCandidate(block, blocks, blockIndex) {
-  return (
-    shouldSkipChapterGraphicAnalysis(block, blocks, blockIndex) ||
-    isFlashbackChapterHeading(block, blocks, blockIndex)
-  )
+  return shouldSkipChapterGraphicAnalysis(block, blocks, blockIndex)
 }
 
 function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, blocks) {

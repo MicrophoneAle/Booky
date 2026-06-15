@@ -281,6 +281,9 @@ function parseChapterNumberToken(token) {
   }
 
   if (/^\d{1,3}$/.test(trimmed)) {
+    if (trimmed === "0" || trimmed === "00") {
+      return null
+    }
     return { kind: "chapter", label: `Chapter ${trimmed}` }
   }
 
@@ -466,17 +469,58 @@ function parseChapterHeadingBannerText(bannerText) {
   return buildChapterHeadingMetadata({ number, title })
 }
 
+function resolveBestChapterNumberToken(...regionTexts) {
+  const tokens = regionTexts
+    .map((text) => {
+      const trimmed = normalizeOcrLine(text).replace(/\s+/g, "")
+      return /^\d{1,3}$/.test(trimmed) ? trimmed : null
+    })
+    .filter(Boolean)
+
+  if (tokens.length === 0) {
+    return null
+  }
+
+  return tokens.sort((left, right) => right.length - left.length || Number(right) - Number(left))[0]
+}
+
 async function ocrChapterHeading(imageBuffer) {
   const scaledCanvas = await prepareScaledCanvas(imageBuffer, 900)
   const bannerRegion = { left: 0.04, top: 0, width: 0.92, height: 0.58 }
+  const numberRegionWide = { left: 0.3, top: 0.01, width: 0.4, height: 0.14 }
+  const numberRegionNarrow = { left: 0.38, top: 0.02, width: 0.24, height: 0.12 }
 
-  const bannerText = await recognizeRegion(scaledCanvas, bannerRegion, {
-    psm: "6",
-  })
+  const [bannerText, numberTextWide, numberTextNarrow] = await Promise.all([
+    recognizeRegion(scaledCanvas, bannerRegion, { psm: "6" }),
+    recognizeRegion(scaledCanvas, numberRegionWide, {
+      psm: "7",
+      whitelist: "0123456789IVXLCDM-I",
+    }),
+    recognizeRegion(scaledCanvas, numberRegionNarrow, {
+      psm: "7",
+      whitelist: "0123456789IVXLCDM-I",
+    }),
+  ])
 
-  logOcr("chapter_heading_banner", { bannerText })
+  logOcr("chapter_heading_banner", { bannerText, numberTextWide, numberTextNarrow })
 
-  return parseChapterHeadingBannerText(bannerText)
+  const metadata = parseChapterHeadingBannerText(bannerText)
+  const bestNumberToken = resolveBestChapterNumberToken(numberTextWide, numberTextNarrow)
+
+  if (bestNumberToken) {
+    const parsedNumber = parseChapterNumberToken(bestNumberToken)
+    if (parsedNumber) {
+      if (metadata) {
+        metadata.number = parsedNumber.label
+        metadata.rawText = [parsedNumber.label, metadata.title].filter(Boolean).join(": ")
+        return metadata
+      }
+
+      return buildChapterHeadingMetadata({ number: parsedNumber, title: null })
+    }
+  }
+
+  return metadata
 }
 
 async function ocrFullPageSection(imageBuffer) {
