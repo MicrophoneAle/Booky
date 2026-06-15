@@ -778,9 +778,7 @@ export default function Library() {
                 aria-label="Loading library"
               >
                 <p className="library-loading__text">Loading your library…</p>
-                <div className="library-loading__bar-wrap">
-                  <div className="library-loading__bar-fill" />
-                </div>
+                <p className="library-loading__subtext">Fetching books…</p>
               </div>
             )}
 

@@ -614,31 +614,12 @@
   letter-spacing: 0.02em;
 }
 
-.library-loading__bar-wrap {
-  width: min(220px, 70vw);
-  height: 2px;
-  margin: 1.25rem auto 0;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.library-loading__bar-fill {
-  width: 40%;
-  height: 100%;
-  background: var(--color-ui-gold-hot);
-  border-radius: 999px;
-  animation: library-loading-indeterminate 1.2s ease-in-out infinite;
-}
-
-@keyframes library-loading-indeterminate {
-  0% {
-    transform: translateX(-120%);
-  }
-
-  100% {
-    transform: translateX(320%);
-  }
+.library-loading__subtext {
+  margin: 0.75rem 0 0;
+  color: var(--color-ui-text-dim);
+  font-size: 13px;
+  font-variant: small-caps;
+  letter-spacing: 0.1em;
 }
 
 .library-state {
