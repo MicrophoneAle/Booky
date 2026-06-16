@@ -6950,7 +6950,7 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
           percent: 2,
         })
 
-        const { parsedText, chapters, contentWithChapters, wordCount, bookTitle } =
+        const { parsedText, chapters, contentWithChapters, wordCount } =
           await parsePdfBuffer(buffer, fileName, {
             documentId,
             onPageProcessed(pageNumber, totalPages) {
@@ -6985,10 +6985,6 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
           parser_version: PARSER_VERSION,
           parse_status: PARSE_STATUS.READY,
           ...buildParsedCacheFields(),
-        }
-
-        if (bookTitle) {
-          documentUpdate.name = bookTitle
         }
 
         const { error: updateError } = await supabase
