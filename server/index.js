@@ -30,7 +30,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 64
+const PARSER_VERSION = 65
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -3191,7 +3191,7 @@ function collapseLetterSpacing(text) {
 // content stream: the prepress filename/timestamp slug, and the
 // unfilled running-header placeholder left in the template.
 const PRODUCTION_SLUG_REGEX = /\.(?:qxd|qxp|qx\d|indd)\b/i
-const CHAPTER_PLACEHOLDER_REGEX = /^chapter\s+heading\s+goes\s+here\.?$/i
+const CHAPTER_PLACEHOLDER_REGEX = /^chapter\s*heading\s*goes\s*here\.?$/i
 
 // After collapsing letter-spacing, a short run of capital letters
 // (the book title or chapter title rendered in tracked small caps)
@@ -3200,7 +3200,7 @@ const CHAPTER_PLACEHOLDER_REGEX = /^chapter\s+heading\s+goes\s+here\.?$/i
 // "CHAPTER 7", "PART ONE") are excluded by the CHAPTER_PATTERN and
 // STRUCTURAL_HEADING_PREFIX_REGEX check before this applies.
 const LETTER_SPACED_RUNNING_HEADER_SHAPE_REGEX =
-  /^(?:\d{1,4}\s+)?[A-Z][A-Z'\u2019]{2,48}(?:\s+\d{1,4})?$/
+  /^(?:\d{1,4}\s+[A-Z][A-Z'\u2019]{2,48}|[A-Z][A-Z'\u2019]{2,48}\s+\d{1,4})$/
 
 function joinWrappedText(left, right) {
   const leftText = (left ?? "").trim()
@@ -3741,17 +3741,14 @@ function shouldDropExtractedLine(
   ) {
     return false
   }
-  const collapsedForHeaderCheck = collapseLetterSpacing(trimmed)
-  if (collapsedForHeaderCheck !== trimmed) {
-    if (
-      CHAPTER_PATTERN.test(collapsedForHeaderCheck) ||
-      STRUCTURAL_HEADING_PREFIX_REGEX.test(collapsedForHeaderCheck)
-    ) {
-      return false
-    }
-    if (LETTER_SPACED_RUNNING_HEADER_SHAPE_REGEX.test(collapsedForHeaderCheck)) {
-      return true
-    }
+  if (
+    CHAPTER_PATTERN.test(trimmed) ||
+    STRUCTURAL_HEADING_PREFIX_REGEX.test(trimmed)
+  ) {
+    return false
+  }
+  if (LETTER_SPACED_RUNNING_HEADER_SHAPE_REGEX.test(trimmed)) {
+    return true
   }
   if (STANDALONE_PAGE_NUMBER_REGEX.test(trimmed)) {
     return true
