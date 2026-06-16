@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "canvas": "^3.2.3"
+    "canvas": "^3.2.3",
+    "fast-xml-parser": "^5.9.0"
   }
 }
