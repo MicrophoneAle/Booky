@@ -30,7 +30,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 63
+const PARSER_VERSION = 64
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -3135,6 +3135,73 @@ function joinSplitWordFragments(text) {
   )
 }
 
+// Collapse PDF letter-spacing (tracking) on display lines so that
+// "T R E A S U R E I S L A N D" becomes "TREASUREISLAND" and
+// "c h a p t e r 7" becomes "chapter 7". Only acts when a line is
+// dominated by single-character tokens, so normal prose and titles
+// (multi-character word items) are returned unchanged.
+function collapseLetterSpacing(text) {
+  if (!text || text.indexOf(" ") === -1) {
+    return text
+  }
+
+  const tokens = text.trim().split(/\s+/)
+  const singleCharTokenCount = tokens.filter((token) => token.length === 1).length
+
+  if (singleCharTokenCount < 3 || singleCharTokenCount < tokens.length * 0.6) {
+    return text
+  }
+
+  const collapsedTokens = []
+  let run = []
+
+  const flushRun = () => {
+    if (run.length >= 3) {
+      let word = ""
+      let previousCharClass = null
+      for (const character of run) {
+        const charClass = /[0-9]/.test(character) ? "digit" : "other"
+        if (previousCharClass && charClass !== previousCharClass) {
+          word += " "
+        }
+        word += character
+        previousCharClass = charClass
+      }
+      collapsedTokens.push(word)
+    } else {
+      collapsedTokens.push(...run)
+    }
+    run = []
+  }
+
+  for (const token of tokens) {
+    if (token.length === 1) {
+      run.push(token)
+    } else {
+      flushRun()
+      collapsedTokens.push(token)
+    }
+  }
+  flushRun()
+
+  return collapsedTokens.join(" ")
+}
+
+// Print-production artifacts that show up as real text in the PDF's
+// content stream: the prepress filename/timestamp slug, and the
+// unfilled running-header placeholder left in the template.
+const PRODUCTION_SLUG_REGEX = /\.(?:qxd|qxp|qx\d|indd)\b/i
+const CHAPTER_PLACEHOLDER_REGEX = /^chapter\s+heading\s+goes\s+here\.?$/i
+
+// After collapsing letter-spacing, a short run of capital letters
+// (the book title or chapter title rendered in tracked small caps)
+// optionally flanked by a 1 to 4 digit folio is a running header,
+// never body prose. Legitimate structural headings ("PROLOGUE",
+// "CHAPTER 7", "PART ONE") are excluded by the CHAPTER_PATTERN and
+// STRUCTURAL_HEADING_PREFIX_REGEX check before this applies.
+const LETTER_SPACED_RUNNING_HEADER_SHAPE_REGEX =
+  /^(?:\d{1,4}\s+)?[A-Z][A-Z'\u2019]{2,48}(?:\s+\d{1,4})?$/
+
 function joinWrappedText(left, right) {
   const leftText = (left ?? "").trim()
   const rightText = (right ?? "").trim()
@@ -3658,6 +3725,12 @@ function shouldDropExtractedLine(
   if (!trimmed) {
     return true
   }
+  if (PRODUCTION_SLUG_REGEX.test(trimmed)) {
+    return true
+  }
+  if (CHAPTER_PLACEHOLDER_REGEX.test(trimmed)) {
+    return true
+  }
   if (isSceneBreakOrnamentLine(trimmed)) {
     return false
   }
@@ -3667,6 +3740,18 @@ function shouldDropExtractedLine(
     !CHAPTER_PATTERN.test(trimmed)
   ) {
     return false
+  }
+  const collapsedForHeaderCheck = collapseLetterSpacing(trimmed)
+  if (collapsedForHeaderCheck !== trimmed) {
+    if (
+      CHAPTER_PATTERN.test(collapsedForHeaderCheck) ||
+      STRUCTURAL_HEADING_PREFIX_REGEX.test(collapsedForHeaderCheck)
+    ) {
+      return false
+    }
+    if (LETTER_SPACED_RUNNING_HEADER_SHAPE_REGEX.test(collapsedForHeaderCheck)) {
+      return true
+    }
   }
   if (STANDALONE_PAGE_NUMBER_REGEX.test(trimmed)) {
     return true
@@ -3775,11 +3860,12 @@ function groupTextItemsIntoLines(items) {
     group.items.sort((a, b) => a.x - b.x)
     const leftmost = group.items[0]
     const rightmost = group.items[group.items.length - 1]
-    const text = group.items
+    const joinedText = group.items
       .map((entry) => entry.str)
       .join(" ")
       .replace(/\s+/g, " ")
       .trim()
+    const text = collapseLetterSpacing(joinedText)
 
     if (!text) {
       continue
