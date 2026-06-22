@@ -448,44 +448,46 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
           ) : (
             <>
               <h2 className="library-card__title">{document.name}</h2>
-              <button
-                type="button"
-                className="library-card__edit"
-                onClick={() => setIsEditingTitle(true)}
-                aria-label={`Rename ${document.name}`}
-              >
-                <EditTitleIcon />
-              </button>
-              <button
-                type="button"
-                className="library-card__download"
-                onClick={handleDownload}
-                aria-label={`Download original PDF of ${document.name}`}
-                disabled={downloading}
-                title="Download original PDF"
-              >
-                {downloading ? "…" : <DownloadIcon />}
-              </button>
-              <button
-                type="button"
-                className="library-card__download"
-                onClick={() => handleDownloadReformatted("html")}
-                aria-label={`Download reformatted HTML of ${document.name}`}
-                disabled={downloadingReformattedFormat !== null}
-                title="Download reformatted (HTML)"
-              >
-                {downloadingReformattedFormat === "html" ? "…" : <ReformattedDownloadIcon />}
-              </button>
-              <button
-                type="button"
-                className="library-card__download"
-                onClick={() => handleDownloadReformatted("pdf")}
-                aria-label={`Download reformatted PDF of ${document.name}`}
-                disabled={downloadingReformattedFormat !== null}
-                title="Download reformatted (PDF)"
-              >
-                {downloadingReformattedFormat === "pdf" ? "…" : <ReformattedPdfDownloadIcon />}
-              </button>
+              <div className="library-card__actions">
+                <button
+                  type="button"
+                  className="library-card__edit"
+                  onClick={() => setIsEditingTitle(true)}
+                  aria-label={`Rename ${document.name}`}
+                >
+                  <EditTitleIcon />
+                </button>
+                <button
+                  type="button"
+                  className="library-card__download"
+                  onClick={handleDownload}
+                  aria-label={`Download original PDF of ${document.name}`}
+                  disabled={downloading}
+                  title="Download original PDF"
+                >
+                  {downloading ? "…" : <DownloadIcon />}
+                </button>
+                <button
+                  type="button"
+                  className="library-card__download"
+                  onClick={() => handleDownloadReformatted("html")}
+                  aria-label={`Download reformatted HTML of ${document.name}`}
+                  disabled={downloadingReformattedFormat !== null}
+                  title="Download reformatted (HTML)"
+                >
+                  {downloadingReformattedFormat === "html" ? "…" : <ReformattedDownloadIcon />}
+                </button>
+                <button
+                  type="button"
+                  className="library-card__download"
+                  onClick={() => handleDownloadReformatted("pdf")}
+                  aria-label={`Download reformatted PDF of ${document.name}`}
+                  disabled={downloadingReformattedFormat !== null}
+                  title="Download reformatted (PDF)"
+                >
+                  {downloadingReformattedFormat === "pdf" ? "…" : <ReformattedPdfDownloadIcon />}
+                </button>
+              </div>
             </>
           )}
         </div>
