@@ -63,6 +63,8 @@ const MIN_CHAPTER_ILLUSTRATION_PAGE = 30
 const MIN_SECTION_BOUNDARY_PAGE = 28
 /** Decorative title-spread arches before the narrative begins. */
 const MIN_TALL_CHAPTER_ARCH_BOUNDARY_PAGE = 24
+/** Inline story plates on pages that already carry narrative prose (e.g. Aesop fables). */
+const TEXT_HEAVY_CHAPTER_PLATE_PAGE_CHARS = 120
 
 const FLASHBACK_TIMESTAMP_REGEX =
   /^FIVE (?:AND A HALF )?YEARS (?:LATER|AGO)|^TWO YEARS AGO|^ONE YEAR LATER/i
@@ -424,6 +426,19 @@ function analyzeFlashbackTimestampHeading(imageBlock, blocks, blockIndex) {
 function shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex) {
   if (isCoverPageImage(imageBlock)) {
     logChapterGraphicDecision("skip_cover", { pageNumber: imageBlock.pageNumber })
+    return true
+  }
+
+  const samePageTextChars = countSamePageTextChars(blocks, imageBlock)
+  if (
+    (imageBlock.imageRole === "chapter_heading" ||
+      isLikelyChapterArchBannerBlock(imageBlock)) &&
+    samePageTextChars > TEXT_HEAVY_CHAPTER_PLATE_PAGE_CHARS
+  ) {
+    logChapterGraphicDecision("skip_text_heavy_chapter_plate", {
+      pageNumber: imageBlock.pageNumber,
+      samePageTextChars,
+    })
     return true
   }
 

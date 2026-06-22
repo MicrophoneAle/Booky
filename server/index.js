@@ -30,7 +30,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 67
+const PARSER_VERSION = 68
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -4379,6 +4379,7 @@ function buildPageTextCharCounts(blocks) {
 
 const FULL_PAGE_OCR_MIN_PAGE = 28
 const FULL_PAGE_OCR_MIN_HEIGHT_RATIO = 0.55
+const TEXT_HEAVY_CHAPTER_PLATE_PAGE_CHARS = 120
 
 function shouldOcrFullPageIllustration(block, pageTextCharCounts) {
   if (block?.imageRole !== "full_page_illustration") {
@@ -4408,12 +4409,22 @@ function shouldOcrFullPageIllustration(block, pageTextCharCounts) {
   return true
 }
 
+function isTextHeavyIllustrationPage(pageTextCharCounts, imageBlock) {
+  return (
+    getSamePageTextChars(pageTextCharCounts, imageBlock) >
+    TEXT_HEAVY_CHAPTER_PLATE_PAGE_CHARS
+  )
+}
+
 function shouldRunIllustrationOcr(block, _ocrMetadata, pageTextCharCounts) {
   if (block.imageRole === "illustration") {
     return false
   }
 
   if (block.imageRole === "chapter_heading" || isLikelyChapterArchBannerBlock(block)) {
+    if (isTextHeavyIllustrationPage(pageTextCharCounts, block)) {
+      return false
+    }
     return true
   }
 
@@ -4454,14 +4465,20 @@ function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, blocks) {
     }
 
     if (block.imageRole === "chapter_heading") {
-      if (!shouldSkipChapterHeadingCandidate(block, blocks, blockIndex)) {
+      if (
+        !shouldSkipChapterHeadingCandidate(block, blocks, blockIndex) &&
+        !isTextHeavyIllustrationPage(pageTextCharCounts, block)
+      ) {
         count += 1
       }
       continue
     }
 
     if (isLikelyChapterArchBannerBlock(block)) {
-      if (!shouldSkipChapterGraphicAnalysis(block, blocks, blockIndex)) {
+      if (
+        !shouldSkipChapterGraphicAnalysis(block, blocks, blockIndex) &&
+        !isTextHeavyIllustrationPage(pageTextCharCounts, block)
+      ) {
         count += 1
       }
       continue
@@ -4863,6 +4880,24 @@ async function finalizeIllustrationBlocks(
       const shouldRunOcr = shouldRunIllustrationOcr(block, null, pageTextCharCounts)
 
       if (imageBuffer?.length && shouldRunOcr) {
+        onProgress?.({
+          phase: "ocr_illustrations",
+          label:
+            block.imageRole === "chapter_heading"
+              ? "Reading chapter headers from artwork"
+              : "Reading section dividers from artwork",
+          current: ocrCompleted,
+          total: Math.max(plannedOcrTotal, ocrCompleted + 1),
+          percent:
+            illustrationProgressRange.start +
+            Math.round((processedCandidates / Math.max(1, totalCandidates)) * illustrationSpan),
+          usingPrintedToc: Boolean(printedToc),
+          illustrationCurrent: processedCandidates,
+          illustrationTotal: totalCandidates,
+          ocrCurrent: ocrCompleted,
+          ocrTotal: Math.max(plannedOcrTotal, ocrCompleted + 1),
+        })
+
         ocrMetadata = await ocrIllustrationMetadata(
           imageBuffer,
           resolveIllustrationOcrRole(block)

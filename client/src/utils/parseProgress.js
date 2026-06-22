@@ -631,6 +631,10 @@ export function getParseProgressStaleHint(parseProgress) {
     return "Large PDFs can take a minute to open. Still working…"
   }
 
+  if (parseProgress.phase === "ocr_illustrations") {
+    return "Header OCR can be slow on large illustrated books. Still working…"
+  }
+
   if (parseProgress.phase !== "extracting") {
     return null
   }

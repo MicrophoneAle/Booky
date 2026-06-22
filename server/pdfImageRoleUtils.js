@@ -54,6 +54,7 @@ export function isLikelyChapterArchBanner({ width, height, pageWidth, pageHeight
   }
 
   if (
+    widthRatio >= 0.45 &&
     heightRatio >= CHAPTER_ARCH_MIN_HEIGHT_RATIO &&
     heightRatio <= CHAPTER_ARCH_MAX_HEIGHT_RATIO &&
     aspectRatio >= CHAPTER_ARCH_MIN_ASPECT_RATIO &&

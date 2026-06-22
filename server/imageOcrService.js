@@ -10,6 +10,7 @@ import { createCanvas, loadImage } from "@napi-rs/canvas/node-canvas.js"
 import { createWorker } from "tesseract.js"
 
 const OCR_DEBUG = process.env.BOOKY_OCR_DEBUG === "1"
+const OCR_RECOGNIZE_TIMEOUT_MS = 45_000
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const LOCAL_TESSDATA_PATH = path.join(__dirname, "tessdata")
 const BUNDLED_ENG_TRAINEDDATA = path.join(__dirname, "eng.traineddata")
@@ -230,8 +231,21 @@ async function recognizeBuffer(buffer, { psm = "7", whitelist = null } = {}) {
   }
 
   await worker.setParameters(parameters)
-  const { data } = await worker.recognize(buffer)
-  return normalizeOcrLine(data.text)
+
+  let timeoutId
+  const recognizePromise = worker.recognize(buffer)
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error("OCR recognize timed out"))
+    }, OCR_RECOGNIZE_TIMEOUT_MS)
+  })
+
+  try {
+    const { data } = await Promise.race([recognizePromise, timeoutPromise])
+    return normalizeOcrLine(data.text)
+  } finally {
+    clearTimeout(timeoutId)
+  }
 }
 
 async function recognizeRegion(scaledCanvas, region, options = {}) {
