@@ -30,7 +30,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 68
+const PARSER_VERSION = 69
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -3283,8 +3283,10 @@ function normalizeExtractedText(text, options = {}) {
     return ""
   }
 
+  const withoutNullBytes = text.includes("\u0000") ? text.replace(/\u0000/g, "") : text
+
   const puaNormalized = translatePuaCharacters(
-    text,
+    withoutNullBytes,
     options.puaReplacementMap ?? null
   )
 
@@ -7149,6 +7151,40 @@ function buildParsedCacheFields() {
   }
 }
 
+function sanitizeStorageString(value) {
+  if (typeof value !== "string") {
+    return value
+  }
+  if (!value.includes("\u0000")) {
+    return value
+  }
+  return value.replace(/\u0000/g, "")
+}
+
+function sanitizeDocumentStoragePayload(payload) {
+  if (payload == null) {
+    return payload
+  }
+
+  if (typeof payload === "string") {
+    return sanitizeStorageString(payload)
+  }
+
+  if (Array.isArray(payload)) {
+    return payload.map((entry) => sanitizeDocumentStoragePayload(entry))
+  }
+
+  if (typeof payload !== "object") {
+    return payload
+  }
+
+  const sanitized = {}
+  for (const [key, value] of Object.entries(payload)) {
+    sanitized[key] = sanitizeDocumentStoragePayload(value)
+  }
+  return sanitized
+}
+
 function buildOpenDocumentPayload(documentRow, cached) {
   return {
     id: documentRow.id,
@@ -7260,7 +7296,7 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
           `Background parse finished for ${documentId} (${parsedText.numpages} PDF pages, ${wordCount.toLocaleString()} words) in ${((Date.now() - parseStartedAt) / 1000).toFixed(1)}s`
         )
 
-        const documentUpdate = {
+        const documentUpdate = sanitizeDocumentStoragePayload({
           total_pages: parsedText.numpages,
           chapters,
           content: contentWithChapters,
@@ -7268,7 +7304,7 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
           parser_version: PARSER_VERSION,
           parse_status: PARSE_STATUS.READY,
           ...buildParsedCacheFields(),
-        }
+        })
 
         const { error: updateError } = await supabase
           .from("documents")
@@ -7782,15 +7818,17 @@ async function reparseDocumentIfOutdatedCore(documentRow) {
 
     const { error: updateError } = await supabase
       .from("documents")
-      .update({
-        total_pages: parsedText.numpages,
-        chapters,
-        content: contentWithChapters,
-        word_count: wordCount,
-        parser_version: PARSER_VERSION,
-        parse_status: PARSE_STATUS.READY,
-        ...buildParsedCacheFields(),
-      })
+      .update(
+        sanitizeDocumentStoragePayload({
+          total_pages: parsedText.numpages,
+          chapters,
+          content: contentWithChapters,
+          word_count: wordCount,
+          parser_version: PARSER_VERSION,
+          parse_status: PARSE_STATUS.READY,
+          ...buildParsedCacheFields(),
+        })
+      )
       .eq("id", documentRow.id)
 
     if (updateError) {
