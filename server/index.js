@@ -1,6 +1,7 @@
 import "dotenv/config"
 import path from "node:path"
 import zlib from "node:zlib"
+import { createRequire } from "node:module"
 import { fileURLToPath } from "node:url"
 import express from "express"
 import multer from "multer"
@@ -30,7 +31,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 72
+const PARSER_VERSION = 73
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -1188,6 +1189,12 @@ const SCENE_BREAK_DIVIDER_TEXT = " * * * "
 const CHAPTER_TITLE_TAIL_WORD_REGEX = /^[A-Z][A-Z\-']{1,18}\.?$/
 const PRINTED_TOC_RUN_MIN_LENGTH = 5
 const MULTILINE_CHAPTER_WRAP_MIN_FONT_SIZE = 14
+const DISPLAY_CHAPTER_TITLE_MIN_FONT_SIZE = 20
+
+const requireFromModule = createRequire(import.meta.url)
+const PDFJS_DIST_DIR = path.dirname(requireFromModule.resolve("pdfjs-dist/package.json"))
+const PDFJS_WASM_URL = `${path.join(PDFJS_DIST_DIR, "wasm").replace(/\\/g, "/")}/`
+const PDFJS_STANDARD_FONT_URL = `${path.join(PDFJS_DIST_DIR, "standard_fonts").replace(/\\/g, "/")}/`
 
 function isPuaCodePoint(codePoint) {
   return codePoint >= PUA_PRIVATE_USE_START && codePoint <= PUA_PRIVATE_USE_END
@@ -1570,7 +1577,27 @@ function stripEmbeddedRunningHeader(text) {
 
 function isPrintedTocHeading(text) {
   const trimmed = (text ?? "").trim()
-  return /^(?:contents|table of contents)$/i.test(trimmed)
+  return /^(?:contents|table\s+of\s+contents)$/i.test(trimmed.replace(/\s+/g, " "))
+}
+
+function isPrintedTocTitlePageLine(text) {
+  const trimmed = (text ?? "").trim()
+  const match = trimmed.match(/^(.+?)\s+(\d{1,4})$/)
+  if (!match) {
+    return false
+  }
+
+  const titlePart = match[1].trim()
+  if (
+    CHAPTER_PATTERN.test(titlePart) ||
+    CHAPTER_WITH_SUBTITLE_REGEX.test(titlePart) ||
+    parseChapterOnlyHeading(titlePart)
+  ) {
+    return false
+  }
+
+  const words = titlePart.split(/\s+/).filter(Boolean)
+  return words.length >= 2 && words.length <= 14 && titlePart.length <= 90
 }
 
 function isPrintedTocEntryLine(text) {
@@ -1591,6 +1618,9 @@ function isPrintedTocEntryLine(text) {
     return true
   }
   if (isTocPageReferenceLine(trimmed)) {
+    return true
+  }
+  if (isPrintedTocTitlePageLine(trimmed)) {
     return true
   }
 
@@ -2273,7 +2303,7 @@ function isWrappedChapterTitleFragment(block) {
   if (!text) {
     return false
   }
-  if (isAllCapsChapterSubtitleText(text)) {
+  if (isAllCapsChapterSubtitleText(text) || isDisplayChapterTitleText(text)) {
     return true
   }
   if (!block?.isHeading) {
@@ -2350,7 +2380,7 @@ function isTrailingChapterTitleFragment(block) {
   if (!text) {
     return false
   }
-  if (isAllCapsChapterSubtitleText(text)) {
+  if (isAllCapsChapterSubtitleText(text) || isDisplayChapterTitleText(text)) {
     return true
   }
   if (!block?.isHeading) {
@@ -3581,6 +3611,191 @@ function isCollapsedRunningHeaderLine(text) {
   return letters.length >= 8
 }
 
+function isLetterSpacedProductionArtifact(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  const normalized = trimmed.replace(/\s+/g, "")
+  if (CHAPTER_PLACEHOLDER_REGEX.test(normalized)) {
+    return true
+  }
+  if (/^CHAPTERHEADINGGOESHERE$/i.test(normalized)) {
+    return true
+  }
+
+  const tokens = trimmed.split(/\s+/).filter(Boolean)
+  if (
+    tokens.length >= 4 &&
+    tokens.every((token) => token.length === 1 && /[A-Za-z]/.test(token))
+  ) {
+    const joined = tokens.join("").toUpperCase()
+    if (
+      /^(CHAPTER|HEADING|GOES|HERE|TREASURE|ISLAND)/.test(joined) ||
+      joined.includes("CHAPTERHEADING")
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function isSpacedRunningHeaderLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  const match = trimmed.match(/^(.+?)\s+(\d{1,4})$/)
+  if (!match) {
+    return false
+  }
+
+  const titlePart = match[1].replace(/\s+/g, " ").trim()
+  const letters = titlePart.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 8) {
+    return false
+  }
+
+  const upperCount = (titlePart.match(/[A-Z]/g) ?? []).length
+  if (upperCount / letters.length < 0.8) {
+    return false
+  }
+
+  if (letters === letters.toUpperCase()) {
+    return true
+  }
+
+  return /^THE[A-Z]/i.test(titlePart.replace(/\s+/g, ""))
+}
+
+const EMBEDDED_RUNNING_HEADER_REGEX =
+  /\s+(?:THE[A-Z0-9"“”'.,\u2013\u2014-]{8,80}|[A-Z][A-Z0-9"“”'.,\u2013\u2014-\s]{8,80})\s+\d{1,4}\s+/g
+const EMBEDDED_CHAPTER_PLACEHOLDER_REGEX = /\bCHAPTER\s*HEADING\s*GOES\s*HERE\b/gi
+
+function isDisplayChapterTitleText(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (parseChapterOnlyHeading(trimmed) || CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed)) {
+    return false
+  }
+  if (isScannerWatermarkLine(trimmed) || isLetterSpacedProductionArtifact(trimmed)) {
+    return false
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 1 || words.length > 8 || trimmed.length > 90) {
+    return false
+  }
+  if (isNarrativeSentenceLine(trimmed)) {
+    return false
+  }
+  if (words.length >= 5 && /[.!?]/.test(trimmed)) {
+    return false
+  }
+
+  if (/^[a-z]/.test(trimmed)) {
+    return words.length <= 6 && trimmed.length <= 48
+  }
+
+  return isLikelyChapterSubtitleText(trimmed)
+}
+
+function isDisplayChapterTitleLine(text, line) {
+  if ((line?.fontSize ?? 0) < DISPLAY_CHAPTER_TITLE_MIN_FONT_SIZE) {
+    return false
+  }
+  return isDisplayChapterTitleText(text)
+}
+
+function estimateBodyFontSize(lines) {
+  const sizes = (lines ?? [])
+    .map((line) => line.fontSize ?? 0)
+    .filter((size) => size >= 9 && size <= 16)
+  if (sizes.length === 0) {
+    return 12
+  }
+  return medianValue(sizes)
+}
+
+function isDropCapTargetLine(text, line, dropCapThreshold) {
+  const trimmed = (text ?? "").trim()
+  const fontSize = line?.fontSize ?? 0
+  if (fontSize >= dropCapThreshold || fontSize >= DISPLAY_CHAPTER_TITLE_MIN_FONT_SIZE) {
+    return false
+  }
+  if (!/^[a-z]/.test(trimmed)) {
+    return false
+  }
+  if (isDisplayChapterTitleText(trimmed)) {
+    return false
+  }
+  if (parseChapterOnlyHeading(trimmed)) {
+    return false
+  }
+  if (isCollapsedRunningHeaderLine(trimmed) || isSpacedRunningHeaderLine(trimmed)) {
+    return false
+  }
+  return true
+}
+
+function repairDropCapLines(lines) {
+  if (!Array.isArray(lines) || lines.length === 0) {
+    return lines
+  }
+
+  const bodySize = estimateBodyFontSize(lines)
+  const dropCapThreshold = bodySize * 3
+  const ordered = [...lines].sort((left, right) => (right.y ?? 0) - (left.y ?? 0))
+
+  for (let index = 0; index < ordered.length; index += 1) {
+    const line = ordered[index]
+    const text = (line.text ?? "").trim()
+    const fontSize = line.fontSize ?? 0
+    if (fontSize < dropCapThreshold) {
+      continue
+    }
+
+    let letter = null
+    let removeLine = false
+
+    if (/^[A-Z]$/.test(text)) {
+      letter = text
+      removeLine = true
+    } else {
+      const merged = text.match(/^([A-Z])\s+(.+)$/)
+      if (merged?.[2]?.length >= 3) {
+        letter = merged[1]
+        line.text = merged[2]
+        line.fontSize = bodySize
+      }
+    }
+
+    if (!letter) {
+      continue
+    }
+
+    for (let targetIndex = 0; targetIndex < index; targetIndex += 1) {
+      const target = ordered[targetIndex]
+      if (isDropCapTargetLine(target.text, target, dropCapThreshold)) {
+        target.text = `${letter}${(target.text ?? "").trim()}`
+        break
+      }
+    }
+
+    if (removeLine) {
+      ordered.splice(index, 1)
+      index -= 1
+    }
+  }
+
+  return ordered.sort((left, right) => (right.y ?? 0) - (left.y ?? 0))
+}
+
 function joinWrappedText(left, right) {
   const leftText = (left ?? "").trim()
   const rightText = (right ?? "").trim()
@@ -3722,6 +3937,8 @@ function stripInlineArtifacts(text) {
   return text
     .replace(INLINE_PAGE_DECORATOR_REGEX, " ")
     .replace(RUNNING_HEADER_INLINE_REGEX, " ")
+    .replace(EMBEDDED_RUNNING_HEADER_REGEX, " ")
+    .replace(EMBEDDED_CHAPTER_PLACEHOLDER_REGEX, " ")
     .replace(ROMAN_PREFIX_BEFORE_HEADING_REGEX, "")
     .replace(EMBEDDED_PREFACE_PAGE_MARKER_REGEX, "")
     .replace(FOOTNOTE_REFERENCE_REGEX, "")
@@ -3908,6 +4125,9 @@ function isRunningHeaderMergedLine(text) {
     return true
   }
   if (isTocPageReferenceLine(trimmed)) {
+    return true
+  }
+  if (isSpacedRunningHeaderLine(trimmed)) {
     return true
   }
   if (
@@ -4120,6 +4340,12 @@ function shouldDropExtractedLine(
     return true
   }
   if (CHAPTER_PLACEHOLDER_REGEX.test(trimmed)) {
+    return true
+  }
+  if (isLetterSpacedProductionArtifact(trimmed)) {
+    return true
+  }
+  if (isSpacedRunningHeaderLine(trimmed)) {
     return true
   }
   if (isSceneBreakOrnamentLine(trimmed)) {
@@ -5661,21 +5887,22 @@ function buildPdfPageLinesFromTextContent(textContent, headingStrings) {
   }
 
   const rawLines = groupTextItemsIntoLines(pageItems)
-  const medianX = medianValue(rawLines.map((line) => line.x))
+  const repairedLines = repairDropCapLines(rawLines)
+  const medianX = medianValue(repairedLines.map((line) => line.x))
 
-  for (const line of rawLines) {
+  for (const line of repairedLines) {
     line.indented = line.x > medianX + INDENT_THRESHOLD_PX
   }
 
-  annotateLinesCentered(rawLines)
+  annotateLinesCentered(repairedLines)
 
-  for (const line of rawLines) {
+  for (const line of repairedLines) {
     if (isSceneBreakOrnamentLine(line.text) && line.centered) {
       line.isSceneBreakOrnament = true
     }
   }
 
-  return dropMarginCalloutLines(rawLines)
+  return dropMarginCalloutLines(repairedLines)
 }
 
 async function buildPdfPageLines(page, headingStrings) {
@@ -5688,6 +5915,9 @@ async function loadPdfDocument(buffer) {
     data: new Uint8Array(buffer),
     disableFontFace: true,
     useSystemFonts: false,
+    useWorkerFetch: false,
+    wasmUrl: PDFJS_WASM_URL,
+    standardFontDataUrl: PDFJS_STANDARD_FONT_URL,
   })
   return loadingTask.promise
 }
@@ -6429,19 +6659,44 @@ function mergeChapterSubtitleBlocks(blocks) {
         continue
       }
 
-      const nextBlock = blocks[index + 1]
-      if (isLikelyChapterSubtitleBlock(nextBlock)) {
+      const subtitleParts = []
+      let cursor = index + 1
+
+      while (cursor < blocks.length) {
+        const candidate = blocks[cursor]
+        const candidateText = (candidate?.text ?? "").trim()
+        if (!candidateText) {
+          break
+        }
+
+        const isSubtitle =
+          isLikelyChapterSubtitleBlock(candidate) ||
+          ((candidate?.fontSize ?? 0) >= DISPLAY_CHAPTER_TITLE_MIN_FONT_SIZE &&
+            isDisplayChapterTitleText(candidateText))
+
+        if (!isSubtitle) {
+          break
+        }
+
+        subtitleParts.push(candidateText)
+        cursor += 1
+      }
+
+      if (subtitleParts.length > 0) {
         const displayTitle = formatChapterLabel(
           parts.kind,
           parts.number,
-          nextBlock.text ?? ""
+          subtitleParts.join(" ")
         )
         merged.push({
           ...block,
           text: displayTitle,
           chapterTitle: displayTitle,
+          fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+          isHeading: true,
+          isChapterStart: true,
         })
-        index += 1
+        index = cursor - 1
         continue
       }
 
@@ -7080,6 +7335,12 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
         }
 
         if (isShortChapterHeadingSubtitleLine(nextText, nextEntry.line)) {
+          titleFragments.push(nextText)
+          cursor += 1
+          continue
+        }
+
+        if (isDisplayChapterTitleLine(nextText, nextEntry.line)) {
           titleFragments.push(nextText)
           cursor += 1
           continue
