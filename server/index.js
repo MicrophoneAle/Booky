@@ -824,11 +824,12 @@ app.get("/documents/:id/download/reformatted", requireAuth, async (req, res) => 
     if (format === "pdf") {
       const pdfBuffer = await buildReformattedPdfBuffer(data.name, data.content)
       res.setHeader("Content-Type", "application/pdf")
+      res.setHeader("Content-Length", String(pdfBuffer.length))
       res.setHeader(
         "Content-Disposition",
         `attachment; filename="${safeFileName} (reformatted).pdf"`
       )
-      res.send(pdfBuffer)
+      res.end(pdfBuffer)
       return
     }
 
@@ -847,7 +848,8 @@ app.get("/documents/:id/download/reformatted", requireAuth, async (req, res) => 
       `attachment; filename="${safeFileName} (reformatted).html"`
     )
     res.send(html)
-  } catch {
+  } catch (error) {
+    console.error("[download/reformatted]", error)
     res.status(500).json({ success: false, error: "Failed to build reformatted document" })
   }
 })

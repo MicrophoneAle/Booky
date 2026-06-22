@@ -1,4 +1,8 @@
 import PDFDocument from "pdfkit"
+import { createCanvas, loadImage } from "@napi-rs/canvas/node-canvas.js"
+
+const PDF_IMAGE_MAX_DIMENSION = 1200
+const PDF_IMAGE_FETCH_CONCURRENCY = 6
 
 function escapeHtmlText(text) {
   return String(text ?? "")
@@ -184,24 +188,79 @@ ${parts.join("\n")}
 </html>`
 }
 
-async function fetchImageBuffer(src, cache) {
-  if (!src || cache.has(src)) {
-    return cache.get(src) ?? null
+async function fetchRawImageBuffer(src) {
+  if (!src) {
+    return null
+  }
+
+  if (src.startsWith("data:")) {
+    const match = src.match(/^data:image\/[^;]+;base64,(.+)$/i)
+    if (!match) {
+      return null
+    }
+    try {
+      return Buffer.from(match[1], "base64")
+    } catch {
+      return null
+    }
   }
 
   try {
     const response = await fetch(src)
     if (!response.ok) {
-      cache.set(src, null)
       return null
     }
+
     const buffer = Buffer.from(await response.arrayBuffer())
-    cache.set(src, buffer)
+    if (!buffer.length) {
+      return null
+    }
+
+    const contentType = (response.headers.get("content-type") ?? "").toLowerCase()
+    if (contentType.includes("text/html") || contentType.includes("application/json")) {
+      return null
+    }
+
     return buffer
   } catch {
-    cache.set(src, null)
     return null
   }
+}
+
+async function normalizeImageForPdf(buffer) {
+  if (!buffer?.length) {
+    return null
+  }
+
+  try {
+    const image = await loadImage(buffer)
+    let { width, height } = image
+    const maxDim = PDF_IMAGE_MAX_DIMENSION
+
+    if (width > maxDim || height > maxDim) {
+      const scale = maxDim / Math.max(width, height)
+      width = Math.max(1, Math.round(width * scale))
+      height = Math.max(1, Math.round(height * scale))
+    }
+
+    const canvas = createCanvas(width, height)
+    const ctx = canvas.getContext("2d")
+    ctx.drawImage(image, 0, 0, width, height)
+    return canvas.toBuffer("image/jpeg", { quality: 0.88 })
+  } catch {
+    return null
+  }
+}
+
+async function fetchImageBuffer(src, cache) {
+  if (!src || cache.has(src)) {
+    return cache.get(src) ?? null
+  }
+
+  const raw = await fetchRawImageBuffer(src)
+  const normalized = raw ? await normalizeImageForPdf(raw) : null
+  cache.set(src, normalized)
+  return normalized
 }
 
 async function prefetchExportImages(content) {
@@ -214,11 +273,45 @@ async function prefetchExportImages(content) {
     }
   }
 
-  await Promise.all(
-    [...imageSrcs].map((src) => fetchImageBuffer(src, cache))
-  )
+  const uniqueSrcs = [...imageSrcs]
+  if (uniqueSrcs.length === 0) {
+    return cache
+  }
 
+  let nextIndex = 0
+  const workerCount = Math.min(PDF_IMAGE_FETCH_CONCURRENCY, uniqueSrcs.length)
+
+  async function worker() {
+    while (nextIndex < uniqueSrcs.length) {
+      const src = uniqueSrcs[nextIndex]
+      nextIndex += 1
+      await fetchImageBuffer(src, cache)
+    }
+  }
+
+  await Promise.all(Array.from({ length: workerCount }, () => worker()))
   return cache
+}
+
+function sanitizePdfText(text) {
+  return String(text ?? "")
+    .replace(/\0/g, "")
+    .replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+}
+
+function assertValidPdfBuffer(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 128) {
+    throw new Error("Generated PDF is empty or too small")
+  }
+
+  if (!buffer.subarray(0, 5).equals(Buffer.from("%PDF-"))) {
+    throw new Error("Generated PDF has an invalid header")
+  }
+
+  const trailer = buffer.subarray(Math.max(0, buffer.length - 1024)).toString("ascii")
+  if (!trailer.includes("%%EOF")) {
+    throw new Error("Generated PDF is missing an EOF marker")
+  }
 }
 
 function contentWidth(doc) {
@@ -233,52 +326,72 @@ function ensureVerticalSpace(doc, heightNeeded) {
 }
 
 function renderPdfImage(doc, buffer) {
-  const maxWidth = contentWidth(doc)
-  const maxHeight = doc.page.height * 0.55
-  ensureVerticalSpace(doc, maxHeight + 24)
-  doc.moveDown(0.5)
-  doc.image(buffer, {
-    fit: [maxWidth, maxHeight],
-    align: "center",
-  })
-  doc.moveDown(0.75)
+  try {
+    const maxWidth = contentWidth(doc)
+    const maxHeight = doc.page.height * 0.55
+    const imageInfo = doc.openImage(buffer)
+    let width = imageInfo.width
+    let height = imageInfo.height
+    const scale = Math.min(maxWidth / width, maxHeight / height, 1)
+    width = Math.max(1, Math.round(width * scale))
+    height = Math.max(1, Math.round(height * scale))
+
+    ensureVerticalSpace(doc, height + 24)
+    doc.moveDown(0.5)
+    const x = doc.page.margins.left + (maxWidth - width) / 2
+    const y = doc.y
+    doc.image(buffer, x, y, { width, height })
+    doc.y = y + height + 12
+  } catch (error) {
+    console.warn(
+      "[reformattedExport] Skipping illustration:",
+      error instanceof Error ? error.message : String(error)
+    )
+  }
 }
 
 function renderPdfTextBlock(doc, block, { previousWasHeading }) {
-  const text = (block.text ?? "").trim()
+  const text = sanitizePdfText(block.text).trim()
   if (!text) {
     return { previousWasHeading: false }
   }
 
   const isCentered = block.textAlign === "center" || block.centered === true
 
-  if (block.isHeading) {
-    ensureVerticalSpace(doc, 48)
-    doc.moveDown(1)
-    doc
-      .font("Times-Bold")
-      .fontSize((block.fontSize ?? 0) >= 18 ? 20 : 16)
-      .text(text, { align: "center" })
-    doc.moveDown(0.5)
-    doc.font("Times-Roman").fontSize(12)
-    return { previousWasHeading: true }
-  }
+  try {
+    if (block.isHeading) {
+      ensureVerticalSpace(doc, 48)
+      doc.moveDown(1)
+      doc
+        .font("Helvetica-Bold")
+        .fontSize((block.fontSize ?? 0) >= 18 ? 20 : 16)
+        .text(text, { align: "center" })
+      doc.moveDown(0.5)
+      doc.font("Helvetica").fontSize(12)
+      return { previousWasHeading: true }
+    }
 
-  if (isCentered) {
-    ensureVerticalSpace(doc, 24)
-    doc.moveDown(0.35)
-    doc.font("Times-Roman").fontSize(12).text(text, { align: "center" })
-    doc.moveDown(0.35)
-    return { previousWasHeading: false }
-  }
+    if (isCentered) {
+      ensureVerticalSpace(doc, 24)
+      doc.moveDown(0.35)
+      doc.font("Helvetica").fontSize(12).text(text, { align: "center" })
+      doc.moveDown(0.35)
+      return { previousWasHeading: false }
+    }
 
-  const indent = block.isIndented ? 36 : previousWasHeading ? 0 : 18
-  doc.font("Times-Roman").fontSize(12).text(text, {
-    align: "justify",
-    indent,
-    paragraphGap: 6,
-    lineGap: 2,
-  })
+    const indent = block.isIndented ? 36 : previousWasHeading ? 0 : 18
+    doc.font("Helvetica").fontSize(12).text(text, {
+      align: "justify",
+      indent,
+      paragraphGap: 6,
+      lineGap: 2,
+    })
+  } catch (error) {
+    console.warn(
+      "[reformattedExport] Skipping text block:",
+      error instanceof Error ? error.message : String(error)
+    )
+  }
 
   return { previousWasHeading: false }
 }
@@ -319,39 +432,61 @@ export async function buildReformattedPdfBuffer(name, content) {
   const flattened = flattenExportBlocks(content)
 
   return new Promise((resolve, reject) => {
+    let settled = false
+    const settle = (handler, value) => {
+      if (settled) {
+        return
+      }
+      settled = true
+      handler(value)
+    }
+
     const doc = new PDFDocument({
       size: "A4",
       margins: { top: 72, bottom: 72, left: 72, right: 72 },
+      autoFirstPage: true,
       info: {
-        Title: name || "Document",
+        Title: sanitizePdfText(name || "Document"),
       },
     })
 
     const chunks = []
     doc.on("data", (chunk) => chunks.push(chunk))
-    doc.on("end", () => resolve(Buffer.concat(chunks)))
-    doc.on("error", reject)
+    doc.on("error", (error) => settle(reject, error))
+    doc.on("end", () => {
+      try {
+        const buffer = Buffer.concat(chunks)
+        assertValidPdfBuffer(buffer)
+        settle(resolve, buffer)
+      } catch (error) {
+        settle(reject, error)
+      }
+    })
 
-    doc.font("Times-Roman").fontSize(12)
+    try {
+      doc.font("Helvetica").fontSize(12)
 
-    let previousWasHeading = false
+      let previousWasHeading = false
 
-    for (const item of flattened) {
-      if (item.kind === "image") {
-        const src =
-          typeof item.block.src === "string" ? item.block.src.trim() : ""
-        const buffer = src ? imageCache.get(src) : null
-        if (buffer) {
-          renderPdfImage(doc, buffer)
+      for (const item of flattened) {
+        if (item.kind === "image") {
+          const src =
+            typeof item.block.src === "string" ? item.block.src.trim() : ""
+          const buffer = src ? imageCache.get(src) : null
+          if (buffer) {
+            renderPdfImage(doc, buffer)
+          }
+          previousWasHeading = false
+          continue
         }
-        previousWasHeading = false
-        continue
+
+        const state = renderPdfTextBlock(doc, item.block, { previousWasHeading })
+        previousWasHeading = state.previousWasHeading
       }
 
-      const state = renderPdfTextBlock(doc, item.block, { previousWasHeading })
-      previousWasHeading = state.previousWasHeading
+      doc.end()
+    } catch (error) {
+      settle(reject, error)
     }
-
-    doc.end()
   })
 }

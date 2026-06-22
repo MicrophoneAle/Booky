@@ -391,6 +391,14 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
       }
 
       const blob = await response.blob()
+      if (format === "pdf") {
+        const headerBytes = new Uint8Array(await blob.slice(0, 5).arrayBuffer())
+        const header = String.fromCharCode(...headerBytes)
+        if (!header.startsWith("%PDF-")) {
+          throw new Error("The server returned an invalid PDF file. Try again after restarting the server.")
+        }
+      }
+
       const objectUrl = URL.createObjectURL(blob)
       const extension = format === "pdf" ? "pdf" : "html"
 
