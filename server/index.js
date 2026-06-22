@@ -31,7 +31,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 76
+const PARSER_VERSION = 77
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -3270,6 +3270,12 @@ function isProseLineContinuation(text, previousBlock) {
     if (/^[a-z(\u201c(']/.test(trimmed)) {
       return true
     }
+    if (
+      /,\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s*$/.test(prevTrim) &&
+      /^[A-Z][a-z]+\s/.test(trimmed)
+    ) {
+      return true
+    }
     if (/^(and|but|or|then|who|which|that|as|if|like|for|of|to|in|at|on|with|from|by|the|a|an|apples|out)\s/i.test(trimmed)) {
       return true
     }
@@ -3339,6 +3345,10 @@ const STANDALONE_ROMAN_PAGE_MARKER_REGEX = /^[ivxlcdm]{1,4}$/i
 const ROMAN_PAGE_MARKER_CLUSTER_REGEX = /^[ivxlcdm]{1,4}(?:\s+[ivxlcdm]{1,4}){0,3}$/i
 const STANDALONE_RUNNING_HEAD_REGEX =
   /^\d{1,3}\s+(?:chapter|letter)\s+(?:[IVXLCDM]+|\d+)$/i
+const ROMAN_SECTION_RUNNING_HEAD_REGEX =
+  /^[IVXLCDM]{1,4}\s+(?:INTRODUCTION|PREFACE|PROLOGUE|EPILOGUE|CONCLUSION|CONTENTS|CHAPTER|PART)\b/i
+const EMBEDDED_ROMAN_SECTION_RUNNING_HEAD_REGEX =
+  /\b[IVXLCDM]{1,4}\s+(?:INTRODUCTION|PREFACE|PROLOGUE|EPILOGUE|CONCLUSION)\b/gi
 const TOC_HEADER_LINE_REGEX = /^-\s*\d+\s*-\s*.+$/
 
 const MARGIN_CALLOUT_MAX_WORDS = 9
@@ -3885,6 +3895,7 @@ function repairDropCapLines(lines) {
   const bodySize = estimateBodyFontSize(lines)
   const dropCapThreshold = bodySize * 3
   const ordered = [...lines].sort((left, right) => (right.y ?? 0) - (left.y ?? 0))
+  let pageHadDropCap = false
 
   for (let index = 0; index < ordered.length; index += 1) {
     const line = ordered[index]
@@ -3913,10 +3924,13 @@ function repairDropCapLines(lines) {
       continue
     }
 
+    pageHadDropCap = true
+
     for (let targetIndex = 0; targetIndex < index; targetIndex += 1) {
       const target = ordered[targetIndex]
       if (isDropCapTargetLine(target.text, target, dropCapThreshold)) {
         target.text = `${letter}${(target.text ?? "").trim()}`
+        target.dropCapContinuation = true
         break
       }
     }
@@ -3924,6 +3938,12 @@ function repairDropCapLines(lines) {
     if (removeLine) {
       ordered.splice(index, 1)
       index -= 1
+    }
+  }
+
+  if (pageHadDropCap) {
+    for (const line of ordered) {
+      line.pageHadDropCap = true
     }
   }
 
@@ -4072,12 +4092,46 @@ function stripInlineArtifacts(text) {
     .replace(INLINE_PAGE_DECORATOR_REGEX, " ")
     .replace(RUNNING_HEADER_INLINE_REGEX, " ")
     .replace(EMBEDDED_RUNNING_HEADER_REGEX, " ")
+    .replace(EMBEDDED_ROMAN_SECTION_RUNNING_HEAD_REGEX, " ")
     .replace(EMBEDDED_CHAPTER_PLACEHOLDER_REGEX, " ")
     .replace(ROMAN_PREFIX_BEFORE_HEADING_REGEX, "")
     .replace(EMBEDDED_PREFACE_PAGE_MARKER_REGEX, "")
     .replace(FOOTNOTE_REFERENCE_REGEX, "")
     .replace(/\s+/g, " ")
     .trim()
+}
+
+function pageHasDropCapLetter(entries) {
+  if (entries.some((entry) => entry.line.pageHadDropCap || entry.line.dropCapContinuation)) {
+    return true
+  }
+
+  const bodySizes = entries
+    .map((entry) => entry.line.fontSize)
+    .filter(
+      (value) =>
+        Number.isFinite(value) && value > 0 && value <= HEADING_STRING_MIN_FONT_SIZE + 2
+    )
+  const bodySize = bodySizes.length > 0 ? medianValue(bodySizes) : 10.5
+  const threshold = bodySize * 3
+
+  return entries.some((entry) => {
+    const text = (entry.text ?? "").trim()
+    return (entry.line.fontSize ?? 0) >= threshold && /^[A-Z]$/.test(text)
+  })
+}
+
+function isDropCapIndentedContinuation(line, bodyLeftX, entries) {
+  if (line.dropCapContinuation) {
+    return true
+  }
+
+  if (!pageHasDropCapLetter(entries)) {
+    return false
+  }
+
+  const x = Number.isFinite(line.x) ? line.x : bodyLeftX
+  return x > bodyLeftX + MARGIN_CALLOUT_RIGHT_DISPLACE_PX
 }
 
 function isShortLineSubstringOfLongerLine(shortText, longTexts) {
@@ -4203,6 +4257,12 @@ function dropMarginCalloutLines(lines) {
 
       // Displaced short line that still reads like narrative dialogue: keep.
       if (isLikelyDialogueContinuationLine(text)) {
+        return true
+      }
+
+      // Lines indented beside a drop cap (e.g. "nce when his stepson...") sit
+      // outside the body column but are paragraph prose, not margin callouts.
+      if (isDropCapIndentedContinuation(line, bodyLeftX, entries)) {
         return true
       }
 
@@ -4494,6 +4554,9 @@ function shouldDropExtractedLine(
     return true
   }
   if (isSpacedRunningHeaderLine(trimmed)) {
+    return true
+  }
+  if (ROMAN_SECTION_RUNNING_HEAD_REGEX.test(trimmed)) {
     return true
   }
   if (isSceneBreakOrnamentLine(trimmed)) {
@@ -7592,6 +7655,10 @@ function shouldStartNewProseBlock(line, previousBlock, entry = null, previousEnt
     return true
   }
 
+  if (previousBlock && isProseLineContinuation(text, previousBlock)) {
+    return false
+  }
+
   if (line.indented && !/^[a-z(\u201c]/.test(text)) {
     return true
   }
@@ -7602,10 +7669,6 @@ function shouldStartNewProseBlock(line, previousBlock, entry = null, previousEnt
 
   if (previousBlock.isHeading || previousBlock.textAlign === "center") {
     return true
-  }
-
-  if (isProseLineContinuation(text, previousBlock)) {
-    return false
   }
 
   if (

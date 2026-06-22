@@ -81,7 +81,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 76
+const PARSER_VERSION = 77
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -4838,7 +4838,7 @@ export default function BookViewer({
     }))
 
     const textSectionEntries = textEntries.filter((entry) =>
-      /^(prelude|prologue|epilogue|part\b)/i.test(entry.title ?? "")
+      /^(prelude|prologue|epilogue|introduction|preface|part\b)/i.test(entry.title ?? "")
     )
 
     const combined =
