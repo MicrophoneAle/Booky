@@ -14,6 +14,7 @@ import {
   buildChapterPageMap,
   buildFrontMatterPack,
   buildImageChapterPageMap,
+  chapterTitlesReferToSameChapter,
   extractImageChapterTocEntries,
   formatImageChapterTocTitle,
   formatTocChapterTitle,
@@ -1903,6 +1904,13 @@ function groupBlocksForDisplay(blocks) {
       const headingFontSize = isFableTitle ? 15 : (block.fontSize ?? 16)
       const isChapterStart = inferBlockIsChapterStart(block)
       let headingText = text
+      if (
+        block.chapterTitle &&
+        /^part\s+[ivxlcdm\d]+\.?$/i.test(headingText) &&
+        block.chapterTitle.length > headingText.length
+      ) {
+        headingText = block.chapterTitle
+      }
       const nextBlock = expandedBlocks[index + 1]
       const nextText = (nextBlock?.text ?? "").trim()
 
@@ -3322,6 +3330,20 @@ function normalizeTocTitleKey(title) {
     .trim()
 }
 
+function isTextSectionTocEntry(title) {
+  const normalized = (title ?? "").trim()
+  if (!normalized) {
+    return false
+  }
+  if (/^(prelude|prologue|epilogue|introduction|preface)$/i.test(normalized)) {
+    return true
+  }
+  if (/^part\s+/i.test(normalized) && !/\bchapter\b/i.test(normalized)) {
+    return true
+  }
+  return false
+}
+
 function dedupeTocEntries(entries) {
   const seenPageTitle = new Set()
   const deduped = []
@@ -3333,6 +3355,19 @@ function dedupeTocEntries(entries) {
     if (seenPageTitle.has(dedupeKey)) {
       continue
     }
+
+    const chapterDuplicate = deduped.find((existing) =>
+      chapterTitlesReferToSameChapter(existing.title, entry.title)
+    )
+    if (chapterDuplicate) {
+      if ((entry.title ?? "").length > (chapterDuplicate.title ?? "").length) {
+        chapterDuplicate.title = entry.title
+        chapterDuplicate.pageNum = entry.pageNum ?? chapterDuplicate.pageNum
+        chapterDuplicate.id = entry.id ?? chapterDuplicate.id
+      }
+      continue
+    }
+
     seenPageTitle.add(dedupeKey)
     deduped.push(entry)
   }
@@ -4837,14 +4872,28 @@ export default function BookViewer({
       pageNum: chapterPageMap[chapter.id] ?? null,
     }))
 
+    const textChapterEntries = textEntries.filter((entry) =>
+      /\bchapter\b/i.test(entry.title ?? "")
+    )
     const textSectionEntries = textEntries.filter((entry) =>
-      /^(prelude|prologue|epilogue|introduction|preface|part\b)/i.test(entry.title ?? "")
+      isTextSectionTocEntry(entry.title)
     )
 
-    const combined =
-      imageEntries.length >= 10
-        ? [...textSectionEntries, ...imageEntries]
-        : [...textEntries, ...imageEntries]
+    const useImageChapterToc =
+      imageEntries.length >= 10 && textChapterEntries.length < 10
+
+    const imageEntriesForToc = useImageChapterToc
+      ? imageEntries
+      : imageEntries.filter(
+          (entry) =>
+            !textChapterEntries.some((textEntry) =>
+              chapterTitlesReferToSameChapter(textEntry.title, entry.title)
+            )
+        )
+
+    const combined = useImageChapterToc
+      ? [...textSectionEntries, ...imageEntriesForToc]
+      : [...textEntries, ...imageEntriesForToc]
 
     return dedupeTocEntries(
       combined.sort((left, right) => {

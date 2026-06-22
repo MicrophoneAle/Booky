@@ -352,9 +352,6 @@ export function chapterTitlesReferToSameChapter(apiTitle, candidateTitle) {
   if (apiPart && candidatePart && apiPart !== candidatePart) {
     return false
   }
-  if (apiPart && !candidatePart) {
-    return false
-  }
 
   const apiNumber = extractChapterNumberLabel(api)
   const candidateNumber = extractChapterNumberLabel(candidate)
@@ -364,6 +361,10 @@ export function chapterTitlesReferToSameChapter(apiTitle, candidateTitle) {
       /\bchapter\s+\d/i.test(api) &&
       /\bchapter\s+\d/i.test(candidate)
     )
+  }
+
+  if (apiPart && !candidatePart) {
+    return false
   }
 
   // Part/volume-only headings (e.g. "PART TWO") or roman chapter labels without digits.
