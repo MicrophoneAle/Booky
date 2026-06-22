@@ -31,7 +31,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 73
+const PARSER_VERSION = 74
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -1162,6 +1162,62 @@ const STRUCTURAL_HEADING_PREFIX_REGEX =
 const PART_HEADING_PATTERN =
   /^part\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six)\.?$/i
 
+const COMPACT_PART_HEADING_REGEX =
+  /^part\s*(i{1,3}|iv|v|vi{0,3}|ix|x|xi{0,3}|xii{0,3})\s*:?\s*$/i
+
+const EMBEDDED_PART_WITH_SUBTITLE_REGEX =
+  /\bpart(i{1,3}|iv|v|vi{0,3}|ix|x)\s*:\s*(.+)$/i
+
+const PART_WORD_TO_ROMAN = {
+  one: "I",
+  two: "II",
+  three: "III",
+  four: "IV",
+  five: "V",
+  six: "VI",
+}
+
+function formatPartHeadingLabel(romanOrWord) {
+  const key = (romanOrWord ?? "").toLowerCase()
+  const roman = PART_WORD_TO_ROMAN[key] ?? String(romanOrWord ?? "").toUpperCase()
+  return `Part ${roman}`
+}
+
+function parseCompactPartHeading(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return null
+  }
+  const match = trimmed.match(COMPACT_PART_HEADING_REGEX)
+  if (!match) {
+    return null
+  }
+  return formatPartHeadingLabel(match[1])
+}
+
+function resolvePartHeadingLabel(text) {
+  const compact = parseCompactPartHeading(text)
+  if (compact) {
+    return compact
+  }
+  const normalized = normalizeHeadingCandidate(text)
+  if (PART_HEADING_PATTERN.test(normalized)) {
+    const match = normalized.match(/^part\s+(.+?)\.?$/i)
+    if (match) {
+      const token = match[1]
+      const prefix = /^PART\s/i.test(normalized) ? "PART" : "Part"
+      if (/^(one|two|three|four|five|six)$/i.test(token)) {
+        const label = /^[A-Z]+$/.test(token)
+          ? token
+          : `${token.charAt(0).toUpperCase()}${token.slice(1).toLowerCase()}`
+        return `${prefix} ${label}`
+      }
+      return formatPartHeadingLabel(token)
+    }
+  }
+  return null
+}
+
 const VOLUME_HEADING_PATTERN =
   /^volume\s+(\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
 
@@ -2214,6 +2270,19 @@ function promoteStructuralSectionHeadings(blocks) {
       }
     }
 
+    const partLabel = resolvePartHeadingLabel(normalized)
+    if (partLabel) {
+      return {
+        ...block,
+        text: partLabel,
+        isHeading: true,
+        isChapterStart: true,
+        fontSize: Math.max(block.fontSize ?? 0, CHAPTER_DISPLAY_FONT_SIZE),
+        chapterTitle: block.chapterTitle ?? partLabel,
+        textAlign: block.textAlign === "center" || block.centered ? "center" : block.textAlign,
+      }
+    }
+
     return block
   })
 }
@@ -2681,6 +2750,9 @@ function isFableStoryTitleBlock(block) {
     block.isChapterStart &&
     (block.textAlign === "center" || block.centered)
   ) {
+    if (countWordsInText(text) >= 8) {
+      return false
+    }
     return true
   }
 
@@ -3194,10 +3266,32 @@ function isProseLineContinuation(text, previousBlock) {
   if (previousBlock.textAlign === "center") {
     return false
   }
-  if (isAllCapsCalloutLine(trimmed)) {
+  if (!/[.!?]["'\u201d]?\s*$/.test(prevTrim)) {
+    if (/^[a-z(\u201c(']/.test(trimmed)) {
+      return true
+    }
+    if (/^(and|but|or|then|who|which|that|as|if|like|for|of|to|in|at|on|with|from|by|the|a|an|apples|out)\s/i.test(trimmed)) {
+      return true
+    }
+    if (HEADING_DANGLING_ENDING_REGEX.test(prevTrim)) {
+      return true
+    }
+    const letters = trimmed.replace(/[^A-Za-z]/g, "")
+    if (letters.length >= 8) {
+      const upperRatio = (trimmed.match(/[A-Z]/g) ?? []).length / letters.length
+      if (upperRatio >= 0.85) {
+        if (isPureAllCapsTitleText(trimmed)) {
+          return false
+        }
+        return true
+      }
+    }
+    if (/[.!?]["'\u201d]?\s*$/.test(trimmed) && countWordsInText(trimmed) <= 15) {
+      return true
+    }
     return false
   }
-  if (/[.!?]["'\u201d]?\s*$/.test(prevTrim)) {
+  if (isAllCapsCalloutLine(trimmed)) {
     return false
   }
   if (/^[a-z(\u201c]/.test(trimmed)) {
@@ -3358,6 +3452,27 @@ function isLineIsolatedOnPage(line, gapThreshold) {
   return above > gapThreshold && below > gapThreshold
 }
 
+function isIncompleteAllCapsWrapLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length < 12) {
+    return false
+  }
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 10 || letters !== letters.toUpperCase()) {
+    return false
+  }
+  if (/[.!?]\s*$/.test(trimmed)) {
+    return false
+  }
+  if (/[-\u2014\u2013,]\s*$/.test(trimmed)) {
+    return true
+  }
+  if ((trimmed.match(/,/g) ?? []).length >= 1) {
+    return true
+  }
+  return false
+}
+
 function isPureAllCapsTitleText(text) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
@@ -3367,6 +3482,12 @@ function isPureAllCapsTitleText(text) {
     return false
   }
   if (isNarrativeSentenceLine(trimmed)) {
+    return false
+  }
+  if (isIncompleteAllCapsWrapLine(trimmed)) {
+    return false
+  }
+  if ((trimmed.match(/,/g) ?? []).length >= 2) {
     return false
   }
   if (/[.!?][\u201d"\u2019']?\s*$/.test(trimmed)) {
@@ -4152,6 +4273,11 @@ function normalizeHeadingCandidate(text) {
     return ""
   }
 
+  const expandedPart = parseCompactPartHeading(trimmed)
+  if (expandedPart) {
+    return expandedPart
+  }
+
   if (CHAPTER_PATTERN.test(trimmed)) {
     return trimmed
   }
@@ -4222,6 +4348,9 @@ function isCleanStructuralHeadingText(text, line = null) {
   if (CHAPTER_PATTERN.test(trimmed)) {
     return true
   }
+  if (PART_HEADING_PATTERN.test(trimmed) || VOLUME_HEADING_PATTERN.test(trimmed)) {
+    return true
+  }
   if (STRUCTURAL_HEADING_PREFIX_REGEX.test(trimmed)) {
     if (/^book\s+one\s+of\.?$/i.test(trimmed)) {
       return false
@@ -4257,6 +4386,12 @@ function isNarrativeBoundaryLine(text, line = null) {
     return false
   }
   if (isScannerWatermarkLine(trimmed)) {
+    return false
+  }
+  if (resolvePartHeadingLabel(trimmed)) {
+    return true
+  }
+  if (isIncompleteAllCapsWrapLine(trimmed)) {
     return false
   }
   if (isNarrativeSentenceLine(trimmed)) {
@@ -4506,6 +4641,67 @@ function groupTextItemsIntoLines(items) {
   return lines
 }
 
+function isLikelyWrappedProseContinuation(text, previousText) {
+  const trimmed = (text ?? "").trim()
+  const prevTrim = (previousText ?? "").trim()
+  if (!trimmed || !prevTrim) {
+    return false
+  }
+  if (/[.!?]["'\u201d]?\s*$/.test(prevTrim)) {
+    return false
+  }
+  if (/^[a-z(\u201c(']/.test(trimmed)) {
+    return true
+  }
+  if (/^(and|but|or|then|who|which|that|as|if|like|for|of|to|in|at|on|with|from|by|the|a|an|apples|out)\s/i.test(trimmed)) {
+    return true
+  }
+  if (HEADING_DANGLING_ENDING_REGEX.test(prevTrim)) {
+    return true
+  }
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length >= 8) {
+    const upperRatio = (trimmed.match(/[A-Z]/g) ?? []).length / letters.length
+    if (upperRatio >= 0.85) {
+      if (isPureAllCapsTitleText(trimmed)) {
+        return false
+      }
+      return true
+    }
+  }
+  if (/[.!?]["'\u201d]?\s*$/.test(trimmed) && countWordsInText(trimmed) <= 15) {
+    return true
+  }
+  return false
+}
+
+function isProseSentenceFragment(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (resolvePartHeadingLabel(trimmed)) {
+    return false
+  }
+  if (/^[a-z(\u201c(']/.test(trimmed)) {
+    return true
+  }
+  if (/^(and|but|or|then|who|which|that|as|if|like|for)\s/i.test(trimmed)) {
+    return true
+  }
+  if (/[.!?]["'\u201d]?\s*$/.test(trimmed) && countWordsInText(trimmed) <= 20) {
+    const letters = trimmed.replace(/[^A-Za-z]/g, "")
+    if (letters.length < 12) {
+      return true
+    }
+    const upperRatio = (trimmed.match(/[A-Z]/g) ?? []).length / letters.length
+    if (upperRatio < 0.75) {
+      return true
+    }
+  }
+  return false
+}
+
 function annotateLinesCentered(lines) {
   if (!lines.length) {
     return
@@ -4545,9 +4741,18 @@ function annotateLinesCentered(lines) {
     lineCountsOnPage.set(trimmed, (lineCountsOnPage.get(trimmed) ?? 0) + 1)
   }
 
-  for (const line of lines) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex]
     const trimmed = (line.text ?? "").trim()
+    const previousLineText =
+      lineIndex > 0 ? (lines[lineIndex - 1].text ?? "").trim() : ""
+
     if (isShortDialogueLine(trimmed) || isDialogueAttributionFragment(trimmed)) {
+      line.centered = false
+      continue
+    }
+
+    if (isLikelyWrappedProseContinuation(trimmed, previousLineText)) {
       line.centered = false
       continue
     }
@@ -4588,6 +4793,11 @@ function annotateLinesCentered(lines) {
       trimmed.length <= CENTERED_REPEATED_LINE_MAX_CHARS &&
       (lineCountsOnPage.get(trimmed) ?? 0) >= CENTERED_REPEATED_LINE_MIN_COUNT &&
       !isDialogueAttributionFragment(trimmed)
+
+    if (isProseSentenceFragment(trimmed)) {
+      line.centered = false
+      continue
+    }
 
     line.centered = symmetricMargins || nearColumnCenter || repeatedDisplayLine
   }
@@ -6350,14 +6560,20 @@ function logHeadingPromotion(text, reasonLabel) {
   }
 }
 
-function pushHeadingBlock(blocks, payload, reasonLabel, pageIndex) {
+function pushHeadingBlock(blocks, payload, reasonLabel, pageIndex, line = null) {
   const text = (payload.text ?? "").trim()
   if (!qualifiesAsEmittedHeading(text, { fontSize: payload.fontSize ?? 0 })) {
     return false
   }
 
+  const headingPayload = { ...payload }
+  if (line?.centered && !isShortDialogueLine(text)) {
+    headingPayload.textAlign = "center"
+    headingPayload.centered = true
+  }
+
   logHeadingPromotion(text, reasonLabel)
-  blocks.push(withSourcePdfPage(payload, pageIndex))
+  blocks.push(withSourcePdfPage(headingPayload, pageIndex))
   return true
 }
 
@@ -6442,6 +6658,10 @@ function isChapterHeading(block) {
   }
 
   if (CHAPTER_WITH_SUBTITLE_REGEX.test(text)) {
+    return true
+  }
+
+  if (PART_HEADING_PATTERN.test(normalizeHeadingCandidate(text))) {
     return true
   }
 
@@ -6715,6 +6935,142 @@ function mergeChapterSubtitleBlocks(blocks) {
   return merged
 }
 
+function isLikelyPartSubtitleLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 72) {
+    return false
+  }
+  if (resolvePartHeadingLabel(trimmed) || parseChapterOnlyHeading(trimmed)) {
+    return false
+  }
+  if (CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed) || CHAPTER_PATTERN.test(trimmed)) {
+    return false
+  }
+  if (isNarrativeSentenceLine(trimmed) || isScannerWatermarkLine(trimmed)) {
+    return false
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 1 || words.length > 8) {
+    return false
+  }
+  if (/[.!?]/.test(trimmed)) {
+    return false
+  }
+  if (!/^[A-Z"'\u201c]/.test(trimmed)) {
+    return false
+  }
+  return isLikelyChapterSubtitleText(trimmed) || isDisplayChapterTitleText(trimmed)
+}
+
+function splitEmbeddedPartHeadings(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  const result = []
+
+  for (const block of blocks) {
+    if (
+      block?.type === "image" ||
+      block?.type === "image_candidate" ||
+      block?.isHeading
+    ) {
+      result.push(block)
+      continue
+    }
+
+    const text = (block?.text ?? "").trim()
+    const embeddedMatch = text.match(EMBEDDED_PART_WITH_SUBTITLE_REGEX)
+    if (!embeddedMatch || embeddedMatch.index == null) {
+      result.push(block)
+      continue
+    }
+
+    const before = text.slice(0, embeddedMatch.index).trim()
+    const partLabel = formatPartHeadingLabel(embeddedMatch[1])
+    const subtitle = (embeddedMatch[2] ?? "").trim()
+
+    if (before) {
+      result.push({
+        ...block,
+        text: before,
+        textAlign: undefined,
+        centered: undefined,
+      })
+    }
+
+    result.push({
+      ...block,
+      text: partLabel,
+      chapterTitle: subtitle ? `${partLabel} — ${subtitle}` : partLabel,
+      isHeading: true,
+      isChapterStart: true,
+      fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+      textAlign: "center",
+    })
+  }
+
+  return result
+}
+
+function mergePartHeadingBlocks(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  const merged = []
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    const text = (block?.text ?? "").trim()
+    const partLabel = resolvePartHeadingLabel(text)
+
+    if (!partLabel) {
+      merged.push(block)
+      continue
+    }
+
+    let cursor = index + 1
+    let subtitle = null
+
+    while (cursor < blocks.length) {
+      const candidate = blocks[cursor]
+      const candidateText = (candidate?.text ?? "").trim()
+      if (!candidateText) {
+        break
+      }
+      if (resolvePartHeadingLabel(candidateText)) {
+        break
+      }
+      if (
+        parseChapterOnlyHeading(candidateText) ||
+        CHAPTER_WITH_SUBTITLE_REGEX.test(candidateText)
+      ) {
+        break
+      }
+      if (isLikelyPartSubtitleLine(candidateText)) {
+        subtitle = subtitle ? `${subtitle} ${candidateText}` : candidateText
+        cursor += 1
+        continue
+      }
+      break
+    }
+
+    merged.push({
+      ...block,
+      text: partLabel,
+      chapterTitle: subtitle ? `${partLabel} — ${subtitle}` : partLabel,
+      isHeading: true,
+      isChapterStart: true,
+      fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+      textAlign: block.textAlign === "center" || block.centered ? "center" : block.textAlign,
+    })
+    index = cursor - 1
+  }
+
+  return merged
+}
+
 function normalizeTitleComparisonKey(text) {
   return (text ?? "")
     .toLowerCase()
@@ -6860,7 +7216,9 @@ function detectChapters(content, bookTitle = "") {
 
       if (isChapterHeading(block)) {
         const rawTitle = (block.chapterTitle ?? block.text ?? "").trim()
-        const canonicalTitle = normalizeHeadingCandidate(rawTitle) || rawTitle
+        const headingText = (block.text ?? rawTitle).trim()
+        const canonicalTitle = normalizeHeadingCandidate(headingText) || headingText
+        const partLabel = resolvePartHeadingLabel(headingText)
         let id = slugify(canonicalTitle)
         let chapterTitle = block.chapterTitle ?? rawTitle
         const isFableTitle = isFableStoryTitleBlock(block)
@@ -6872,13 +7230,11 @@ function detectChapters(content, bookTitle = "") {
           }
         }
 
-        if (
-          !isFableTitle &&
-          (PART_HEADING_PATTERN.test(canonicalTitle) ||
-            VOLUME_HEADING_PATTERN.test(canonicalTitle))
-        ) {
-          currentPartId = id
-          currentPartTitle = canonicalTitle
+        if (!isFableTitle && partLabel) {
+          currentPartId = slugify(partLabel)
+          currentPartTitle = partLabel
+          id = slugify(block.chapterTitle ?? partLabel)
+          chapterTitle = block.chapterTitle ?? partLabel
         } else if (
           !isFableTitle &&
           currentPartId &&
@@ -6888,6 +7244,13 @@ function detectChapters(content, bookTitle = "") {
           id = `${currentPartId}-${slugify(canonicalTitle)}`
           const chapterLabel = block.chapterTitle ?? rawTitle
           chapterTitle = `${currentPartTitle ?? currentPartId} — ${chapterLabel}`
+        } else if (
+          !isFableTitle &&
+          (PART_HEADING_PATTERN.test(canonicalTitle) ||
+            VOLUME_HEADING_PATTERN.test(canonicalTitle))
+        ) {
+          currentPartId = id
+          currentPartTitle = canonicalTitle
         }
 
         if (!seenChapterIds.has(id)) {
@@ -7000,6 +7363,14 @@ function isHeadingLine(text, line, headingStrings, entry = null) {
   }
 
   if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
+    return false
+  }
+
+  if (resolvePartHeadingLabel(text)) {
+    return true
+  }
+
+  if (isIncompleteAllCapsWrapLine(text)) {
     return false
   }
 
@@ -7369,7 +7740,8 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
           chapterId: null,
         },
         "compiledMultilineChapter",
-        entry.pageIndex
+        entry.pageIndex,
+        line
       )
 
       nonEmptyLineIndex += cursor - index - 1
@@ -7427,7 +7799,8 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
             chapterId: null,
           },
           "dedicationConnective",
-          entry.pageIndex
+          entry.pageIndex,
+          line
         )
         index += 1
         continue
@@ -7449,7 +7822,8 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
           chapterId: null,
         },
         "structuralLine",
-        entry.pageIndex
+        entry.pageIndex,
+        line
       )
       index += 1
       continue
@@ -7492,7 +7866,8 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
           chapterId: null,
         },
         "tocChapterListing",
-        entry.pageIndex
+        entry.pageIndex,
+        line
       )
       index += 1
       continue
@@ -7542,12 +7917,33 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
             chapterId: null,
           },
           "likelyChapterNumber",
-          entry.pageIndex
+          entry.pageIndex,
+          line
         )
       ) {
         index += 1
         continue
       }
+    }
+
+    const partLabel = resolvePartHeadingLabel(text)
+    if (partLabel) {
+      pendingConnective = null
+      pushHeadingBlock(
+        blocks,
+        {
+          text: partLabel,
+          isHeading: true,
+          fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+          isChapterStart: true,
+          chapterId: null,
+        },
+        "compactPartHeading",
+        entry.pageIndex,
+        line
+      )
+      index += 1
+      continue
     }
 
     if (isNarrativeBoundaryLine(text, line)) {
@@ -7568,7 +7964,8 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
           chapterId: null,
         },
         "narrativeBoundary",
-        entry.pageIndex
+        entry.pageIndex,
+        line
       )
       index += 1
       continue
@@ -7634,7 +8031,8 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
             : isBoundary
               ? "tocHeadingRunBoundary"
               : "tocHeadingRun",
-          runEntry.pageIndex
+          runEntry.pageIndex,
+          runEntry.line
         )
       }
       nonEmptyLineIndex += run.length - 1
@@ -8076,9 +8474,13 @@ function applyBlockTransformPipeline(blocks) {
         mergeEndOfPartBlocks(
           mergeTrailingChapterTitleFragments(
             mergeInlineChapterLabelTitles(
-              mergeChapterSubtitleBlocks(
-                mergeMultilineFableTitleBlocks(
-                  mergeMultilineChapterTitleBlocks(splitDialogueHeavyBlocks(blocks))
+              mergePartHeadingBlocks(
+                mergeChapterSubtitleBlocks(
+                  mergeMultilineFableTitleBlocks(
+                    mergeMultilineChapterTitleBlocks(
+                      splitDialogueHeavyBlocks(splitEmbeddedPartHeadings(blocks))
+                    )
+                  )
                 )
               )
             )
