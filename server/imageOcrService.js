@@ -17,16 +17,20 @@ const BUNDLED_ENG_TRAINEDDATA = path.join(__dirname, "eng.traineddata")
 
 let sharedWorkerPromise = null
 
+function trainedDataArchiveExists(langDir) {
+  return fs.existsSync(path.join(langDir, "eng.traineddata.gz"))
+}
+
 function resolveTesseractLangPath() {
-  if (fs.existsSync(LOCAL_TESSDATA_PATH)) {
+  if (fs.existsSync(LOCAL_TESSDATA_PATH) && trainedDataArchiveExists(LOCAL_TESSDATA_PATH)) {
     return LOCAL_TESSDATA_PATH
   }
 
-  if (fs.existsSync(BUNDLED_ENG_TRAINEDDATA)) {
+  if (trainedDataArchiveExists(__dirname)) {
     return __dirname
   }
 
-  return undefined
+  return null
 }
 
 const ROMAN_WORDS = new Set([
@@ -61,12 +65,23 @@ async function getOcrWorker() {
   if (!sharedWorkerPromise) {
     sharedWorkerPromise = (async () => {
       const langPath = resolveTesseractLangPath()
-      const workerOptions = {
-        ...(langPath ? { langPath } : {}),
-        ...(OCR_DEBUG ? { logger: (message) => console.log("[tesseract]", message) } : {}),
+      if (!langPath) {
+        logOcr("tessdata_missing")
+        return null
       }
-      const worker = await createWorker("eng", 1, workerOptions)
-      return worker
+
+      try {
+        const workerOptions = {
+          langPath,
+          ...(OCR_DEBUG ? { logger: (message) => console.log("[tesseract]", message) } : {}),
+        }
+        return await createWorker("eng", 1, workerOptions)
+      } catch (error) {
+        logOcr("worker_init_failed", {
+          message: error instanceof Error ? error.message : String(error),
+        })
+        return null
+      }
     })()
   }
 
@@ -222,6 +237,9 @@ function cropCanvasRegion(canvas, region, { preprocess = true } = {}) {
 
 async function recognizeBuffer(buffer, { psm = "7", whitelist = null } = {}) {
   const worker = await getOcrWorker()
+  if (!worker) {
+    return ""
+  }
   const parameters = {
     tessedit_pageseg_mode: psm,
   }

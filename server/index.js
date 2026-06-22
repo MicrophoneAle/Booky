@@ -9,7 +9,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import crypto from "node:crypto"
 import { getDocument, OPS, ImageKind } from "pdfjs-dist/legacy/build/pdf.mjs"
-import { createCanvas } from "@napi-rs/canvas/node-canvas.js"
+import { createCanvas, loadImage } from "@napi-rs/canvas/node-canvas.js"
 import {
   analyzeChapterGraphicFromContext,
   analyzeChapterHeadingBanner,
@@ -31,7 +31,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 74
+const PARSER_VERSION = 76
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -3520,10 +3520,20 @@ function isLikelyAllCapsDisplayTitle(text, line = null, entry = null) {
   if (lineFontSize >= HEADING_STRING_MIN_FONT_SIZE) {
     return true
   }
-  if (centered) {
-    return true
+  if (centered && !isHeadingIncompleteEnding(trimmed)) {
+    const words = trimmed.split(/\s+/).filter(Boolean)
+    if (words.length <= 8) {
+      return true
+    }
   }
-  if (isHeadingIncompleteEnding(trimmed) || /,\s*$/.test(trimmed)) {
+  if (isHeadingIncompleteEnding(trimmed)) {
+    const words = trimmed.split(/\s+/).filter(Boolean)
+    if (words.length <= 5 && isPureAllCapsTitleText(trimmed)) {
+      return true
+    }
+    return false
+  }
+  if (/,\s*$/.test(trimmed)) {
     return true
   }
 
@@ -3567,6 +3577,9 @@ function isProminentDisplayTitleLine(text, line, entry = null) {
 
   const words = trimmed.split(/\s+/).filter(Boolean)
   if (words.length < 2 || words.length > 12) {
+    return false
+  }
+  if (isHeadingIncompleteEnding(trimmed)) {
     return false
   }
   if (/[.!?][\u201d"\u2019']?\s*$/.test(trimmed)) {
@@ -4858,20 +4871,106 @@ function generateImageCandidateId(pageNumber, streamIndex) {
   return `img-p${pageNumber}-s${streamIndex}-${crypto.randomUUID().slice(0, 8)}`
 }
 
-async function resolvePdfImageObject(page, imageRefId) {
+async function awaitPdfObject(pool, objId) {
+  if (!pool?.get || !objId) {
+    return null
+  }
+
+  if (typeof pool.has === "function" && pool.has(objId)) {
+    try {
+      return pool.get(objId)
+    } catch {
+      // Fall through to the callback form when data is still pending.
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    let settled = false
+    const timeoutId = setTimeout(() => {
+      if (settled) {
+        return
+      }
+      settled = true
+      reject(new Error(`Image resolve timed out for ${objId}`))
+    }, PDF_IMAGE_RESOLVE_TIMEOUT_MS)
+
+    pool.get(objId, (data) => {
+      if (settled) {
+        return
+      }
+      settled = true
+      clearTimeout(timeoutId)
+      if (data != null) {
+        resolve(data)
+      } else {
+        reject(new Error(`Image object ${objId} returned empty data`))
+      }
+    })
+  })
+}
+
+async function resolvePdfImageObject(page, imageRefId, pdf = null) {
   if (!imageRefId) {
     return null
   }
 
-  return Promise.race([
-    page.objs.get(imageRefId),
-    new Promise((_, reject) => {
-      setTimeout(
-        () => reject(new Error("Image resolve timed out")),
-        PDF_IMAGE_RESOLVE_TIMEOUT_MS
-      )
-    }),
-  ])
+  const pools = [page?.objs, page?.commonObjs, pdf?.commonObjs].filter(Boolean)
+  let lastError = null
+
+  for (const pool of pools) {
+    try {
+      const data = await awaitPdfObject(pool, imageRefId)
+      if (data) {
+        return data
+      }
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  if (lastError) {
+    throw lastError
+  }
+
+  return null
+}
+
+function isPngImageBuffer(buffer) {
+  return (
+    Buffer.isBuffer(buffer) &&
+    buffer.length >= 8 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47
+  )
+}
+
+function isWebpImageBuffer(buffer) {
+  return (
+    Buffer.isBuffer(buffer) &&
+    buffer.length >= 12 &&
+    buffer.toString("ascii", 0, 4) === "RIFF" &&
+    buffer.toString("ascii", 8, 12) === "WEBP"
+  )
+}
+
+function isGifImageBuffer(buffer) {
+  return (
+    Buffer.isBuffer(buffer) &&
+    buffer.length >= 6 &&
+    (buffer.toString("ascii", 0, 6) === "GIF87a" ||
+      buffer.toString("ascii", 0, 6) === "GIF89a")
+  )
+}
+
+function isRasterImageBuffer(buffer) {
+  return (
+    isJpegImageBuffer(buffer) ||
+    isPngImageBuffer(buffer) ||
+    isWebpImageBuffer(buffer) ||
+    isGifImageBuffer(buffer)
+  )
 }
 
 function isJpegImageBuffer(buffer) {
@@ -4943,12 +5042,12 @@ function extractCompressedPdfImageBytes(imageObject) {
 
   for (const candidate of compressedCandidates) {
     const buffer = bufferFromByteSource(candidate)
-    if (isJpegImageBuffer(buffer)) {
+    if (isRasterImageBuffer(buffer)) {
       return buffer
     }
   }
 
-  if (typeof imageObject.src === "string" && imageObject.src.startsWith("data:image/jpeg")) {
+  if (typeof imageObject.src === "string" && imageObject.src.startsWith("data:image/")) {
     const buffer = bufferFromByteSource(imageObject.src)
     if (buffer?.length) {
       return buffer
@@ -4956,7 +5055,7 @@ function extractCompressedPdfImageBytes(imageObject) {
   }
 
   const dataBuffer = bufferFromByteSource(imageObject.data)
-  if (isJpegImageBuffer(dataBuffer)) {
+  if (isRasterImageBuffer(dataBuffer)) {
     return dataBuffer
   }
 
@@ -5035,9 +5134,41 @@ function rawPdfPixelsToJpegBuffer(imageObject) {
   return canvas.toBuffer("image/jpeg", { quality: 0.92 })
 }
 
-function resolvePdfImageBuffer(imageObject) {
+async function rasterBufferToJpegBuffer(buffer) {
+  if (!buffer?.length) {
+    return null
+  }
+
+  if (isJpegImageBuffer(buffer)) {
+    return buffer
+  }
+
+  try {
+    const source = await loadImage(buffer)
+    const canvas = createCanvas(source.width, source.height)
+    const context = canvas.getContext("2d")
+    context.fillStyle = "#ffffff"
+    context.fillRect(0, 0, source.width, source.height)
+    context.drawImage(source, 0, 0)
+    return canvas.toBuffer("image/jpeg", { quality: 0.92 })
+  } catch {
+    return null
+  }
+}
+
+async function resolvePdfImageBuffer(imageObject) {
   const compressedBuffer = extractCompressedPdfImageBytes(imageObject)
   if (compressedBuffer?.length) {
+    if (isJpegImageBuffer(compressedBuffer)) {
+      return compressedBuffer
+    }
+    if (
+      isPngImageBuffer(compressedBuffer) ||
+      isWebpImageBuffer(compressedBuffer) ||
+      isGifImageBuffer(compressedBuffer)
+    ) {
+      return rasterBufferToJpegBuffer(compressedBuffer)
+    }
     return compressedBuffer
   }
 
@@ -5048,7 +5179,7 @@ async function extractPdfPageImageCandidatesFromOperatorList(
   page,
   pageNumber,
   operatorList,
-  { resolveBuffers = true } = {}
+  { resolveBuffers = true, pdf = null } = {}
 ) {
   const viewport = page.getViewport({ scale: 1 })
   const pageWidth = viewport.width
@@ -5096,12 +5227,11 @@ async function extractPdfPageImageCandidatesFromOperatorList(
 
     if (imageRole != null && resolveBuffers) {
       try {
-        if (op === OPS.paintInlineImageXObject) {
-          buffer = resolvePdfImageBuffer(args?.[0])
-        } else {
-          const imageObject = await resolvePdfImageObject(page, args?.[0])
-          buffer = resolvePdfImageBuffer(imageObject)
-        }
+        const imageObject =
+          op === OPS.paintInlineImageXObject
+            ? args?.[0]
+            : await resolvePdfImageObject(page, args?.[0], pdf)
+        buffer = await resolvePdfImageBuffer(imageObject)
       } catch {
         buffer = null
       }
@@ -6250,7 +6380,7 @@ async function extractPdfPageImagesOnly(pdf, pageNumber) {
         page,
         pageNumber,
         operatorList,
-        { resolveBuffers: false }
+        { resolveBuffers: false, pdf }
       )
     } finally {
       if (typeof page.cleanup === "function") {
@@ -6296,7 +6426,7 @@ async function resolvePageImageCandidateBuffers(pdf, pageImageCandidates, onPage
               page,
               pageNumber,
               operatorList,
-              { resolveBuffers: true }
+              { resolveBuffers: true, pdf }
             )
             const resolvedByStreamIndex = new Map(
               resolved.map((candidate) => [candidate.streamIndex, candidate])
@@ -6804,6 +6934,12 @@ function isLikelyChapterSubtitleText(text) {
   if (/^[a-z]/.test(trimmed) && !/^e\.?\s/i.test(trimmed)) {
     return false
   }
+  if (isHeadingIncompleteEnding(trimmed)) {
+    return false
+  }
+  if (/^by\s+(?:this|the|now|then|that|which|whom)\b/i.test(trimmed)) {
+    return false
+  }
   if (trimmed.length > 72) {
     return false
   }
@@ -7294,13 +7430,33 @@ function isAuthorStructuralLine(text) {
     return false
   }
 
-  if (!/^(by|written by|translated by)\s+[A-Z]/i.test(text)) {
+  const trimmed = (text ?? "").trim()
+  if (!/^(?:by|written by|translated by)\s+/i.test(trimmed)) {
     return false
   }
-  if (text.length >= 50) {
+
+  const afterBy = trimmed.replace(/^(?:by|written by|translated by)\s+/i, "").trim()
+  if (!afterBy || !/^\p{Lu}/u.test(afterBy)) {
     return false
   }
-  if (/[.!?]/.test(text)) {
+
+  // Narrative openers such as "By this time the schooner..." are prose, not credits.
+  if (
+    /^(?:this|the|now|then|that|which|whom|far|reason|day|night|morning|evening|chance|luck|turn|way|and|a|an|no|some|any|virtue|means|degrees?|contrast|comparison|default|order|itself|it)\b/i.test(
+      afterBy
+    )
+  ) {
+    return false
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length > 6) {
+    return false
+  }
+  if (trimmed.length >= 50) {
+    return false
+  }
+  if (/[.!?]/.test(trimmed)) {
     return false
   }
   return true
@@ -7371,6 +7527,13 @@ function isHeadingLine(text, line, headingStrings, entry = null) {
   }
 
   if (isIncompleteAllCapsWrapLine(text)) {
+    return false
+  }
+
+  if (
+    isHeadingIncompleteEnding((text ?? "").trim()) &&
+    !isCleanStructuralHeadingText(text, line)
+  ) {
     return false
   }
 
