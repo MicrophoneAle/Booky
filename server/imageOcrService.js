@@ -33,19 +33,6 @@ function resolveTesseractLangPath() {
   return null
 }
 
-const ROMAN_WORDS = new Set([
-  "one",
-  "two",
-  "three",
-  "four",
-  "five",
-  "six",
-  "seven",
-  "eight",
-  "nine",
-  "ten",
-])
-
 const PART_WORD_TO_NUMBER = {
   one: "One",
   two: "Two",
@@ -270,6 +257,21 @@ async function recognizeRegion(scaledCanvas, region, options = {}) {
   return recognizeBuffer(cropCanvasRegion(scaledCanvas, region, { preprocess: true }), options)
 }
 
+function isBookDividerText(text) {
+  return /\bBOOK\s+(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+)\b/i.test(
+    normalizeOcrLine(text)
+  )
+}
+
+function buildBookDividerMetadata(text) {
+  return {
+    boundaryKind: "book_divider",
+    number: null,
+    title: null,
+    rawText: normalizeOcrLine(text),
+  }
+}
+
 function parseSectionLabelToken(token) {
   const trimmed = normalizeOcrLine(token).replace(/\.$/, "")
   if (!trimmed) {
@@ -327,14 +329,8 @@ function parseChapterNumberToken(token, { hasDigitNumber = false } = {}) {
     return { kind: "chapter", label: `Chapter ${trimmed}` }
   }
 
-  if (!hasDigitNumber && /^[IVXLCDM]+$/i.test(trimmed)) {
+  if (!hasDigitNumber && /^[IVXLCDM]{2,}$/i.test(trimmed)) {
     return { kind: "chapter", label: `Chapter ${trimmed.toUpperCase()}` }
-  }
-
-  const lower = trimmed.toLowerCase()
-  if (ROMAN_WORDS.has(lower)) {
-    const word = lower.charAt(0).toUpperCase() + lower.slice(1)
-    return { kind: "chapter", label: `Chapter ${word}` }
   }
 
   return null
@@ -476,6 +472,10 @@ function buildChapterHeadingMetadata({ number, title }) {
 }
 
 function parseChapterHeadingBannerText(bannerText) {
+  if (isBookDividerText(bannerText)) {
+    return buildBookDividerMetadata(bannerText)
+  }
+
   const lines = bannerText
     .split(/\n/)
     .map((line) => normalizeOcrLine(line))
@@ -557,6 +557,11 @@ async function ocrChapterHeading(imageBuffer) {
 
   logOcr("chapter_heading_banner", { bannerText, numberTextWide, numberTextNarrow })
 
+  const ocrContext = [bannerText, numberTextWide, numberTextNarrow].join(" ")
+  if (isBookDividerText(ocrContext)) {
+    return buildBookDividerMetadata(ocrContext)
+  }
+
   const metadata = parseChapterHeadingBannerText(bannerText)
   const bestNumberToken = resolveBestChapterNumberToken(numberTextWide, numberTextNarrow)
 
@@ -585,6 +590,10 @@ async function ocrFullPageSection(imageBuffer) {
   })
 
   logOcr("full_page_body", { combined })
+
+  if (isBookDividerText(combined)) {
+    return buildBookDividerMetadata(combined)
+  }
 
   const interludes = parseInterludesDivider(combined)
   if (interludes) {

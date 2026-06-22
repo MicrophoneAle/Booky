@@ -35,7 +35,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 80
+const PARSER_VERSION = 81
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -4963,6 +4963,7 @@ import {
   isChapterLikeOcrMetadata,
   isFullPageSpreadHalf,
   isLikelyChapterArchBannerBlock,
+  isTallChapterArchBannerBlock,
   PDF_IMAGE_ROLE,
 } from "./pdfImageRoleUtils.js"
 
@@ -5431,6 +5432,13 @@ function shouldOcrFullPageIllustration(block, pageTextCharCounts) {
 }
 
 function isTextHeavyIllustrationPage(pageTextCharCounts, imageBlock) {
+  if (
+    imageBlock?.imageRole === "chapter_heading" ||
+    isTallChapterArchBannerBlock(imageBlock)
+  ) {
+    return false
+  }
+
   return (
     getSamePageTextChars(pageTextCharCounts, imageBlock) >
     TEXT_HEAVY_CHAPTER_PLATE_PAGE_CHARS

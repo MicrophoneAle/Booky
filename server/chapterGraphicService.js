@@ -136,6 +136,40 @@ function hasNonChapterCaption(followingBlocks) {
   )
 }
 
+function collectNearbyTextLines(blocks, imageBlock, maxPageDelta = 1) {
+  const pageNumber = imageBlock?.pageNumber ?? 0
+  const lines = []
+
+  for (const block of blocks) {
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      continue
+    }
+
+    const blockPage =
+      block?.pageNumber ??
+      (Number.isFinite(block?.sourcePdfPageIndex)
+        ? block.sourcePdfPageIndex + 1
+        : 0)
+
+    if (Math.abs(blockPage - pageNumber) > maxPageDelta) {
+      continue
+    }
+
+    const text = (block?.text ?? "").trim()
+    if (text) {
+      lines.push(text)
+    }
+  }
+
+  return lines
+}
+
+function hasNearbyNonChapterCaption(blocks, imageBlock) {
+  return collectNearbyTextLines(blocks, imageBlock).some((text) =>
+    NON_CHAPTER_CAPTION_PATTERNS.some((pattern) => pattern.test(text))
+  )
+}
+
 function isFrontMatterIllustration(followingBlocks) {
   return followingBlocks.some(({ text }) =>
     FRONT_MATTER_SERIES_MARKERS.some((pattern) => pattern.test(text))
@@ -227,6 +261,11 @@ function isChapterTitleStripBlock(block) {
 
 function isEndOfChapterTallArt(blocks, blockIndex, imageBlock) {
   if (!isTallChapterArchBannerBlock(imageBlock)) {
+    return false
+  }
+
+  const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex, 8)
+  if (hasEpigraphFollowUp(followingBlocks) || hasInterstitialTitle(followingBlocks)) {
     return false
   }
 
@@ -431,9 +470,10 @@ function shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex) {
 
   const samePageTextChars = countSamePageTextChars(blocks, imageBlock)
   if (
-    (imageBlock.imageRole === "chapter_heading" ||
-      isLikelyChapterArchBannerBlock(imageBlock)) &&
-    samePageTextChars > TEXT_HEAVY_CHAPTER_PLATE_PAGE_CHARS
+    imageBlock.imageRole !== "chapter_heading" &&
+    isLikelyChapterArchBannerBlock(imageBlock) &&
+    samePageTextChars > TEXT_HEAVY_CHAPTER_PLATE_PAGE_CHARS &&
+    !isTallChapterArchBannerBlock(imageBlock)
   ) {
     logChapterGraphicDecision("skip_text_heavy_chapter_plate", {
       pageNumber: imageBlock.pageNumber,
@@ -444,7 +484,7 @@ function shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex) {
 
   const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex)
 
-  if (hasNonChapterCaption(followingBlocks)) {
+  if (hasNonChapterCaption(followingBlocks) || hasNearbyNonChapterCaption(blocks, imageBlock)) {
     logChapterGraphicDecision("skip_non_chapter_caption", {
       pageNumber: imageBlock.pageNumber,
     })
@@ -471,8 +511,16 @@ function shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex) {
     isTallChapterArchBannerBlock(imageBlock) &&
     !isHorizontalChapterStripBlock(imageBlock)
   ) {
-    logChapterGraphicDecision("skip_front_matter_tall_arch", { pageNumber })
-    return true
+    const openerFollowingBlocks = collectFollowingTextBlocks(blocks, blockIndex, 8)
+    const looksLikeSectionOpener =
+      hasEpigraphFollowUp(openerFollowingBlocks) ||
+      hasInterstitialTitle(openerFollowingBlocks) ||
+      hasNarrativeFollowUp(openerFollowingBlocks)
+
+    if (!looksLikeSectionOpener) {
+      logChapterGraphicDecision("skip_front_matter_tall_arch", { pageNumber })
+      return true
+    }
   }
 
   if (isEndOfChapterTallArt(blocks, blockIndex, imageBlock)) {
@@ -647,6 +695,10 @@ function mergeOcrIntoAnalysis(
 ) {
   if (analysisResult?.boundaryKind === "flashback") {
     return analysisResult
+  }
+
+  if (ocrMetadata?.boundaryKind === "book_divider") {
+    return { ...SAFE_FALLBACK }
   }
 
   if (imageRole === "full_page_illustration" && printedToc && !isChapterLikeOcrMetadata(ocrMetadata)) {
