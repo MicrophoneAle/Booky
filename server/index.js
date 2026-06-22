@@ -30,7 +30,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 65
+const PARSER_VERSION = 66
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -3193,14 +3193,38 @@ function collapseLetterSpacing(text) {
 const PRODUCTION_SLUG_REGEX = /\.(?:qxd|qxp|qx\d|indd)\b/i
 const CHAPTER_PLACEHOLDER_REGEX = /^chapter\s*heading\s*goes\s*here\.?$/i
 
-// After collapsing letter-spacing, a short run of capital letters
-// (the book title or chapter title rendered in tracked small caps)
-// optionally flanked by a 1 to 4 digit folio is a running header,
-// never body prose. Legitimate structural headings ("PROLOGUE",
-// "CHAPTER 7", "PART ONE") are excluded by the CHAPTER_PATTERN and
-// STRUCTURAL_HEADING_PREFIX_REGEX check before this applies.
-const LETTER_SPACED_RUNNING_HEADER_SHAPE_REGEX =
-  /^(?:\d{1,4}\s+[A-Z][A-Z'\u2019]{2,48}|[A-Z][A-Z'\u2019]{2,48}\s+\d{1,4})$/
+// A collapsed running header: an all-caps title run (letter-spacing
+// already fused by collapseLetterSpacing, so it has no internal spaces),
+// optionally flanked by a 1 to 4 digit folio on either side. The title
+// run allows the punctuation that appears inside chapter and book titles
+// set in tracked small caps: straight and curly quotes, apostrophes,
+// periods, commas, and dashes.
+const COLLAPSED_RUNNING_HEADER_REGEX =
+  /^(?:(\d{1,4})\s+)?([A-Z][A-Z0-9.,!?'\u2018\u2019"\u201c\u201d\u2013\u2014-]{2,60})(?:\s+(\d{1,4}))?$/
+
+function isCollapsedRunningHeaderLine(text) {
+  const match = (text ?? "").trim().match(COLLAPSED_RUNNING_HEADER_REGEX)
+  if (!match) {
+    return false
+  }
+  const leadingNumber = match[1]
+  const titleRun = match[2]
+  const trailingNumber = match[3]
+  if (/\s/.test(titleRun)) {
+    return false
+  }
+  const letters = titleRun.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 4 || letters !== letters.toUpperCase()) {
+    return false
+  }
+  // With a folio on either side it is unambiguously a running head. Without
+  // one, require a longer run so a lone all-caps prose word ("STOP", "NOOO")
+  // is not mistaken for a header.
+  if (leadingNumber || trailingNumber) {
+    return true
+  }
+  return letters.length >= 8
+}
 
 function joinWrappedText(left, right) {
   const leftText = (left ?? "").trim()
@@ -3747,7 +3771,7 @@ function shouldDropExtractedLine(
   ) {
     return false
   }
-  if (LETTER_SPACED_RUNNING_HEADER_SHAPE_REGEX.test(trimmed)) {
+  if (isCollapsedRunningHeaderLine(trimmed)) {
     return true
   }
   if (STANDALONE_PAGE_NUMBER_REGEX.test(trimmed)) {
@@ -4350,6 +4374,10 @@ function shouldOcrFullPageIllustration(block, pageTextCharCounts) {
 }
 
 function shouldRunIllustrationOcr(block, _ocrMetadata, pageTextCharCounts) {
+  if (block.imageRole === "illustration") {
+    return false
+  }
+
   if (block.imageRole === "chapter_heading" || isLikelyChapterArchBannerBlock(block)) {
     return true
   }
@@ -4366,6 +4394,10 @@ function resolveIllustrationOcrRole(block) {
 }
 
 function isChapterBannerCandidate(block) {
+  if (block.imageRole === "illustration") {
+    return false
+  }
+
   return block.imageRole === "chapter_heading" || isLikelyChapterArchBannerBlock(block)
 }
 

@@ -69,6 +69,10 @@ export function isLikelyChapterArchBanner({ width, height, pageWidth, pageHeight
 }
 
 export function isLikelyChapterArchBannerBlock(block) {
+  if (block?.imageRole === PDF_IMAGE_ROLE.ILLUSTRATION) {
+    return false
+  }
+
   const coords = block?.coordinates ?? {}
   return isLikelyChapterArchBanner({
     width: coords.width ?? 0,
@@ -121,13 +125,14 @@ export function isFullPageSpreadHalf(block, previousImage) {
 export const PDF_IMAGE_ROLE = Object.freeze({
   FULL_PAGE_ILLUSTRATION: "full_page_illustration",
   CHAPTER_HEADING: "chapter_heading",
+  ILLUSTRATION: "illustration",
 })
 
 /** Minimum rendered height (px) for a wide banner to count as a chapter heading graphic. */
 export const CHAPTER_HEADING_MIN_HEIGHT_PX = 36
 
 /**
- * @returns {"full_page_illustration"|"chapter_heading"|null}
+ * @returns {"full_page_illustration"|"chapter_heading"|"illustration"|null}
  */
 export function classifyPdfImageRole(metrics) {
   const { width, height, pageHeight, pageWidth } = metrics ?? {}
@@ -169,6 +174,10 @@ export function classifyPdfImageRole(metrics) {
     aspectRatio >= 1.05
   ) {
     return PDF_IMAGE_ROLE.CHAPTER_HEADING
+  }
+
+  if (widthRatio >= 0.45 || widthRatio * heightRatio >= 0.12) {
+    return PDF_IMAGE_ROLE.ILLUSTRATION
   }
 
   return null
