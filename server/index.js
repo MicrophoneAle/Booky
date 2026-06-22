@@ -5007,6 +5007,19 @@ function stripImageBinaryFields(block) {
   return rest
 }
 
+function stripAllImageBinaryFieldsFromBlocks(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  return blocks.map((block) => {
+    if (block?.buffer != null || block?.imgData != null) {
+      return stripImageBinaryFields(block)
+    }
+    return block
+  })
+}
+
 async function resolveUploadedImageAssetUrl(bucket, storagePath) {
   const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(storagePath)
   const publicUrl = publicUrlData?.publicUrl
@@ -5218,7 +5231,7 @@ async function uploadBookAssets(bookId, blocks, { onProgress } = {}) {
       continue
     }
 
-    if (block.src && !extractImageBase64Payload(block)) {
+    if (block.buffer != null || block.imgData != null) {
       nextBlocks[index] = stripImageBinaryFields(block)
     }
   }
@@ -7153,7 +7166,15 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
           .eq("user_id", userId)
 
         if (updateError) {
-          throw new Error("Failed to save parsed document")
+          console.error(
+            `Failed to save parsed document ${documentId}:`,
+            updateError.message ?? updateError
+          )
+          throw new Error(
+            updateError.message
+              ? `Failed to save parsed document: ${updateError.message}`
+              : "Failed to save parsed document"
+          )
         }
 
         clearDocumentParseProgress(documentId)
@@ -7507,6 +7528,8 @@ async function parsePdfBuffer(
       },
     })
   }
+
+  blocks = stripAllImageBinaryFieldsFromBlocks(blocks)
 
   const content = blocksToContent(blocks)
 
