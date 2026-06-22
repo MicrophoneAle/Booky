@@ -30,7 +30,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 70
+const PARSER_VERSION = 71
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -2541,6 +2541,74 @@ function mergeMultilineFableTitleBlocks(blocks) {
   }
 
   return merged
+}
+
+const FABLE_NON_STORY_HEADING_REGEX =
+  /^(introduction|preface|prologue|epilogue|conclusion|contents|illustrations)$/i
+
+function isFableStoryTitleBlock(block) {
+  if (!block?.isHeading || block?.type === "image") {
+    return false
+  }
+
+  const text = (block.text ?? "").trim()
+  if (!text || text.length > 90) {
+    return false
+  }
+
+  const fontSize = block.fontSize ?? 0
+  if (fontSize >= 40) {
+    return false
+  }
+
+  if (FABLE_NON_STORY_HEADING_REGEX.test(text)) {
+    return false
+  }
+  if (CHAPTER_PATTERN.test(text)) {
+    return false
+  }
+  if (PART_HEADING_PATTERN.test(text) || VOLUME_HEADING_PATTERN.test(text)) {
+    return false
+  }
+  if (isTocChapterListingLine(text) || isTocDenseListingLine(text)) {
+    return false
+  }
+  if (isCleanStructuralHeadingText(text, block)) {
+    return false
+  }
+
+  if (
+    block.isChapterStart &&
+    (block.textAlign === "center" || block.centered)
+  ) {
+    return true
+  }
+
+  if (fontSize >= 20 && fontSize <= 35 && isPureAllCapsTitleText(text)) {
+    return true
+  }
+
+  return false
+}
+
+function promoteFableStoryTitleBlocks(blocks) {
+  return blocks.map((block) => {
+    if (!isFableStoryTitleBlock(block)) {
+      return block
+    }
+
+    const titleText = (block.chapterTitle ?? block.text ?? "").trim()
+    return {
+      ...block,
+      text: titleText || block.text,
+      chapterTitle: titleText || block.chapterTitle,
+      isHeading: true,
+      isChapterStart: true,
+      fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+      centered: true,
+      textAlign: "center",
+    }
+  })
 }
 
 function slugify(text) {
@@ -6064,6 +6132,10 @@ function isChapterHeading(block) {
 
   if (isStandaloneChapterNumber(text, block)) return true
 
+  if (isFableStoryTitleBlock(block)) {
+    return true
+  }
+
   return false
 }
 
@@ -6405,14 +6477,24 @@ function detectChapters(content, bookTitle = "") {
         const canonicalTitle = normalizeHeadingCandidate(rawTitle) || rawTitle
         let id = slugify(canonicalTitle)
         let chapterTitle = block.chapterTitle ?? rawTitle
+        const isFableTitle = isFableStoryTitleBlock(block)
+
+        if (isFableTitle) {
+          isChapterStart = true
+          if (seenChapterIds.has(id)) {
+            id = `${id}-${currentFlatIndex}`
+          }
+        }
 
         if (
-          PART_HEADING_PATTERN.test(canonicalTitle) ||
-          VOLUME_HEADING_PATTERN.test(canonicalTitle)
+          !isFableTitle &&
+          (PART_HEADING_PATTERN.test(canonicalTitle) ||
+            VOLUME_HEADING_PATTERN.test(canonicalTitle))
         ) {
           currentPartId = id
           currentPartTitle = canonicalTitle
         } else if (
+          !isFableTitle &&
           currentPartId &&
           (CHAPTER_NUMBER_REGEX.test(canonicalTitle) ||
             /^(chapter|letter)\s+/i.test(canonicalTitle))
@@ -6432,7 +6514,12 @@ function detectChapters(content, bookTitle = "") {
           })
           currentChapterId = id
           chapterId = id
-          isChapterStart = true
+          if (!isFableTitle) {
+            isChapterStart = true
+          }
+          displayChapterTitle = chapterTitle
+        } else if (isFableTitle) {
+          chapterId = currentChapterId
           displayChapterTitle = chapterTitle
         } else {
           chapterId = currentChapterId
@@ -7586,13 +7673,15 @@ function normalizeChapterHeadingFontSizes(blocks) {
 
 function applyBlockTransformPipeline(blocks) {
   return normalizeChapterHeadingFontSizes(
-    promoteStructuralSectionHeadings(
-      mergeEndOfPartBlocks(
-        mergeTrailingChapterTitleFragments(
-          mergeInlineChapterLabelTitles(
-            mergeChapterSubtitleBlocks(
-              mergeMultilineFableTitleBlocks(
-                mergeMultilineChapterTitleBlocks(splitDialogueHeavyBlocks(blocks))
+    promoteFableStoryTitleBlocks(
+      promoteStructuralSectionHeadings(
+        mergeEndOfPartBlocks(
+          mergeTrailingChapterTitleFragments(
+            mergeInlineChapterLabelTitles(
+              mergeChapterSubtitleBlocks(
+                mergeMultilineFableTitleBlocks(
+                  mergeMultilineChapterTitleBlocks(splitDialogueHeavyBlocks(blocks))
+                )
               )
             )
           )

@@ -581,12 +581,92 @@ export function isChapterBoundaryText(text) {
   return isCleanStructuralHeadingText(text)
 }
 
+const FABLE_NON_STORY_HEADING_REGEX =
+  /^(introduction|preface|prologue|epilogue|conclusion|contents|illustrations)$/i
+
+const FABLE_DISPLAY_TITLE_MIN_FONT_SIZE = 20
+const FABLE_DISPLAY_TITLE_MAX_FONT_SIZE = 35
+
+function isPureAllCapsTitleText(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || isTocChapterListingText(trimmed) || isTocDenseListingText(trimmed)) {
+    return false
+  }
+  if (/[.!?][\u201d"\u2019']?\s*$/.test(trimmed)) {
+    return false
+  }
+
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 3 || letters !== letters.toUpperCase()) {
+    return false
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  return words.length >= 1 && words.length <= 14
+}
+
+export function isFableStoryTitleBlock(block) {
+  if (!block?.isHeading) {
+    return false
+  }
+
+  const text = (block.text ?? "").trim()
+  if (!text || text.length > 90) {
+    return false
+  }
+
+  const fontSize = block.fontSize ?? 0
+  if (fontSize >= 40) {
+    return false
+  }
+
+  if (FABLE_NON_STORY_HEADING_REGEX.test(text)) {
+    return false
+  }
+  if (CHAPTER_BOUNDARY_REGEX.test(text)) {
+    return false
+  }
+  if (isTocChapterListingText(text) || isTocDenseListingText(text)) {
+    return false
+  }
+  if (isCleanStructuralHeadingText(text, block)) {
+    return false
+  }
+
+  if (
+    block.isChapterStart &&
+    (block.textAlign === "center" || block.centered)
+  ) {
+    return true
+  }
+
+  if (
+    fontSize >= FABLE_DISPLAY_TITLE_MIN_FONT_SIZE &&
+    fontSize <= FABLE_DISPLAY_TITLE_MAX_FONT_SIZE &&
+    isPureAllCapsTitleText(text)
+  ) {
+    return true
+  }
+
+  if (
+    block.isChapterStart &&
+    (block.textAlign === "center" || block.centered)
+  ) {
+    return true
+  }
+
+  return false
+}
+
 export function inferBlockIsChapterStart(block) {
   if (block?.isChapterStart === true) {
     return true
   }
   if (block?.isChapterStart === false) {
-    return false
+    if (!isFableStoryTitleBlock(block)) {
+      return false
+    }
+    return true
   }
   if (!block?.isHeading) {
     return false
@@ -603,6 +683,10 @@ export function inferBlockIsChapterStart(block) {
   }
 
   if (isCleanStructuralHeadingText(text, block)) {
+    return true
+  }
+
+  if (isFableStoryTitleBlock(block)) {
     return true
   }
 

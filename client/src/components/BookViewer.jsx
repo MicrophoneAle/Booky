@@ -22,6 +22,7 @@ import {
   groupFrontMatterPlacementUnits,
   inferBlockIsChapterStart,
   isChapterBoundaryText,
+  isFableStoryTitleBlock,
   isFullPageIllustrationItem,
   normalizeImageDimensions,
   resolveImageLayoutMetrics,
@@ -80,7 +81,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 70
+const PARSER_VERSION = 71
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -1898,7 +1899,8 @@ function groupBlocksForDisplay(blocks) {
     }
 
     if (block.isHeading) {
-      const headingFontSize = block.fontSize ?? 16
+      const isFableTitle = isFableStoryTitleBlock(block)
+      const headingFontSize = isFableTitle ? 15 : (block.fontSize ?? 16)
       const isChapterStart = inferBlockIsChapterStart(block)
       let headingText = text
       const nextBlock = expandedBlocks[index + 1]
@@ -1951,7 +1953,9 @@ function groupBlocksForDisplay(blocks) {
       }
 
       const itemType =
-        isChapterStart || CHAPTER_WITH_SUBTITLE_REGEX.test(headingText)
+        isChapterStart ||
+        isFableTitle ||
+        CHAPTER_WITH_SUBTITLE_REGEX.test(headingText)
           ? "chapter"
           : resolveHeadingVisualType(headingFontSize, headingText)
 
