@@ -31,7 +31,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 78
+const PARSER_VERSION = 79
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -7089,6 +7089,49 @@ function isLikelyChapterSubtitleBlock(block) {
   return (block?.text ?? "").length <= 48
 }
 
+function looksLikeChapterOpeningProse(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length < 12) {
+    return false
+  }
+  if (/^["'\u201c]/.test(trimmed)) {
+    return true
+  }
+  if (/^(I|My|We|He|She|They|It|You)\s+/i.test(trimmed)) {
+    return true
+  }
+  if (isNarrativeSentenceLine(trimmed)) {
+    return true
+  }
+  return false
+}
+
+function extractEmbeddedChapterSubtitle(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return null
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 3) {
+    return null
+  }
+
+  for (let end = 4; end <= Math.min(10, words.length - 1); end += 1) {
+    const subtitle = words.slice(0, end).join(" ")
+    const prose = words.slice(end).join(" ")
+    if (!isLikelyChapterSubtitleText(subtitle)) {
+      continue
+    }
+    if (!looksLikeChapterOpeningProse(prose)) {
+      continue
+    }
+    return { subtitle, prose }
+  }
+
+  return null
+}
+
 function mergeChapterSubtitleBlocks(blocks) {
   const merged = []
 
@@ -7098,6 +7141,32 @@ function mergeChapterSubtitleBlocks(blocks) {
     const parts = block.isHeading ? parseChapterOnlyHeading(text) : null
 
     if (parts && index + 1 < blocks.length) {
+      const nextBlock = blocks[index + 1]
+      const embeddedSubtitle = extractEmbeddedChapterSubtitle(nextBlock?.text)
+      if (embeddedSubtitle && !nextBlock?.isHeading) {
+        const displayTitle = formatChapterLabel(
+          parts.kind,
+          parts.number,
+          embeddedSubtitle.subtitle
+        )
+        merged.push({
+          ...block,
+          text: displayTitle,
+          chapterTitle: displayTitle,
+          fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+          isHeading: true,
+          isChapterStart: true,
+        })
+        merged.push({
+          ...nextBlock,
+          text: embeddedSubtitle.prose,
+          isHeading: false,
+          isChapterStart: false,
+        })
+        index += 1
+        continue
+      }
+
       const { fragments: allCapsFragments, cursor: afterAllCaps } =
         collectFollowingAllCapsChapterSubtitleTexts(blocks, index + 1)
 
