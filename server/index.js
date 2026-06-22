@@ -31,7 +31,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 79
+const PARSER_VERSION = 80
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -304,12 +304,6 @@ function mergeParseProgressSnapshot(previous, patch) {
           ? counters.pages
           : { current: 0, total: patch?.total ?? counters.pages.total }
       counters.pages = bumpParseCounter(imageBase, patch.current, patch.total)
-    } else if (subphase === "resolve_buffers") {
-      const resolveBase =
-        prev?.extractSubphase === "resolve_buffers"
-          ? counters.pages
-          : { current: 0, total: patch?.total ?? counters.pages.total }
-      counters.pages = bumpParseCounter(resolveBase, patch.current, patch.total)
     } else if (subphase === "filtering") {
       const filterBase =
         prev?.extractSubphase === "filtering"
@@ -412,6 +406,7 @@ function setDocumentParseProgress(documentId, progress) {
     illustrationChanged ||
     ocrChanged ||
     merged?.phase === "starting" ||
+    merged?.phase === "extracting" ||
     merged?.phase === "error" ||
     merged?.phase === "saving" ||
     now - lastWrite >= PARSE_PROGRESS_DB_WRITE_MS
@@ -3238,7 +3233,12 @@ function isDialogueAttributionFragment(text) {
 
 function applyProseFormattingToBlock(block, line) {
   const lineText = (line.text ?? block.text ?? "").trim()
-  if (line.centered && !isShortDialogueLine(lineText)) {
+  if (
+    line.centered &&
+    !isShortDialogueLine(lineText) &&
+    !isDisplayChapterTitleText(lineText) &&
+    !isIncompleteNarrativeLineFragment(lineText)
+  ) {
     block.textAlign = "center"
   }
 
@@ -3266,6 +3266,9 @@ function isProseLineContinuation(text, previousBlock) {
   const trimmed = (text ?? "").trim()
   const prevTrim = (previousBlock?.text ?? "").trim()
   if (!trimmed || !prevTrim || previousBlock?.isHeading) {
+    return false
+  }
+  if (isVerseLineText(trimmed) || isVerseLineText(prevTrim)) {
     return false
   }
   if (previousBlock.textAlign === "center") {
@@ -3955,6 +3958,144 @@ function repairDropCapLines(lines) {
   return ordered.sort((left, right) => (right.y ?? 0) - (left.y ?? 0))
 }
 
+function repairSplitSmallCapsOpening(lines) {
+  if (!Array.isArray(lines) || lines.length < 2) {
+    return lines
+  }
+
+  const ordered = [...lines].sort((left, right) => (right.y ?? 0) - (left.y ?? 0))
+
+  for (let index = 0; index < ordered.length - 1; index += 1) {
+    const current = ordered[index]
+    const next = ordered[index + 1]
+    const text = (current.text ?? "").trim()
+    const nextText = (next.text ?? "").trim()
+
+    const orphanLead = text.match(/^([A-Z])\s+([A-Z].*)$/)
+    const splitNext = nextText.match(/^([A-Z])([a-z]{2,})(.*)$/)
+    if (!orphanLead || !splitNext) {
+      continue
+    }
+
+    const bodyPart = orphanLead[2]
+    const bodyWords = bodyPart.split(/\s+/).filter(Boolean)
+    const leadingCapsWords = bodyWords.filter((word) => /^[A-Z]{2,}$/.test(word))
+    if (leadingCapsWords.length < 3 || bodyWords.length < 4) {
+      continue
+    }
+    if (/[.!?:]["'\u201d]?\s*$/.test(text)) {
+      continue
+    }
+
+    const restoredWord = splitNext[1] + orphanLead[1]
+    const remainder = splitNext[3].trim()
+    current.text = `${restoredWord} ${bodyPart} ${splitNext[2]}${remainder ? ` ${remainder}` : ""}`
+      .replace(/\s+/g, " ")
+      .trim()
+
+    ordered.splice(index + 1, 1)
+    index -= 1
+  }
+
+  return ordered.sort((left, right) => (right.y ?? 0) - (left.y ?? 0))
+}
+
+function isIncompleteNarrativeLineFragment(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || /[.!?:]["'\u201d]?\s*$/.test(trimmed)) {
+    return false
+  }
+  if (isLikelyChapterSubtitleText(trimmed) || isDisplayChapterTitleText(trimmed)) {
+    return false
+  }
+  if (/^["'\u201c]/.test(trimmed)) {
+    return false
+  }
+
+  const words = countWordsInText(trimmed)
+  if (words < 3 || words > 14) {
+    return false
+  }
+
+  return /^(We|I|He|She|They|It|The|My|Our|His|Her|Their|This|That|There|When|As|But|And|Now|Then|So|Yet|For|In|On|At|By|A|An)\b/i.test(
+    trimmed
+  )
+}
+
+function isGlossarySidebarLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 56) {
+    return false
+  }
+  if (/^Wooden bars used$/i.test(trimmed)) {
+    return true
+  }
+  if (/^to wind up the$/i.test(trimmed)) {
+    return true
+  }
+  if (/^chain\.?$/i.test(trimmed)) {
+    return true
+  }
+  if (/ship'?s anchor (?:chain|chest)/i.test(trimmed)) {
+    return true
+  }
+  if (/^CAPTAIN\s+BARS$/i.test(trimmed)) {
+    return true
+  }
+  if (/^[A-Z]{3,12}$/.test(trimmed) && trimmed === trimmed.toUpperCase()) {
+    return true
+  }
+  return false
+}
+
+function isVerseLineText(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (/fifteen men on the dead man/i.test(trimmed)) {
+    return true
+  }
+  if (/yo-?ho-?ho/i.test(trimmed)) {
+    return true
+  }
+  if (/^Drink and the devil had done for the rest/i.test(trimmed)) {
+    return true
+  }
+  if (
+    /^["'\u201c].*(?:—|–|-).*["'\u201d]?\s*$/u.test(trimmed) &&
+    countWordsInText(trimmed) <= 16
+  ) {
+    return true
+  }
+  return false
+}
+
+function isAdjacentPageProseEcho(text, pageIndex, pagesBeforeFilter) {
+  const trimmed = (text ?? "").trim()
+  if (trimmed.length < 12 || trimmed.length > 96) {
+    return false
+  }
+  if (/[.!?:]["'\u201d]?\s*$/.test(trimmed)) {
+    return false
+  }
+
+  for (const offset of [-1, 1]) {
+    const adjacentPage = pagesBeforeFilter[pageIndex + offset]
+    if (!adjacentPage?.lines) {
+      continue
+    }
+    for (const line of adjacentPage.lines) {
+      const other = (line.text ?? "").trim()
+      if (other.length > trimmed.length && other.includes(trimmed)) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
 function joinWrappedText(left, right) {
   const leftText = (left ?? "").trim()
   const rightText = (right ?? "").trim()
@@ -4607,6 +4748,9 @@ function shouldDropExtractedLine(
   if (isScannerWatermarkLine(trimmed)) {
     return true
   }
+  if (isGlossarySidebarLine(trimmed)) {
+    return true
+  }
   if (isLikelyChapterSubtitleText(trimmed)) {
     return false
   }
@@ -4768,6 +4912,9 @@ function isProseSentenceFragment(text) {
     return true
   }
   if (/^(and|but|or|then|who|which|that|as|if|like|for)\s/i.test(trimmed)) {
+    return true
+  }
+  if (isIncompleteNarrativeLineFragment(trimmed)) {
     return true
   }
   if (/[.!?]["'\u201d]?\s*$/.test(trimmed) && countWordsInText(trimmed) <= 20) {
@@ -6295,7 +6442,7 @@ function buildPdfPageLinesFromTextContent(textContent, headingStrings) {
   }
 
   const rawLines = groupTextItemsIntoLines(pageItems)
-  const repairedLines = repairDropCapLines(rawLines)
+  const repairedLines = repairSplitSmallCapsOpening(repairDropCapLines(rawLines))
   const medianX = medianValue(repairedLines.map((line) => line.x))
 
   for (const line of repairedLines) {
@@ -6435,14 +6582,6 @@ function extractPhasePercent(pageNumber, totalPages, extractSubphase = "text") {
     )
   }
 
-  if (extractSubphase === "resolve_buffers") {
-    const imageScanEnd =
-      PARSE_PROGRESS_EXTRACT_MAX_PERCENT *
-      (EXTRACT_PROGRESS_TEXT_SHARE + EXTRACT_PROGRESS_IMAGE_SHARE)
-    const resolveEnd = PARSE_PROGRESS_EXTRACT_MAX_PERCENT * 0.97
-    return Math.round(imageScanEnd + fraction * Math.max(0, resolveEnd - imageScanEnd))
-  }
-
   return Math.round(
     fraction * PARSE_PROGRESS_EXTRACT_MAX_PERCENT * EXTRACT_PROGRESS_TEXT_SHARE
   )
@@ -6488,9 +6627,9 @@ async function resolvePageImageCandidateBuffers(pdf, pageImageCandidates, onPage
     return
   }
 
-  const pagesToResolve = []
+  const totalPages = pageImageCandidates.length
 
-  for (let pageIndex = 0; pageIndex < pageImageCandidates.length; pageIndex += 1) {
+  for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
     const candidates = pageImageCandidates[pageIndex]
     if (!Array.isArray(candidates) || candidates.length === 0) {
       continue
@@ -6502,22 +6641,12 @@ async function resolvePageImageCandidateBuffers(pdf, pageImageCandidates, onPage
         candidate.imageRole != null &&
         !extractImageBlockPayload(candidate)
     )
-    if (needsBuffer) {
-      pagesToResolve.push(pageIndex + 1)
+    if (!needsBuffer) {
+      continue
     }
-  }
 
-  const totalToResolve = pagesToResolve.length
-  if (totalToResolve === 0) {
-    return
-  }
-
-  for (let resolved = 0; resolved < pagesToResolve.length; resolved += 1) {
-    const pageNumber = pagesToResolve[resolved]
-    const pageIndex = pageNumber - 1
-    const candidates = pageImageCandidates[pageIndex]
-
-    onPageResolved?.(resolved, totalToResolve, { pageNumber, inProgress: true })
+    const pageNumber = pageIndex + 1
+    onPageResolved?.(pageNumber, totalPages)
 
     await withPdfPageOperationTimeout(
       () =>
@@ -6525,14 +6654,14 @@ async function resolvePageImageCandidateBuffers(pdf, pageImageCandidates, onPage
           const page = await pdf.getPage(pageNumber)
           try {
             const operatorList = await page.getOperatorList({ intent: "display" })
-            const resolvedCandidates = await extractPdfPageImageCandidatesFromOperatorList(
+            const resolved = await extractPdfPageImageCandidatesFromOperatorList(
               page,
               pageNumber,
               operatorList,
               { resolveBuffers: true, pdf }
             )
             const resolvedByStreamIndex = new Map(
-              resolvedCandidates.map((candidate) => [candidate.streamIndex, candidate])
+              resolved.map((candidate) => [candidate.streamIndex, candidate])
             )
 
             for (let index = 0; index < candidates.length; index += 1) {
@@ -6552,7 +6681,6 @@ async function resolvePageImageCandidateBuffers(pdf, pageImageCandidates, onPage
       "Illustration buffer load"
     )
 
-    onPageResolved?.(resolved + 1, totalToResolve, { pageNumber, done: true })
     await yieldToEventLoop()
   }
 }
@@ -6694,6 +6822,10 @@ async function extractPdfStructure(
           )) ||
         isStandalonePageNumberText(normalizedForDropCheck)
       ) {
+        continue
+      }
+
+      if (isAdjacentPageProseEcho(line.text, pageIndex, pagesBeforeFilter)) {
         continue
       }
 
@@ -7765,6 +7897,14 @@ function shouldStartNewProseBlock(line, previousBlock, entry = null, previousEnt
     return true
   }
 
+  if (isVerseLineText(text)) {
+    return true
+  }
+
+  if (previousBlock && isVerseLineText(previousBlock.text)) {
+    return true
+  }
+
   if (previousBlock && isProseLineContinuation(text, previousBlock)) {
     return false
   }
@@ -8168,7 +8308,8 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
     if (
       isTocDenseListingLine(text) ||
       isTocPageReferenceLine(text) ||
-      isRunningHeaderMergedLine(text)
+      isRunningHeaderMergedLine(text) ||
+      isGlossarySidebarLine(text)
     ) {
       pendingConnective = null
       index += 1
@@ -8913,22 +9054,16 @@ async function parsePdfBuffer(
         })
       },
     }))
-    await resolvePageImageCandidateBuffers(
-      pdf,
-      pageImageCandidates,
-      (current, totalToResolve, { pageNumber, inProgress } = {}) => {
-        reportProgress({
-          phase: "extracting",
-          label: inProgress
-            ? `Loading illustration data (page ${pageNumber})`
-            : "Loading illustration data",
-          current,
-          total: totalToResolve,
-          extractSubphase: "resolve_buffers",
-          percent: extractPhasePercent(current, totalToResolve, "resolve_buffers"),
-        })
-      }
-    )
+    await resolvePageImageCandidateBuffers(pdf, pageImageCandidates, (pageNumber, totalPages) => {
+      reportProgress({
+        phase: "extracting",
+        label: "Loading illustration data",
+        current: pageNumber,
+        total: totalPages,
+        extractSubphase: "images",
+        percent: extractPhasePercent(pageNumber, totalPages, "images"),
+      })
+    })
   } finally {
     if (typeof pdf.destroy === "function") {
       await pdf.destroy()

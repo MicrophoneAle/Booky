@@ -194,14 +194,6 @@ function mergeCounterSnapshot(previous, update) {
           ? prevCounters.pages
           : { current: 0, total: update?.total ?? prevCounters.pages.total }
       counters.pages = bumpCounter(imageBase, update?.current, update?.total)
-    } else if (subphase === "resolve_buffers") {
-      counters.pages = bumpCounter(
-        previous?.extractSubphase === "resolve_buffers"
-          ? prevCounters.pages
-          : { current: 0, total: update?.total ?? prevCounters.pages.total },
-        update?.current,
-        update?.total
-      )
     } else if (subphase === "filtering") {
       counters.pages = bumpCounter(
         previous?.extractSubphase === "filtering"
@@ -412,9 +404,6 @@ export function getParseProgressHeadline(parseProgress) {
     if (subphase === "text_complete" || (subphase === "images" && (parseProgress.current ?? 0) === 0)) {
       return "Starting artwork scan…"
     }
-    if (subphase === "resolve_buffers") {
-      return "Loading illustration data…"
-    }
     if (subphase === "images" && parseProgress.label === "Loading illustration data") {
       return "Loading illustration data…"
     }
@@ -484,11 +473,6 @@ export function getParseProgressDetail(parseProgress) {
         current >= total
           ? 100
           : Math.min(99, Math.round((current / total) * 100))
-      if (subphase === "resolve_buffers") {
-        const pageMatch = /page\s+(\d+)/i.exec(label ?? "")
-        const pageNote = pageMatch ? ` (PDF page ${pageMatch[1]})` : ""
-        return `Loading illustration data — ${current} of ${total} pages with artwork${pageNote} (${pct}%).`
-      }
       if (subphase === "images") {
         if (label === "Loading illustration data") {
           return `Loading illustration data — page ${current} of ${total} (${pct}%).`
@@ -593,18 +577,26 @@ export function getCombinedProcessingPercent(
     return Math.round(base)
   }
 
+  const serverFloor =
+    typeof parseProgress.percent === "number"
+      ? Math.round(base + parseProgress.percent * processingShare)
+      : Math.round(base)
+
   const { current, total } = getPhaseCounters(parseProgress)
   const rawPhase = getRawProcessingPhase(parseProgress)
   const displayPhase = getEffectiveDisplayPhase(parseProgress)
 
   if (displayPhase === "extracting") {
     if (typeof parseProgress.percent === "number") {
-      return Math.round(base + parseProgress.percent * processingShare)
+      return serverFloor
     }
     if (total > 0) {
       const fraction = current / total
       const extractMax = 58
-      return Math.round(base + fraction * extractMax * processingShare)
+      return Math.max(
+        serverFloor,
+        Math.round(base + fraction * extractMax * processingShare)
+      )
     }
   }
 
@@ -612,9 +604,8 @@ export function getCombinedProcessingPercent(
     const structureMax = 62
     const structureMin = 58
     const fraction = current / total
-    const band =
-      structureMin + fraction * (structureMax - structureMin)
-    return Math.round(base + band * processingShare)
+    const band = structureMin + fraction * (structureMax - structureMin)
+    return Math.max(serverFloor, Math.round(base + band * processingShare))
   }
 
   const itemPhases = {
@@ -628,10 +619,10 @@ export function getCombinedProcessingPercent(
   if (itemBand && total > 0 && current <= total) {
     const fraction = current / total
     const bandPercent = itemBand.start + fraction * (itemBand.end - itemBand.start)
-    return Math.round(base + bandPercent * processingShare)
+    return Math.max(serverFloor, Math.round(base + bandPercent * processingShare))
   }
 
-  return Math.round(base + (parseProgress.percent ?? 0) * processingShare)
+  return serverFloor
 }
 
 /**
@@ -665,10 +656,6 @@ export function getParseProgressStaleHint(parseProgress) {
 
   if (subphase === "images") {
     return `Artwork scanning can take several minutes on illustrated books. Still working on page ${current} of ${total}.`
-  }
-
-  if (subphase === "resolve_buffers") {
-    return `Decoding illustration data can take a minute on the last pages. Still working (${current} of ${total} pages with artwork).`
   }
 
   if (subphase === "filtering" || subphase === "text_complete") {
