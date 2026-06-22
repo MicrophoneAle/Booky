@@ -404,6 +404,9 @@ export function getParseProgressHeadline(parseProgress) {
     if (subphase === "text_complete" || (subphase === "images" && (parseProgress.current ?? 0) === 0)) {
       return "Starting artwork scan…"
     }
+    if (subphase === "images" && parseProgress.label === "Loading illustration data") {
+      return "Loading illustration data…"
+    }
     if (subphase === "images") {
       return "Scanning page artwork…"
     }
@@ -466,8 +469,14 @@ export function getParseProgressDetail(parseProgress) {
     }
 
     if (total > 0) {
-      const pct = Math.round((current / total) * 100)
+      const pct =
+        current >= total
+          ? 100
+          : Math.min(99, Math.round((current / total) * 100))
       if (subphase === "images") {
+        if (label === "Loading illustration data") {
+          return `Loading illustration data — page ${current} of ${total} (${pct}%).`
+        }
         return `Scanning artwork page ${current} of ${total} (${pct}%).`
       }
       return `Reading page ${current} of ${total} (${pct}%).`
@@ -630,12 +639,12 @@ export function getParseProgressStaleHint(parseProgress) {
   const total = parseProgress.pageTotal ?? parseProgress.total ?? 0
   const current = parseProgress.pageCurrent ?? parseProgress.current ?? 0
 
-  if (total < 400 || current <= 0) {
+  if (total < 100 || current <= 0) {
     return null
   }
 
   if (subphase === "images") {
-    return null
+    return `Artwork scanning can take several minutes on illustrated books. Still working on page ${current} of ${total}.`
   }
 
   if (subphase === "filtering" || subphase === "text_complete") {

@@ -168,6 +168,10 @@ function resolvePdfExtractionConcurrency(totalPages) {
     return { text: 6, image: 3 }
   }
 
+  if (totalPages >= 120) {
+    return { text: 4, image: 2 }
+  }
+
   return {
     text: PDF_TEXT_EXTRACTION_CONCURRENCY,
     image: PDF_PAGE_EXTRACTION_CONCURRENCY,
@@ -4267,7 +4271,8 @@ function resolvePdfImageBuffer(imageObject) {
 async function extractPdfPageImageCandidatesFromOperatorList(
   page,
   pageNumber,
-  operatorList
+  operatorList,
+  { resolveBuffers = true } = {}
 ) {
   const viewport = page.getViewport({ scale: 1 })
   const pageWidth = viewport.width
@@ -4313,7 +4318,7 @@ async function extractPdfPageImageCandidatesFromOperatorList(
     const imageRole = classifyPdfImageRole(metrics)
     let buffer = null
 
-    if (imageRole != null) {
+    if (imageRole != null && resolveBuffers) {
       try {
         if (op === OPS.paintInlineImageXObject) {
           buffer = resolvePdfImageBuffer(args?.[0])
@@ -5365,11 +5370,66 @@ async function extractPdfPageImagesOnly(pdf, pageNumber) {
     return extractPdfPageImageCandidatesFromOperatorList(
       page,
       pageNumber,
-      operatorList
+      operatorList,
+      { resolveBuffers: false }
     )
   } finally {
     if (typeof page.cleanup === "function") {
       page.cleanup()
+    }
+  }
+}
+
+async function resolvePageImageCandidateBuffers(pdf, pageImageCandidates, onPageResolved) {
+  if (!pdf || !Array.isArray(pageImageCandidates) || pageImageCandidates.length === 0) {
+    return
+  }
+
+  const totalPages = pageImageCandidates.length
+
+  for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
+    const candidates = pageImageCandidates[pageIndex]
+    if (!Array.isArray(candidates) || candidates.length === 0) {
+      continue
+    }
+
+    const needsBuffer = candidates.some(
+      (candidate) =>
+        candidate?.isCandidate === true &&
+        candidate.imageRole != null &&
+        !extractImageBlockPayload(candidate)
+    )
+    if (!needsBuffer) {
+      continue
+    }
+
+    const pageNumber = pageIndex + 1
+    onPageResolved?.(pageNumber, totalPages)
+
+    const page = await pdf.getPage(pageNumber)
+    try {
+      const operatorList = await page.getOperatorList({ intent: "display" })
+      const resolved = await extractPdfPageImageCandidatesFromOperatorList(
+        page,
+        pageNumber,
+        operatorList,
+        { resolveBuffers: true }
+      )
+      const resolvedByStreamIndex = new Map(
+        resolved.map((candidate) => [candidate.streamIndex, candidate])
+      )
+
+      for (let index = 0; index < candidates.length; index += 1) {
+        const candidate = candidates[index]
+        const match = resolvedByStreamIndex.get(candidate.streamIndex)
+        if (match?.buffer) {
+          candidates[index] = { ...candidate, buffer: match.buffer }
+        }
+      }
+    } finally {
+      if (typeof page.cleanup === "function") {
+        page.cleanup()
+      }
     }
   }
 }
@@ -5439,6 +5499,14 @@ async function extractPdfStructure(
 
       const batchResults = await Promise.all(
         batchPageNumbers.map(async (pageNumber) => {
+          if (onPageProcessed) {
+            onPageProcessed(pageNumber, totalPages, {
+              extractSubphase: "text",
+              batchEnd,
+              batchStarted: true,
+            })
+          }
+
           const lines = await extractPdfPageTextOnly(pdf, pageNumber, headingStrings)
 
           if (onPageProcessed) {
@@ -5483,6 +5551,14 @@ async function extractPdfStructure(
 
       const batchResults = await Promise.all(
         batchPageNumbers.map(async (pageNumber) => {
+          if (onPageProcessed) {
+            onPageProcessed(pageNumber, totalPages, {
+              extractSubphase: "images",
+              batchEnd,
+              batchStarted: true,
+            })
+          }
+
           const candidates = await extractPdfPageImagesOnly(pdf, pageNumber)
 
           if (onPageProcessed) {
@@ -7344,6 +7420,16 @@ async function parsePdfBuffer(
         })
       },
     }))
+    await resolvePageImageCandidateBuffers(pdf, pageImageCandidates, (pageNumber, totalPages) => {
+      reportProgress({
+        phase: "extracting",
+        label: "Loading illustration data",
+        current: pageNumber,
+        total: totalPages,
+        extractSubphase: "images",
+        percent: extractPhasePercent(pageNumber, totalPages, "images"),
+      })
+    })
   } finally {
     if (typeof pdf.destroy === "function") {
       await pdf.destroy()
