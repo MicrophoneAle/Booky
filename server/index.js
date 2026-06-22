@@ -31,7 +31,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 77
+const PARSER_VERSION = 78
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -161,12 +161,12 @@ function resolvePdfExtractionConcurrency(totalPages, byteLength = 0) {
   if (totalPages > 900 || byteLength >= PDF_LARGE_FILE_BYTES * 4) {
     text = 1
     image = 1
-  } else if (totalPages > 400) {
+  } else if (totalPages > 400 || byteLength >= PDF_LARGE_FILE_BYTES) {
     text = 2
     image = 1
-  } else if (totalPages >= PDF_LARGE_BOOK_PAGE_THRESHOLD || byteLength >= PDF_LARGE_FILE_BYTES) {
-    text = 1
-    image = 1
+  } else if (totalPages >= PDF_LARGE_BOOK_PAGE_THRESHOLD) {
+    text = 3
+    image = 2
   }
 
   if (Number.isFinite(configuredText) && configuredText > 0) {
@@ -406,7 +406,6 @@ function setDocumentParseProgress(documentId, progress) {
     illustrationChanged ||
     ocrChanged ||
     merged?.phase === "starting" ||
-    merged?.phase === "extracting" ||
     merged?.phase === "error" ||
     merged?.phase === "saving" ||
     now - lastWrite >= PARSE_PROGRESS_DB_WRITE_MS
@@ -6371,18 +6370,35 @@ async function extractAllPdfPages({
   const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1)
 
   return runWithConcurrency(pageNumbers, concurrency, async (pageNumber) => {
-    const result = await withPdfPageOperationTimeout(
-      () => worker(pageNumber),
-      pageNumber,
+    const operationLabel =
       extractSubphase === "images" ? "Artwork scan" : "Text extraction"
-    )
 
-    if (onPageProcessed) {
-      onPageProcessed(pageNumber, totalPages, { extractSubphase })
+    try {
+      const result = await withPdfPageOperationTimeout(
+        () => worker(pageNumber),
+        pageNumber,
+        operationLabel
+      )
+
+      if (onPageProcessed) {
+        onPageProcessed(pageNumber, totalPages, { extractSubphase })
+      }
+
+      await yieldToEventLoop()
+      return { pageNumber, result }
+    } catch (error) {
+      console.warn(
+        `[extract] ${operationLabel} failed on PDF page ${pageNumber}:`,
+        error instanceof Error ? error.message : String(error)
+      )
+
+      if (onPageProcessed) {
+        onPageProcessed(pageNumber, totalPages, { extractSubphase })
+      }
+
+      await yieldToEventLoop()
+      return { pageNumber, result: extractSubphase === "images" ? [] : [] }
     }
-
-    await yieldToEventLoop()
-    return { pageNumber, result }
   })
 }
 
@@ -6569,7 +6585,7 @@ async function extractPdfStructure(
     })
 
     for (const { pageNumber, result } of textResults) {
-      pagesBeforeFilter[pageNumber - 1] = { lines: result }
+      pagesBeforeFilter[pageNumber - 1] = { lines: Array.isArray(result) ? result : [] }
     }
 
     if (onPageProcessed) {
@@ -6586,7 +6602,7 @@ async function extractPdfStructure(
     })
 
     for (const { pageNumber, result } of imageResults) {
-      pageImageCandidates[pageNumber - 1] = result
+      pageImageCandidates[pageNumber - 1] = Array.isArray(result) ? result : []
     }
   } finally {
     if (!pdfInput && typeof pdf.destroy === "function") {
