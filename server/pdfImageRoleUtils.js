@@ -12,6 +12,7 @@ const CHAPTER_STRIP_MIN_ASPECT_RATIO = 1.45
 const FULL_PAGE_MIN_HEIGHT_RATIO = 0.58
 const FULL_PAGE_SPREAD_MIN_HEIGHT_RATIO = 0.72
 const TALL_CHAPTER_ARCH_MIN_HEIGHT_RATIO = 0.40
+const ILLUSTRATION_MAX_CHAPTER_ASPECT_RATIO = 1.35
 
 export function isLikelyHorizontalChapterStrip({ width, height, pageWidth, pageHeight }) {
   if (!pageWidth || !pageHeight || !width || !height) {
@@ -61,7 +62,14 @@ export function isLikelyChapterArchBanner({ width, height, pageWidth, pageHeight
     return true
   }
 
-  if (widthRatio >= 0.55 && aspectRatio >= 0.95) {
+  // Wide near-square banners only. A true arch banner is roughly square to
+  // mildly landscape; a landscape illustration plate (aspect well above the
+  // arch band) is content art and must not be treated as a chapter banner.
+  if (
+    widthRatio >= 0.55 &&
+    aspectRatio >= 0.95 &&
+    aspectRatio <= CHAPTER_ARCH_MAX_ASPECT_RATIO
+  ) {
     return true
   }
 
@@ -156,6 +164,8 @@ export function classifyPdfImageRole(metrics) {
     return PDF_IMAGE_ROLE.FULL_PAGE_ILLUSTRATION
   }
 
+  // Short wide strip banner (e.g. a thin chapter rule). Still excludes tall
+  // landscape plates because the strip height band caps at CHAPTER_STRIP_MAX_HEIGHT_RATIO.
   if (
     height >= CHAPTER_HEADING_MIN_HEIGHT_PX &&
     widthRatio >= CHAPTER_STRIP_MIN_WIDTH_RATIO &&
@@ -166,12 +176,15 @@ export function classifyPdfImageRole(metrics) {
     return PDF_IMAGE_ROLE.CHAPTER_HEADING
   }
 
+  // Wide near-square banner only. Landscape plates (aspect above the arch band)
+  // are excluded here and fall through to ILLUSTRATION below.
   if (
     height >= CHAPTER_HEADING_MIN_HEIGHT_PX &&
     widthRatio >= 0.55 &&
     heightRatio >= 0.06 &&
     heightRatio < FULL_PAGE_MIN_HEIGHT_RATIO &&
-    aspectRatio >= 1.05
+    aspectRatio >= 1.05 &&
+    aspectRatio <= ILLUSTRATION_MAX_CHAPTER_ASPECT_RATIO
   ) {
     return PDF_IMAGE_ROLE.CHAPTER_HEADING
   }

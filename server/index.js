@@ -30,7 +30,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 66
+const PARSER_VERSION = 67
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -3048,6 +3048,19 @@ function isProminentDisplayTitleLine(text, line, entry = null) {
   if (CHAPTER_PATTERN.test(trimmed) || isAuthorStructuralLine(trimmed)) {
     return false
   }
+  // A small-caps chapter opening run is body prose, not a display title.
+  // It is long, mostly uppercase, and does not read as a short title.
+  {
+    const letters = trimmed.replace(/[^A-Za-z]/g, "")
+    const upper = (trimmed.match(/[A-Z]/g) ?? []).length
+    if (
+      letters.length >= 16 &&
+      upper / Math.max(1, letters.length) >= 0.85 &&
+      trimmed.split(/\s+/).filter(Boolean).length >= 5
+    ) {
+      return false
+    }
+  }
   if (
     isIllustrationsListEntryLine(trimmed) ||
     isIllustrationsListLine(trimmed) ||
@@ -3301,7 +3314,17 @@ function isAllCapsCalloutLine(text) {
     return false
   }
   const upperCount = (trimmed.match(/[A-Z]/g) ?? []).length
-  return upperCount / letters.length >= 0.85
+  if (upperCount / letters.length < 0.85) {
+    return false
+  }
+  // A small-caps chapter opening ("BOUT NOON I BROUGHT THE CAPTAIN SOME COOLING")
+  // runs straight into lowercase prose on the next line and does not end on
+  // terminal punctuation. A genuine all-caps callout is a complete line that
+  // ends cleanly. Require terminal punctuation so opening runs are excluded.
+  if (!/[.!?:][\u201d"\u2019']?\s*$/.test(trimmed)) {
+    return false
+  }
+  return true
 }
 
 function countWordsInText(text) {
@@ -3960,7 +3983,14 @@ function annotateLinesCentered(lines) {
     }
 
     if (isAllCapsCalloutLine(trimmed)) {
-      line.centered = true
+      const leftEdge = line.x ?? 0
+      const rightEdge = line.rightEdge ?? leftEdge
+      const lineWidth = Math.max(0, rightEdge - leftEdge)
+      const isNarrow =
+        columnWidth > 0 &&
+        lineWidth > 0 &&
+        lineWidth / columnWidth <= CENTERED_LINE_MAX_WIDTH_RATIO
+      line.centered = isNarrow
       continue
     }
 
@@ -6182,6 +6212,20 @@ function isHeadingLine(text, line, headingStrings, entry = null) {
     return false
   }
 
+  {
+    const trimmed = (text ?? "").trim()
+    const letters = trimmed.replace(/[^A-Za-z]/g, "")
+    const upper = (trimmed.match(/[A-Z]/g) ?? []).length
+    if (
+      letters.length >= 16 &&
+      upper / Math.max(1, letters.length) >= 0.85 &&
+      trimmed.split(/\s+/).filter(Boolean).length >= 5 &&
+      !isCleanStructuralHeadingText(text, line)
+    ) {
+      return false
+    }
+  }
+
   if (!text.includes(" ") && text.length < 5) {
     return false
   }
@@ -7155,13 +7199,31 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
   }
 }
 
+function normalizeChapterHeadingFontSizes(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  return blocks.map((block) => {
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      return block
+    }
+    if (block?.isHeading && block?.isChapterStart) {
+      return { ...block, fontSize: CHAPTER_DISPLAY_FONT_SIZE }
+    }
+    return block
+  })
+}
+
 function applyBlockTransformPipeline(blocks) {
-  return promoteStructuralSectionHeadings(
-    mergeEndOfPartBlocks(
-      mergeTrailingChapterTitleFragments(
-        mergeInlineChapterLabelTitles(
-          mergeChapterSubtitleBlocks(
-            mergeMultilineChapterTitleBlocks(splitDialogueHeavyBlocks(blocks))
+  return normalizeChapterHeadingFontSizes(
+    promoteStructuralSectionHeadings(
+      mergeEndOfPartBlocks(
+        mergeTrailingChapterTitleFragments(
+          mergeInlineChapterLabelTitles(
+            mergeChapterSubtitleBlocks(
+              mergeMultilineChapterTitleBlocks(splitDialogueHeavyBlocks(blocks))
+            )
           )
         )
       )
