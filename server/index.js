@@ -30,7 +30,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 71
+const PARSER_VERSION = 72
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -1685,6 +1685,64 @@ function isLargeFontAllCapsChapterWrapLine(text, line) {
   )
 }
 
+const ALL_CAPS_CHAPTER_SUBTITLE_MIN_FONT_SIZE = 11.5
+const ALL_CAPS_CHAPTER_SUBTITLE_MAX_CHARS = 120
+const ALL_CAPS_CHAPTER_SUBTITLE_MAX_WORDS = 22
+
+function isAllCapsChapterSubtitleText(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (CHAPTER_PATTERN.test(trimmed) || CHAPTER_ONLY_HEADING_REGEX.test(trimmed)) {
+    return false
+  }
+  if (CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed)) {
+    return false
+  }
+  if (isScannerWatermarkLine(trimmed) || isAuthorStructuralLine(trimmed)) {
+    return false
+  }
+  if (/^[a-z]/.test(trimmed)) {
+    return false
+  }
+
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 3 || letters !== letters.toUpperCase()) {
+    return false
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  return (
+    words.length >= 1 &&
+    words.length <= ALL_CAPS_CHAPTER_SUBTITLE_MAX_WORDS &&
+    trimmed.length <= ALL_CAPS_CHAPTER_SUBTITLE_MAX_CHARS
+  )
+}
+
+function isAllCapsChapterSubtitleLine(text, line) {
+  if (!isAllCapsChapterSubtitleText(text)) {
+    return false
+  }
+  return (line?.fontSize ?? 0) >= ALL_CAPS_CHAPTER_SUBTITLE_MIN_FONT_SIZE
+}
+
+function collectFollowingAllCapsChapterSubtitleTexts(blocks, startIndex) {
+  const fragments = []
+  let cursor = startIndex
+
+  while (cursor < blocks.length) {
+    const nextText = (blocks[cursor]?.text ?? "").trim()
+    if (!isAllCapsChapterSubtitleText(nextText)) {
+      break
+    }
+    fragments.push(nextText)
+    cursor += 1
+  }
+
+  return { fragments, cursor }
+}
+
 const PRELUDE_HEADING_REGEX = /^PRELUDE TO THE STORMLIGHT ARCHIVE$/i
 
 function mergeEndOfPartBlocks(blocks) {
@@ -2212,7 +2270,13 @@ function excludePrintedTocBlocks(blocks) {
 
 function isWrappedChapterTitleFragment(block) {
   const text = (block?.text ?? "").trim()
-  if (!text || !block?.isHeading) {
+  if (!text) {
+    return false
+  }
+  if (isAllCapsChapterSubtitleText(text)) {
+    return true
+  }
+  if (!block?.isHeading) {
     return false
   }
   if (parseChapterOnlyHeading(text)) {
@@ -2283,7 +2347,13 @@ function mergeMultilineChapterTitleBlocks(blocks) {
 
 function isTrailingChapterTitleFragment(block) {
   const text = (block?.text ?? "").trim()
-  if (!text || !block?.isHeading) {
+  if (!text) {
+    return false
+  }
+  if (isAllCapsChapterSubtitleText(text)) {
+    return true
+  }
+  if (!block?.isHeading) {
     return false
   }
   if (CHAPTER_WITH_SUBTITLE_REGEX.test(text) || parseChapterOnlyHeading(text)) {
@@ -3708,7 +3778,7 @@ function dropMarginCalloutLines(lines) {
 
       if (
         parseChapterOnlyHeading(previousText) &&
-        isLikelyChapterSubtitleText(text)
+        (isLikelyChapterSubtitleText(text) || isAllCapsChapterSubtitleText(text))
       ) {
         return true
       }
@@ -6091,12 +6161,45 @@ function isLikelyChapterNumberLine(text, line) {
   return (line.fontSize ?? 0) >= CHAPTER_HEADING_MIN_FONT_SIZE
 }
 
+function isOrphanChapterSubtitleFragment(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (/^(chapter|letter)\s+/i.test(trimmed)) {
+    return false
+  }
+  if (CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed) || parseChapterOnlyHeading(trimmed)) {
+    return false
+  }
+  if (isAllCapsChapterSubtitleText(trimmed)) {
+    return false
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 5 || trimmed.length > 160) {
+    return false
+  }
+
+  return (
+    /^[A-Z][a-z]/.test(trimmed) &&
+    !isNarrativeSentenceLine(trimmed) &&
+    /\b(?:Concerning|Treats|Containing|Comprising|Relates|Particulars|Mingles|Goaded|Walks|Becomes|Involves|Introduces|Affording|Monks)\b/i.test(
+      trimmed
+    )
+  )
+}
+
 function isChapterHeading(block) {
   if (block?.type === "image" || typeof block?.text !== "string") {
     return false
   }
 
   const text = block.text.trim()
+
+  if (isOrphanChapterSubtitleFragment(text)) {
+    return false
+  }
 
   if (/^Prelude to the Stormlight Archive$/i.test(text)) {
     return true
@@ -6305,6 +6408,27 @@ function mergeChapterSubtitleBlocks(blocks) {
     const parts = block.isHeading ? parseChapterOnlyHeading(text) : null
 
     if (parts && index + 1 < blocks.length) {
+      const { fragments: allCapsFragments, cursor: afterAllCaps } =
+        collectFollowingAllCapsChapterSubtitleTexts(blocks, index + 1)
+
+      if (allCapsFragments.length > 0) {
+        const displayTitle = formatChapterLabel(
+          parts.kind,
+          parts.number,
+          allCapsFragments.join(" ")
+        )
+        merged.push({
+          ...block,
+          text: displayTitle,
+          chapterTitle: displayTitle,
+          fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+          isHeading: true,
+          isChapterStart: true,
+        })
+        index = afterAllCaps - 1
+        continue
+      }
+
       const nextBlock = blocks[index + 1]
       if (isLikelyChapterSubtitleBlock(nextBlock)) {
         const displayTitle = formatChapterLabel(
@@ -6935,6 +7059,12 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
           nextFontSize >= MULTILINE_CHAPTER_WRAP_MIN_FONT_SIZE &&
           isLargeFontAllCapsChapterWrapLine(nextText, nextEntry.line)
         ) {
+          titleFragments.push(nextText)
+          cursor += 1
+          continue
+        }
+
+        if (isAllCapsChapterSubtitleLine(nextText, nextEntry.line)) {
           titleFragments.push(nextText)
           cursor += 1
           continue
