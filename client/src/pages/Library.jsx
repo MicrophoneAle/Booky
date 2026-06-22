@@ -142,6 +142,29 @@ function ReformattedDownloadIcon() {
   )
 }
 
+function ReformattedPdfDownloadIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+      <path d="M10 12h4" />
+      <path d="M10 16h4" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M12 15V3" />
+    </svg>
+  )
+}
+
 function LibraryBookCard({ document, onDelete, onRename, getToken }) {
   const navigate = useNavigate()
   const titleInputRef = useRef(null)
@@ -154,7 +177,7 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
   const [savingTitle, setSavingTitle] = useState(false)
   const [renameError, setRenameError] = useState(false)
   const [downloading, setDownloading] = useState(false)
-  const [downloadingReformatted, setDownloadingReformatted] = useState(false)
+  const [downloadingReformattedFormat, setDownloadingReformattedFormat] = useState(null)
   const [downloadError, setDownloadError] = useState(false)
 
   const handleDeleteClick = () => {
@@ -339,8 +362,8 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
     }
   }
 
-  const handleDownloadReformatted = async () => {
-    setDownloadingReformatted(true)
+  const handleDownloadReformatted = async (format = "html") => {
+    setDownloadingReformattedFormat(format)
     setDownloadError(false)
 
     try {
@@ -348,7 +371,7 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
       if (!token) throw new Error("Unauthorized")
 
       const response = await fetch(
-        `${API_URL}/documents/${encodeURIComponent(document.id)}/download/reformatted`,
+        `${API_URL}/documents/${encodeURIComponent(document.id)}/download/reformatted?format=${encodeURIComponent(format)}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -369,10 +392,11 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
 
       const blob = await response.blob()
       const objectUrl = URL.createObjectURL(blob)
+      const extension = format === "pdf" ? "pdf" : "html"
 
       const link = window.document.createElement("a")
       link.href = objectUrl
-      link.download = `${document.name} (reformatted).html`
+      link.download = `${document.name} (reformatted).${extension}`
       window.document.body.appendChild(link)
       link.click()
       link.remove()
@@ -380,7 +404,7 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
     } catch {
       setDownloadError(true)
     } finally {
-      setDownloadingReformatted(false)
+      setDownloadingReformattedFormat(null)
     }
   }
 
@@ -437,12 +461,22 @@ function LibraryBookCard({ document, onDelete, onRename, getToken }) {
               <button
                 type="button"
                 className="library-card__download"
-                onClick={handleDownloadReformatted}
-                aria-label={`Download reformatted ${document.name}`}
-                disabled={downloadingReformatted}
+                onClick={() => handleDownloadReformatted("html")}
+                aria-label={`Download reformatted HTML of ${document.name}`}
+                disabled={downloadingReformattedFormat !== null}
                 title="Download reformatted (HTML)"
               >
-                {downloadingReformatted ? "…" : <ReformattedDownloadIcon />}
+                {downloadingReformattedFormat === "html" ? "…" : <ReformattedDownloadIcon />}
+              </button>
+              <button
+                type="button"
+                className="library-card__download"
+                onClick={() => handleDownloadReformatted("pdf")}
+                aria-label={`Download reformatted PDF of ${document.name}`}
+                disabled={downloadingReformattedFormat !== null}
+                title="Download reformatted (PDF)"
+              >
+                {downloadingReformattedFormat === "pdf" ? "…" : <ReformattedPdfDownloadIcon />}
               </button>
             </>
           )}
