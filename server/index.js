@@ -30,7 +30,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 69
+const PARSER_VERSION = 70
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -2397,6 +2397,152 @@ function mergeTrailingChapterTitleFragments(blocks) {
   return merged
 }
 
+function isFableTitleLeadFragment(block) {
+  const text = (block?.text ?? "").trim()
+  if (!text) {
+    return false
+  }
+  if (!isPureAllCapsTitleText(text)) {
+    return false
+  }
+  return isHeadingIncompleteEnding(text) || /,\s*$/.test(text)
+}
+
+function isFableTitleTailFragmentText(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (!isPureAllCapsTitleText(trimmed)) {
+    return false
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  return words.length >= 1 && words.length <= 6
+}
+
+function isFableTitleTailFragment(block) {
+  return isFableTitleTailFragmentText(block?.text)
+}
+
+function makeFableHeadingBlock(sourceBlock, titleText) {
+  return {
+    ...sourceBlock,
+    text: titleText,
+    chapterTitle: titleText,
+    isHeading: true,
+    isChapterStart: true,
+    fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+    centered: true,
+    textAlign: "center",
+  }
+}
+
+function inferCompleteFableTitleFromProse(leadTitle, proseText) {
+  const leadUpper = leadTitle.replace(/\s+/g, " ").trim().toUpperCase()
+  if (!leadUpper || !isHeadingIncompleteEnding(leadTitle)) {
+    return null
+  }
+
+  const words = (proseText ?? "").trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) {
+    return null
+  }
+
+  const phraseWords = []
+  for (let index = 0; index < words.length; index += 1) {
+    const core = words[index].replace(/^[^A-Za-z]+|[^A-Za-z]+$/g, "")
+    if (!core) {
+      break
+    }
+
+    if (index === 0 && /^THE$/i.test(core)) {
+      phraseWords.push("THE")
+      continue
+    }
+    if (/^[A-Z][a-z]+$/.test(core) || /^(and|the)$/i.test(core)) {
+      phraseWords.push(core.toUpperCase())
+      continue
+    }
+    break
+  }
+
+  if (phraseWords.length < 3) {
+    return null
+  }
+
+  const fullTitle = phraseWords.join(" ")
+  if (!fullTitle.startsWith(leadUpper)) {
+    return null
+  }
+  if (fullTitle.toUpperCase() === leadUpper) {
+    return null
+  }
+
+  const consumedWordCount = phraseWords.length
+  let remainderProse = words.slice(consumedWordCount).join(" ").trim()
+  if (remainderProse) {
+    remainderProse =
+      remainderProse.charAt(0).toUpperCase() + remainderProse.slice(1)
+  }
+  return {
+    title: formatInferredTitleText(fullTitle),
+    remainderProse,
+  }
+}
+
+function mergeMultilineFableTitleBlocks(blocks) {
+  const merged = []
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    const text = (block.text ?? "").trim()
+
+    if (!isFableTitleLeadFragment(block)) {
+      merged.push(block)
+      continue
+    }
+
+    const fragments = [text]
+    let cursor = index + 1
+
+    while (cursor < blocks.length && isFableTitleTailFragment(blocks[cursor])) {
+      fragments.push((blocks[cursor].text ?? "").trim())
+      cursor += 1
+      const lastFragment = fragments[fragments.length - 1]
+      if (!isHeadingIncompleteEnding(lastFragment) && !/,\s*$/.test(lastFragment)) {
+        break
+      }
+    }
+
+    if (fragments.length >= 2) {
+      merged.push(
+        makeFableHeadingBlock(
+          block,
+          formatInferredTitleText(fragments.join(" ").replace(/\s+/g, " ").trim())
+        )
+      )
+      index = cursor - 1
+      continue
+    }
+
+    if (cursor < blocks.length && !blocks[cursor].isHeading) {
+      const inferred = inferCompleteFableTitleFromProse(text, blocks[cursor].text)
+      if (inferred) {
+        merged.push(makeFableHeadingBlock(block, inferred.title))
+        if (inferred.remainderProse) {
+          merged.push({ ...blocks[cursor], text: inferred.remainderProse })
+        }
+        index = cursor
+        continue
+      }
+    }
+
+    merged.push(block)
+  }
+
+  return merged
+}
+
 function slugify(text) {
   return text
     .trim()
@@ -3044,6 +3190,57 @@ function isLineIsolatedOnPage(line, gapThreshold) {
   return above > gapThreshold && below > gapThreshold
 }
 
+function isPureAllCapsTitleText(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (isTocChapterListingLine(trimmed) || isTocDenseListingLine(trimmed)) {
+    return false
+  }
+  if (isNarrativeSentenceLine(trimmed)) {
+    return false
+  }
+  if (/[.!?][\u201d"\u2019']?\s*$/.test(trimmed)) {
+    return false
+  }
+
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 3 || letters !== letters.toUpperCase()) {
+    return false
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  return words.length >= 1 && words.length <= 14
+}
+
+function isLikelyAllCapsDisplayTitle(text, line = null, entry = null) {
+  if (!isPureAllCapsTitleText(text)) {
+    return false
+  }
+
+  const trimmed = (text ?? "").trim()
+  const metrics = entry?.pageMetrics ?? line?.pageMetrics
+  const bodyFontSize = metrics?.bodyFontSize ?? 0
+  const lineFontSize = line?.fontSize ?? 0
+  const centered = Boolean(line?.centered || line?.textAlign === "center")
+
+  if (bodyFontSize > 0 && lineFontSize >= bodyFontSize * 1.35) {
+    return true
+  }
+  if (lineFontSize >= HEADING_STRING_MIN_FONT_SIZE) {
+    return true
+  }
+  if (centered) {
+    return true
+  }
+  if (isHeadingIncompleteEnding(trimmed) || /,\s*$/.test(trimmed)) {
+    return true
+  }
+
+  return false
+}
+
 function isProminentDisplayTitleLine(text, line, entry = null) {
   const trimmed = (text ?? "").trim()
   if (!trimmed || isScannerWatermarkLine(trimmed)) {
@@ -3051,6 +3248,9 @@ function isProminentDisplayTitleLine(text, line, entry = null) {
   }
   if (CHAPTER_PATTERN.test(trimmed) || isAuthorStructuralLine(trimmed)) {
     return false
+  }
+  if (isLikelyAllCapsDisplayTitle(trimmed, line, entry)) {
+    return true
   }
   // A small-caps chapter opening run is body prose, not a display title.
   // It is long, mostly uppercase, and does not read as a short title.
@@ -6343,6 +6543,7 @@ function isHeadingLine(text, line, headingStrings, entry = null) {
     const letters = trimmed.replace(/[^A-Za-z]/g, "")
     const upper = (trimmed.match(/[A-Z]/g) ?? []).length
     if (
+      !isLikelyAllCapsDisplayTitle(trimmed, line, entry) &&
       letters.length >= 16 &&
       upper / Math.max(1, letters.length) >= 0.85 &&
       trimmed.split(/\s+/).filter(Boolean).length >= 5 &&
@@ -7390,7 +7591,9 @@ function applyBlockTransformPipeline(blocks) {
         mergeTrailingChapterTitleFragments(
           mergeInlineChapterLabelTitles(
             mergeChapterSubtitleBlocks(
-              mergeMultilineChapterTitleBlocks(splitDialogueHeavyBlocks(blocks))
+              mergeMultilineFableTitleBlocks(
+                mergeMultilineChapterTitleBlocks(splitDialogueHeavyBlocks(blocks))
+              )
             )
           )
         )
