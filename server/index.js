@@ -35,7 +35,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 84
+const PARSER_VERSION = 85
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -5942,6 +5942,44 @@ async function finalizeIllustrationBlocks(
       ? () => takeNextSequentialTocEntryForImageBanner(printedToc, tocOrderCursor)
       : null
 
+  // Front-matter art gate. Real numbered chapters always begin after the
+  // Prologue, so the stream position of the injected Prologue text heading is
+  // the end of front matter. Any image candidate at or before it (the Roshar
+  // and Alethkar map spreads, the prelude and prologue arch banners) is
+  // front-matter art: it must never be classified as a chapter, never consume a
+  // printed-TOC slot, and never advance the sequential cursor. This is
+  // OCR-independent, so a banner whose stone plaque OCR misreads "PROLOGUE" as
+  // garbage can no longer fall through into a numbered chapter slot.
+  let frontMatterCutoffIndex = -1
+  for (let scan = 0; scan < blocks.length; scan += 1) {
+    const candidate = blocks[scan]
+    if (candidate?.type === "image" || candidate?.type === "image_candidate") {
+      continue
+    }
+    if (/^Prologue:\s+/i.test((candidate?.text ?? "").trim())) {
+      frontMatterCutoffIndex = scan
+      break
+    }
+  }
+  // Fallback to the Prelude heading if the Prologue heading is missing, so the
+  // map spread before it still cannot steal slots even in the degraded case.
+  if (frontMatterCutoffIndex === -1) {
+    for (let scan = 0; scan < blocks.length; scan += 1) {
+      const candidate = blocks[scan]
+      if (candidate?.type === "image" || candidate?.type === "image_candidate") {
+        continue
+      }
+      if (/^Prelude to the Stormlight Archive$/i.test((candidate?.text ?? "").trim())) {
+        frontMatterCutoffIndex = scan
+        break
+      }
+    }
+  }
+
+  if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
+    console.log("[frontMatterGate]", JSON.stringify({ frontMatterCutoffIndex }))
+  }
+
   function boundaryDedupeKey(analysisResult) {
     const kind = analysisResult?.boundaryKind
     const number = (analysisResult?.number ?? "").trim()
@@ -6008,6 +6046,24 @@ async function finalizeIllustrationBlocks(
 
   try {
     for (const { block, index } of candidateEntries) {
+      if (frontMatterCutoffIndex >= 0 && index <= frontMatterCutoffIndex) {
+        if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
+          console.log(
+            "[frontMatterGate] excluded",
+            JSON.stringify({
+              index,
+              pageNumber: block.pageNumber,
+              imageRole: block.imageRole,
+            })
+          )
+        }
+        finalizedByIndex.set(index, finalizeVisionImageBlock(block, SAFE_FALLBACK))
+        releaseImageBlockBinary(blocks[index])
+        processedCandidates += 1
+        reportCandidateProgress({ block, shouldRunOcr: false, imageBuffer: null })
+        continue
+      }
+
       const imageBuffer = base64PayloadToImageBuffer(extractImageBlockPayload(block))
       let forceInterludeBoundary =
         pendingInterludes > 0 && isChapterBannerCandidate(block)
@@ -6115,6 +6171,22 @@ async function finalizeIllustrationBlocks(
         pendingInterludes = 0
       } else if (finalResult.boundaryKind === "epilogue") {
         pendingInterludes = 0
+      }
+
+      if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
+        console.log(
+          "[chapterAssign]",
+          JSON.stringify({
+            index,
+            pageNumber: block.pageNumber,
+            imageRole: block.imageRole,
+            ocrKind: ocrMetadata?.boundaryKind ?? null,
+            ocrNumber: ocrMetadata?.number ?? null,
+            finalKind: finalResult?.boundaryKind ?? null,
+            finalNumber: finalResult?.number ?? null,
+            isBoundary: Boolean(finalResult?.isChapterBoundary),
+          })
+        )
       }
 
       finalizedByIndex.set(index, finalizeVisionImageBlock(block, finalResult))
