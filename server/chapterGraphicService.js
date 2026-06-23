@@ -29,6 +29,30 @@ const SAFE_FALLBACK = Object.freeze({
   rawText: null,
 })
 
+const NARRATIVE_START_HEADING_REGEX =
+  /^(?:Prelude to the Stormlight Archive|Prologue:\s+\S|Part\s+(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[IVXLCDM]+|\d+)\b|(?:chapter|letter)\s+(?:\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\b)/i
+
+/**
+ * True once a narrative section heading (Prelude, Prologue, Part, or a numbered
+ * Chapter/Letter) has appeared in the text stream before blockIndex. The injected
+ * Prelude and Prologue headings precede every real chapter banner, so this is false
+ * only for front-matter art (the Roshar map spread, title-page art) that sits ahead
+ * of the Prelude.
+ */
+function hasNarrativeStartedBefore(blocks, blockIndex) {
+  for (let index = 0; index < blockIndex; index += 1) {
+    const block = blocks[index]
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      continue
+    }
+    const text = (block?.text ?? "").trim()
+    if (text && NARRATIVE_START_HEADING_REGEX.test(text)) {
+      return true
+    }
+  }
+  return false
+}
+
 const CHAPTER_LABEL_REGEX =
   /^(chapter|letter)\s+(\d{1,3}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\b/i
 
@@ -1096,6 +1120,17 @@ function analyzeChapterGraphicFromContext({
   buildSequentialTocEntry = null,
 }) {
   if (!imageBlock || imageBlock.type !== "image_candidate") {
+    return { ...SAFE_FALLBACK }
+  }
+
+  // Front-matter art (the Roshar map spread, title-page art) is interleaved before
+  // the injected Prelude heading. It must never be classified as a chapter banner,
+  // never consume a printed-TOC chapter slot, and never advance the sequential TOC
+  // cursor. Returning here before any cursor work keeps the cursor aligned, so later
+  // real chapters (12, 33, 35, 67, 71, 74, Epilogue, ...) get their correct numbers
+  // instead of colliding and being dropped by boundaryDedupeKey (which is what was
+  // suppressing their newpage flush).
+  if (!hasNarrativeStartedBefore(blocks, blockIndex)) {
     return { ...SAFE_FALLBACK }
   }
 

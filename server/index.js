@@ -35,7 +35,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 83
+const PARSER_VERSION = 84
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -1413,6 +1413,10 @@ const STORMLIGHT_TOC_PART_LINE_REGEX =
 
 const STORMLIGHT_PRELUDE_OPENING_REGEX = /^Kalak rounded\b/i
 const STORMLIGHT_PROLOGUE_OPENING_REGEX = /^Szeth-son-son-Vallano\b/i
+// Survives a missed drop-cap "S" ("zeth-son-son-Vallano") and matches the
+// distinctive prologue phrase. Only used inside the post-Prelude page window,
+// where no interlude or later Szeth scene can appear.
+const STORMLIGHT_PROLOGUE_ANCHOR_REGEX = /Szeth-son-son-Vallano|Truthless of Shinovar/i
 
 const ILLUSTRATIONS_LIST_ENTRY_REGEX =
   /^(?:Map of\b|Prime Map of\b|Sketchbook:|Navani['\u2019]?s Notebook:|Relief of\b|Historical Greatshell|The History of Man\b|Detail of the|The Alethi Codes of War\b|Map of Four Cities\b|Shallan['\u2019]?s Sketchbook:)/i
@@ -1526,7 +1530,17 @@ function isTitlePageBookLabelLine(text) {
 }
 
 function stripEmbeddedRunningHeader(text) {
-  return (text ?? "")
+  const trimmed = (text ?? "").trim()
+
+  // Never strip the legitimate series title from the Prelude heading. The
+  // running-header strip below matches "the Stormlight Archive" case-insensitively
+  // and would otherwise truncate "Prelude to the Stormlight Archive" to "Prelude to",
+  // which then fails chapter detection and drops it from the table of contents.
+  if (/^Prelude to the Stormlight Archive$/i.test(trimmed)) {
+    return trimmed
+  }
+
+  return trimmed
     .replace(/\s+THE WAY OF KINGS\s*$/i, "")
     .replace(/\s+THE STORMLIGHT ARCHIVE\s*$/i, "")
     .trim()
@@ -2099,18 +2113,59 @@ function injectStormlightPrologueHeading(blocks, printedToc = null) {
 
   const prologueSubtitle = printedToc?.sections?.get("prologue") ?? "To Kill"
   const prologueHeadingText = `Prologue: ${prologueSubtitle}`
+
+  // Anchor the Prologue to the Prelude. The Prologue always sits between the
+  // Prelude and Part One, never deep in the interludes, so a hard page window
+  // after the Prelude prevents the heading from attaching to a later Szeth
+  // interlude (e.g. I-6 "A Work of Art").
+  let preludeIndex = -1
+  let preludeSourcePage = null
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      continue
+    }
+    const text = (block?.text ?? "").trim()
+    if (
+      /^Prelude to the Stormlight Archive$/i.test(text) ||
+      STORMLIGHT_PRELUDE_OPENING_REGEX.test(stripEmbeddedRunningHeader(block?.text ?? ""))
+    ) {
+      preludeIndex = index
+      preludeSourcePage = Number.isFinite(block?.sourcePdfPageIndex)
+        ? block.sourcePdfPageIndex
+        : null
+      break
+    }
+  }
+
+  const PROLOGUE_MAX_PAGES_AFTER_PRELUDE = 60
+
   const result = []
   let injected = false
 
   for (let index = 0; index < blocks.length; index += 1) {
     const block = blocks[index]
     const text = stripEmbeddedRunningHeader(block?.text ?? "").trim()
+    const sourcePage = Number.isFinite(block?.sourcePdfPageIndex)
+      ? block.sourcePdfPageIndex
+      : null
+
+    const withinPrologueWindow =
+      index > preludeIndex &&
+      (preludeSourcePage == null ||
+        sourcePage == null ||
+        sourcePage - preludeSourcePage <= PROLOGUE_MAX_PAGES_AFTER_PRELUDE)
+
+    const looksLikePrologueOpening =
+      STORMLIGHT_PROLOGUE_OPENING_REGEX.test(text) ||
+      STORMLIGHT_PROLOGUE_ANCHOR_REGEX.test(text)
 
     if (
       !injected &&
       block?.type !== "image" &&
       block?.type !== "image_candidate" &&
-      STORMLIGHT_PROLOGUE_OPENING_REGEX.test(text)
+      withinPrologueWindow &&
+      looksLikePrologueOpening
     ) {
       const hasPrologue = result
         .slice(-8)
