@@ -388,22 +388,25 @@ function qualifiesAsPrintedTocBannerSlot(imageBlock, blocks, blockIndex, ocrMeta
     return false
   }
 
-  if (isChapterLikeOcrMetadata(ocrMetadata)) {
-    const kind = ocrMetadata.boundaryKind
-    if (kind === "part" || kind === "interlude_divider") {
-      return false
-    }
-    return true
+  // OCR-confirmed part and interlude dividers never take a sequential chapter slot.
+  const ocrKind = ocrMetadata?.boundaryKind
+  if (ocrKind === "part" || ocrKind === "interlude_divider") {
+    return false
   }
 
+  // Full-page art (tall plates, character portraits, sketchbook pages) is never
+  // a chapter banner, even when its plaque OCR misreads as a chapter number.
+  // These rejections run before any OCR shortcut so a plate cannot consume a
+  // sequential chapter slot and shift every later banner.
   if (imageBlock.imageRole === "full_page_illustration") {
     return false
   }
-
+  if (isFullPageHeightIllustrationBlock(imageBlock)) {
+    return false
+  }
   if (isMapOrGalleryIllustration(blocks, blockIndex, imageBlock)) {
     return false
   }
-
   if (hasNearbyNonChapterCaption(blocks, imageBlock)) {
     return false
   }
@@ -422,6 +425,9 @@ function qualifiesAsPrintedTocBannerSlot(imageBlock, blocks, blockIndex, ocrMeta
     return false
   }
 
+  // A genuine chapter arch always opens onto an epigraph, an interstitial title,
+  // or narrative prose. Requiring this even when OCR looks chapter-like stops a
+  // plate whose plaque misreads as a number from taking a slot.
   const hasOpenerSignal =
     hasEpigraphFollowUp(followingBlocks) ||
     hasInterstitialTitle(followingBlocks) ||

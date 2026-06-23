@@ -35,7 +35,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 85
+const PARSER_VERSION = 86
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -6185,6 +6185,15 @@ async function finalizeIllustrationBlocks(
             finalKind: finalResult?.boundaryKind ?? null,
             finalNumber: finalResult?.number ?? null,
             isBoundary: Boolean(finalResult?.isChapterBoundary),
+            widthRatio: (block.coordinates?.pageWidth ?? 0)
+              ? Number(((block.coordinates.width ?? 0) / block.coordinates.pageWidth).toFixed(3))
+              : null,
+            heightRatio: (block.coordinates?.pageHeight ?? 0)
+              ? Number(((block.coordinates.height ?? 0) / block.coordinates.pageHeight).toFixed(3))
+              : null,
+            aspect: (block.coordinates?.height ?? 0)
+              ? Number(((block.coordinates.width ?? 0) / block.coordinates.height).toFixed(3))
+              : null,
           })
         )
       }
@@ -6211,6 +6220,34 @@ async function finalizeIllustrationBlocks(
         illustrationCurrent: totalCandidates,
         illustrationTotal: totalCandidates,
       })
+    }
+
+    if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
+      const orderedBoundaries = []
+      for (const { index } of candidateEntries) {
+        const finalized = finalizedByIndex.get(index)
+        if (finalized?.isChapterBoundary) {
+          const coords = finalized.coordinates ?? {}
+          const w = coords.width ?? 0
+          const h = coords.height ?? 0
+          const pw = coords.pageWidth ?? 0
+          const ph = coords.pageHeight ?? 0
+          orderedBoundaries.push({
+            index,
+            pageNumber: finalized.pageNumber ?? null,
+            kind: finalized.chapterMetadata?.boundaryKind ?? null,
+            number: finalized.chapterMetadata?.number ?? null,
+            title: finalized.chapterMetadata?.title ?? null,
+            widthRatio: pw ? Number((w / pw).toFixed(3)) : null,
+            heightRatio: ph ? Number((h / ph).toFixed(3)) : null,
+            aspect: h ? Number((w / h).toFixed(3)) : null,
+          })
+        }
+      }
+      console.log(
+        "[boundarySummary]",
+        JSON.stringify({ count: orderedBoundaries.length, orderedBoundaries })
+      )
     }
   } finally {
     await terminateOcrWorker()

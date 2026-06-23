@@ -5,6 +5,13 @@ const CHAPTER_ARCH_MIN_HEIGHT_RATIO = 0.28
 const CHAPTER_ARCH_MAX_HEIGHT_RATIO = 0.57
 const CHAPTER_ARCH_MIN_ASPECT_RATIO = 0.55
 const CHAPTER_ARCH_MAX_ASPECT_RATIO = 1.35
+// A chapter arch banner in this series is always landscape (wider than tall).
+// A portrait-oriented block that fills a large share of page height is a
+// full-page character or sketchbook plate, never an arch. These two thresholds
+// exclude such plates before the near-square arch band can misclassify them.
+// Tunable from the [chapterAssign] geometry logged in finalizeIllustrationBlocks.
+const CHAPTER_ARCH_PORTRAIT_PLATE_MAX_ASPECT = 1.05
+const CHAPTER_ARCH_PORTRAIT_PLATE_MIN_HEIGHT_RATIO = 0.42
 const CHAPTER_STRIP_MIN_WIDTH_RATIO = 0.33
 const CHAPTER_STRIP_MIN_HEIGHT_RATIO = 0.10
 const CHAPTER_STRIP_MAX_HEIGHT_RATIO = 0.28
@@ -49,6 +56,15 @@ export function isLikelyChapterArchBanner({ width, height, pageWidth, pageHeight
     return false
   }
 
+  // Portrait-and-tall blocks are full-page plates, not arches. A landscape arch
+  // (aspect above the threshold) is untouched, as is a short decorative band.
+  if (
+    aspectRatio < CHAPTER_ARCH_PORTRAIT_PLATE_MAX_ASPECT &&
+    heightRatio >= CHAPTER_ARCH_PORTRAIT_PLATE_MIN_HEIGHT_RATIO
+  ) {
+    return false
+  }
+
   if (isLikelyHorizontalChapterStrip({ width, height, pageWidth, pageHeight })) {
     return true
   }
@@ -63,9 +79,7 @@ export function isLikelyChapterArchBanner({ width, height, pageWidth, pageHeight
     return true
   }
 
-  // Wide near-square banners only. A true arch banner is roughly square to
-  // mildly landscape; a landscape illustration plate (aspect well above the
-  // arch band) is content art and must not be treated as a chapter banner.
+  // Wide near-square banners only.
   if (
     widthRatio >= 0.55 &&
     aspectRatio >= 0.95 &&
