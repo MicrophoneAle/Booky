@@ -31,11 +31,14 @@ import {
 } from "./reformattedExportService.js"
 import {
   extractChapterKeyFromOcrNumber,
+  countInterludesAfterUpcomingBannerlessChapters,
+  scanPendingInterludesFromBlocks,
   supplementBannerlessPrintedChapters,
+  takeNextSequentialInterludeTocEntry,
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 86
+const PARSER_VERSION = 87
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -5964,6 +5967,11 @@ async function finalizeIllustrationBlocks(
       ? () => takeNextSequentialTocEntryForImageBanner(printedToc, tocOrderCursor)
       : null
 
+  const buildSequentialInterludeTocEntry =
+    printedToc && tocOrderCursor
+      ? () => takeNextSequentialInterludeTocEntry(printedToc, tocOrderCursor)
+      : null
+
   // Front-matter art gate. Real numbered chapters always begin after the
   // Prologue, so the stream position of the injected Prologue text heading is
   // the end of front matter. Any image candidate at or before it (the Roshar
@@ -6001,6 +6009,9 @@ async function finalizeIllustrationBlocks(
   if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
     console.log("[frontMatterGate]", JSON.stringify({ frontMatterCutoffIndex }))
   }
+
+  let lastInterludeTextScanIndex =
+    frontMatterCutoffIndex >= 0 ? frontMatterCutoffIndex + 1 : 0
 
   function boundaryDedupeKey(analysisResult) {
     const kind = analysisResult?.boundaryKind
@@ -6068,6 +6079,32 @@ async function finalizeIllustrationBlocks(
 
   try {
     for (const { block, index } of candidateEntries) {
+      const interludesFromText = scanPendingInterludesFromBlocks(
+        blocks,
+        lastInterludeTextScanIndex,
+        index
+      )
+      if (interludesFromText > 0) {
+        pendingInterludes = interludesFromText
+      }
+
+      if (
+        printedToc &&
+        tocOrderCursor &&
+        isChapterBannerCandidate(block) &&
+        pendingInterludes === 0
+      ) {
+        const interludesFromToc = countInterludesAfterUpcomingBannerlessChapters(
+          printedToc,
+          tocOrderCursor
+        )
+        if (interludesFromToc > 0) {
+          pendingInterludes = interludesFromToc
+        }
+      }
+
+      lastInterludeTextScanIndex = index
+
       if (frontMatterCutoffIndex >= 0 && index <= frontMatterCutoffIndex) {
         if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
           console.log(
@@ -6160,6 +6197,7 @@ async function finalizeIllustrationBlocks(
         precomputedPageCharCounts: pageTextCharCounts,
         tocOrderCursor,
         buildSequentialTocEntry,
+        buildSequentialInterludeTocEntry,
       })
 
       let finalResult = analysisResult

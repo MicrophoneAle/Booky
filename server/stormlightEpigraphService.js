@@ -124,6 +124,11 @@ function extractTocAnchorFromOcrLabel(ocrNumberLabel) {
     return { kind: "interlude", key: interludeMatch[1] }
   }
 
+  const interludePlaqueMatch = label.match(/^i[\s\-–—]*(\d{1,2})$/i)
+  if (interludePlaqueMatch) {
+    return { kind: "interlude", key: interludePlaqueMatch[1] }
+  }
+
   const chapterKey = extractChapterKeyFromOcrNumber(label)
   if (chapterKey) {
     return { kind: "chapter", key: chapterKey }
@@ -198,6 +203,117 @@ function shouldAcceptTocReanchor(expected, anchor, located, tocOrderCursor) {
   return true
 }
 
+function countInterludesAfterUpcomingBannerlessChapters(printedToc, tocOrderCursor) {
+  if (!printedToc?.ordered?.length || !tocOrderCursor) {
+    return 0
+  }
+
+  let index = tocOrderCursor.index
+  let bannerlessChapters = 0
+  let firstChapterKey = null
+
+  while (index < printedToc.ordered.length) {
+    const entry = printedToc.ordered[index]
+    if (entry.kind === "part") {
+      index += 1
+      continue
+    }
+
+    if (entry.kind === "chapter") {
+      if (!firstChapterKey) {
+        firstChapterKey = entry.key
+      }
+      bannerlessChapters += 1
+      index += 1
+      continue
+    }
+
+    if (entry.kind === "interlude") {
+      const firstChapterNum = Number.parseInt(firstChapterKey, 10)
+      // Only the first interlude batch is preceded by bannerless chapters 10
+      // and 11 (they have no arch banners in this edition). Later interlude
+      // sections follow real chapter arches and must not skip chapter slots.
+      if (
+        bannerlessChapters === 2 &&
+        firstChapterNum === 10
+      ) {
+        let interludeCount = 0
+        while (index < printedToc.ordered.length) {
+          const next = printedToc.ordered[index]
+          if (next.kind === "part") {
+            index += 1
+            continue
+          }
+          if (next.kind === "interlude") {
+            interludeCount += 1
+            index += 1
+            continue
+          }
+          break
+        }
+        return interludeCount
+      }
+      return 0
+    }
+
+    break
+  }
+
+  return 0
+}
+
+function countInterludeNamesFromTextBlocks(blocks, interludesIndex) {
+  for (
+    let index = interludesIndex + 1;
+    index < Math.min(blocks.length, interludesIndex + 10);
+    index += 1
+  ) {
+    const block = blocks[index]
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      break
+    }
+
+    const text = (block?.text ?? "").trim()
+    if (!text) {
+      continue
+    }
+
+    const names = text
+      .split(/\s*[•·]\s*/)
+      .map((part) => part.trim())
+      .filter((part) => part.length >= 3)
+    if (names.length >= 2) {
+      return names.length
+    }
+  }
+
+  return 3
+}
+
+/**
+ * Scan narrative text blocks for an "Interludes" divider heading and return how
+ * many interlude banners follow. OCR on the divider plate is preferred when
+ * available, but this keeps the sequential TOC cursor aligned when tessdata is
+ * missing or the divider is text-only.
+ */
+function scanPendingInterludesFromBlocks(blocks, fromIndex, toIndex) {
+  let pending = 0
+
+  for (let index = fromIndex; index < toIndex; index += 1) {
+    const block = blocks[index]
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      continue
+    }
+
+    const text = (block?.text ?? "").trim()
+    if (/^Interludes$/i.test(text)) {
+      pending = countInterludeNamesFromTextBlocks(blocks, index)
+    }
+  }
+
+  return pending
+}
+
 function buildTocMetadataForChapterHeading(
   blocks,
   blockIndex,
@@ -206,6 +322,7 @@ function buildTocMetadataForChapterHeading(
     tocOrderCursor = null,
     forceInterludeBoundary = false,
     buildSequentialEntry = null,
+    buildSequentialInterludeEntry = null,
     ocrNumberLabel = null,
   } = {}
 ) {
@@ -214,7 +331,7 @@ function buildTocMetadataForChapterHeading(
   }
 
   if (forceInterludeBoundary) {
-    return buildSequentialEntry?.() ?? null
+    return buildSequentialInterludeEntry?.() ?? null
   }
 
   if (hasBackMatterHeadingText(blocks, blockIndex)) {
@@ -246,6 +363,30 @@ function takeNextSequentialTocEntry(printedToc, tocOrderCursor) {
   return printedTocEntryToOcrMetadata(entry)
 }
 
+/** Skip prelude/prologue and any chapter entries until the next interlude slot. */
+function takeNextSequentialInterludeTocEntry(printedToc, tocOrderCursor) {
+  if (!printedToc?.ordered?.length || !tocOrderCursor) {
+    return null
+  }
+
+  while (true) {
+    const entry = peekNextNonPartTocEntry(printedToc, tocOrderCursor)
+    if (!entry) {
+      return null
+    }
+
+    advanceTocCursorAfterEntry(printedToc, tocOrderCursor, entry)
+
+    if (entry.kind === "prelude" || entry.kind === "prologue") {
+      continue
+    }
+
+    if (entry.kind === "interlude") {
+      return printedTocEntryToOcrMetadata(entry)
+    }
+  }
+}
+
 /** Prelude/prologue are text-detected; skip them when assigning printed TOC slots to banners. */
 function takeNextSequentialTocEntryForImageBanner(printedToc, tocOrderCursor) {
   if (!printedToc?.ordered?.length || !tocOrderCursor) {
@@ -275,10 +416,13 @@ function supplementBannerlessPrintedChapters(blocks, _printedToc) {
 export {
   buildTocMetadataForChapterHeading,
   collectFollowingTextBlocks,
+  countInterludesAfterUpcomingBannerlessChapters,
   extractChapterKeyFromOcrNumber,
   extractTocAnchorFromOcrLabel,
   hasBackMatterHeadingText,
+  scanPendingInterludesFromBlocks,
   supplementBannerlessPrintedChapters,
   takeNextSequentialTocEntry,
+  takeNextSequentialInterludeTocEntry,
   takeNextSequentialTocEntryForImageBanner,
 }

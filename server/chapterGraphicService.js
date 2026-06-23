@@ -1124,6 +1124,7 @@ function analyzeChapterGraphicFromContext({
   precomputedPageCharCounts = null,
   tocOrderCursor = null,
   buildSequentialTocEntry = null,
+  buildSequentialInterludeTocEntry = null,
 }) {
   if (!imageBlock || imageBlock.type !== "image_candidate") {
     return { ...SAFE_FALLBACK }
@@ -1202,6 +1203,7 @@ function analyzeChapterGraphicFromContext({
         tocOrderCursor,
         forceInterludeBoundary,
         buildSequentialEntry: buildSequentialTocEntry,
+        buildSequentialInterludeEntry: buildSequentialInterludeTocEntry,
         ocrNumberLabel: ocrMetadata?.number ?? null,
       }
     )
