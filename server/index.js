@@ -246,6 +246,14 @@ function bumpParseCounter(counter, current, total) {
   return next
 }
 
+function shouldResetExtractImagePageCounter(previousSubphase) {
+  return (
+    previousSubphase == null ||
+    previousSubphase === "text" ||
+    previousSubphase === "text_complete"
+  )
+}
+
 function activeCountersForPhase(phase, counters) {
   if (phase === "extracting") {
     return counters.pages
@@ -303,10 +311,9 @@ function mergeParseProgressSnapshot(previous, patch) {
   if (effectivePhase === "extracting" || effectivePhase === "structuring") {
     const subphase = patch?.extractSubphase ?? prev?.extractSubphase
     if (subphase === "images") {
-      const imageBase =
-        prev?.extractSubphase === "images"
-          ? counters.pages
-          : { current: 0, total: patch?.total ?? counters.pages.total }
+      const imageBase = shouldResetExtractImagePageCounter(prev?.extractSubphase)
+        ? { current: 0, total: patch?.total ?? counters.pages.total }
+        : counters.pages
       counters.pages = bumpParseCounter(imageBase, patch.current, patch.total)
     } else if (subphase === "filtering") {
       const filterBase =
@@ -347,6 +354,14 @@ function mergeParseProgressSnapshot(previous, patch) {
   }
 
   const active = activeCountersForPhase(phase, counters)
+  const imageBufferCurrent =
+    typeof patch.imageBufferCurrent === "number"
+      ? Math.max(prev.imageBufferCurrent ?? 0, patch.imageBufferCurrent)
+      : prev.imageBufferCurrent
+  const imageBufferTotal =
+    typeof patch.imageBufferTotal === "number" && patch.imageBufferTotal > 0
+      ? patch.imageBufferTotal
+      : prev.imageBufferTotal
 
   return {
     ...prev,
@@ -374,6 +389,8 @@ function mergeParseProgressSnapshot(previous, patch) {
     pageTotal: counters.pages.total,
     uploadCurrent: counters.uploads.current,
     uploadTotal: counters.uploads.total,
+    imageBufferCurrent,
+    imageBufferTotal,
     updatedAt: Date.now(),
   }
 }
@@ -402,6 +419,10 @@ function setDocumentParseProgress(documentId, progress) {
     typeof merged.illustrationCurrent === "number" &&
     merged.illustrationCurrent !== previous?.illustrationCurrent
 
+  const imageBufferChanged =
+    typeof merged?.imageBufferCurrent === "number" &&
+    merged.imageBufferCurrent !== previous?.imageBufferCurrent
+
   if (
     phaseChanged ||
     structureStepChanged ||
@@ -409,6 +430,7 @@ function setDocumentParseProgress(documentId, progress) {
     pageChanged ||
     illustrationChanged ||
     ocrChanged ||
+    imageBufferChanged ||
     merged?.phase === "starting" ||
     merged?.phase === "extracting" ||
     merged?.phase === "error" ||
@@ -6650,6 +6672,21 @@ async function yieldToEventLoop() {
   })
 }
 
+async function runWithProgressPulse(intervalMs, onPulse, task) {
+  const timer = setInterval(() => {
+    try {
+      onPulse()
+    } catch {
+      // ignore pulse errors
+    }
+  }, intervalMs)
+  try {
+    return await task()
+  } finally {
+    clearInterval(timer)
+  }
+}
+
 async function extractAllPdfPages({
   pdf,
   totalPages,
@@ -6766,10 +6803,33 @@ async function resolvePageImageCandidateBuffers(pdf, pageImageCandidates, onPage
   }
 
   const totalPages = pageImageCandidates.length
-
+  let bufferPagesTotal = 0
   for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
     const candidates = pageImageCandidates[pageIndex]
     if (!Array.isArray(candidates) || candidates.length === 0) {
+      continue
+    }
+    const needsBuffer = candidates.some(
+      (candidate) =>
+        candidate?.isCandidate === true &&
+        candidate.imageRole != null &&
+        !extractImageBlockPayload(candidate)
+    )
+    if (needsBuffer) {
+      bufferPagesTotal += 1
+    }
+  }
+
+  let bufferPagesDone = 0
+
+  for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
+    const pageNumber = pageIndex + 1
+    const candidates = pageImageCandidates[pageIndex]
+    if (!Array.isArray(candidates) || candidates.length === 0) {
+      onPageResolved?.(pageNumber, totalPages, {
+        imageBufferCurrent: bufferPagesDone,
+        imageBufferTotal: bufferPagesTotal,
+      })
       continue
     }
 
@@ -6779,45 +6839,71 @@ async function resolvePageImageCandidateBuffers(pdf, pageImageCandidates, onPage
         candidate.imageRole != null &&
         !extractImageBlockPayload(candidate)
     )
+
     if (!needsBuffer) {
+      onPageResolved?.(pageNumber, totalPages, {
+        imageBufferCurrent: bufferPagesDone,
+        imageBufferTotal: bufferPagesTotal,
+      })
       continue
     }
 
-    const pageNumber = pageIndex + 1
-    onPageResolved?.(pageNumber, totalPages)
+    bufferPagesDone += 1
+    onPageResolved?.(pageNumber, totalPages, {
+      imageBufferCurrent: bufferPagesDone,
+      imageBufferTotal: bufferPagesTotal,
+    })
 
-    await withPdfPageOperationTimeout(
-      () =>
-        withPdfDocumentAccessLock(pdf, async () => {
-          const page = await pdf.getPage(pageNumber)
-          try {
-            const operatorList = await page.getOperatorList({ intent: "display" })
-            const resolved = await extractPdfPageImageCandidatesFromOperatorList(
-              page,
-              pageNumber,
-              operatorList,
-              { resolveBuffers: true, pdf }
-            )
-            const resolvedByStreamIndex = new Map(
-              resolved.map((candidate) => [candidate.streamIndex, candidate])
-            )
+    try {
+      await runWithProgressPulse(
+        3000,
+        () => {
+          onPageResolved?.(pageNumber, totalPages, {
+            imageBufferCurrent: bufferPagesDone,
+            imageBufferTotal: bufferPagesTotal,
+            pulse: true,
+          })
+        },
+        () =>
+          withPdfPageOperationTimeout(
+            () =>
+              withPdfDocumentAccessLock(pdf, async () => {
+                const page = await pdf.getPage(pageNumber)
+                try {
+                  const operatorList = await page.getOperatorList({ intent: "display" })
+                  const resolved = await extractPdfPageImageCandidatesFromOperatorList(
+                    page,
+                    pageNumber,
+                    operatorList,
+                    { resolveBuffers: true, pdf }
+                  )
+                  const resolvedByStreamIndex = new Map(
+                    resolved.map((candidate) => [candidate.streamIndex, candidate])
+                  )
 
-            for (let index = 0; index < candidates.length; index += 1) {
-              const candidate = candidates[index]
-              const match = resolvedByStreamIndex.get(candidate.streamIndex)
-              if (match?.buffer) {
-                candidates[index] = { ...candidate, buffer: match.buffer }
-              }
-            }
-          } finally {
-            if (typeof page.cleanup === "function") {
-              page.cleanup()
-            }
-          }
-        }),
-      pageNumber,
-      "Illustration buffer load"
-    )
+                  for (let index = 0; index < candidates.length; index += 1) {
+                    const candidate = candidates[index]
+                    const match = resolvedByStreamIndex.get(candidate.streamIndex)
+                    if (match?.buffer) {
+                      candidates[index] = { ...candidate, buffer: match.buffer }
+                    }
+                  }
+                } finally {
+                  if (typeof page.cleanup === "function") {
+                    page.cleanup()
+                  }
+                }
+              }),
+            pageNumber,
+            "Illustration buffer load"
+          )
+      )
+    } catch (error) {
+      console.warn(
+        `[extract] Illustration buffer load failed on PDF page ${pageNumber}:`,
+        error instanceof Error ? error.message : String(error)
+      )
+    }
 
     await yieldToEventLoop()
   }
@@ -8994,6 +9080,31 @@ async function downloadStoredPdfBuffer(storagePath, { timeoutMs = 120_000 } = {}
   }
 }
 
+async function resumePendingDocumentParses() {
+  const { data, error } = await supabase
+    .from("documents")
+    .select("id, user_id, storage_path, name, parse_status")
+    .eq("parse_status", PARSE_STATUS.PENDING)
+    .order("created_at", { ascending: true })
+    .limit(3)
+
+  if (error || !Array.isArray(data)) {
+    if (error) {
+      console.warn("[parse-resume] Failed to list pending documents:", error.message)
+    }
+    return
+  }
+
+  for (const row of data) {
+    if (!row?.id || !row.storage_path || backgroundParseInFlight.has(row.id)) {
+      continue
+    }
+
+    console.log(`[parse-resume] Resuming pending parse for document ${row.id}`)
+    void parseDocumentInBackground(row.id, row.user_id, row.storage_path, row.name ?? "")
+  }
+}
+
 async function parseDocumentInBackground(documentId, userId, storagePath, fileName) {
   if (backgroundParseInFlight.has(documentId)) {
     return
@@ -9264,7 +9375,7 @@ async function parsePdfBuffer(
         })
       },
     }))
-    await resolvePageImageCandidateBuffers(pdf, pageImageCandidates, (pageNumber, totalPages) => {
+    await resolvePageImageCandidateBuffers(pdf, pageImageCandidates, (pageNumber, totalPages, extra = {}) => {
       reportProgress({
         phase: "extracting",
         label: "Loading illustration data",
@@ -9272,6 +9383,8 @@ async function parsePdfBuffer(
         total: totalPages,
         extractSubphase: "images",
         percent: extractPhasePercent(pageNumber, totalPages, "images"),
+        imageBufferCurrent: extra.imageBufferCurrent ?? null,
+        imageBufferTotal: extra.imageBufferTotal ?? null,
       })
     })
   } finally {
@@ -9817,6 +9930,10 @@ if (isServerEntryPoint) {
   const PORT = process.env.PORT || 3000
   app.listen(PORT, () => {
     console.log(`Server on port ${PORT}`)
+
+    setTimeout(() => {
+      void resumePendingDocumentParses()
+    }, 5_000)
 
     if (process.env.BOOKY_REPARSE_ON_BOOT === "1") {
       setTimeout(async () => {

@@ -97,6 +97,14 @@ function bumpCounter(counter, current, total) {
   return next
 }
 
+function shouldResetExtractImagePageCounter(previousSubphase) {
+  return (
+    previousSubphase == null ||
+    previousSubphase === "text" ||
+    previousSubphase === "text_complete"
+  )
+}
+
 function legacyCountersFromProgress(raw) {
   const counters = emptyCounters()
 
@@ -189,10 +197,9 @@ function mergeCounterSnapshot(previous, update) {
   if (effectivePhase === "extracting") {
     const subphase = update?.extractSubphase ?? previous?.extractSubphase
     if (subphase === "images") {
-      const imageBase =
-        previous?.extractSubphase === "images"
-          ? prevCounters.pages
-          : { current: 0, total: update?.total ?? prevCounters.pages.total }
+      const imageBase = shouldResetExtractImagePageCounter(previous?.extractSubphase)
+        ? { current: 0, total: update?.total ?? prevCounters.pages.total }
+        : prevCounters.pages
       counters.pages = bumpCounter(imageBase, update?.current, update?.total)
     } else if (subphase === "filtering") {
       counters.pages = bumpCounter(
@@ -322,6 +329,14 @@ export function mergePollProgressUpdate(previous, update) {
 
   const counters = mergeCounterSnapshot(previous, { ...update, phase })
   const active = activeCountersForPhase(phase, counters)
+  const imageBufferCurrent =
+    typeof update.imageBufferCurrent === "number"
+      ? Math.max(previous?.imageBufferCurrent ?? 0, update.imageBufferCurrent)
+      : previous?.imageBufferCurrent
+  const imageBufferTotal =
+    typeof update.imageBufferTotal === "number" && update.imageBufferTotal > 0
+      ? update.imageBufferTotal
+      : previous?.imageBufferTotal
 
   return {
     ...previous,
@@ -354,6 +369,8 @@ export function mergePollProgressUpdate(previous, update) {
     ocrTotal: counters.ocr.total,
     uploadCurrent: counters.uploads.current,
     uploadTotal: counters.uploads.total,
+    imageBufferCurrent,
+    imageBufferTotal,
     updatedAt: update.updatedAt ?? previous.updatedAt ?? Date.now(),
   }
 }
@@ -404,9 +421,13 @@ export function getParseProgressHeadline(parseProgress) {
     if (subphase === "text_complete" || (subphase === "images" && (parseProgress.current ?? 0) === 0)) {
       return "Starting artwork scan…"
     }
-    if (subphase === "images" && parseProgress.label === "Loading illustration data") {
-      return "Loading illustration data…"
+  if (subphase === "images" && parseProgress.label === "Loading illustration data") {
+    const bufferTotal = parseProgress.imageBufferTotal ?? 0
+    if (bufferTotal > 0) {
+      return "Loading illustration artwork buffers…"
     }
+    return "Loading illustration data…"
+  }
     if (subphase === "images") {
       return "Scanning page artwork…"
     }
@@ -475,6 +496,15 @@ export function getParseProgressDetail(parseProgress) {
           : Math.min(99, Math.round((current / total) * 100))
       if (subphase === "images") {
         if (label === "Loading illustration data") {
+          const bufferCurrent = parseProgress.imageBufferCurrent ?? 0
+          const bufferTotal = parseProgress.imageBufferTotal ?? 0
+          if (bufferTotal > 0) {
+            const bufferPct = Math.min(
+              99,
+              Math.round((bufferCurrent / bufferTotal) * 100)
+            )
+            return `Loading illustration data — artwork ${bufferCurrent} of ${bufferTotal} (${bufferPct}%), PDF page ${current} of ${total}.`
+          }
           return `Loading illustration data — page ${current} of ${total} (${pct}%).`
         }
         return `Scanning artwork page ${current} of ${total} (${pct}%).`
@@ -654,7 +684,12 @@ export function getParseProgressStaleHint(parseProgress) {
     return null
   }
 
-  if (subphase === "images") {
+  if (subphase === "images" && parseProgress.label === "Loading illustration data") {
+    const bufferCurrent = parseProgress.imageBufferCurrent ?? 0
+    const bufferTotal = parseProgress.imageBufferTotal ?? 0
+    if (bufferTotal > 0) {
+      return `Loading illustration buffers can take several minutes near the end of large books. Still working (${bufferCurrent} of ${bufferTotal} artwork pages).`
+    }
     return `Artwork scanning can take several minutes on illustrated books. Still working on page ${current} of ${total}.`
   }
 
@@ -673,8 +708,14 @@ export function getParseProgressStaleHint(parseProgress) {
  * Shown when server progress timestamps stop advancing (likely OOM restart on Render).
  * @param {number} staleSinceMs - milliseconds since last updatedAt change
  */
-export function getParseProgressDeadHint(staleSinceMs) {
-  if (staleSinceMs < 60_000) {
+export function getParseProgressDeadHint(staleSinceMs, parseProgress = null) {
+  const isBufferLoad =
+    parseProgress?.phase === "extracting" &&
+    parseProgress?.extractSubphase === "images" &&
+    parseProgress?.label === "Loading illustration data"
+  const deadThresholdMs = isBufferLoad ? 180_000 : 60_000
+
+  if (staleSinceMs < deadThresholdMs) {
     return null
   }
 

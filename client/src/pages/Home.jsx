@@ -102,7 +102,7 @@ async function fetchWithRetry(url, options, retries = 4) {
 async function pollDocumentParseStatus(documentId, getToken, onProgress, onStale) {
   const startedAt = Date.now()
   let lastProgress = null
-  let lastUpdatedAt = null
+  let lastProgressFingerprint = null
   let lastUpdatedAtChangeAt = Date.now()
 
   while (Date.now() - startedAt < PARSE_POLL_TIMEOUT_MS) {
@@ -145,9 +145,16 @@ async function pollDocumentParseStatus(documentId, getToken, onProgress, onStale
     if (lastProgress) {
       onProgress(lastProgress)
 
-      const progressUpdatedAt = lastProgress.updatedAt ?? null
-      if (progressUpdatedAt !== lastUpdatedAt) {
-        lastUpdatedAt = progressUpdatedAt
+      const progressFingerprint = [
+        lastProgress.updatedAt ?? null,
+        lastProgress.imageBufferCurrent ?? null,
+        lastProgress.pageCurrent ?? lastProgress.current ?? null,
+        lastProgress.phase,
+        lastProgress.extractSubphase ?? null,
+      ].join(":")
+
+      if (progressFingerprint !== lastProgressFingerprint) {
+        lastProgressFingerprint = progressFingerprint
         lastUpdatedAtChangeAt = Date.now()
       } else {
         onStale?.(Date.now() - lastUpdatedAtChangeAt)
@@ -352,6 +359,7 @@ export default function Home() {
   const [showStaleParseHint, setShowStaleParseHint] = useState(false)
   const [parseStaleSinceMs, setParseStaleSinceMs] = useState(0)
   const [retryingParse, setRetryingParse] = useState(false)
+  const autoRetryParseAttemptedRef = useRef(false)
   const parseProgressRef = useRef({ key: "", at: Date.now() })
 
   useEffect(() => {
@@ -364,7 +372,7 @@ export default function Home() {
     const progressKey = [
       progress?.phase,
       progress?.extractSubphase,
-      progress?.pageCurrent ?? progress?.current,
+      progress?.imageBufferCurrent ?? progress?.pageCurrent ?? progress?.current,
     ].join(":")
 
     if (progressKey !== parseProgressRef.current.key) {
@@ -383,6 +391,7 @@ export default function Home() {
     setFile(selectedFile)
     setParseStaleSinceMs(0)
     setRetryingParse(false)
+    autoRetryParseAttemptedRef.current = false
     setUploadState({
       phase: "waking",
       progress: 0,
@@ -490,6 +499,27 @@ export default function Home() {
       setRetryingParse(false)
     }
   }, [getToken, navigate, retryingParse, uploadState.documentId])
+
+  useEffect(() => {
+    if (uploadState.phase !== "processing" || retryingParse || autoRetryParseAttemptedRef.current) {
+      return undefined
+    }
+
+    if (parseStaleSinceMs < 120_000) {
+      return undefined
+    }
+
+    autoRetryParseAttemptedRef.current = true
+    void handleRetryParse()
+
+    return undefined
+  }, [
+    uploadState.phase,
+    uploadState.parseProgress,
+    parseStaleSinceMs,
+    retryingParse,
+    handleRetryParse,
+  ])
 
   const handleInvalidFile = useCallback(() => {
     setFile(null)
@@ -666,10 +696,10 @@ export default function Home() {
                         {getParseProgressStaleHint(uploadState.parseProgress)}
                       </p>
                     ) : null}
-                    {getParseProgressDeadHint(parseStaleSinceMs) ? (
+                    {getParseProgressDeadHint(parseStaleSinceMs, uploadState.parseProgress) ? (
                       <>
                         <p className="home__upload-sublabel home__upload-sublabel--stale">
-                          {getParseProgressDeadHint(parseStaleSinceMs)}
+                          {getParseProgressDeadHint(parseStaleSinceMs, uploadState.parseProgress)}
                         </p>
                         <button
                           type="button"
