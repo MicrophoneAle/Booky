@@ -6,6 +6,7 @@
 import { isPlausibleTitle } from "./imageOcrService.js"
 import {
   isChapterLikeOcrMetadata,
+  isFullPageHeightIllustrationBlock,
   isFullPageSpreadHalf,
   isLikelyChapterArchBannerBlock,
   isLikelyHorizontalChapterStrip,
@@ -47,6 +48,27 @@ const NON_CHAPTER_CAPTION_PATTERNS = [
   /^old friend,/i,
   /^scholar, circa/i,
   /^adolin, the visions/i,
+  /^ROSHAR$/i,
+  /\broshar\b/i,
+  /codes of war/i,
+  /alethi codes/i,
+  /sketchbook/i,
+  /journal entry/i,
+  /^purports to be\b/i,
+]
+
+const MAP_OR_DIVIDER_TEXT_PATTERNS = [
+  /^ROSHAR$/i,
+  /^THE STORMLIGHT ARCHIVE$/i,
+  /^BOOK$/i,
+  /^ONE$/i,
+  /^TWO$/i,
+  /^THREE$/i,
+  /^THE WAY OF KINGS$/i,
+  /4,500 years later/i,
+  /codes of war/i,
+  /alethi codes/i,
+  /sketchbook/i,
 ]
 
 const FRONT_MATTER_SERIES_MARKERS = [
@@ -165,7 +187,10 @@ function collectNearbyTextLines(blocks, imageBlock, maxPageDelta = 1) {
 }
 
 function hasNearbyNonChapterCaption(blocks, imageBlock) {
-  return collectNearbyTextLines(blocks, imageBlock).some((text) =>
+  // Only same-page captions disqualify a block. Captions on the previous page
+  // belong to the illustration there and must not suppress the next page's
+  // chapter arch banner.
+  return collectNearbyTextLines(blocks, imageBlock, 0).some((text) =>
     NON_CHAPTER_CAPTION_PATTERNS.some((pattern) => pattern.test(text))
   )
 }
@@ -257,6 +282,128 @@ function isChapterTitleStripBlock(block) {
   }
 
   return block?.imageRole === "chapter_heading" && height / pageHeight <= 0.25
+}
+
+function hasSamePageProseBeforeImage(blocks, blockIndex, imageBlock) {
+  const pageIndex = Number.isFinite(imageBlock?.sourcePdfPageIndex)
+    ? imageBlock.sourcePdfPageIndex
+    : Math.max(0, (imageBlock?.pageNumber ?? 1) - 1)
+
+  let charsBefore = 0
+
+  for (let index = 0; index < blockIndex; index += 1) {
+    const block = blocks[index]
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      continue
+    }
+
+    const blockPage = Number.isFinite(block?.sourcePdfPageIndex)
+      ? block.sourcePdfPageIndex
+      : Math.max(0, (block?.pageNumber ?? 1) - 1)
+
+    if (blockPage === pageIndex) {
+      charsBefore += (block?.text ?? "").length
+    }
+  }
+
+  return charsBefore > 80
+}
+
+function isMapOrGalleryIllustration(blocks, blockIndex, imageBlock) {
+  if (imageBlock?.imageRole === "full_page_illustration") {
+    return true
+  }
+
+  if (isFullPageHeightIllustrationBlock(imageBlock)) {
+    return true
+  }
+
+  const nearby = collectNearbyTextLines(blocks, imageBlock, 1)
+  if (nearby.some((text) => MAP_OR_DIVIDER_TEXT_PATTERNS.some((pattern) => pattern.test(text)))) {
+    return true
+  }
+
+  const previousImage = findPreviousImageBlock(blocks, blockIndex)
+  const nextImage = findNextImageBlock(blocks, blockIndex, 2)
+
+  if (
+    isFullPageHeightIllustrationBlock(previousImage) &&
+    isFullPageHeightIllustrationBlock(imageBlock)
+  ) {
+    return true
+  }
+
+  if (
+    isFullPageHeightIllustrationBlock(imageBlock) &&
+    isFullPageHeightIllustrationBlock(nextImage)
+  ) {
+    return true
+  }
+
+  if (isFullPageSpreadHalf(imageBlock, previousImage)) {
+    return true
+  }
+
+  if (hasSamePageProseBeforeImage(blocks, blockIndex, imageBlock)) {
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Gate printed-TOC slot assignment so full-page maps and in-chapter plates
+ * never consume sequential chapter numbers.
+ */
+function qualifiesAsPrintedTocBannerSlot(imageBlock, blocks, blockIndex, ocrMetadata) {
+  if (!imageBlock) {
+    return false
+  }
+
+  if (ocrMetadata?.boundaryKind === "book_divider") {
+    return false
+  }
+
+  if (isChapterLikeOcrMetadata(ocrMetadata)) {
+    const kind = ocrMetadata.boundaryKind
+    if (kind === "part" || kind === "interlude_divider") {
+      return false
+    }
+    return true
+  }
+
+  if (imageBlock.imageRole === "full_page_illustration") {
+    return false
+  }
+
+  if (isMapOrGalleryIllustration(blocks, blockIndex, imageBlock)) {
+    return false
+  }
+
+  if (hasNearbyNonChapterCaption(blocks, imageBlock)) {
+    return false
+  }
+
+  const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex, 8)
+  if (hasNonChapterCaption(followingBlocks)) {
+    return false
+  }
+
+  const hasBannerGeometry =
+    imageBlock.imageRole === "chapter_heading" ||
+    isLikelyChapterArchBannerBlock(imageBlock) ||
+    isChapterTitleStripBlock(imageBlock)
+
+  if (!hasBannerGeometry) {
+    return false
+  }
+
+  const hasOpenerSignal =
+    hasEpigraphFollowUp(followingBlocks) ||
+    hasInterstitialTitle(followingBlocks) ||
+    hasNarrativeFollowUp(followingBlocks)
+
+  return hasOpenerSignal
 }
 
 function isEndOfChapterTallArt(blocks, blockIndex, imageBlock) {
@@ -742,7 +889,7 @@ function mergeOcrIntoAnalysis(
     const interludeNum = interludeMatch ? Number.parseInt(interludeMatch[1], 10) : NaN
     if (
       Number.isFinite(interludeNum) &&
-      interludeNum > 8 &&
+      interludeNum > 12 &&
       !isChapterTitleStripBlock(imageBlock)
     ) {
       return { ...SAFE_FALLBACK }
@@ -794,7 +941,7 @@ function mergeOcrIntoAnalysis(
     const interludeNum = interludeMatch
       ? Number.parseInt(interludeMatch[1], 10)
       : NaN
-    if (!Number.isFinite(interludeNum) || interludeNum > 8) {
+    if (!Number.isFinite(interludeNum) || interludeNum > 12) {
       effectiveBoundaryKind = "chapter"
       if (/interlude/i.test(number ?? "")) {
         number = null
@@ -990,10 +1137,20 @@ function analyzeChapterGraphicFromContext({
 
   let analysisResult = { ...SAFE_FALLBACK }
 
+  const isSectionBanner =
+    ocrMetadata?.boundaryKind === "prelude" ||
+    ocrMetadata?.boundaryKind === "prologue" ||
+    ocrMetadata?.boundaryKind === "epilogue"
+
+  const qualifiesForBannerSlot =
+    isSectionBanner ||
+    qualifiesAsPrintedTocBannerSlot(imageBlock, blocks, blockIndex, ocrMetadata)
+
   const isChapterBanner =
-    imageBlock.imageRole === "chapter_heading" ||
-    isChapterLikeOcrMetadata(ocrMetadata) ||
-    isLikelyChapterArchBannerBlock(imageBlock)
+    qualifiesForBannerSlot &&
+    (imageBlock.imageRole === "chapter_heading" ||
+      isChapterLikeOcrMetadata(ocrMetadata) ||
+      isLikelyChapterArchBannerBlock(imageBlock))
 
   if (isChapterBanner) {
     analysisResult = analyzeChapterHeadingBanner({
@@ -1013,11 +1170,6 @@ function analyzeChapterGraphicFromContext({
       })
     }
   }
-
-  const isSectionBanner =
-    ocrMetadata?.boundaryKind === "prelude" ||
-    ocrMetadata?.boundaryKind === "prologue" ||
-    ocrMetadata?.boundaryKind === "epilogue"
 
   let effectiveOcrMetadata = ocrMetadata
   let tocMetadata = null

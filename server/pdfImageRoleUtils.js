@@ -105,6 +105,21 @@ export function isTallChapterArchBannerBlock(block) {
   )
 }
 
+export function isFullPageHeightIllustrationBlock(block) {
+  const coords = block?.coordinates ?? {}
+  const pageHeight = coords.pageHeight ?? 0
+  const height = coords.height ?? 0
+  if (!pageHeight || !height) {
+    return false
+  }
+
+  if (block?.imageRole === PDF_IMAGE_ROLE.FULL_PAGE_ILLUSTRATION) {
+    return true
+  }
+
+  return height / pageHeight >= FULL_PAGE_MIN_HEIGHT_RATIO
+}
+
 export function isFullPageSpreadHalf(block, previousImage) {
   if (block?.imageRole !== "full_page_illustration") {
     return false

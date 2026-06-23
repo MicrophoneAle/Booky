@@ -104,6 +104,54 @@ const map = analyzeChapterGraphicFromContext({
   ocrMetadata: null,
 })
 
+const chapterAfterMapCaption = {
+  type: "image_candidate",
+  imageRole: "chapter_heading",
+  pageNumber: 36,
+  coordinates: { width: 300, height: 400, pageWidth: 400, pageHeight: 600 },
+}
+
+const chapterAfterMapBlocks = [
+  {
+    type: "image_candidate",
+    imageRole: "illustration",
+    pageNumber: 35,
+    coordinates: { width: 360, height: 420, pageWidth: 400, pageHeight: 600 },
+  },
+  {
+    type: "text",
+    text: "Charcoal rubbing of a map of Sadeas's warcamp on the Shattered Plains.",
+    pageNumber: 35,
+    sourcePdfPageIndex: 34,
+  },
+  chapterAfterMapCaption,
+  {
+    type: "text",
+    text: "—Collected on the third day of Betach, year 1171.",
+    pageNumber: 36,
+    sourcePdfPageIndex: 35,
+  },
+  {
+    type: "text",
+    text: "Kaladin hunched against the wind as the bridge crew marched.",
+    pageNumber: 36,
+    sourcePdfPageIndex: 35,
+  },
+]
+
+const chapterAfterMap = analyzeChapterGraphicFromContext({
+  imageBlock: chapterAfterMapCaption,
+  blocks: chapterAfterMapBlocks,
+  blockIndex: 2,
+  chapterSequence: 6,
+  ocrMetadata: {
+    boundaryKind: "chapter",
+    number: "6",
+    title: "BRIDGE FOUR",
+    rawText: "6: BRIDGE FOUR",
+  },
+})
+
 console.log(
   "chapter on busy page",
   chapterOnBusyPage.isChapterBoundary,
@@ -111,7 +159,13 @@ console.log(
 )
 console.log("prologue p12", prologue.isChapterBoundary, prologue.boundaryKind, prologue.title)
 console.log("map illustration", map.isChapterBoundary)
+console.log("chapter after map caption", chapterAfterMap.isChapterBoundary)
 
-if (!chapterOnBusyPage.isChapterBoundary || !prologue.isChapterBoundary || map.isChapterBoundary) {
+if (
+  !chapterOnBusyPage.isChapterBoundary ||
+  !prologue.isChapterBoundary ||
+  map.isChapterBoundary ||
+  !chapterAfterMap.isChapterBoundary
+) {
   process.exitCode = 1
 }

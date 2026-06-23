@@ -82,7 +82,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 81
+const PARSER_VERSION = 82
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -3335,7 +3335,10 @@ function isTextSectionTocEntry(title) {
   if (!normalized) {
     return false
   }
-  if (/^(prelude|prologue|epilogue|introduction|preface)$/i.test(normalized)) {
+  if (/^(prelude|prologue|epilogue|introduction|preface)\b/i.test(normalized)) {
+    return true
+  }
+  if (/^prelude to\b/i.test(normalized)) {
     return true
   }
   if (/^part\s+/i.test(normalized) && !/\bchapter\b/i.test(normalized)) {

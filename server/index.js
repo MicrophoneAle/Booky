@@ -35,7 +35,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 81
+const PARSER_VERSION = 82
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -5993,7 +5993,9 @@ async function finalizeIllustrationBlocks(
         pendingInterludes = 0
       } else if (finalResult.boundaryKind === "epilogue") {
         pendingInterludes = 0
-        pastEpilogue = true
+        if ((block.pageNumber ?? 0) >= 650) {
+          pastEpilogue = true
+        }
       }
 
       finalizedByIndex.set(index, finalizeVisionImageBlock(block, finalResult))
