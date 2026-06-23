@@ -35,7 +35,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 82
+const PARSER_VERSION = 83
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -1412,6 +1412,7 @@ const STORMLIGHT_TOC_PART_LINE_REGEX =
   /^Part\s+(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[IVXLCDM]+|\d+):/i
 
 const STORMLIGHT_PRELUDE_OPENING_REGEX = /^Kalak rounded\b/i
+const STORMLIGHT_PROLOGUE_OPENING_REGEX = /^Szeth-son-son-Vallano\b/i
 
 const ILLUSTRATIONS_LIST_ENTRY_REGEX =
   /^(?:Map of\b|Prime Map of\b|Sketchbook:|Navani['\u2019]?s Notebook:|Relief of\b|Historical Greatshell|The History of Man\b|Detail of the|The Alethi Codes of War\b|Map of Four Cities\b|Shallan['\u2019]?s Sketchbook:)/i
@@ -2086,6 +2087,57 @@ function normalizeBiographyAppendixBlocks(blocks) {
     }
 
     result.push(block)
+  }
+
+  return result
+}
+
+function injectStormlightPrologueHeading(blocks, printedToc = null) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  const prologueSubtitle = printedToc?.sections?.get("prologue") ?? "To Kill"
+  const prologueHeadingText = `Prologue: ${prologueSubtitle}`
+  const result = []
+  let injected = false
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    const text = stripEmbeddedRunningHeader(block?.text ?? "").trim()
+
+    if (
+      !injected &&
+      block?.type !== "image" &&
+      block?.type !== "image_candidate" &&
+      STORMLIGHT_PROLOGUE_OPENING_REGEX.test(text)
+    ) {
+      const hasPrologue = result
+        .slice(-8)
+        .some((entry) => /^Prologue:\s+/i.test((entry?.text ?? "").trim()))
+
+      if (!hasPrologue) {
+        result.push({
+          text: prologueHeadingText,
+          isHeading: true,
+          fontSize: 15,
+          isChapterStart: true,
+          chapterId: null,
+          chapterTitle: prologueHeadingText,
+          sourcePdfPageIndex: block.sourcePdfPageIndex ?? null,
+        })
+      }
+
+      injected = true
+      result.push({ ...block, text, isHeading: false, fontSize: 12 })
+      continue
+    }
+
+    if (text !== (block?.text ?? "").trim()) {
+      result.push({ ...block, text })
+    } else {
+      result.push(block)
+    }
   }
 
   return result
@@ -4961,6 +5013,7 @@ function imageMetricsFromTransform(transform, pageWidth, pageHeight) {
 import {
   classifyPdfImageRole,
   isChapterLikeOcrMetadata,
+  isFullPageHeightIllustrationBlock,
   isFullPageSpreadHalf,
   isLikelyChapterArchBannerBlock,
   isTallChapterArchBannerBlock,
@@ -5698,18 +5751,34 @@ function finalizeNonCandidateImageBlock(block) {
 
 function finalizeVisionImageBlock(block, visionResult) {
   const { isCandidate: _isCandidate, ...rest } = block
-  const includeInToc = visionResult?.includeInToc !== false
+  const isFullPageArt = isFullPageHeightIllustrationBlock(block)
+  let resolvedVision = visionResult ?? null
+
+  if (
+    isFullPageArt &&
+    resolvedVision?.isChapterBoundary &&
+    (resolvedVision?.boundaryKind === "chapter" ||
+      resolvedVision?.boundaryKind === "interlude")
+  ) {
+    resolvedVision = { ...SAFE_FALLBACK }
+  }
+
+  const includeInToc = resolvedVision?.includeInToc !== false
+  const imageRole =
+    isFullPageArt && block.imageRole !== PDF_IMAGE_ROLE.FULL_PAGE_ILLUSTRATION
+      ? PDF_IMAGE_ROLE.FULL_PAGE_ILLUSTRATION
+      : block.imageRole ?? null
 
   return {
     ...rest,
     type: "image",
-    imageRole: block.imageRole ?? null,
-    isChapterBoundary: Boolean(visionResult?.isChapterBoundary),
+    imageRole,
+    isChapterBoundary: Boolean(resolvedVision?.isChapterBoundary),
     chapterMetadata: {
-      boundaryKind: visionResult?.boundaryKind ?? null,
-      title: visionResult?.title ?? null,
-      number: visionResult?.number ?? null,
-      rawText: visionResult?.rawText ?? null,
+      boundaryKind: resolvedVision?.boundaryKind ?? null,
+      title: resolvedVision?.title ?? null,
+      number: resolvedVision?.number ?? null,
+      rawText: resolvedVision?.rawText ?? null,
       includeInToc,
     },
   }
@@ -5802,7 +5871,17 @@ async function finalizeIllustrationBlocks(
     assignedBoundaryKeys.add("prelude")
   }
 
-  let pastEpilogue = false
+  if (
+    blocks.some(
+      (candidate) =>
+        candidate?.type !== "image" &&
+        candidate?.type !== "image_candidate" &&
+        /^Prologue:\s+/i.test((candidate?.text ?? "").trim())
+    )
+  ) {
+    assignedBoundaryKeys.add("prologue")
+  }
+
   const buildSequentialTocEntry =
     printedToc && tocOrderCursor
       ? () => takeNextSequentialTocEntryForImageBanner(printedToc, tocOrderCursor)
@@ -5882,18 +5961,6 @@ async function finalizeIllustrationBlocks(
         isChapterBannerCandidate(block) &&
         shouldSkipChapterHeadingCandidate(block, blocks, index)
       ) {
-        finalizedByIndex.set(index, finalizeVisionImageBlock(block, SAFE_FALLBACK))
-        releaseImageBlockBinary(blocks[index])
-        processedCandidates += 1
-        reportCandidateProgress({
-          block,
-          shouldRunOcr: false,
-          imageBuffer: null,
-        })
-        continue
-      }
-
-      if (pastEpilogue && isChapterBannerCandidate(block)) {
         finalizedByIndex.set(index, finalizeVisionImageBlock(block, SAFE_FALLBACK))
         releaseImageBlockBinary(blocks[index])
         processedCandidates += 1
@@ -5993,9 +6060,6 @@ async function finalizeIllustrationBlocks(
         pendingInterludes = 0
       } else if (finalResult.boundaryKind === "epilogue") {
         pendingInterludes = 0
-        if ((block.pageNumber ?? 0) >= 650) {
-          pastEpilogue = true
-        }
       }
 
       finalizedByIndex.set(index, finalizeVisionImageBlock(block, finalResult))
@@ -7510,6 +7574,76 @@ function isOrphanTextPartHeading(block, flatBlocks, flatIndex) {
   return false
 }
 
+function formatImageBoundaryChapterTitle(chapterMetadata) {
+  const boundaryKind = chapterMetadata?.boundaryKind ?? null
+  const number = (chapterMetadata?.number ?? "").trim()
+  const title = (chapterMetadata?.title ?? "").trim()
+
+  if (boundaryKind === "prelude" || boundaryKind === "prologue" || boundaryKind === "epilogue") {
+    if (number && title) {
+      return `${number}: ${title}`
+    }
+    if (title) {
+      return title
+    }
+    return number || (boundaryKind ? boundaryKind.charAt(0).toUpperCase() + boundaryKind.slice(1) : "Section")
+  }
+
+  if (boundaryKind === "interlude") {
+    if (number && title) {
+      return `${number}: ${title}`
+    }
+    return number || title || "Interlude"
+  }
+
+  if (number && title) {
+    return `${number}: ${title}`
+  }
+
+  return number || title || "Chapter"
+}
+
+function appendImageBoundaryChapters(content, chapters, seenChapterIds) {
+  for (const page of content) {
+    for (let blockIndex = 0; blockIndex < (page.blocks ?? []).length; blockIndex += 1) {
+      const block = page.blocks[blockIndex]
+      if (block?.type !== "image" || !block.isChapterBoundary) {
+        continue
+      }
+      if (block.chapterMetadata?.includeInToc === false) {
+        continue
+      }
+
+      const kind = block.chapterMetadata?.boundaryKind
+      if (
+        !kind ||
+        kind === "flashback" ||
+        kind === "part" ||
+        kind === "interlude_divider" ||
+        kind === "book_divider"
+      ) {
+        continue
+      }
+
+      const title = formatImageBoundaryChapterTitle(block.chapterMetadata)
+      const id = slugify(title) || `image-boundary-${page.pageIndex}-${blockIndex}`
+      if (seenChapterIds.has(id)) {
+        continue
+      }
+
+      seenChapterIds.add(id)
+      chapters.push({
+        id,
+        title,
+        pageIndex: page.pageIndex,
+        blockIndex,
+      })
+    }
+  }
+
+  return chapters
+}
+
 function detectChapters(content, bookTitle = "") {
   const trimmedBookTitle = (bookTitle ?? "").trim()
   const flatBlocks = flattenContentBlocks(content)
@@ -7636,6 +7770,8 @@ function detectChapters(content, bookTitle = "") {
       }
     }),
   }))
+
+  appendImageBoundaryChapters(content, chapters, seenChapterIds)
 
   return { chapters, content: updatedContent }
 }
@@ -9077,6 +9213,7 @@ async function parsePdfBuffer(
   blocks = excludePrintedTocBlocks(blocks)
   blocks = normalizeFrontAndBackMatterBlocks(blocks)
   blocks = injectStormlightPreludeHeading(blocks)
+  blocks = injectStormlightPrologueHeading(blocks, printedToc)
 
   reportProgress({
     phase: "structuring",

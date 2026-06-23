@@ -131,10 +131,6 @@ export function isFullPageIllustrationItem(item) {
     return true
   }
 
-  if (item?.isChapterBoundary) {
-    return false
-  }
-
   const coords = item?.coordinates ?? {}
   const pageHeight = coords.pageHeight ?? 0
   const pageWidth = coords.pageWidth ?? 0
@@ -147,6 +143,15 @@ export function isFullPageIllustrationItem(item) {
   const heightRatio = height / pageHeight
   const widthRatio = width / pageWidth
   const aspectRatio = width / height
+
+  // Tall plates use full-page layout even when mis-tagged as chapter boundaries.
+  if (heightRatio >= 0.58) {
+    return true
+  }
+
+  if (item?.isChapterBoundary) {
+    return false
+  }
 
   if (
     widthRatio >= 0.33 &&
@@ -579,6 +584,9 @@ export function isChapterBoundaryText(text) {
   if (CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed)) {
     return true
   }
+  if (/^prelude to\b/i.test(trimmed)) {
+    return true
+  }
   return isCleanStructuralHeadingText(text)
 }
 
@@ -868,6 +876,35 @@ export function buildFrontMatterPack(placeables) {
   }
 
   return { frontMatterPack, remainder }
+}
+
+export function isEpigraphOrChapterOpenerProse(placeable) {
+  if (placeable?.type !== "prose") {
+    return false
+  }
+
+  const text = (placeable.item?.text ?? "").trim()
+  if (!text) {
+    return false
+  }
+
+  if (/^[\u2014\u2013—-]/.test(text)) {
+    return true
+  }
+
+  if (/^—(?:Collected|Noted|Dated|Purports|Though)/i.test(text)) {
+    return true
+  }
+
+  if (
+    text.length <= 60 &&
+    /^[A-Z][A-Z0-9\s'’\-]{3,}$/.test(text) &&
+    !/^THE\s/.test(text)
+  ) {
+    return true
+  }
+
+  return false
 }
 
 export function shouldCenterTitlePage(visualItems) {

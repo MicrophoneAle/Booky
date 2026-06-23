@@ -884,18 +884,6 @@ function mergeOcrIntoAnalysis(
     }
   }
 
-  if (resolvedBoundaryKind === "interlude") {
-    const interludeMatch = (ocrMetadata?.number ?? "").match(/I-(\d{1,2})/i)
-    const interludeNum = interludeMatch ? Number.parseInt(interludeMatch[1], 10) : NaN
-    if (
-      Number.isFinite(interludeNum) &&
-      interludeNum > 12 &&
-      !isChapterTitleStripBlock(imageBlock)
-    ) {
-      return { ...SAFE_FALLBACK }
-    }
-  }
-
   if (imageRole === "full_page_illustration" && ocrMetadata && !isChapterLikeOcrMetadata(ocrMetadata)) {
     const section = analyzeFullPageSectionDivider(ocrMetadata, imageBlock)
     if (section.isChapterBoundary) {
@@ -931,24 +919,7 @@ function mergeOcrIntoAnalysis(
   let number = ocrMetadata?.number ?? analysisResult.number ?? null
   let title = parseTitleFromOcr(ocrMetadata?.title) ?? analysisResult.title ?? null
 
-  let effectiveBoundaryKind = boundaryKind
-  if (
-    boundaryKind === "interlude" &&
-    isChapterTitleStripBlock(imageBlock) &&
-    !forceInterludeBoundary
-  ) {
-    const interludeMatch = (number ?? ocrMetadata?.number ?? "").match(/I-(\d{1,2})/i)
-    const interludeNum = interludeMatch
-      ? Number.parseInt(interludeMatch[1], 10)
-      : NaN
-    if (!Number.isFinite(interludeNum) || interludeNum > 12) {
-      effectiveBoundaryKind = "chapter"
-      if (/interlude/i.test(number ?? "")) {
-        number = null
-        title = null
-      }
-    }
-  }
+  const effectiveBoundaryKind = boundaryKind
 
   const ocrNumber = (number ?? "").trim()
   const ocrNumberValid = ocrNumber.length > 0 && !/^chapter$/i.test(ocrNumber)

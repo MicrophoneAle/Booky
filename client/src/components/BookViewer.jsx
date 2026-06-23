@@ -24,6 +24,7 @@ import {
   inferBlockIsChapterStart,
   isChapterBoundaryText,
   isFableStoryTitleBlock,
+  isEpigraphOrChapterOpenerProse,
   isFullPageIllustrationItem,
   normalizeImageDimensions,
   resolveImageLayoutMetrics,
@@ -82,7 +83,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 82
+const PARSER_VERSION = 83
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -2407,10 +2408,36 @@ function isChapterBoundaryPlaceable(placeable) {
   )
 }
 
+function requiresChapterNewPagePlaceable(placeable) {
+  if (isFrontMatterPlaceable(placeable)) {
+    return false
+  }
+
+  if (isChapterBoundaryPlaceable(placeable)) {
+    return true
+  }
+
+  if (placeable.type === "image" && placeable.item?.isChapterBoundary) {
+    return true
+  }
+
+  if (placeable.type === "chapter") {
+    return true
+  }
+
+  const text = (placeable.item?.text ?? "").trim()
+  if (text && isChapterBoundaryText(text)) {
+    return true
+  }
+
+  return false
+}
+
 function isChapterHeadingImagePlaceable(placeable) {
   return (
     placeable.type === "image" &&
-    placeable.item?.imageRole === "chapter_heading"
+    placeable.item?.imageRole === "chapter_heading" &&
+    !isFullPageIllustrationItem(placeable.item)
   )
 }
 
@@ -2775,11 +2802,7 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout, incrementalOpts = n
   }
 
   const ensureChapterStartsOnNewPage = (placeable) => {
-    if (isFrontMatterPlaceable(placeable)) {
-      return
-    }
-
-    if (!isChapterBoundaryPlaceable(placeable)) {
+    if (!requiresChapterNewPagePlaceable(placeable)) {
       return
     }
 
@@ -2880,7 +2903,8 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout, incrementalOpts = n
       const canPairWithFollowing =
         followingPlaceable &&
         !isChapterBoundaryPlaceable(followingPlaceable) &&
-        !isFrontMatterPlaceable(followingPlaceable)
+        !isFrontMatterPlaceable(followingPlaceable) &&
+        isEpigraphOrChapterOpenerProse(followingPlaceable)
 
       if (isChapterHeadingImagePlaceable(placeable) && canPairWithFollowing) {
         placeHeadingWithFollowing(placeable, followingPlaceable)
@@ -2895,7 +2919,9 @@ function paginateBlocksByDom(flatBlocks, bodyEl, pageLayout, incrementalOpts = n
       continue
     }
 
-    ensureChapterStartsOnNewPage(placeable)
+    if (requiresChapterNewPagePlaceable(placeable)) {
+      ensureChapterStartsOnNewPage(placeable)
+    }
 
     if (isFrontMatterPlaceable(placeable)) {
       const run = [placeable]
@@ -3345,6 +3371,13 @@ function isTextSectionTocEntry(title) {
     return true
   }
   return false
+}
+
+function tocEntrySortKey(entry) {
+  if (isTextSectionTocEntry(entry.title)) {
+    return entry.sourcePageNumber ?? entry.pageNum ?? Number.MAX_SAFE_INTEGER
+  }
+  return entry.pageNum ?? entry.sourcePageNumber ?? Number.MAX_SAFE_INTEGER
 }
 
 function dedupeTocEntries(entries) {
@@ -4873,6 +4906,9 @@ export default function BookViewer({
       id: chapter.id,
       title: formatTocChapterTitle(chapter.title),
       pageNum: chapterPageMap[chapter.id] ?? null,
+      sourcePageNumber: Number.isFinite(chapter.pageIndex)
+        ? chapter.pageIndex + 1
+        : null,
     }))
 
     const textChapterEntries = textEntries.filter((entry) =>
@@ -4899,10 +4935,8 @@ export default function BookViewer({
 
     return dedupeTocEntries(
       combined.sort((left, right) => {
-        const leftPage =
-          left.pageNum ?? left.sourcePageNumber ?? Number.MAX_SAFE_INTEGER
-        const rightPage =
-          right.pageNum ?? right.sourcePageNumber ?? Number.MAX_SAFE_INTEGER
+        const leftPage = tocEntrySortKey(left)
+        const rightPage = tocEntrySortKey(right)
         if (leftPage !== rightPage) {
           return leftPage - rightPage
         }
