@@ -38,7 +38,23 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 92
+const PARSER_VERSION = 93
+const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
+
+function bbNormalizeLetters(text) {
+  return (text ?? "").replace(/\s+/g, "").toLowerCase()
+}
+
+function bbMatchesPhrase(text) {
+  return bbNormalizeLetters(text).includes("downwithbigbrother")
+}
+
+function bbLog(stage, payload) {
+  if (!BOOKY_BB_DEBUG) {
+    return
+  }
+  console.log("[bb]", stage, JSON.stringify(payload))
+}
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -4262,12 +4278,17 @@ function isVerseLineText(text) {
   return false
 }
 
-function isAdjacentPageProseEcho(text, pageIndex, pagesBeforeFilter) {
+function isAdjacentPageProseEcho(text, pageIndex, pagesBeforeFilter, line = null) {
   const trimmed = (text ?? "").trim()
   if (trimmed.length < 12 || trimmed.length > 96) {
     return false
   }
   if (/[.!?:]["'\u201d]?\s*$/.test(trimmed)) {
+    return false
+  }
+  // Centered lines, such as 1984 diary chants, are deliberate content even when
+  // the same phrase appears inside prose on a neighboring page.
+  if (line?.centered) {
     return false
   }
 
@@ -4276,11 +4297,17 @@ function isAdjacentPageProseEcho(text, pageIndex, pagesBeforeFilter) {
     if (!adjacentPage?.lines) {
       continue
     }
-    for (const line of adjacentPage.lines) {
-      const other = (line.text ?? "").trim()
-      if (other.length > trimmed.length && other.includes(trimmed)) {
-        return true
+    for (const adjacentLine of adjacentPage.lines) {
+      const other = (adjacentLine.text ?? "").trim()
+      if (other.length <= trimmed.length || !other.includes(trimmed)) {
+        continue
       }
+      // Neighbor quotes the phrase inside narrative prose, not as a duplicate
+      // running-header echo of this standalone line.
+      if (/[a-z]/.test(other) && other.length > trimmed.length + 8) {
+        continue
+      }
+      return true
     }
   }
 
@@ -4486,7 +4513,7 @@ function isShortLineSubstringOfLongerLine(shortText, longTexts) {
   return false
 }
 
-function dropMarginCalloutLines(lines) {
+function dropMarginCalloutLines(lines, pageIndex = -1) {
   const entries = lines
     .map((line) => ({ line, text: (line.text ?? "").trim() }))
     .filter((entry) => entry.text)
@@ -4517,94 +4544,102 @@ function dropMarginCalloutLines(lines) {
     .filter((entry, entryIndex) => {
       const { text, line } = entry
       const previousText = entryIndex > 0 ? entries[entryIndex - 1].text : ""
+      let keep = true
+      let reason = "keep"
 
       if (
         parseChapterOnlyHeading(previousText) &&
         (isLikelyChapterSubtitleText(text) || isAllCapsChapterSubtitleText(text))
       ) {
-        return true
-      }
-
-      if (line.centered) {
-        return true
-      }
-
-      if (isSceneBreakOrnamentLine(text)) {
-        return true
-      }
-
-      if (
+        keep = true
+        reason = "chapter-subtitle-after-heading"
+      } else if (line.centered) {
+        keep = true
+        reason = "centered"
+      } else if (isSceneBreakOrnamentLine(text)) {
+        keep = true
+        reason = "scene-break"
+      } else if (
         CHAPTER_TITLE_TAIL_WORD_REGEX.test(text) &&
         (line.fontSize ?? 0) >= HEADING_STRING_MIN_FONT_SIZE
       ) {
-        return true
-      }
-
-      if (
+        keep = true
+        reason = "chapter-title-tail"
+      } else if (
         isCleanStructuralHeadingText(text, { fontSize: line.fontSize ?? 0 }) ||
         PART_HEADING_PATTERN.test(text) ||
         VOLUME_HEADING_PATTERN.test(text) ||
         CHAPTER_PATTERN.test(text)
       ) {
-        return true
-      }
-
-      if (
+        keep = true
+        reason = "structural-heading"
+      } else if (
         isEpistolaryAddressLine(text) ||
         isEpistolarySignOffLine(text) ||
         isEpistolarySignatureLine(text)
       ) {
-        return true
-      }
+        keep = true
+        reason = "epistolary"
+      } else {
+        const words = text.split(/\s+/).filter(Boolean)
+        const isShort =
+          text.length <= MARGIN_CALLOUT_MAX_CHARS &&
+          words.length <= MARGIN_CALLOUT_MAX_WORDS
 
-      const words = text.split(/\s+/).filter(Boolean)
-      const isShort =
-        text.length <= MARGIN_CALLOUT_MAX_CHARS &&
-        words.length <= MARGIN_CALLOUT_MAX_WORDS
+        if (
+          words.length >= 2 &&
+          (line.fontSize ?? 0) >= HEADING_STRING_MIN_FONT_SIZE
+        ) {
+          keep = true
+          reason = "large-font-short-line"
+        } else if (!isShort) {
+          keep = true
+          reason = "not-short"
+        } else if (isShortLineSubstringOfLongerLine(text, longTextsOnPage)) {
+          if (isLikelyChapterSubtitleText(text)) {
+            keep = true
+            reason = "substring-chapter-subtitle"
+          } else {
+            keep = false
+            reason = "substring-of-longer-line"
+          }
+        } else {
+          const x = Number.isFinite(line.x) ? line.x : bodyLeftX
+          const displacedLeft = x < bodyLeftX - MARGIN_CALLOUT_LEFT_DISPLACE_PX
+          const displacedRight = x > bodyLeftX + MARGIN_CALLOUT_RIGHT_DISPLACE_PX
 
-      if (
-        words.length >= 2 &&
-        (line.fontSize ?? 0) >= HEADING_STRING_MIN_FONT_SIZE
-      ) {
-        return true
-      }
-
-      // Body-length lines are always content.
-      if (!isShort) {
-        return true
-      }
-
-      // A short fragment fully contained inside a longer line on the same page
-      // (e.g. a running header echoed within body text) is a duplicate artifact.
-      if (isShortLineSubstringOfLongerLine(text, longTextsOnPage)) {
-        if (isLikelyChapterSubtitleText(text)) {
-          return true
+          if (!displacedLeft && !displacedRight) {
+            keep = true
+            reason = "body-column-aligned"
+          } else if (isLikelyDialogueContinuationLine(text)) {
+            keep = true
+            reason = "dialogue-continuation"
+          } else if (isDropCapIndentedContinuation(line, bodyLeftX, entries)) {
+            keep = true
+            reason = "drop-cap-continuation"
+          } else {
+            keep = false
+            reason = displacedLeft
+              ? "margin-callout-displaced-left"
+              : "margin-callout-displaced-right"
+          }
         }
-        return false
       }
 
-      const x = Number.isFinite(line.x) ? line.x : bodyLeftX
-      const displacedLeft = x < bodyLeftX - MARGIN_CALLOUT_LEFT_DISPLACE_PX
-      const displacedRight = x > bodyLeftX + MARGIN_CALLOUT_RIGHT_DISPLACE_PX
-
-      // Short line aligned to the body column: keep it, it is paragraph prose.
-      if (!displacedLeft && !displacedRight) {
-        return true
+      if (bbMatchesPhrase(text)) {
+        bbLog("dropMarginCalloutLines", {
+          pageIndex,
+          distinctPageCount: null,
+          text,
+          keep,
+          reason,
+          x: line.x,
+          bodyLeftX,
+          centered: Boolean(line.centered),
+        })
       }
 
-      // Displaced short line that still reads like narrative dialogue: keep.
-      if (isLikelyDialogueContinuationLine(text)) {
-        return true
-      }
-
-      // Lines indented beside a drop cap (e.g. "nce when his stepson...") sit
-      // outside the body column but are paragraph prose, not margin callouts.
-      if (isDropCapIndentedContinuation(line, bodyLeftX, entries)) {
-        return true
-      }
-
-      // Displaced short line out in the margin: a genuine callout/side note.
-      return false
+      return keep
     })
     .map((entry) => entry.line)
 }
@@ -4869,7 +4904,7 @@ function isStandalonePageNumberText(text) {
   )
 }
 
-function shouldDropExtractedLine(
+function explainShouldDropExtractedLine(
   text,
   distinctPageCount,
   occurrencesOnThisPage = 1,
@@ -4879,125 +4914,133 @@ function shouldDropExtractedLine(
 ) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
-    return true
+    return { drop: true, reason: "empty" }
   }
   if (PRODUCTION_SLUG_REGEX.test(trimmed)) {
-    return true
+    return { drop: true, reason: "production-slug" }
   }
   if (CHAPTER_PLACEHOLDER_REGEX.test(trimmed)) {
-    return true
+    return { drop: true, reason: "chapter-placeholder" }
   }
   if (isLetterSpacedProductionArtifact(trimmed)) {
-    return true
+    return { drop: true, reason: "letter-spaced-artifact" }
   }
   if (isSpacedRunningHeaderLine(trimmed)) {
-    return true
+    return { drop: true, reason: "spaced-running-header" }
   }
   if (ROMAN_SECTION_RUNNING_HEAD_REGEX.test(trimmed)) {
-    return true
+    return { drop: true, reason: "roman-section-running-head" }
   }
   if (isSceneBreakOrnamentLine(trimmed)) {
-    return false
+    return { drop: false, reason: "scene-break-ornament-keep" }
   }
   if (
     /^[A-Z]{2,8}\.?$/.test(trimmed) &&
     distinctPageCount <= 1 &&
     !CHAPTER_PATTERN.test(trimmed)
   ) {
-    return false
+    return { drop: false, reason: "short-all-caps-keep" }
   }
   if (
     CHAPTER_PATTERN.test(trimmed) ||
     STRUCTURAL_HEADING_PREFIX_REGEX.test(trimmed)
   ) {
-    return false
+    return { drop: false, reason: "chapter-or-structural-keep" }
   }
   if (isCollapsedRunningHeaderLine(trimmed)) {
-    // A genuine running header repeats across many pages. A one-page all-caps
-    // run, such as 1984's letter-spaced "DOWN WITH BIG BROTHER" diary lines
-    // (fused into a single token by collapseLetterSpacing), appears on only one
-    // or two pages and is content, not a header. Only drop when it recurs like
-    // a real running header so book text is never skipped.
     if (distinctPageCount >= RUNNING_HEADER_MIN_PAGES) {
-      if (process.env.BOOKY_DROP_DEBUG === "1") {
-        console.log(
-          "[dropLine] collapsed-running-header",
-          JSON.stringify({ trimmed, distinctPageCount })
-        )
-      }
-      return true
+      return { drop: true, reason: "collapsed-running-header" }
     }
+    return { drop: false, reason: "collapsed-running-header-below-page-threshold" }
   }
   if (STANDALONE_PAGE_NUMBER_REGEX.test(trimmed)) {
-    return true
+    return { drop: true, reason: "standalone-page-number" }
   }
   if (STANDALONE_ROMAN_PAGE_MARKER_REGEX.test(trimmed)) {
-    return true
+    return { drop: true, reason: "standalone-roman-page-marker" }
   }
   if (ROMAN_PAGE_MARKER_CLUSTER_REGEX.test(trimmed)) {
-    return true
+    return { drop: true, reason: "roman-page-marker-cluster" }
   }
   if (STANDALONE_RUNNING_HEAD_REGEX.test(trimmed)) {
-    return true
+    return { drop: true, reason: "standalone-running-head" }
   }
   if (isHeaderPageMarkerLine(trimmed)) {
-    return true
+    return { drop: true, reason: "header-page-marker" }
   }
   if (isTocDenseListingLine(trimmed) || isTocPageReferenceLine(trimmed)) {
-    return true
+    return { drop: true, reason: "toc-listing" }
   }
   if (isRunningHeaderMergedLine(trimmed)) {
-    return true
+    return { drop: true, reason: "running-header-merged" }
   }
   if (isScannerWatermarkLine(trimmed)) {
-    return true
+    return { drop: true, reason: "scanner-watermark" }
   }
   if (isGlossarySidebarLine(trimmed)) {
-    return true
+    return { drop: true, reason: "glossary-sidebar" }
   }
   if (isLikelyChapterSubtitleText(trimmed)) {
-    return false
+    return { drop: false, reason: "chapter-subtitle-keep" }
   }
   if (TOC_HEADER_LINE_REGEX.test(trimmed)) {
-    return true
+    return { drop: true, reason: "toc-header" }
   }
   if (/^(?:preface|introduction|prologue|epilogue|conclusion)$/i.test(trimmed)) {
     if (occurrencesOnThisPage > 1) {
-      return true
+      return { drop: true, reason: "repeated-section-label-same-page" }
     }
     if (distinctPageCount >= RUNNING_HEADER_MIN_PAGES) {
       const firstPage = lineFirstPageIndex?.get(trimmed)
       if (firstPage !== undefined && pageIndex !== firstPage) {
-        return true
+        return { drop: true, reason: "repeated-section-label-other-page" }
       }
     }
   }
   if (isCentered || isNarrativeBoundaryLine(trimmed) || CHAPTER_NUMBER_REGEX.test(trimmed)) {
-    return false
+    return { drop: false, reason: "centered-or-boundary-keep" }
   }
   if (
     isEpistolaryAddressLine(trimmed) ||
     isEpistolarySignOffLine(trimmed) ||
     isEpistolarySignatureLine(trimmed)
   ) {
-    return false
+    return { drop: false, reason: "epistolary-keep" }
   }
   if (
     distinctPageCount >= RUNNING_HEADER_MIN_PAGES &&
     occurrencesOnThisPage <= 1
   ) {
-    return true
+    return { drop: true, reason: "recurring-line-running-header" }
   }
   if (/^https?:\/\//i.test(trimmed)) {
-    return true
+    return { drop: true, reason: "url" }
   }
   if (/^www\./i.test(trimmed)) {
-    return true
+    return { drop: true, reason: "www" }
   }
-  return false
+  return { drop: false, reason: "keep-default" }
 }
 
-function groupTextItemsIntoLines(items) {
+function shouldDropExtractedLine(
+  text,
+  distinctPageCount,
+  occurrencesOnThisPage = 1,
+  isCentered = false,
+  pageIndex = 0,
+  lineFirstPageIndex = null
+) {
+  return explainShouldDropExtractedLine(
+    text,
+    distinctPageCount,
+    occurrencesOnThisPage,
+    isCentered,
+    pageIndex,
+    lineFirstPageIndex
+  ).drop
+}
+
+function groupTextItemsIntoLines(items, pageIndex = -1) {
   if (!items.length) {
     return []
   }
@@ -5044,6 +5087,31 @@ function groupTextItemsIntoLines(items) {
       .replace(/\s+/g, " ")
       .trim()
     const text = collapseLetterSpacing(joinedText)
+
+    if (bbMatchesPhrase(joinedText) || bbMatchesPhrase(text)) {
+      bbLog("raw-after-extraction", {
+        pageIndex,
+        distinctPageCount: null,
+        raw: joinedText,
+        collapsed: text,
+        collapsedRunningHeader: isCollapsedRunningHeaderLine(text),
+        y: group.y,
+        x: leftmost.x,
+      })
+      bbLog("after-collapseLetterSpacing", {
+        pageIndex,
+        distinctPageCount: null,
+        collapsed: text,
+        spacingRecovered: text.includes(" "),
+        fusedSingleToken: !text.includes(" ") && bbMatchesPhrase(text),
+      })
+      bbLog("isCollapsedRunningHeaderLine", {
+        pageIndex,
+        distinctPageCount: null,
+        text,
+        result: isCollapsedRunningHeaderLine(text),
+      })
+    }
 
     if (!text) {
       continue
@@ -6783,7 +6851,7 @@ async function readPdfInfo(pdf) {
   }
 }
 
-function buildPdfPageLinesFromTextContent(textContent, headingStrings) {
+function buildPdfPageLinesFromTextContent(textContent, headingStrings, pageIndex = -1) {
   const pageItems = []
 
   for (const item of textContent.items) {
@@ -6811,7 +6879,7 @@ function buildPdfPageLinesFromTextContent(textContent, headingStrings) {
     })
   }
 
-  const rawLines = groupTextItemsIntoLines(pageItems)
+  const rawLines = groupTextItemsIntoLines(pageItems, pageIndex)
   const repairedLines = repairSplitSmallCapsOpening(repairDropCapLines(rawLines))
   const medianX = medianValue(repairedLines.map((line) => line.x))
 
@@ -6827,7 +6895,7 @@ function buildPdfPageLinesFromTextContent(textContent, headingStrings) {
     }
   }
 
-  return dropMarginCalloutLines(repairedLines)
+  return dropMarginCalloutLines(repairedLines, pageIndex)
 }
 
 async function buildPdfPageLines(page, headingStrings) {
@@ -6978,7 +7046,11 @@ async function extractPdfPageTextOnly(pdf, pageNumber, headingStrings) {
 
     try {
       const textContent = await page.getTextContent()
-      return buildPdfPageLinesFromTextContent(textContent, headingStrings)
+      return buildPdfPageLinesFromTextContent(
+        textContent,
+        headingStrings,
+        pageNumber - 1
+      )
     } finally {
       if (typeof page.cleanup === "function") {
         page.cleanup()
@@ -7343,6 +7415,28 @@ async function extractPdfStructure(
       const occurrencesOnThisPage =
         lineOccurrencesPerPage.get(line.text)?.get(pageIndex) ?? 1
       const normalizedForDropCheck = translatePuaCharacters(line.text, puaMap).trim()
+
+      if (bbMatchesPhrase(line.text) || bbMatchesPhrase(normalizedForDropCheck)) {
+        const primaryDecision = explainShouldDropExtractedLine(
+          line.text,
+          distinctPageCount,
+          occurrencesOnThisPage,
+          Boolean(line.centered),
+          pageIndex,
+          lineFirstPageIndex
+        )
+        bbLog("shouldDropExtractedLine", {
+          pageIndex,
+          distinctPageCount,
+          text: line.text,
+          centered: Boolean(line.centered),
+          occurrencesOnThisPage,
+          drop: primaryDecision.drop,
+          reason: primaryDecision.reason,
+          collapsedRunningHeader: isCollapsedRunningHeaderLine(line.text),
+        })
+      }
+
       if (
         shouldDropExtractedLine(
           line.text,
@@ -7364,15 +7458,52 @@ async function extractPdfStructure(
           )) ||
         isStandalonePageNumberText(normalizedForDropCheck)
       ) {
+        if (bbMatchesPhrase(line.text)) {
+          bbLog("extractPdfStructure-filter", {
+            pageIndex,
+            distinctPageCount,
+            text: line.text,
+            survived: false,
+            stage: "shouldDropExtractedLine-or-page-number",
+          })
+        }
         continue
       }
 
-      if (isAdjacentPageProseEcho(line.text, pageIndex, pagesBeforeFilter)) {
+      if (isAdjacentPageProseEcho(line.text, pageIndex, pagesBeforeFilter, line)) {
+        if (bbMatchesPhrase(line.text)) {
+          bbLog("extractPdfStructure-filter", {
+            pageIndex,
+            distinctPageCount,
+            text: line.text,
+            survived: false,
+            stage: "adjacent-page-prose-echo",
+          })
+        }
         continue
       }
 
       if (isSceneBreakOrnamentLine(line.text) && !line.centered) {
+        if (bbMatchesPhrase(line.text)) {
+          bbLog("extractPdfStructure-filter", {
+            pageIndex,
+            distinctPageCount,
+            text: line.text,
+            survived: false,
+            stage: "scene-break-not-centered",
+          })
+        }
         continue
+      }
+
+      if (bbMatchesPhrase(line.text)) {
+        bbLog("extractPdfStructure-filter", {
+          pageIndex,
+          distinctPageCount,
+          text: line.text,
+          survived: true,
+          stage: "into-pageData",
+        })
       }
 
       const cleanedText = normalizeExtractedText(line.text, {
@@ -10058,6 +10189,28 @@ async function parsePdfBuffer(
 
   const { chapters, content: contentWithChapters } = detectChapters(content, bookTitle)
   const wordCount = countWordsFromBlocks(blocks)
+
+  if (BOOKY_BB_DEBUG) {
+    const flatBlocks = contentWithChapters.flatMap((page) => page.blocks ?? [])
+    const standaloneHits = flatBlocks.filter((block) =>
+      /^DOWN WITH BIG BROTHER$/i.test((block.text ?? "").trim())
+    )
+    const embeddedHits = flatBlocks.filter((block) =>
+      bbMatchesPhrase(block.text) &&
+      !/^DOWN WITH BIG BROTHER$/i.test((block.text ?? "").trim())
+    )
+    bbLog("final-structured-blocks", {
+      standaloneCount: standaloneHits.length,
+      embeddedCount: embeddedHits.length,
+      chapterCount: chapters.length,
+      wordCount,
+      samples: standaloneHits.slice(0, 5).map((block) => ({
+        text: block.text,
+        textAlign: block.textAlign,
+        isHeading: block.isHeading,
+      })),
+    })
+  }
 
   reportProgress({
     phase: "finalizing",
