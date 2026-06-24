@@ -38,7 +38,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 89
+const PARSER_VERSION = 88
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -8010,7 +8010,6 @@ function detectChapters(content, bookTitle = "") {
           chapterTitle = block.chapterTitle ?? partLabel
         } else if (
           !isFableTitle &&
-          !block.bannerlessChapterBoundary &&
           currentPartId &&
           (CHAPTER_NUMBER_REGEX.test(canonicalTitle) ||
             /^(chapter|letter)\s+/i.test(canonicalTitle))

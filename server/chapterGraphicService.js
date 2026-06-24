@@ -870,12 +870,7 @@ function enrichOcrMetadataFromPrintedToc(ocrMetadata, tocMetadata) {
     : ocrNumberValid
       ? ocrNumber
       : tocNumber
-  const tocKind = tocMetadata.boundaryKind ?? null
-  const ocrKind = ocrMetadata.boundaryKind ?? null
-  const boundaryKind =
-    tocKind === "epilogue" || tocKind === "prelude" || tocKind === "prologue"
-      ? tocKind
-      : ocrKind ?? tocKind
+  const boundaryKind = ocrMetadata.boundaryKind ?? tocMetadata.boundaryKind
 
   return {
     boundaryKind,
