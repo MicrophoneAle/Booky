@@ -697,11 +697,7 @@ export function getParseProgressStaleHint(parseProgress) {
     return "Finishing the text pass before scanning artwork…"
   }
 
-  if (current >= 30 && total >= 120) {
-    return `Page ${current} of ${total} can take a while on large illustrated books. Still reading…`
-  }
-
-  return `Large books take several minutes. Progress updates after each page finishes — still working on page ${current} of ${total}.`
+  return null
 }
 
 /**

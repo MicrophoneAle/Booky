@@ -7,11 +7,18 @@ export const AUTHOR_LINE_REGEX = /^(by|written by|translated by)\s+/i
 
 export const DEDICATION_SUBTITLE_REGEX = /^To\s+[A-Z]/i
 
-export const TOC_CHAPTER_LISTING_REGEX =
-  /^(?:Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:\s+\S|\d{1,3}:\s+[A-Z][A-Z0-9\s'’.,\-]+)$/i
+const CHAPTER_WORD_NUMBERS =
+  "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty"
 
-export const CHAPTER_BOUNDARY_REGEX =
-  /^(?:(?:chapter|letter|part|section|book|volume|preface|introduction|prologue|epilogue|conclusion|appendix|stave)\s+(?:\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|(?:preface|introduction|prologue|epilogue|conclusion|dedication))\.?$/i
+export const TOC_CHAPTER_LISTING_REGEX = new RegExp(
+  `^(?:Chapter\\s+(\\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen|Seventeen|Eighteen|Nineteen|Twenty)\\s*:\\s+\\S|\\d{1,3}:\\s+[A-Z][A-Z0-9\\s''.,\\-]+)$`,
+  "i"
+)
+
+export const CHAPTER_BOUNDARY_REGEX = new RegExp(
+  `^(?:(?:chapter|letter|part|section|book|volume|preface|introduction|prologue|epilogue|conclusion|appendix|stave)\\s+(?:\\d+|[ivxlcdm]+|${CHAPTER_WORD_NUMBERS})|(?:preface|introduction|prologue|epilogue|conclusion|dedication))\\.?$`,
+  "i"
+)
 
 const STRUCTURAL_HEADING_PREFIX_REGEX =
   /^(chapter|letter|part|section|book|volume|preface|introduction|prologue|epilogue|conclusion|appendix|stave)\s+/i
@@ -19,11 +26,15 @@ const STRUCTURAL_HEADING_PREFIX_REGEX =
 const STRUCTURAL_HEADING_MAX_CHARS = 80
 const STRUCTURAL_HEADING_MAX_WORDS = 12
 
-export const CHAPTER_NUMBER_REGEX =
-  /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
+export const CHAPTER_NUMBER_REGEX = new RegExp(
+  `^(\\d{1,2}|[ivxlcdm]+|${CHAPTER_WORD_NUMBERS})\\.?$`,
+  "i"
+)
 
-export const CHAPTER_WITH_SUBTITLE_REGEX =
-  /^(chapter|letter)\s+(\d{1,3}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\s*-\s+\S/i
+export const CHAPTER_WITH_SUBTITLE_REGEX = new RegExp(
+  `^(chapter|letter)\\s+(\\d{1,3}|[ivxlcdm]+|${CHAPTER_WORD_NUMBERS})\\s*-\\s+\\S`,
+  "i"
+)
 
 export const CHAPTER_HEADING_MIN_FONT_SIZE = 12.5
 

@@ -38,7 +38,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 88
+const PARSER_VERSION = 89
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -1078,8 +1078,13 @@ app.post("/documents/:id/retry-parse", requireAuth, async (req, res) => {
   }
 })
 
-const CHAPTER_PATTERN =
-  /^(?:(?:chapter|letter|part|section|book|volume|preface|introduction|prologue|epilogue|conclusion|appendix|stave)\s+(?:\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)|(?:preface|introduction|prologue|epilogue|conclusion|dedication|contents))\.?$/i
+const CHAPTER_WORD_NUMBERS =
+  "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty"
+
+const CHAPTER_PATTERN = new RegExp(
+  `^(?:(?:chapter|letter|part|section|book|volume|preface|introduction|prologue|epilogue|conclusion|appendix|stave)\\s+(?:\\d+|[ivxlcdm]+|${CHAPTER_WORD_NUMBERS})|(?:preface|introduction|prologue|epilogue|conclusion|dedication|contents))\\.?$`,
+  "i"
+)
 
 const STRUCTURAL_HEADING_PREFIX_REGEX =
   /^(chapter|letter|part|section|book|volume|preface|introduction|prologue|epilogue|conclusion|appendix|stave)\s+/i
@@ -1149,13 +1154,17 @@ const VOLUME_HEADING_PATTERN =
 const STRUCTURAL_HEADING_MAX_CHARS = 80
 const STRUCTURAL_HEADING_MAX_WORDS = 12
 
-const TOC_CHAPTER_LISTING_REGEX =
-  /^Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:\s+\S/i
+const TOC_CHAPTER_LISTING_REGEX = new RegExp(
+  `^Chapter\\s+(\\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen|Seventeen|Eighteen|Nineteen|Twenty)\\s*:\\s+\\S`,
+  "i"
+)
 
 const EARLY_TOC_SCAN_LINE_LIMIT = 80
 
-const CHAPTER_NUMBER_REGEX =
-  /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
+const CHAPTER_NUMBER_REGEX = new RegExp(
+  `^(\\d{1,2}|[ivxlcdm]+|${CHAPTER_WORD_NUMBERS})\\.?$`,
+  "i"
+)
 
 const CHAPTER_HEADING_MIN_FONT_SIZE = 12.5
 const CHAPTER_DISPLAY_FONT_SIZE = 15
@@ -2439,11 +2448,61 @@ function isWrappedChapterTitleFragment(block) {
   return false
 }
 
+function parseChapterHeadingWithInlineTitle(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed)) {
+    return null
+  }
+
+  const match = trimmed.match(
+    new RegExp(
+      `^(chapter|letter)\\s+(\\d{1,3}|[ivxlcdm]+|${CHAPTER_WORD_NUMBERS})\\s+(.+)$`,
+      "i"
+    )
+  )
+  if (!match) {
+    return null
+  }
+
+  let subtitle = match[3].trim()
+  const quoteIndex = subtitle.search(/\s["'\u201c]/)
+  if (quoteIndex > 0 && subtitle.length - quoteIndex > 40) {
+    subtitle = subtitle.slice(0, quoteIndex).trim()
+  }
+  if (!subtitle || subtitle.length > 120 || isNarrativeSentenceLine(subtitle)) {
+    return null
+  }
+
+  return {
+    kind: match[1],
+    number: match[2],
+    subtitle: formatInferredTitleText(subtitle),
+  }
+}
+
 function mergeMultilineChapterTitleBlocks(blocks) {
   const merged = []
 
   for (let index = 0; index < blocks.length; index += 1) {
     const block = blocks[index]
+    const inlineParts = parseChapterHeadingWithInlineTitle(block.text)
+    if (inlineParts) {
+      const displayTitle = formatChapterLabel(
+        inlineParts.kind,
+        inlineParts.number,
+        inlineParts.subtitle
+      )
+      merged.push({
+        ...block,
+        text: displayTitle,
+        chapterTitle: displayTitle,
+        fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+        isHeading: true,
+        isChapterStart: true,
+      })
+      continue
+    }
+
     const parts = parseChapterOnlyHeading(block.text)
 
     if (!parts) {
@@ -7338,11 +7397,15 @@ function contentHasChapterHeadings(content) {
   return false
 }
 
-const CHAPTER_ONLY_HEADING_REGEX =
-  /^(chapter|letter)\s+(\d{1,3}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?\s*$/i
+const CHAPTER_ONLY_HEADING_REGEX = new RegExp(
+  `^(chapter|letter)\\s+(\\d{1,3}|[ivxlcdm]+|${CHAPTER_WORD_NUMBERS})\\.?\\s*$`,
+  "i"
+)
 
-const CHAPTER_WITH_SUBTITLE_REGEX =
-  /^(chapter|letter)\s+(\d{1,3}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\s*-\s+\S/i
+const CHAPTER_WITH_SUBTITLE_REGEX = new RegExp(
+  `^(chapter|letter)\\s+(\\d{1,3}|[ivxlcdm]+|${CHAPTER_WORD_NUMBERS})\\s*-\\s+\\S`,
+  "i"
+)
 
 function formatChapterLabel(kind, number, subtitle = "") {
   const label = kind.charAt(0).toUpperCase() + kind.slice(1).toLowerCase()
