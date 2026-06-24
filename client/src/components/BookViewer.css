@@ -1273,6 +1273,12 @@
   text-align: center;
   text-indent: 0;
   hyphens: none;
+  font-weight: inherit;
+}
+
+.book-page__text--center.book-page__text--bold,
+.book-page__text--center .book-page__run--bold {
+  font-weight: inherit;
 }
 
 :not(.book-page__text--center) + .book-page__text--center {

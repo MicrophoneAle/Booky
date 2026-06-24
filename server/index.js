@@ -24,6 +24,7 @@ import {
 import {
   extractPrintedTocLookup,
   extractPrintedTocFromPageData,
+  lookupPrintedTocTitle,
 } from "./printedTocService.js"
 import {
   buildReformattedHtml,
@@ -33,12 +34,11 @@ import {
   extractChapterKeyFromOcrNumber,
   countInterludesAfterUpcomingBannerlessChapters,
   scanPendingInterludesFromBlocks,
-  supplementBannerlessPrintedChapters,
   takeNextSequentialInterludeTocEntry,
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 90
+const PARSER_VERSION = 91
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -3648,7 +3648,68 @@ function isPureAllCapsTitleText(text) {
   return words.length >= 1 && words.length <= 14
 }
 
+const TEMPORAL_SCENE_MARKER_REGEX =
+  /^(?:(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:minute|minutes|hour|hours|day|days|week|weeks|month|months|year|years)\s+later|(?:moments?|minutes?|hours?|days?|weeks?|months?|years?)\s+later|some\s+time\s+later|much\s+later|(?:the\s+)?next\s+(?:morning|evening|night|day|week|month|year)|(?:later\s+that|that)\s+(?:morning|evening|night|day|week|month|year)|a\s+(?:few|couple\s+of)\s+(?:minutes?|hours?|days?|weeks?|months?|years?)\s+later)$/i
+
+function isTemporalSceneMarkerText(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  return TEMPORAL_SCENE_MARKER_REGEX.test(trimmed)
+}
+
+function isCenteredDecorativeProseText(text, line = null, entry = null) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (isTemporalSceneMarkerText(trimmed)) {
+    return true
+  }
+
+  const centered = Boolean(
+    line?.centered ||
+      line?.textAlign === "center" ||
+      entry?.line?.centered ||
+      entry?.line?.textAlign === "center"
+  )
+
+  if (centered && isPureAllCapsTitleText(trimmed)) {
+    if (
+      parseChapterOnlyHeading(trimmed) ||
+      CHAPTER_PATTERN.test(trimmed) ||
+      CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed)
+    ) {
+      return false
+    }
+    const words = trimmed.split(/\s+/).filter(Boolean)
+    if (words.length >= 1 && words.length <= 8 && trimmed.length <= 72) {
+      return true
+    }
+  }
+
+  if (
+    parseChapterOnlyHeading(trimmed) ||
+    CHAPTER_PATTERN.test(trimmed) ||
+    CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed)
+  ) {
+    return false
+  }
+  if (isDisplayChapterTitleText(trimmed) || isScannerWatermarkLine(trimmed)) {
+    return false
+  }
+  if (isNarrativeSentenceLine(trimmed)) {
+    return false
+  }
+
+  return false
+}
+
 function isLikelyAllCapsDisplayTitle(text, line = null, entry = null) {
+  if (isCenteredDecorativeProseText(text, line, entry)) {
+    return false
+  }
   if (!isPureAllCapsTitleText(text)) {
     return false
   }
@@ -3688,6 +3749,9 @@ function isLikelyAllCapsDisplayTitle(text, line = null, entry = null) {
 function isProminentDisplayTitleLine(text, line, entry = null) {
   const trimmed = (text ?? "").trim()
   if (!trimmed || isScannerWatermarkLine(trimmed)) {
+    return false
+  }
+  if (isCenteredDecorativeProseText(trimmed, line, entry)) {
     return false
   }
   if (CHAPTER_PATTERN.test(trimmed) || isAuthorStructuralLine(trimmed)) {
@@ -7593,6 +7657,14 @@ const CHAPTER_SUBTITLE_MINOR_WORDS = new Set([
   "al",
   "del",
   "della",
+  "that",
+  "which",
+  "who",
+  "whom",
+  "whose",
+  "where",
+  "when",
+  "while",
 ])
 
 const CHAPTER_SUBTITLE_APOSTROPHE_REGEX = /['\u2018\u2019\u201a\u02bc`]/g
@@ -7655,7 +7727,7 @@ function isLikelyChapterSubtitleText(text) {
   }
 
   const words = trimmed.split(/\s+/).filter(Boolean)
-  if (words.length < 1 || words.length > 12) {
+  if (words.length < 1 || words.length > 14) {
     return false
   }
   if ((trimmed.match(/[.!?]/g) ?? []).length > 1) {
@@ -7672,7 +7744,7 @@ function isLikelyChapterSubtitleText(text) {
     return false
   }
 
-  return words.length <= 10 && trimmed.length <= 60
+  return words.length <= 14 && trimmed.length <= 80
 }
 
 function isLikelyChapterSubtitleBlock(block) {
@@ -7683,16 +7755,7 @@ function isLikelyChapterSubtitleBlock(block) {
   if (block?.isHeading && !isLikelyChapterSubtitleText(text)) {
     return false
   }
-  if (!isLikelyChapterSubtitleText(text)) {
-    return false
-  }
-
-  const centered = block.textAlign === "center"
-  if (centered) {
-    return true
-  }
-
-  return (block?.text ?? "").length <= 48
+  return isLikelyChapterSubtitleText(text)
 }
 
 function looksLikeChapterOpeningProse(text) {
@@ -7723,7 +7786,7 @@ function extractEmbeddedChapterSubtitle(text) {
     return null
   }
 
-  for (let end = 4; end <= Math.min(10, words.length - 1); end += 1) {
+  for (let end = 1; end <= Math.min(10, words.length - 1); end += 1) {
     const subtitle = words.slice(0, end).join(" ")
     const prose = words.slice(end).join(" ")
     if (!isLikelyChapterSubtitleText(subtitle)) {
@@ -7736,6 +7799,48 @@ function extractEmbeddedChapterSubtitle(text) {
   }
 
   return null
+}
+
+function chapterHeadingAlreadyHasSubtitle(text) {
+  return /\s-\s\S/.test((text ?? "").trim())
+}
+
+function supplementBannerlessPrintedChapters(blocks, printedToc) {
+  if (!printedToc?.chapters?.size || !Array.isArray(blocks)) {
+    return blocks
+  }
+
+  return blocks.map((block) => {
+    if (!block?.isHeading || !block?.isChapterStart) {
+      return block
+    }
+
+    const text = (block.text ?? "").trim()
+    if (chapterHeadingAlreadyHasSubtitle(text)) {
+      return block
+    }
+
+    const parts = parseChapterOnlyHeading(text)
+    if (!parts) {
+      return block
+    }
+
+    const tocTitle = lookupPrintedTocTitle(printedToc, {
+      number: parts.number,
+      boundaryKind: "chapter",
+    })
+    if (!tocTitle) {
+      return block
+    }
+
+    const displayTitle = formatChapterLabel(parts.kind, parts.number, tocTitle)
+    return {
+      ...block,
+      text: displayTitle,
+      chapterTitle: displayTitle,
+      fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+    }
+  })
 }
 
 function mergeChapterSubtitleBlocks(blocks) {
@@ -8365,6 +8470,10 @@ function isHeadingLine(text, line, headingStrings, entry = null) {
     return false
   }
 
+  if (isCenteredDecorativeProseText(text, line, entry)) {
+    return false
+  }
+
   if (isProminentDisplayTitleLine(text, line, entry)) {
     return true
   }
@@ -8719,6 +8828,15 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
         }
 
         if (
+          isLikelyChapterSubtitleText(nextText) &&
+          !looksLikeChapterOpeningProse(nextText)
+        ) {
+          titleFragments.push(nextText)
+          cursor += 1
+          continue
+        }
+
+        if (
           nextFontSize >= HEADING_STRING_MIN_FONT_SIZE &&
           CHAPTER_TITLE_TAIL_WORD_REGEX.test(nextText)
         ) {
@@ -8923,6 +9041,28 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
     ) {
       pendingConnective = null
       blockBeforeHeading.text = joinWrappedText(blockBeforeHeading.text, text)
+      index += 1
+      continue
+    }
+
+    if (isCenteredDecorativeProseText(text, line, entry)) {
+      pendingConnective = null
+      const proseBlock = {
+        text,
+        isHeading: false,
+        fontSize: 12,
+        chapterId: null,
+        textAlign: "center",
+        centered: true,
+      }
+      applyProseFormattingToBlock(proseBlock, line)
+      if (proseBlock.runs) {
+        proseBlock.runs = proseBlock.runs.map((run) => ({
+          ...run,
+          bold: false,
+        }))
+      }
+      blocks.push(withSourcePdfPage(proseBlock, entry.pageIndex))
       index += 1
       continue
     }
@@ -9529,18 +9669,68 @@ function normalizeChapterHeadingFontSizes(blocks) {
   })
 }
 
+function stripBoldFromCenteredProseBlock(block) {
+  const runs = block.runs?.map((run) => {
+    const nextRun = { ...run }
+    delete nextRun.bold
+    return nextRun
+  })
+
+  return {
+    ...block,
+    isHeading: false,
+    isChapterStart: false,
+    chapterTitle: undefined,
+    fontSize: 12,
+    centered: true,
+    textAlign: "center",
+    bold: false,
+    ...(runs?.length ? { runs } : {}),
+  }
+}
+
+function normalizeCenteredDecorativeProseBlocks(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  return blocks.map((block) => {
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      return block
+    }
+
+    const text = (block?.text ?? "").trim()
+    const lineLike = {
+      centered: block.centered,
+      textAlign: block.textAlign,
+      fontSize: block.fontSize,
+    }
+    const shouldNormalize =
+      isCenteredDecorativeProseText(text, lineLike, null) ||
+      (block?.isHeading && isCenteredDecorativeProseText(text, lineLike, null))
+
+    if (!shouldNormalize) {
+      return block
+    }
+
+    return stripBoldFromCenteredProseBlock(block)
+  })
+}
+
 function applyBlockTransformPipeline(blocks) {
-  return normalizeChapterHeadingFontSizes(
-    promoteFableStoryTitleBlocks(
-      promoteStructuralSectionHeadings(
-        mergeEndOfPartBlocks(
-          mergeTrailingChapterTitleFragments(
-            mergeInlineChapterLabelTitles(
-              mergePartHeadingBlocks(
-                mergeChapterSubtitleBlocks(
-                  mergeMultilineFableTitleBlocks(
-                    mergeMultilineChapterTitleBlocks(
-                      splitDialogueHeavyBlocks(splitEmbeddedPartHeadings(blocks))
+  return normalizeCenteredDecorativeProseBlocks(
+    normalizeChapterHeadingFontSizes(
+      promoteFableStoryTitleBlocks(
+        promoteStructuralSectionHeadings(
+          mergeEndOfPartBlocks(
+            mergeTrailingChapterTitleFragments(
+              mergeInlineChapterLabelTitles(
+                mergePartHeadingBlocks(
+                  mergeChapterSubtitleBlocks(
+                    mergeMultilineFableTitleBlocks(
+                      mergeMultilineChapterTitleBlocks(
+                        splitDialogueHeavyBlocks(splitEmbeddedPartHeadings(blocks))
+                      )
                     )
                   )
                 )

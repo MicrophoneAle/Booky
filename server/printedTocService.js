@@ -10,6 +10,8 @@ const PART_TOC_LINE_REGEX =
   /^Part\s+((?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)|[IVXLCDM]+|\d+):\s*(.+)$/i
 const CHAPTER_LISTING_TOC_REGEX =
   /^Chapter\s+(\d{1,3}|[IVXLCDM]+):\s+(.+)$/i
+const ROMAN_CHAPTER_TOC_LINE_REGEX =
+  /^(?:([IVXLCDM]{1,10})|(\d{1,3}))\.\s+(.+?)\s+(\d{1,4})\s*$/i
 const PROLOGUE_TOC_REGEX = /^Prologue:\s+(.+)$/i
 const EPILOGUE_TOC_REGEX = /^Epilogue:\s+(.+)$/i
 const PRELUDE_TOC_REGEX = /^Prelude to the Stormlight Archive$/i
@@ -48,6 +50,7 @@ function isPrintedTocSectionLine(text) {
     INTERLUDE_TOC_LINE_REGEX.test(trimmed) ||
     PART_TOC_LINE_REGEX.test(trimmed) ||
     CHAPTER_LISTING_TOC_REGEX.test(trimmed) ||
+    ROMAN_CHAPTER_TOC_LINE_REGEX.test(trimmed) ||
     PROLOGUE_TOC_REGEX.test(trimmed) ||
     EPILOGUE_TOC_REGEX.test(trimmed) ||
     PRELUDE_TOC_REGEX.test(trimmed) ||
@@ -146,6 +149,17 @@ function ingestPrintedTocLine(text, state) {
     return true
   }
 
+  const romanRowMatch = trimmed.match(ROMAN_CHAPTER_TOC_LINE_REGEX)
+  if (romanRowMatch) {
+    const key = (romanRowMatch[1] ?? romanRowMatch[2]).toUpperCase()
+    const title = titleCaseTocTitle(romanRowMatch[3])
+    const label = `Chapter ${key}`
+    state.chapters.set(key, title)
+    state.ordered.push({ kind: "chapter", key, title, label })
+    state.tocEntryCount += 1
+    return true
+  }
+
   return state.inTocSection
 }
 
@@ -218,8 +232,22 @@ function parseChapterNumberKey(numberLabel) {
     return null
   }
 
+  if (/^\d{1,3}$/.test(trimmed)) {
+    return trimmed
+  }
+
+  const romanOnly = trimmed.match(/^([IVXLCDM]{1,10})$/i)
+  if (romanOnly) {
+    return romanOnly[1].toUpperCase()
+  }
+
   const digitMatch = trimmed.match(/\b(\d{1,3})\b/)
-  return digitMatch?.[1] ?? null
+  if (digitMatch) {
+    return digitMatch[1]
+  }
+
+  const romanMatch = trimmed.match(/\b([IVXLCDM]{1,10})\b/i)
+  return romanMatch ? romanMatch[1].toUpperCase() : null
 }
 
 function parseInterludeKey(numberLabel) {

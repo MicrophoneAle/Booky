@@ -83,7 +83,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 90
+const PARSER_VERSION = 91
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -1192,7 +1192,7 @@ function proseParagraphClassName(previousItem, proseItem = null) {
   if (proseShouldBeCentered(proseItem)) {
     classes.push("book-page__text--center")
   }
-  if (proseItem?.bold) {
+  if (proseItem?.bold && !proseShouldBeCentered(proseItem)) {
     classes.push("book-page__text--bold")
   }
   if (proseItem?.italic) {
@@ -1202,9 +1202,9 @@ function proseParagraphClassName(previousItem, proseItem = null) {
   return classes.join(" ")
 }
 
-function proseRunClassName(run) {
+function proseRunClassName(run, proseItem = null) {
   const classes = []
-  if (run?.bold) {
+  if (run?.bold && !proseShouldBeCentered(proseItem)) {
     classes.push("book-page__run--bold")
   }
   if (run?.italic) {
@@ -1258,7 +1258,7 @@ function renderProseContent(
     return item.runs.map((run, runIndex) => (
       <Fragment key={`run-${runIndex}`}>
         {runIndex > 0 ? " " : null}
-        <span className={proseRunClassName(run)}>
+        <span className={proseRunClassName(run, item)}>
           {highlightTextContent(
             run.text,
             searchQuery,
@@ -2197,7 +2197,7 @@ function appendVisualItem(body, item, previousItem = null, pageLayout = null) {
           paragraph.appendChild(document.createTextNode(" "))
         }
         const span = document.createElement("span")
-        const runClass = proseRunClassName(run)
+        const runClass = proseRunClassName(run, item)
         if (runClass) {
           span.className = runClass
         }
