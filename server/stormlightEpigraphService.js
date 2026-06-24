@@ -188,7 +188,9 @@ function shouldAcceptTocReanchor(expected, anchor, located, tocOrderCursor) {
     const expectedNum = Number.parseInt(expected.key, 10)
     const anchorNum = Number.parseInt(anchor.key, 10)
     if (Number.isFinite(expectedNum) && Number.isFinite(anchorNum)) {
-      return anchorNum >= expectedNum && anchorNum <= expectedNum + 2
+      // Allow a wider forward window so a confident plaque OCR can recover from
+      // sequential cursor drift (e.g. bannerless chapters 10–11, failed arches).
+      return anchorNum >= expectedNum && anchorNum <= expectedNum + 12
     }
   }
 
@@ -196,11 +198,36 @@ function shouldAcceptTocReanchor(expected, anchor, located, tocOrderCursor) {
     const expectedNum = Number.parseInt(expected.key, 10)
     const anchorNum = Number.parseInt(anchor.key, 10)
     if (Number.isFinite(expectedNum) && Number.isFinite(anchorNum)) {
-      return anchorNum >= expectedNum && anchorNum <= expectedNum + 1
+      return anchorNum >= expectedNum && anchorNum <= expectedNum + 2
     }
   }
 
   return true
+}
+
+function countUpcomingInterludesAtCursor(printedToc, tocOrderCursor) {
+  if (!printedToc?.ordered?.length || !tocOrderCursor) {
+    return 0
+  }
+
+  let index = tocOrderCursor.index
+  let count = 0
+
+  while (index < printedToc.ordered.length) {
+    const entry = printedToc.ordered[index]
+    if (entry.kind === "part") {
+      index += 1
+      continue
+    }
+    if (entry.kind === "interlude") {
+      count += 1
+      index += 1
+      continue
+    }
+    break
+  }
+
+  return count
 }
 
 function countInterludesAfterUpcomingBannerlessChapters(printedToc, tocOrderCursor) {
@@ -330,14 +357,6 @@ function buildTocMetadataForChapterHeading(
     return null
   }
 
-  if (forceInterludeBoundary) {
-    return buildSequentialInterludeEntry?.() ?? null
-  }
-
-  if (hasBackMatterHeadingText(blocks, blockIndex)) {
-    return null
-  }
-
   if (tocOrderCursor) {
     const anchor = extractTocAnchorFromOcrLabel(ocrNumberLabel)
     if (anchor) {
@@ -348,6 +367,14 @@ function buildTocMetadataForChapterHeading(
         return printedTocEntryToOcrMetadata(located.entry)
       }
     }
+  }
+
+  if (forceInterludeBoundary) {
+    return buildSequentialInterludeEntry?.() ?? null
+  }
+
+  if (hasBackMatterHeadingText(blocks, blockIndex)) {
+    return null
   }
 
   return buildSequentialEntry?.() ?? null
@@ -417,6 +444,7 @@ export {
   buildTocMetadataForChapterHeading,
   collectFollowingTextBlocks,
   countInterludesAfterUpcomingBannerlessChapters,
+  countUpcomingInterludesAtCursor,
   extractChapterKeyFromOcrNumber,
   extractTocAnchorFromOcrLabel,
   hasBackMatterHeadingText,

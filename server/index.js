@@ -38,7 +38,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 87
+const PARSER_VERSION = 88
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(

@@ -368,7 +368,15 @@ function isMapOrGalleryIllustration(blocks, blockIndex, imageBlock) {
     return true
   }
 
-  if (hasSamePageProseBeforeImage(blocks, blockIndex, imageBlock)) {
+  // Stormlight often ends one chapter and opens the next on the same PDF page
+  // (prose above, stone arch below). That layout is a chapter transition, not a
+  // map plate — never reject a chapter arch for same-page prose.
+  const isChapterArch =
+    imageBlock.imageRole === "chapter_heading" ||
+    isLikelyChapterArchBannerBlock(imageBlock) ||
+    isChapterTitleStripBlock(imageBlock)
+
+  if (!isChapterArch && hasSamePageProseBeforeImage(blocks, blockIndex, imageBlock)) {
     return true
   }
 
@@ -407,12 +415,17 @@ function qualifiesAsPrintedTocBannerSlot(imageBlock, blocks, blockIndex, ocrMeta
   if (isMapOrGalleryIllustration(blocks, blockIndex, imageBlock)) {
     return false
   }
-  if (hasNearbyNonChapterCaption(blocks, imageBlock)) {
+
+  const isStandardChapterArch =
+    imageBlock.imageRole === "chapter_heading" &&
+    isLikelyChapterArchBannerBlock(imageBlock)
+
+  if (!isStandardChapterArch && hasNearbyNonChapterCaption(blocks, imageBlock)) {
     return false
   }
 
   const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex, 8)
-  if (hasNonChapterCaption(followingBlocks)) {
+  if (!isStandardChapterArch && hasNonChapterCaption(followingBlocks)) {
     return false
   }
 
@@ -425,13 +438,21 @@ function qualifiesAsPrintedTocBannerSlot(imageBlock, blocks, blockIndex, ocrMeta
     return false
   }
 
+  // Interleave already classified these as chapter_heading on arch geometry.
+  // Requiring post-arch narrative fails for mid-page transitions and late-book
+  // chapters whose following text is sparse or back-matter adjacent.
+  if (isStandardChapterArch) {
+    return true
+  }
+
   // A genuine chapter arch always opens onto an epigraph, an interstitial title,
   // or narrative prose. Requiring this even when OCR looks chapter-like stops a
   // plate whose plaque misreads as a number from taking a slot.
   const hasOpenerSignal =
     hasEpigraphFollowUp(followingBlocks) ||
     hasInterstitialTitle(followingBlocks) ||
-    hasNarrativeFollowUp(followingBlocks)
+    hasNarrativeFollowUp(followingBlocks) ||
+    hasSamePageProseBeforeImage(blocks, blockIndex, imageBlock)
 
   return hasOpenerSignal
 }
@@ -661,7 +682,15 @@ function shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex) {
 
   const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex)
 
-  if (hasNonChapterCaption(followingBlocks) || hasNearbyNonChapterCaption(blocks, imageBlock)) {
+  const isChapterArch =
+    imageBlock.imageRole === "chapter_heading" ||
+    isLikelyChapterArchBannerBlock(imageBlock) ||
+    isChapterTitleStripBlock(imageBlock)
+
+  if (
+    !isChapterArch &&
+    (hasNonChapterCaption(followingBlocks) || hasNearbyNonChapterCaption(blocks, imageBlock))
+  ) {
     logChapterGraphicDecision("skip_non_chapter_caption", {
       pageNumber: imageBlock.pageNumber,
     })
@@ -675,7 +704,7 @@ function shouldSkipChapterGraphicAnalysis(imageBlock, blocks, blockIndex) {
     return true
   }
 
-  if (hasBackMatterHeadingText(blocks, blockIndex)) {
+  if (hasBackMatterHeadingText(blocks, blockIndex) && !isChapterArch) {
     logChapterGraphicDecision("skip_back_matter_illustration", {
       pageNumber: imageBlock.pageNumber,
     })
