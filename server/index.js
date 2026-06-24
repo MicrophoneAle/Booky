@@ -38,7 +38,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 89
+const PARSER_VERSION = 90
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -6930,6 +6930,114 @@ async function extractPdfPageImagesOnly(pdf, pageNumber) {
   })
 }
 
+const DECORATIVE_BACKGROUND_MIN_COVERAGE_RATIO = 0.92
+const DECORATIVE_BACKGROUND_TEXT_HEAVY_CHARS = 120
+const TEMPLATE_BACKGROUND_MIN_PAGES = 20
+const TEMPLATE_BACKGROUND_PAGE_FRACTION = 0.85
+
+function isNearFullPageImageCandidate(candidate) {
+  const coords = candidate?.coordinates ?? {}
+  const pageWidth = coords.pageWidth ?? 0
+  const pageHeight = coords.pageHeight ?? 0
+  const width = coords.width ?? 0
+  const height = coords.height ?? 0
+
+  if (!pageWidth || !pageHeight || !width || !height) {
+    return false
+  }
+
+  return (
+    width / pageWidth >= DECORATIVE_BACKGROUND_MIN_COVERAGE_RATIO &&
+    height / pageHeight >= DECORATIVE_BACKGROUND_MIN_COVERAGE_RATIO
+  )
+}
+
+function stripDecorativeImageCandidate(candidate) {
+  return {
+    ...candidate,
+    imageRole: null,
+    isCandidate: false,
+    buffer: null,
+  }
+}
+
+function filterDecorativePdfPageBackgrounds(pageImageCandidates, pagesBeforeFilter) {
+  if (!Array.isArray(pageImageCandidates) || pageImageCandidates.length === 0) {
+    return pageImageCandidates
+  }
+
+  const pageCharCounts = (pagesBeforeFilter ?? []).map((page) =>
+    (page?.lines ?? []).reduce((sum, line) => sum + (line.text ?? "").length, 0)
+  )
+
+  let templateLikePages = 0
+  let pagesWithActiveCandidates = 0
+
+  for (let pageIndex = 0; pageIndex < pageImageCandidates.length; pageIndex += 1) {
+    const candidates = pageImageCandidates[pageIndex]
+    if (!Array.isArray(candidates)) {
+      continue
+    }
+
+    const activeCandidates = candidates.filter(
+      (candidate) => candidate?.isCandidate === true && candidate.imageRole != null
+    )
+    if (activeCandidates.length === 0) {
+      continue
+    }
+
+    pagesWithActiveCandidates += 1
+    if (
+      activeCandidates.length === 1 &&
+      isNearFullPageImageCandidate(activeCandidates[0])
+    ) {
+      templateLikePages += 1
+    }
+  }
+
+  const isTemplateBackgroundPdf =
+    pagesWithActiveCandidates >= TEMPLATE_BACKGROUND_MIN_PAGES &&
+    templateLikePages / pagesWithActiveCandidates >= TEMPLATE_BACKGROUND_PAGE_FRACTION
+
+  return pageImageCandidates.map((candidates, pageIndex) => {
+    if (!Array.isArray(candidates) || candidates.length === 0) {
+      return candidates
+    }
+
+    const pageChars = pageCharCounts[pageIndex] ?? 0
+    const activeCandidates = candidates.filter(
+      (candidate) => candidate?.isCandidate === true && candidate.imageRole != null
+    )
+
+    if (
+      isTemplateBackgroundPdf &&
+      activeCandidates.length === 1 &&
+      isNearFullPageImageCandidate(activeCandidates[0])
+    ) {
+      return candidates.map((candidate) =>
+        candidate?.isCandidate === true && candidate.imageRole != null
+          ? stripDecorativeImageCandidate(candidate)
+          : candidate
+      )
+    }
+
+    return candidates.map((candidate) => {
+      if (candidate?.isCandidate !== true || candidate.imageRole == null) {
+        return candidate
+      }
+
+      if (
+        pageChars >= DECORATIVE_BACKGROUND_TEXT_HEAVY_CHARS &&
+        isNearFullPageImageCandidate(candidate)
+      ) {
+        return stripDecorativeImageCandidate(candidate)
+      }
+
+      return candidate
+    })
+  })
+}
+
 async function resolvePageImageCandidateBuffers(pdf, pageImageCandidates, onPageResolved) {
   if (!pdf || !Array.isArray(pageImageCandidates) || pageImageCandidates.length === 0) {
     return
@@ -7217,12 +7325,17 @@ async function extractPdfStructure(
     pageData.push({ lines })
   }
 
+  const filteredPageImageCandidates = filterDecorativePdfPageBackgrounds(
+    pageImageCandidates,
+    pagesBeforeFilter
+  )
+
   return {
     pageData,
     headingStrings,
     numPages: pdf.numPages,
     pdfInfo,
-    pageImageCandidates,
+    pageImageCandidates: filteredPageImageCandidates,
   }
 }
 
