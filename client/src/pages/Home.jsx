@@ -18,6 +18,7 @@ import {
   getParseProgressStaleHint,
   mergePollProgressUpdate,
 } from "../utils/parseProgress"
+import { registerPendingDocumentParse } from "../utils/bookCache"
 import "./Home.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
@@ -99,7 +100,13 @@ async function fetchWithRetry(url, options, retries = 4) {
   throw lastError instanceof Error ? lastError : new Error("Failed to fetch")
 }
 
-async function pollDocumentParseStatus(documentId, getToken, onProgress, onStale) {
+async function pollDocumentParseStatus(
+  documentId,
+  getToken,
+  onProgress,
+  onStale,
+  { shouldContinue } = {}
+) {
   const startedAt = Date.now()
   let lastProgress = null
   let lastProgressFingerprint = null
@@ -108,6 +115,10 @@ async function pollDocumentParseStatus(documentId, getToken, onProgress, onStale
   const MAX_CONSECUTIVE_AUTH_FAILURES = 6
 
   while (Date.now() - startedAt < PARSE_POLL_TIMEOUT_MS) {
+    if (shouldContinue && !shouldContinue()) {
+      return documentId
+    }
+
     // Force a fresh token after a rejection. A single 401 here is almost always
     // a momentarily expired or unverifiable token while the server is busy
     // parsing a large book or cold starting, not a real auth problem. The parse
@@ -204,6 +215,10 @@ async function pollDocumentParseStatus(documentId, getToken, onProgress, onStale
     await new Promise((resolve) => setTimeout(resolve, PARSE_POLL_INTERVAL_MS))
   }
 
+  if (shouldContinue && !shouldContinue()) {
+    return documentId
+  }
+
   throw new Error("Processing timed out. Try again in a few minutes.")
 }
 
@@ -244,15 +259,17 @@ function uploadPdfOnce(file, token, setUploadState) {
   })
 }
 
-function doUpload(file, getToken, setUploadState, navigate, setParseStaleSinceMs) {
+function doUpload(file, getToken, setUploadState, navigate, setParseStaleSinceMs, isMountedRef) {
   return (async () => {
     const token = await getToken()
     if (!token) {
-      setUploadState((state) => ({
-        ...state,
-        phase: "error",
-        errorMessage: "Unauthorized",
-      }))
+      if (isMountedRef.current) {
+        setUploadState((state) => ({
+          ...state,
+          phase: "error",
+          errorMessage: "Unauthorized",
+        }))
+      }
       return
     }
 
@@ -275,12 +292,14 @@ function doUpload(file, getToken, setUploadState, navigate, setParseStaleSinceMs
           continue
         }
 
-        setUploadState((state) => ({
-          ...state,
-          phase: "error",
-          errorMessage:
-            reason === "timeout" ? "Request timed out" : RENDER_WAKE_MESSAGE,
-        }))
+        if (isMountedRef.current) {
+          setUploadState((state) => ({
+            ...state,
+            phase: "error",
+            errorMessage:
+              reason === "timeout" ? "Request timed out" : RENDER_WAKE_MESSAGE,
+          }))
+        }
         return
       }
     }
@@ -296,6 +315,8 @@ function doUpload(file, getToken, setUploadState, navigate, setParseStaleSinceMs
         const isPending = data.document?.status === "pending"
 
         if (isPending && documentId) {
+          registerPendingDocumentParse(documentId)
+
           setUploadState((state) => ({
             ...state,
             phase: "processing",
@@ -309,44 +330,59 @@ function doUpload(file, getToken, setUploadState, navigate, setParseStaleSinceMs
             },
           }))
 
-          try {
-            await pollDocumentParseStatus(
-              documentId,
-              getToken,
-              (parseProgress) => {
-                setUploadState((state) => ({
-                  ...state,
-                  phase: "processing",
-                  parseProgress,
-                  progress: overallUploadProgress(
-                    "processing",
-                    100,
-                    parseProgress
-                  ),
-                }))
-              },
-              (staleSinceMs) => {
-                setParseStaleSinceMs(staleSinceMs)
-              }
-            )
+          void (async () => {
+            try {
+              await pollDocumentParseStatus(
+                documentId,
+                getToken,
+                (parseProgress) => {
+                  if (!isMountedRef.current) {
+                    return
+                  }
+                  setUploadState((state) => ({
+                    ...state,
+                    phase: "processing",
+                    parseProgress,
+                    progress: overallUploadProgress(
+                      "processing",
+                      100,
+                      parseProgress
+                    ),
+                  }))
+                },
+                (staleSinceMs) => {
+                  if (isMountedRef.current) {
+                    setParseStaleSinceMs(staleSinceMs)
+                  }
+                },
+                { shouldContinue: () => isMountedRef.current }
+              )
 
-            setUploadState((state) => ({
-              ...state,
-              phase: "done",
-              progress: 100,
-              parseProgress: { phase: "ready", current: 0, total: 0, percent: 100 },
-            }))
-            setTimeout(() => navigate(`/read/${documentId}`), 600)
-          } catch (pollError) {
-            const message =
-              pollError instanceof Error ? pollError.message : "Processing failed"
-            setUploadState((state) => ({
-              ...state,
-              phase: "error",
-              errorMessage:
-                message === "Failed to fetch" ? RENDER_WAKE_MESSAGE : message,
-            }))
-          }
+              if (!isMountedRef.current) {
+                return
+              }
+
+              setUploadState((state) => ({
+                ...state,
+                phase: "done",
+                progress: 100,
+                parseProgress: { phase: "ready", current: 0, total: 0, percent: 100 },
+              }))
+              setTimeout(() => navigate(`/read/${documentId}`), 600)
+            } catch (pollError) {
+              if (!isMountedRef.current) {
+                return
+              }
+              const message =
+                pollError instanceof Error ? pollError.message : "Processing failed"
+              setUploadState((state) => ({
+                ...state,
+                phase: "error",
+                errorMessage:
+                  message === "Failed to fetch" ? RENDER_WAKE_MESSAGE : message,
+              }))
+            }
+          })()
 
           return
         }
@@ -358,17 +394,21 @@ function doUpload(file, getToken, setUploadState, navigate, setParseStaleSinceMs
         return
       }
 
-      setUploadState((state) => ({
-        ...state,
-        phase: "error",
-        errorMessage: data.error ?? "Upload failed",
-      }))
+      if (isMountedRef.current) {
+        setUploadState((state) => ({
+          ...state,
+          phase: "error",
+          errorMessage: data.error ?? "Upload failed",
+        }))
+      }
     } catch {
-      setUploadState((state) => ({
-        ...state,
-        phase: "error",
-        errorMessage: "Unexpected server response",
-      }))
+      if (isMountedRef.current) {
+        setUploadState((state) => ({
+          ...state,
+          phase: "error",
+          errorMessage: "Unexpected server response",
+        }))
+      }
     }
   })()
 }
@@ -388,6 +428,14 @@ export default function Home() {
   const [retryingParse, setRetryingParse] = useState(false)
   const autoRetryParseAttemptedRef = useRef(false)
   const parseProgressRef = useRef({ key: "", at: Date.now() })
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     if (uploadState.phase !== "processing") {
@@ -457,7 +505,14 @@ export default function Home() {
       clearTimeout(wakeTimer)
     }
 
-    await doUpload(selectedFile, getToken, setUploadState, navigate, setParseStaleSinceMs)
+    await doUpload(
+      selectedFile,
+      getToken,
+      setUploadState,
+      navigate,
+      setParseStaleSinceMs,
+      isMountedRef
+    )
   }, [getToken, navigate])
 
   const handleRetryParse = useCallback(async () => {
@@ -491,10 +546,15 @@ export default function Home() {
         throw new Error(data.error ?? "Retry failed")
       }
 
+      registerPendingDocumentParse(documentId)
+
       await pollDocumentParseStatus(
         documentId,
         getToken,
         (parseProgress) => {
+          if (!isMountedRef.current) {
+            return
+          }
           setUploadState((state) => ({
             ...state,
             phase: "processing",
@@ -503,9 +563,16 @@ export default function Home() {
           }))
         },
         (staleSinceMs) => {
-          setParseStaleSinceMs(staleSinceMs)
-        }
+          if (isMountedRef.current) {
+            setParseStaleSinceMs(staleSinceMs)
+          }
+        },
+        { shouldContinue: () => isMountedRef.current }
       )
+
+      if (!isMountedRef.current) {
+        return
+      }
 
       setUploadState((state) => ({
         ...state,
@@ -515,6 +582,9 @@ export default function Home() {
       }))
       setTimeout(() => navigate(`/read/${documentId}`), 600)
     } catch (retryError) {
+      if (!isMountedRef.current) {
+        return
+      }
       const message =
         retryError instanceof Error ? retryError.message : "Retry failed"
       setUploadState((state) => ({

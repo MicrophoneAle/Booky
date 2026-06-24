@@ -38,7 +38,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 93
+const PARSER_VERSION = 94
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 
 function bbNormalizeLetters(text) {
@@ -151,7 +151,6 @@ function cancelBackgroundParse(documentId) {
   }
 
   cancelledBackgroundParses.add(documentId)
-  backgroundParseInFlight.delete(documentId)
   clearDocumentParseProgress(documentId)
 
   for (let index = fullParseWaitQueue.length - 1; index >= 0; index -= 1) {
@@ -1117,9 +1116,7 @@ app.post("/documents/:id/retry-parse", requireAuth, async (req, res) => {
       .eq("id", id)
       .eq("user_id", req.userId)
 
-    setImmediate(() => {
-      void parseDocumentInBackground(id, req.userId, data.storage_path, data.name ?? "")
-    })
+    scheduleBackgroundParse(id, req.userId, data.storage_path, data.name ?? "")
 
     res.json({ success: true, retrying: true })
   } catch (error) {
@@ -9651,6 +9648,52 @@ async function resumePendingDocumentParses() {
   }
 }
 
+const SAVE_PARSED_DOCUMENT_MAX_RETRIES = 6
+const SAVE_PARSED_DOCUMENT_RETRY_BASE_MS = 1500
+
+function scheduleBackgroundParse(documentId, userId, storagePath, fileName) {
+  // Detach from the upload HTTP request. The client may navigate away or close
+  // the connection as soon as the upload response arrives; parsing must continue.
+  setImmediate(() => {
+    void parseDocumentInBackground(documentId, userId, storagePath, fileName)
+  })
+}
+
+async function saveParsedDocumentWithRetry(documentId, userId, documentUpdate) {
+  let lastError = null
+
+  for (let attempt = 1; attempt <= SAVE_PARSED_DOCUMENT_MAX_RETRIES; attempt += 1) {
+    const { error: updateError } = await supabase
+      .from("documents")
+      .update(documentUpdate)
+      .eq("id", documentId)
+      .eq("user_id", userId)
+
+    if (!updateError) {
+      return
+    }
+
+    lastError = updateError
+    const message = updateError.message ?? String(updateError)
+    const retryable = isRetryableStorageError(message)
+
+    console.warn(
+      `[parse-save] Attempt ${attempt}/${SAVE_PARSED_DOCUMENT_MAX_RETRIES} failed for ${documentId}: ${message}`
+    )
+
+    if (!retryable || attempt >= SAVE_PARSED_DOCUMENT_MAX_RETRIES) {
+      break
+    }
+
+    await sleep(SAVE_PARSED_DOCUMENT_RETRY_BASE_MS * attempt)
+  }
+
+  const message = lastError?.message ?? "Unknown error"
+  throw new Error(
+    message ? `Failed to save parsed document: ${message}` : "Failed to save parsed document"
+  )
+}
+
 async function parseDocumentInBackground(documentId, userId, storagePath, fileName) {
   if (backgroundParseInFlight.has(documentId)) {
     return
@@ -9737,26 +9780,11 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
           word_count: wordCount,
           parser_version: PARSER_VERSION,
           parse_status: PARSE_STATUS.READY,
+          parse_progress: null,
           ...buildParsedCacheFields(),
         })
 
-        const { error: updateError } = await supabase
-          .from("documents")
-          .update(documentUpdate)
-          .eq("id", documentId)
-          .eq("user_id", userId)
-
-        if (updateError) {
-          console.error(
-            `Failed to save parsed document ${documentId}:`,
-            updateError.message ?? updateError
-          )
-          throw new Error(
-            updateError.message
-              ? `Failed to save parsed document: ${updateError.message}`
-              : "Failed to save parsed document"
-          )
-        }
+        await saveParsedDocumentWithRetry(documentId, userId, documentUpdate)
 
         clearDocumentParseProgress(documentId)
       },
@@ -10490,9 +10518,7 @@ app.post("/upload", requireAuth, (req, res) => {
       const userId = req.userId
       const originalName = uploadedFile.originalname
 
-      setImmediate(() => {
-        void parseDocumentInBackground(documentId, userId, storageData.path, originalName)
-      })
+      scheduleBackgroundParse(documentId, userId, storageData.path, originalName)
 
       res.json({
         success: true,

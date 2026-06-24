@@ -106,3 +106,50 @@ export function patchLibraryDocumentsCache(libraryCacheKey, updater) {
     return null
   }
 }
+
+const PENDING_PARSE_STORAGE_KEY = "booky-pending-parses"
+
+export function registerPendingDocumentParse(documentId) {
+  if (!documentId) {
+    return
+  }
+
+  try {
+    const raw = sessionStorage.getItem(PENDING_PARSE_STORAGE_KEY)
+    const current = raw ? JSON.parse(raw) : []
+    const ids = Array.isArray(current) ? current : []
+    if (!ids.includes(documentId)) {
+      ids.push(documentId)
+      sessionStorage.setItem(PENDING_PARSE_STORAGE_KEY, JSON.stringify(ids))
+    }
+  } catch {
+    // Ignore storage errors.
+  }
+}
+
+export function getPendingDocumentParses() {
+  try {
+    const raw = sessionStorage.getItem(PENDING_PARSE_STORAGE_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed.filter(Boolean) : []
+  } catch {
+    return []
+  }
+}
+
+export function clearPendingDocumentParse(documentId) {
+  if (!documentId) {
+    return
+  }
+
+  try {
+    const ids = getPendingDocumentParses().filter((id) => id !== documentId)
+    if (ids.length === 0) {
+      sessionStorage.removeItem(PENDING_PARSE_STORAGE_KEY)
+    } else {
+      sessionStorage.setItem(PENDING_PARSE_STORAGE_KEY, JSON.stringify(ids))
+    }
+  } catch {
+    // Ignore storage errors.
+  }
+}

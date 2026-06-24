@@ -11,12 +11,14 @@ import {
 import FullscreenButton from "../components/FullscreenButton"
 import {
   clearBookLocalCache,
+  clearPendingDocumentParse,
+  getPendingDocumentParses,
   patchLibraryDocumentsCache,
 } from "../utils/bookCache"
 import "./Library.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
-const PARSE_STATUS_POLL_MS = 5000
+const PARSE_STATUS_POLL_MS = 2500
 
 async function fetchWithRetry(url, options, retries = 3) {
   let lastError = null
@@ -666,6 +668,7 @@ export default function Library() {
   }, [fetchDocuments, isSignedIn, reloadKey, readCachedDocuments])
 
   const handleParseReady = useCallback((documentId) => {
+    clearPendingDocumentParse(documentId)
     setReloadKey((key) => key + 1)
   }, [])
 
@@ -674,9 +677,18 @@ export default function Library() {
       return undefined
     }
 
-    const pendingIds = documents
-      .filter((doc) => doc.parse_status === "pending")
-      .map((doc) => doc.id)
+    if (getPendingDocumentParses().length > 0) {
+      void fetchDocuments({ background: true })
+    }
+
+    const pendingIds = [
+      ...new Set([
+        ...documents
+          .filter((doc) => doc.parse_status === "pending")
+          .map((doc) => doc.id),
+        ...getPendingDocumentParses(),
+      ]),
+    ]
 
     if (pendingIds.length === 0) {
       return undefined
@@ -709,6 +721,9 @@ export default function Library() {
 
           if (response.ok && data.success && data.parse_status === "ready") {
             handleParseReady(documentId)
+          } else if (response.ok && data.success && data.parse_status === "error") {
+            clearPendingDocumentParse(documentId)
+            setReloadKey((key) => key + 1)
           }
         } catch {
           // keep polling on transient errors
@@ -725,10 +740,11 @@ export default function Library() {
       cancelled = true
       window.clearInterval(intervalId)
     }
-  }, [documents, handleParseReady, isSignedIn])
+  }, [documents, fetchDocuments, handleParseReady, isSignedIn])
 
   const handleDocumentDeleted = useCallback(
     (documentId) => {
+      clearPendingDocumentParse(documentId)
       clearBookLocalCache(documentId)
       patchLibraryDocumentsCache(libraryCacheKey, (current) =>
         current.filter((doc) => doc.id !== documentId)
