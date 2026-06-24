@@ -9,6 +9,10 @@ import {
   UserButton,
 } from "@clerk/clerk-react"
 import FullscreenButton from "../components/FullscreenButton"
+import {
+  clearBookLocalCache,
+  patchLibraryDocumentsCache,
+} from "../utils/bookCache"
 import "./Library.css"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000"
@@ -723,9 +727,16 @@ export default function Library() {
     }
   }, [documents, handleParseReady, isSignedIn])
 
-  const handleDocumentDeleted = useCallback((documentId) => {
-    setDocuments((current) => current.filter((doc) => doc.id !== documentId))
-  }, [])
+  const handleDocumentDeleted = useCallback(
+    (documentId) => {
+      clearBookLocalCache(documentId)
+      patchLibraryDocumentsCache(libraryCacheKey, (current) =>
+        current.filter((doc) => doc.id !== documentId)
+      )
+      setDocuments((current) => current.filter((doc) => doc.id !== documentId))
+    },
+    [libraryCacheKey]
+  )
 
   const handleDocumentRenamed = useCallback((documentId, newName) => {
     setDocuments((current) =>

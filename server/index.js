@@ -84,9 +84,10 @@ const PARSE_STATUS = {
 }
 
 const backgroundParseInFlight = new Set()
+const cancelledBackgroundParses = new Set()
 const MAX_CONCURRENT_FULL_PARSES = 1
 let fullParseActiveCount = 0
-/** @type {Array<{ resolve: () => void, priority: number }>} */
+/** @type {Array<{ resolve: () => void, reject: (error: Error) => void, priority: number, documentId: string|null }>} */
 const fullParseWaitQueue = []
 const PARSE_GATE_UPLOAD_PRIORITY = 10
 const PARSE_GATE_REPARSE_PRIORITY = 0
@@ -111,9 +112,10 @@ function tryAcquireFullParseSlot() {
   return releaseFullParseSlot
 }
 
-function enqueueFullParseWaiter(resolve, priority = 0) {
-  const entry = { resolve, priority }
-  const insertBefore = fullParseWaitQueue.findIndex((item) => item.priority < priority)
+function enqueueFullParseWaiter(entry) {
+  const insertBefore = fullParseWaitQueue.findIndex(
+    (item) => item.priority < entry.priority
+  )
   if (insertBefore === -1) {
     fullParseWaitQueue.push(entry)
   } else {
@@ -121,21 +123,56 @@ function enqueueFullParseWaiter(resolve, priority = 0) {
   }
 }
 
-async function acquireFullParseSlot(priority = 0) {
+function assertParseNotCancelled(documentId) {
+  if (documentId && cancelledBackgroundParses.has(documentId)) {
+    throw new Error("PARSE_CANCELLED")
+  }
+}
+
+function cancelBackgroundParse(documentId) {
+  if (!documentId) {
+    return
+  }
+
+  cancelledBackgroundParses.add(documentId)
+  backgroundParseInFlight.delete(documentId)
+  clearDocumentParseProgress(documentId)
+
+  for (let index = fullParseWaitQueue.length - 1; index >= 0; index -= 1) {
+    const entry = fullParseWaitQueue[index]
+    if (entry.documentId === documentId) {
+      fullParseWaitQueue.splice(index, 1)
+      entry.reject(new Error("PARSE_CANCELLED"))
+    }
+  }
+}
+
+function clearCancelledBackgroundParse(documentId) {
+  if (documentId) {
+    cancelledBackgroundParses.delete(documentId)
+  }
+}
+
+async function acquireFullParseSlot(priority = 0, documentId = null) {
   while (fullParseActiveCount >= MAX_CONCURRENT_FULL_PARSES) {
-    await new Promise((resolve) => {
-      enqueueFullParseWaiter(resolve, priority)
+    assertParseNotCancelled(documentId)
+    await new Promise((resolve, reject) => {
+      if (documentId && cancelledBackgroundParses.has(documentId)) {
+        reject(new Error("PARSE_CANCELLED"))
+        return
+      }
+      enqueueFullParseWaiter({ resolve, reject, priority, documentId })
     })
   }
   fullParseActiveCount += 1
   return releaseFullParseSlot
 }
 
-async function runWithFullParseGate(task, { wait = true, priority = 0, onWaiting } = {}) {
+async function runWithFullParseGate(task, { wait = true, priority = 0, onWaiting, documentId = null } = {}) {
   let release = wait ? null : tryAcquireFullParseSlot()
   if (!release && wait) {
     onWaiting?.()
-    release = await acquireFullParseSlot(priority)
+    release = await acquireFullParseSlot(priority, documentId)
   }
   if (!release) {
     return { skipped: true }
@@ -692,8 +729,7 @@ app.delete("/documents/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params
 
-    backgroundParseInFlight.delete(id)
-    clearDocumentParseProgress(id)
+    cancelBackgroundParse(id)
 
     const { data: document, error: fetchError } = await supabase
       .from("documents")
@@ -9234,6 +9270,8 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
   try {
     await runWithFullParseGate(
       async () => {
+        assertParseNotCancelled(documentId)
+
         setDocumentParseProgress(documentId, {
           phase: "starting",
           label: "Downloading PDF",
@@ -9243,6 +9281,7 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
         })
 
         const buffer = await downloadStoredPdfBuffer(storagePath)
+        assertParseNotCancelled(documentId)
 
         setDocumentParseProgress(documentId, {
           phase: "starting",
@@ -9263,9 +9302,12 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
               }
             },
             onProgress(progress) {
+              assertParseNotCancelled(documentId)
               setDocumentParseProgress(documentId, progress)
             },
           })
+
+        assertParseNotCancelled(documentId)
 
         setDocumentParseProgress(documentId, {
           phase: "saving",
@@ -9312,6 +9354,7 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
       {
         wait: true,
         priority: PARSE_GATE_UPLOAD_PRIORITY,
+        documentId,
         onWaiting() {
           setDocumentParseProgress(documentId, {
             phase: "starting",
@@ -9324,6 +9367,12 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
       }
     )
   } catch (error) {
+    if (error instanceof Error && error.message === "PARSE_CANCELLED") {
+      console.log(`Background parse cancelled for document ${documentId}`)
+      clearDocumentParseProgress(documentId)
+      return
+    }
+
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error(
       `Background parse failed for document ${documentId}:`,
@@ -9347,6 +9396,7 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
   } finally {
     clearInterval(progressHeartbeat)
     backgroundParseInFlight.delete(documentId)
+    clearCancelledBackgroundParse(documentId)
   }
 }
 
