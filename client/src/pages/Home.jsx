@@ -104,26 +104,53 @@ async function pollDocumentParseStatus(documentId, getToken, onProgress, onStale
   let lastProgress = null
   let lastProgressFingerprint = null
   let lastUpdatedAtChangeAt = Date.now()
+  let consecutiveAuthFailures = 0
+  const MAX_CONSECUTIVE_AUTH_FAILURES = 6
 
   while (Date.now() - startedAt < PARSE_POLL_TIMEOUT_MS) {
-    const token = await getToken()
+    // Force a fresh token after a rejection. A single 401 here is almost always
+    // a momentarily expired or unverifiable token while the server is busy
+    // parsing a large book or cold starting, not a real auth problem. The parse
+    // continues server side, so retry instead of aborting the whole upload.
+    const token = await getToken(
+      consecutiveAuthFailures > 0 ? { skipCache: true } : undefined
+    )
     if (!token) {
-      throw new Error("Unauthorized")
+      consecutiveAuthFailures += 1
+      if (consecutiveAuthFailures >= MAX_CONSECUTIVE_AUTH_FAILURES) {
+        throw new Error("Unauthorized")
+      }
+      await new Promise((resolve) => setTimeout(resolve, PARSE_POLL_INTERVAL_MS))
+      continue
     }
 
-    const response = await fetchWithRetry(
-      `${API_URL}/documents/${encodeURIComponent(documentId)}/status`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    )
+    let response
+    try {
+      response = await fetchWithRetry(
+        `${API_URL}/documents/${encodeURIComponent(documentId)}/status`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      )
+    } catch {
+      // Network blip. Keep polling; the parse is unaffected.
+      await new Promise((resolve) => setTimeout(resolve, PARSE_POLL_INTERVAL_MS))
+      continue
+    }
 
     if (response.status === 401 || response.status === 403) {
-      throw new Error("Unauthorized")
+      consecutiveAuthFailures += 1
+      if (consecutiveAuthFailures >= MAX_CONSECUTIVE_AUTH_FAILURES) {
+        throw new Error("Unauthorized")
+      }
+      await new Promise((resolve) => setTimeout(resolve, PARSE_POLL_INTERVAL_MS))
+      continue
     }
+
+    consecutiveAuthFailures = 0
 
     if (!response.ok) {
       throw new Error("Failed to check processing status")

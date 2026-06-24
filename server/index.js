@@ -38,7 +38,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 91
+const PARSER_VERSION = 92
 const PDF_IMAGE_JPEG_CONTENT_TYPE = "image/jpeg"
 
 const PDF_IMAGE_PAINT_OPS = new Set(
@@ -4913,7 +4913,20 @@ function shouldDropExtractedLine(
     return false
   }
   if (isCollapsedRunningHeaderLine(trimmed)) {
-    return true
+    // A genuine running header repeats across many pages. A one-page all-caps
+    // run, such as 1984's letter-spaced "DOWN WITH BIG BROTHER" diary lines
+    // (fused into a single token by collapseLetterSpacing), appears on only one
+    // or two pages and is content, not a header. Only drop when it recurs like
+    // a real running header so book text is never skipped.
+    if (distinctPageCount >= RUNNING_HEADER_MIN_PAGES) {
+      if (process.env.BOOKY_DROP_DEBUG === "1") {
+        console.log(
+          "[dropLine] collapsed-running-header",
+          JSON.stringify({ trimmed, distinctPageCount })
+        )
+      }
+      return true
+    }
   }
   if (STANDALONE_PAGE_NUMBER_REGEX.test(trimmed)) {
     return true
@@ -7938,6 +7951,18 @@ function mergeChapterSubtitleBlocks(blocks) {
         })
         index = cursor - 1
         continue
+      }
+
+      if (process.env.BOOKY_SUBTITLE_DEBUG === "1") {
+        console.log(
+          "[subtitleMiss]",
+          JSON.stringify({
+            heading: text,
+            next1: (blocks[index + 1]?.text ?? "").slice(0, 120),
+            next1IsHeading: Boolean(blocks[index + 1]?.isHeading),
+            next2: (blocks[index + 2]?.text ?? "").slice(0, 120),
+          })
+        )
       }
 
       const displayTitle = formatChapterLabel(parts.kind, parts.number)
