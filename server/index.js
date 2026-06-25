@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 101
+const PARSER_VERSION = 102
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 
 function bbNormalizeLetters(text) {
@@ -1811,8 +1811,120 @@ function isAllCapsChapterSubtitleLine(text, line) {
   if (!isAllCapsChapterSubtitleText(text)) {
     return false
   }
+  if (isDropCapChapterSubtitleArtifact(text)) {
+    return false
+  }
   return (line?.fontSize ?? 0) >= ALL_CAPS_CHAPTER_SUBTITLE_MIN_FONT_SIZE
 }
+
+function isDropCapChapterSubtitleArtifact(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length === 0) {
+    return false
+  }
+
+  if (words.every((word) => word.replace(/[^A-Za-z]/g, "").length <= 3)) {
+    return true
+  }
+
+  if (
+    words.some((word) => /^[A-Z][a-z]{1,4}$/.test(word)) &&
+    words.length <= 5
+  ) {
+    return true
+  }
+
+  if (
+    words.length <= 4 &&
+    /^(?:I|We|He|She|They|It|My|On|In|At|To|No|So|As|By|Or|An)\b/.test(trimmed)
+  ) {
+    return true
+  }
+
+  if (/\b[A-Z]\s+[A-Z][a-z]{1,4}\b/.test(trimmed)) {
+    return true
+  }
+
+  if (/^[A-Z](?:\s+[A-Z]{1,3}){1,5}$/.test(trimmed)) {
+    return true
+  }
+
+  return false
+}
+
+function isChapterOnlyHeadingText(text) {
+  return Boolean(parseChapterOnlyHeading((text ?? "").trim()))
+}
+
+function isIntentionalWrappedChapterTitleFragment(block) {
+  const text = (block?.text ?? "").trim()
+  if (!text || isDropCapChapterSubtitleArtifact(text)) {
+    return false
+  }
+
+  const fontSize = block?.fontSize ?? 0
+
+  if (isDisplayChapterTitleText(text)) {
+    return fontSize >= DISPLAY_CHAPTER_TITLE_MIN_FONT_SIZE || block?.isHeading === true
+  }
+
+  if (
+    fontSize >= MULTILINE_CHAPTER_WRAP_MIN_FONT_SIZE &&
+    isLargeFontAllCapsChapterWrapLine(text, block)
+  ) {
+    return true
+  }
+
+  if (
+    fontSize >= DISPLAY_CHAPTER_TITLE_MIN_FONT_SIZE &&
+    isAllCapsChapterSubtitleText(text) &&
+    !isNarrativeSentenceLine(text)
+  ) {
+    return true
+  }
+
+  return false
+}
+
+function isDedicatedChapterSubtitleBlock(block) {
+  const text = (block?.text ?? "").trim()
+  if (!text || isDropCapChapterSubtitleArtifact(text)) {
+    return false
+  }
+
+  if (block?.isHeading) {
+    return isLikelyChapterSubtitleText(text)
+  }
+
+  return (
+    (block?.fontSize ?? 0) >= DISPLAY_CHAPTER_TITLE_MIN_FONT_SIZE &&
+    isDisplayChapterTitleText(text)
+  )
+}
+
+function shouldUsePrintedTocChapterSubtitle(tocSubtitle, parts) {
+  const trimmed = (tocSubtitle ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  const chapterOnlyLabel = formatChapterLabel(parts.kind, parts.number, "")
+  if (trimmed.toLowerCase() === chapterOnlyLabel.toLowerCase()) {
+    return false
+  }
+
+  if (/^(?:chapter|letter)\s+[\dIVXLCDM]+\.?$/i.test(trimmed)) {
+    return false
+  }
+
+  return !isDropCapChapterSubtitleArtifact(trimmed)
+}
+
 
 function collectFollowingAllCapsChapterSubtitleTexts(blocks, startIndex) {
   const fragments = []
@@ -2524,6 +2636,9 @@ function parseChapterHeadingWithInlineTitle(text) {
   if (!subtitle || subtitle.length > 120 || isNarrativeSentenceLine(subtitle)) {
     return null
   }
+  if (isDropCapChapterSubtitleArtifact(subtitle)) {
+    return null
+  }
 
   return {
     kind: match[1],
@@ -2564,13 +2679,24 @@ function mergeMultilineChapterTitleBlocks(blocks) {
 
     const titleFragments = []
     let cursor = index + 1
-    while (cursor < blocks.length && isWrappedChapterTitleFragment(blocks[cursor])) {
-      titleFragments.push((blocks[cursor].text ?? "").trim())
+    const chapterOnlyHeading = isChapterOnlyHeadingText(block.text)
+    while (cursor < blocks.length) {
+      const candidate = blocks[cursor]
+      const acceptsFragment = chapterOnlyHeading
+        ? isIntentionalWrappedChapterTitleFragment(candidate)
+        : isWrappedChapterTitleFragment(candidate)
+      if (!acceptsFragment) {
+        break
+      }
+      titleFragments.push((candidate.text ?? "").trim())
       cursor += 1
     }
 
     const rawSubtitle = titleFragments.join(" ").replace(/\s+/g, " ").trim()
-    const subtitle = rawSubtitle ? formatInferredTitleText(rawSubtitle) : ""
+    const subtitle =
+      rawSubtitle && !isDropCapChapterSubtitleArtifact(rawSubtitle)
+        ? formatInferredTitleText(rawSubtitle)
+        : ""
     const displayTitle = formatChapterLabel(parts.kind, parts.number, subtitle)
 
     merged.push({
@@ -2669,6 +2795,7 @@ function mergeTrailingChapterTitleFragments(blocks) {
 
     if (
       block.isHeading &&
+      !isChapterOnlyHeadingText(text) &&
       (CHAPTER_WITH_SUBTITLE_REGEX.test(text) || parseChapterOnlyHeading(text))
     ) {
       const tailFragments = []
@@ -8874,7 +9001,7 @@ function supplementBannerlessPrintedChapters(blocks, printedToc) {
       number: parts.number,
       boundaryKind: "chapter",
     })
-    if (!tocTitle) {
+    if (!shouldUsePrintedTocChapterSubtitle(tocTitle, parts)) {
       return block
     }
 
@@ -8897,59 +9024,65 @@ function mergeChapterSubtitleBlocks(blocks, printedToc = null) {
     const parts = block.isHeading ? parseChapterOnlyHeading(text) : null
 
     if (parts && index + 1 < blocks.length) {
-      const nextBlock = blocks[index + 1]
+      const isChapterOnly = isChapterOnlyHeadingText(text)
       const tocSubtitle = printedToc
         ? lookupPrintedTocTitle(printedToc, {
             number: parts.number,
             boundaryKind: "chapter",
           })
         : null
-      const embeddedSubtitle = extractEmbeddedChapterSubtitle(nextBlock?.text, {
-        tocSubtitle,
-      })
-      if (embeddedSubtitle && !nextBlock?.isHeading) {
-        const displayTitle = formatChapterLabel(
-          parts.kind,
-          parts.number,
-          embeddedSubtitle.subtitle
-        )
-        merged.push({
-          ...block,
-          text: displayTitle,
-          chapterTitle: displayTitle,
-          fontSize: CHAPTER_DISPLAY_FONT_SIZE,
-          isHeading: true,
-          isChapterStart: true,
-        })
-        merged.push({
-          ...nextBlock,
-          text: embeddedSubtitle.prose,
-          isHeading: false,
-          isChapterStart: false,
-        })
-        index += 1
+
+      if (isChapterOnly) {
+        if (tocSubtitle && shouldUsePrintedTocChapterSubtitle(tocSubtitle, parts)) {
+          const displayTitle = formatChapterLabel(parts.kind, parts.number, tocSubtitle)
+          merged.push({
+            ...block,
+            text: displayTitle,
+            chapterTitle: displayTitle,
+            fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+            isHeading: true,
+            isChapterStart: true,
+          })
+        } else {
+          const displayTitle = formatChapterLabel(parts.kind, parts.number, "")
+          merged.push({
+            ...block,
+            text: displayTitle,
+            chapterTitle: displayTitle,
+          })
+        }
         continue
       }
 
-      const { fragments: allCapsFragments, cursor: afterAllCaps } =
-        collectFollowingAllCapsChapterSubtitleTexts(blocks, index + 1)
+      const nextBlock = blocks[index + 1]
 
-      if (allCapsFragments.length > 0) {
-        const displayTitle = formatChapterLabel(
-          parts.kind,
-          parts.number,
-          allCapsFragments.join(" ")
-        )
-        merged.push({
-          ...block,
-          text: displayTitle,
-          chapterTitle: displayTitle,
-          fontSize: CHAPTER_DISPLAY_FONT_SIZE,
-          isHeading: true,
-          isChapterStart: true,
+      if (tocSubtitle && shouldUsePrintedTocChapterSubtitle(tocSubtitle, parts)) {
+        const embeddedSubtitle = extractEmbeddedChapterSubtitle(nextBlock?.text, {
+          tocSubtitle,
         })
-        index = afterAllCaps - 1
-        continue
+        if (embeddedSubtitle && !nextBlock?.isHeading) {
+          const displayTitle = formatChapterLabel(
+            parts.kind,
+            parts.number,
+            embeddedSubtitle.subtitle
+          )
+          merged.push({
+            ...block,
+            text: displayTitle,
+            chapterTitle: displayTitle,
+            fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+            isHeading: true,
+            isChapterStart: true,
+          })
+          merged.push({
+            ...nextBlock,
+            text: embeddedSubtitle.prose,
+            isHeading: false,
+            isChapterStart: false,
+          })
+          index += 1
+          continue
+        }
       }
 
       const subtitleParts = []
@@ -8957,40 +9090,33 @@ function mergeChapterSubtitleBlocks(blocks, printedToc = null) {
 
       while (cursor < blocks.length) {
         const candidate = blocks[cursor]
-        const candidateText = (candidate?.text ?? "").trim()
-        if (!candidateText) {
+        if (!isDedicatedChapterSubtitleBlock(candidate)) {
           break
         }
 
-        const isSubtitle =
-          isLikelyChapterSubtitleBlock(candidate) ||
-          ((candidate?.fontSize ?? 0) >= DISPLAY_CHAPTER_TITLE_MIN_FONT_SIZE &&
-            isDisplayChapterTitleText(candidateText))
-
-        if (!isSubtitle) {
-          break
-        }
-
-        subtitleParts.push(candidateText)
+        subtitleParts.push((candidate?.text ?? "").trim())
         cursor += 1
       }
 
       if (subtitleParts.length > 0) {
-        const displayTitle = formatChapterLabel(
-          parts.kind,
-          parts.number,
-          subtitleParts.join(" ")
-        )
-        merged.push({
-          ...block,
-          text: displayTitle,
-          chapterTitle: displayTitle,
-          fontSize: CHAPTER_DISPLAY_FONT_SIZE,
-          isHeading: true,
-          isChapterStart: true,
-        })
-        index = cursor - 1
-        continue
+        const subtitle = subtitleParts.join(" ")
+        if (!isDropCapChapterSubtitleArtifact(subtitle)) {
+          const displayTitle = formatChapterLabel(
+            parts.kind,
+            parts.number,
+            subtitle
+          )
+          merged.push({
+            ...block,
+            text: displayTitle,
+            chapterTitle: displayTitle,
+            fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+            isHeading: true,
+            isChapterStart: true,
+          })
+          index = cursor - 1
+          continue
+        }
       }
 
       if (process.env.BOOKY_SUBTITLE_DEBUG === "1") {
@@ -9005,11 +9131,7 @@ function mergeChapterSubtitleBlocks(blocks, printedToc = null) {
         )
       }
 
-      const displayTitle = formatChapterLabel(
-        parts.kind,
-        parts.number,
-        tocSubtitle ?? ""
-      )
+      const displayTitle = formatChapterLabel(parts.kind, parts.number, "")
       merged.push({
         ...block,
         text: displayTitle,
@@ -9979,6 +10101,26 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
         const nextEntry = allLines[cursor]
         const nextText = nextEntry.text.trim()
         const nextFontSize = nextEntry.line.fontSize ?? 0
+        const chapterOnlyHeading = isChapterOnlyHeadingText(text)
+
+        if (chapterOnlyHeading) {
+          if (
+            nextFontSize >= MULTILINE_CHAPTER_WRAP_MIN_FONT_SIZE &&
+            isLargeFontAllCapsChapterWrapLine(nextText, nextEntry.line)
+          ) {
+            titleFragments.push(nextText)
+            cursor += 1
+            continue
+          }
+
+          if (isDisplayChapterTitleLine(nextText, nextEntry.line)) {
+            titleFragments.push(nextText)
+            cursor += 1
+            continue
+          }
+
+          break
+        }
 
         if (
           nextFontSize >= MULTILINE_CHAPTER_WRAP_MIN_FONT_SIZE &&
@@ -10031,10 +10173,12 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       const subtitle = titleFragments.length
         ? formatInferredTitleText(titleFragments.join(" ").replace(/\s+/g, " ").trim())
         : ""
+      const safeSubtitle =
+        subtitle && !isDropCapChapterSubtitleArtifact(subtitle) ? subtitle : ""
       const displayTitle = formatChapterLabel(
         chapterOnlyParts.kind,
         chapterOnlyParts.number,
-        subtitle
+        safeSubtitle
       )
 
       pushHeadingBlock(
