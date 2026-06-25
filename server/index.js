@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 99
+const PARSER_VERSION = 100
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 
 function bbNormalizeLetters(text) {
@@ -3783,6 +3783,9 @@ const EMBEDDED_PREFACE_PAGE_MARKER_REGEX = /\bPREFACE\s+[ivxlcdm]{1,4}\b/gi
 
 const STANDALONE_PAGE_NUMBER_REGEX = /^-?\s*\d+\s*-?\s*$/
 const STANDALONE_ROMAN_PAGE_MARKER_REGEX = /^[ivxlcdm]{1,4}$/i
+const VALID_ROMAN_NUMERAL_REGEX =
+  /^(?:M{0,3})(?:CM|CD|D?C{0,3})(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3})$/i
+const AMBIGUOUS_SINGLE_ROMAN_LETTERS = new Set(["I", "V", "X", "L", "C", "D", "M"])
 const ROMAN_PAGE_MARKER_CLUSTER_REGEX = /^[ivxlcdm]{1,4}(?:\s+[ivxlcdm]{1,4}){0,3}$/i
 const STANDALONE_RUNNING_HEAD_REGEX =
   /^\d{1,3}\s+(?:chapter|letter)\s+(?:[IVXLCDM]+|\d+)$/i
@@ -3791,6 +3794,57 @@ const ROMAN_SECTION_RUNNING_HEAD_REGEX =
 const EMBEDDED_ROMAN_SECTION_RUNNING_HEAD_REGEX =
   /\b[IVXLCDM]{1,4}\s+(?:INTRODUCTION|PREFACE|PROLOGUE|EPILOGUE|CONCLUSION)\b/gi
 const TOC_HEADER_LINE_REGEX = /^-\s*\d+\s*-\s*.+$/
+
+function parseValidStandaloneRomanNumeral(text) {
+  const trimmed = (text ?? "").trim().replace(/\.$/, "")
+  if (!STANDALONE_ROMAN_PAGE_MARKER_REGEX.test(trimmed)) {
+    return null
+  }
+  const upper = trimmed.toUpperCase()
+  if (!VALID_ROMAN_NUMERAL_REGEX.test(upper)) {
+    return null
+  }
+  return upper
+}
+
+function isRomanPartOpenerLine(
+  text,
+  { distinctPageCount = 1, fontSize = 0, centered = false } = {}
+) {
+  const roman = parseValidStandaloneRomanNumeral(text)
+  if (!roman) {
+    return false
+  }
+
+  if (distinctPageCount >= RUNNING_HEADER_MIN_PAGES) {
+    return false
+  }
+
+  if (roman.length >= 2) {
+    return (
+      fontSize >= CHAPTER_HEADING_MIN_FONT_SIZE ||
+      centered ||
+      distinctPageCount <= 2
+    )
+  }
+
+  if (!AMBIGUOUS_SINGLE_ROMAN_LETTERS.has(roman)) {
+    return false
+  }
+
+  return distinctPageCount === 1 && fontSize >= 14
+}
+
+function countDistinctPagesForLineText(allLines, text) {
+  const normalized = (text ?? "").trim()
+  const pages = new Set()
+  for (const entry of allLines ?? []) {
+    if ((entry.text ?? "").trim() === normalized) {
+      pages.add(entry.pageIndex)
+    }
+  }
+  return pages.size
+}
 
 const MARGIN_CALLOUT_MAX_WORDS = 9
 const MARGIN_CALLOUT_MAX_CHARS = 52
@@ -5446,7 +5500,8 @@ function explainShouldDropExtractedLine(
   occurrencesOnThisPage = 1,
   isCentered = false,
   pageIndex = 0,
-  lineFirstPageIndex = null
+  lineFirstPageIndex = null,
+  fontSize = 0
 ) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
@@ -5493,6 +5548,15 @@ function explainShouldDropExtractedLine(
     return { drop: true, reason: "standalone-page-number" }
   }
   if (STANDALONE_ROMAN_PAGE_MARKER_REGEX.test(trimmed)) {
+    if (
+      isRomanPartOpenerLine(trimmed, {
+        distinctPageCount,
+        fontSize,
+        centered: isCentered,
+      })
+    ) {
+      return { drop: false, reason: "roman-part-opener-keep" }
+    }
     return { drop: true, reason: "standalone-roman-page-marker" }
   }
   if (ROMAN_PAGE_MARKER_CLUSTER_REGEX.test(trimmed)) {
@@ -5567,7 +5631,8 @@ function shouldDropExtractedLine(
   occurrencesOnThisPage = 1,
   isCentered = false,
   pageIndex = 0,
-  lineFirstPageIndex = null
+  lineFirstPageIndex = null,
+  fontSize = 0
 ) {
   return explainShouldDropExtractedLine(
     text,
@@ -5575,7 +5640,8 @@ function shouldDropExtractedLine(
     occurrencesOnThisPage,
     isCentered,
     pageIndex,
-    lineFirstPageIndex
+    lineFirstPageIndex,
+    fontSize
   ).drop
 }
 
@@ -7995,7 +8061,8 @@ async function extractPdfStructure(
           occurrencesOnThisPage,
           Boolean(line.centered),
           pageIndex,
-          lineFirstPageIndex
+          lineFirstPageIndex,
+          line.fontSize ?? 0
         )
         bbLog("shouldDropExtractedLine", {
           pageIndex,
@@ -8022,7 +8089,8 @@ async function extractPdfStructure(
           occurrencesOnThisPage,
           Boolean(line.centered),
           pageIndex,
-          lineFirstPageIndex
+          lineFirstPageIndex,
+          line.fontSize ?? 0
         ) ||
         (normalizedForDropCheck &&
           normalizedForDropCheck !== line.text.trim() &&
@@ -8032,10 +8100,16 @@ async function extractPdfStructure(
             occurrencesOnThisPage,
             Boolean(line.centered),
             pageIndex,
-            lineFirstPageIndex
+            lineFirstPageIndex,
+            line.fontSize ?? 0
           )) ||
         (isStandalonePageNumberText(normalizedForDropCheck) &&
-          !preserveSaddlebackLayoutLine))
+          !preserveSaddlebackLayoutLine &&
+          !isRomanPartOpenerLine(normalizedForDropCheck, {
+            distinctPageCount,
+            fontSize: line.fontSize ?? 0,
+            centered: Boolean(line.centered),
+          })))
       ) {
         if (bbMatchesPhrase(line.text)) {
           bbLog("extractPdfStructure-filter", {
@@ -8132,9 +8206,23 @@ async function extractLinesByPosition(buffer, options = {}) {
 }
 
 function isStandaloneChapterNumber(text, block) {
-  const chapterNumberRegex =
-    /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
   const trimmed = (text ?? "").trim()
+  const roman = parseValidStandaloneRomanNumeral(trimmed)
+  if (roman) {
+    if (block?.isChapterStart) {
+      return true
+    }
+    if (!block?.isHeading) {
+      return false
+    }
+    if (roman.length >= 2) {
+      return (block.fontSize ?? 0) >= CHAPTER_HEADING_MIN_FONT_SIZE
+    }
+    return (block.fontSize ?? 0) >= 14
+  }
+
+  const chapterNumberRegex =
+    /^(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
   if (!chapterNumberRegex.test(trimmed)) {
     return false
   }
@@ -8155,6 +8243,14 @@ function qualifiesAsEmittedHeading(text, { fontSize = 0 } = {}) {
 
   if (/^[a-z(\u201c]/.test(trimmed)) {
     return false
+  }
+
+  const roman = parseValidStandaloneRomanNumeral(trimmed)
+  if (roman) {
+    if (roman.length >= 2) {
+      return fontSize >= CHAPTER_HEADING_MIN_FONT_SIZE
+    }
+    return fontSize >= 14
   }
 
   const core = trimmed.replace(/[.!?]+$/, "")
@@ -8211,6 +8307,14 @@ function isLikelyChapterNumberLine(text, line) {
     return false
   }
 
+  const roman = parseValidStandaloneRomanNumeral(trimmed)
+  if (roman) {
+    if (roman.length >= 2) {
+      return (line.fontSize ?? 0) >= CHAPTER_HEADING_MIN_FONT_SIZE
+    }
+    return (line.fontSize ?? 0) >= 14
+  }
+
   const core = trimmed.replace(/[.!?]+$/, "")
   const wordCount = trimmed.split(/\s+/).filter(Boolean).length
   if (
@@ -8223,7 +8327,7 @@ function isLikelyChapterNumberLine(text, line) {
   }
 
   const chapterNumberRegex =
-    /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
+    /^(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
   if (!chapterNumberRegex.test(trimmed)) {
     return false
   }
@@ -9747,7 +9851,12 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
 
     if (
       isStandalonePageNumberText(text) &&
-      !isSaddlebackChapterNumberLine(text, line, entry.pageMetrics)
+      !isSaddlebackChapterNumberLine(text, line, entry.pageMetrics) &&
+      !isRomanPartOpenerLine(text, {
+        distinctPageCount: countDistinctPagesForLineText(allLines, text),
+        fontSize: line.fontSize ?? 0,
+        centered: Boolean(line.centered),
+      })
     ) {
       pendingConnective = null
       index += 1
@@ -9759,6 +9868,37 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       isRecurringBookTitleRunningHeadLine(text)
     ) {
       pendingConnective = null
+      index += 1
+      continue
+    }
+
+    const romanPart = parseValidStandaloneRomanNumeral(text)
+    if (
+      romanPart &&
+      isRomanPartOpenerLine(text, {
+        distinctPageCount: countDistinctPagesForLineText(allLines, text),
+        fontSize: line.fontSize ?? 0,
+        centered: Boolean(line.centered),
+      })
+    ) {
+      pendingConnective = null
+      pushHeadingBlock(
+        blocks,
+        {
+          text: romanPart,
+          chapterTitle: romanPart,
+          romanPartNumber: romanPart,
+          isHeading: true,
+          fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+          isChapterStart: true,
+          centered: Boolean(line.centered),
+          textAlign: line.centered ? "center" : undefined,
+          chapterId: null,
+        },
+        "standaloneRomanPart",
+        entry.pageIndex,
+        line
+      )
       index += 1
       continue
     }
