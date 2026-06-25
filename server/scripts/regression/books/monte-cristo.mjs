@@ -88,6 +88,18 @@ export default {
       },
     ],
     [
+      "chapter 55 Major Cavalcanti",
+      (ctx) => {
+        const chapter = ctx.chapters.find((entry) =>
+          /Chapter\s+55\s*-\s*Major Cavalcanti/i.test(entry.title ?? "")
+        )
+        const heading = ctx.blocks.find((block) =>
+          /^Chapter\s+55\s*-\s*Major Cavalcanti$/i.test((block.text ?? "").trim())
+        )
+        return Boolean(chapter) && heading?.isHeading === true
+      },
+    ],
+    [
       "chapter 8 Château d'If",
       (ctx) => {
         const chapter = ctx.chapters.find((entry) =>

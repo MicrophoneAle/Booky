@@ -38,7 +38,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 94
+const PARSER_VERSION = 95
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 
 function bbNormalizeLetters(text) {
@@ -7916,7 +7916,136 @@ function looksLikeChapterOpeningProse(text) {
   return false
 }
 
-function extractEmbeddedChapterSubtitle(text) {
+function normalizeChapterSubtitleForMatch(text) {
+  return (text ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+    .replace(/['\u2018\u2019]/g, "'")
+}
+
+function looksLikeFollowOnChapterBody(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (looksLikeChapterOpeningProse(trimmed)) {
+    return true
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 4) {
+    return false
+  }
+  if (/^[a-z]/.test(trimmed) && !/^e\.?\s/i.test(trimmed)) {
+    return true
+  }
+  if (/^[A-Z]/.test(trimmed) && /[a-z]/.test(trimmed)) {
+    return true
+  }
+
+  return false
+}
+
+function splitEmbeddedSubtitleUsingPrintedToc(text, tocSubtitle) {
+  const trimmed = (text ?? "").trim()
+  const tocWords = (tocSubtitle ?? "").trim().split(/\s+/).filter(Boolean)
+  if (!trimmed || tocWords.length === 0) {
+    return null
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length <= tocWords.length) {
+    return null
+  }
+
+  const prefix = words.slice(0, tocWords.length).join(" ")
+  if (
+    normalizeChapterSubtitleForMatch(prefix) !==
+    normalizeChapterSubtitleForMatch(tocSubtitle)
+  ) {
+    return null
+  }
+
+  const prose = words.slice(tocWords.length).join(" ")
+  if (!looksLikeFollowOnChapterBody(prose)) {
+    return null
+  }
+
+  return {
+    subtitle: formatInferredTitleText(tocSubtitle),
+    prose,
+  }
+}
+
+const EMBEDDED_SUBTITLE_INTERIOR_REJECT_WORDS = new Set([
+  "who",
+  "which",
+  "that",
+  "when",
+  "where",
+  "if",
+  "had",
+  "was",
+  "were",
+  "is",
+  "are",
+  "has",
+  "have",
+  "been",
+  "being",
+  "could",
+  "would",
+  "should",
+  "will",
+  "shall",
+  "may",
+  "might",
+  "must",
+  "upon",
+  "into",
+  "onto",
+  "over",
+  "under",
+  "after",
+  "before",
+  "because",
+  "although",
+  "while",
+  "until",
+  "unless",
+  "since",
+])
+
+function isEmbeddedSubtitlePrefixValid(subtitle, { tocSubtitle = null } = {}) {
+  const trimmed = (subtitle ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  if (
+    tocSubtitle &&
+    normalizeChapterSubtitleForMatch(trimmed) ===
+      normalizeChapterSubtitleForMatch(tocSubtitle)
+  ) {
+    return true
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length >= 2) {
+    for (let wordIndex = 1; wordIndex < words.length; wordIndex += 1) {
+      const lower = words[wordIndex].toLowerCase().replace(/[^a-z]/g, "")
+      if (EMBEDDED_SUBTITLE_INTERIOR_REJECT_WORDS.has(lower)) {
+        return false
+      }
+    }
+    return true
+  }
+
+  return false
+}
+
+function extractEmbeddedChapterSubtitle(text, { tocSubtitle = null } = {}) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
     return null
@@ -7927,19 +8056,45 @@ function extractEmbeddedChapterSubtitle(text) {
     return null
   }
 
-  for (let end = 1; end <= Math.min(10, words.length - 1); end += 1) {
+  if (tocSubtitle) {
+    const tocSplit = splitEmbeddedSubtitleUsingPrintedToc(trimmed, tocSubtitle)
+    if (tocSplit) {
+      return tocSplit
+    }
+  }
+
+  const tocKey = tocSubtitle ? normalizeChapterSubtitleForMatch(tocSubtitle) : null
+  let best = null
+  const maxEnd = Math.min(14, words.length - 1)
+
+  for (let end = maxEnd; end >= 1; end -= 1) {
     const subtitle = words.slice(0, end).join(" ")
     const prose = words.slice(end).join(" ")
     if (!isLikelyChapterSubtitleText(subtitle)) {
       continue
     }
-    if (!looksLikeChapterOpeningProse(prose)) {
+    if (!isEmbeddedSubtitlePrefixValid(subtitle, { tocSubtitle })) {
       continue
     }
-    return { subtitle, prose }
+    if (!looksLikeFollowOnChapterBody(prose)) {
+      continue
+    }
+
+    const candidate = {
+      subtitle: formatInferredTitleText(subtitle),
+      prose,
+    }
+
+    if (tocKey && normalizeChapterSubtitleForMatch(candidate.subtitle) === tocKey) {
+      return candidate
+    }
+
+    if (!best) {
+      best = candidate
+    }
   }
 
-  return null
+  return best
 }
 
 function chapterHeadingAlreadyHasSubtitle(text) {
@@ -7984,7 +8139,7 @@ function supplementBannerlessPrintedChapters(blocks, printedToc) {
   })
 }
 
-function mergeChapterSubtitleBlocks(blocks) {
+function mergeChapterSubtitleBlocks(blocks, printedToc = null) {
   const merged = []
 
   for (let index = 0; index < blocks.length; index += 1) {
@@ -7994,7 +8149,15 @@ function mergeChapterSubtitleBlocks(blocks) {
 
     if (parts && index + 1 < blocks.length) {
       const nextBlock = blocks[index + 1]
-      const embeddedSubtitle = extractEmbeddedChapterSubtitle(nextBlock?.text)
+      const tocSubtitle = printedToc
+        ? lookupPrintedTocTitle(printedToc, {
+            number: parts.number,
+            boundaryKind: "chapter",
+          })
+        : null
+      const embeddedSubtitle = extractEmbeddedChapterSubtitle(nextBlock?.text, {
+        tocSubtitle,
+      })
       if (embeddedSubtitle && !nextBlock?.isHeading) {
         const displayTitle = formatChapterLabel(
           parts.kind,
@@ -8093,7 +8256,11 @@ function mergeChapterSubtitleBlocks(blocks) {
         )
       }
 
-      const displayTitle = formatChapterLabel(parts.kind, parts.number)
+      const displayTitle = formatChapterLabel(
+        parts.kind,
+        parts.number,
+        tocSubtitle ?? ""
+      )
       merged.push({
         ...block,
         text: displayTitle,
@@ -9901,7 +10068,7 @@ function normalizeCenteredDecorativeProseBlocks(blocks) {
   })
 }
 
-function applyBlockTransformPipeline(blocks) {
+function applyBlockTransformPipeline(blocks, { printedToc = null } = {}) {
   return normalizeCenteredDecorativeProseBlocks(
     normalizeChapterHeadingFontSizes(
       promoteFableStoryTitleBlocks(
@@ -9915,7 +10082,8 @@ function applyBlockTransformPipeline(blocks) {
                       mergeMultilineChapterTitleBlocks(
                         splitDialogueHeavyBlocks(splitEmbeddedPartHeadings(blocks))
                       )
-                    )
+                    ),
+                    printedToc
                   )
                 )
               )
@@ -10054,6 +10222,8 @@ async function parsePdfBuffer(
     pageTotal: numPages,
   })
 
+  const printedTocFromPages = extractPrintedTocFromPageData(pageData)
+
   let blocks = applyBlockTransformPipeline(
     buildBlocksFromLines(pageData, headingStrings, {
       onProgress(current, total) {
@@ -10066,7 +10236,8 @@ async function parsePdfBuffer(
           percent: structurePhasePercent("lines", current, total),
         })
       },
-    })
+    }),
+    { printedToc: printedTocFromPages }
   )
 
   reportProgress({
@@ -10124,7 +10295,7 @@ async function parsePdfBuffer(
   })
 
   const printedToc =
-    extractPrintedTocFromPageData(pageData) ?? extractPrintedTocLookup(blocks)
+    printedTocFromPages ?? extractPrintedTocLookup(blocks)
   blocks = excludePrintedTocBlocks(blocks)
   blocks = normalizeFrontAndBackMatterBlocks(blocks)
   blocks = injectStormlightPreludeHeading(blocks)
