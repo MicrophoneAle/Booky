@@ -178,6 +178,7 @@ function ingestPrintedTocLine(text, state) {
     state.chapters.set(key, title)
     state.ordered.push({ kind: "chapter", key, title, label })
     state.tocEntryCount += 1
+    state.dotLeaderEntryCount += 1
     return true
   }
 
@@ -193,6 +194,7 @@ function createPrintedTocState() {
     ordered: [],
     inTocSection: false,
     tocEntryCount: 0,
+    dotLeaderEntryCount: 0,
   }
 }
 
@@ -207,6 +209,7 @@ function finalizePrintedTocState(state) {
     sections: state.sections,
     parts: state.parts,
     ordered: state.ordered,
+    isSaddlebackDotLeader: state.dotLeaderEntryCount >= 3,
   }
 }
 

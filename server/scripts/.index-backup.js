@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 101
+const PARSER_VERSION = 100
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 
 function bbNormalizeLetters(text) {
@@ -3809,7 +3809,7 @@ function parseValidStandaloneRomanNumeral(text) {
 
 function isRomanPartOpenerLine(
   text,
-  { distinctPageCount = 1, fontSize = 0, centered = false, romanNumeralsOnPage = 1 } = {}
+  { distinctPageCount = 1, fontSize = 0, centered = false } = {}
 ) {
   const roman = parseValidStandaloneRomanNumeral(text)
   if (!roman) {
@@ -3817,11 +3817,6 @@ function isRomanPartOpenerLine(
   }
 
   if (distinctPageCount >= RUNNING_HEADER_MIN_PAGES) {
-    return false
-  }
-
-  // Printed TOC pages list multiple roman numerals (e.g. Frankenstein: II, IV, VI).
-  if (romanNumeralsOnPage >= 2) {
     return false
   }
 
@@ -3838,68 +3833,6 @@ function isRomanPartOpenerLine(
   }
 
   return distinctPageCount === 1 && fontSize >= 14
-}
-
-function countRomanNumeralsOnPage(allLines, pageIndex, text) {
-  const numerals = new Set()
-  for (const entry of allLines ?? []) {
-    if (entry.pageIndex !== pageIndex) {
-      continue
-    }
-    const roman = parseValidStandaloneRomanNumeral(entry.text)
-    if (roman) {
-      numerals.add(roman)
-    }
-  }
-  return numerals.size
-}
-
-function romanPartOpenerHasFollowingBody(allLines, startIndex) {
-  for (
-    let index = startIndex + 1;
-    index < Math.min(startIndex + 10, allLines.length);
-    index += 1
-  ) {
-    const text = (allLines[index]?.text ?? "").trim()
-    if (!text) {
-      continue
-    }
-    if (parseValidStandaloneRomanNumeral(text)) {
-      return false
-    }
-    if (/^volume\b/i.test(text) || /^letter\b/i.test(text) || CHAPTER_PATTERN.test(text)) {
-      return false
-    }
-    if (/^contents$/i.test(text) || isPrintedTocEntryLine(text)) {
-      return false
-    }
-    if (text.length >= 48 || /^[a-z("\u201c]/.test(text)) {
-      return true
-    }
-  }
-  return false
-}
-
-function isFrontMatterRomanNumeralTocEntry(allLines, startIndex) {
-  let firstVolumeOrLetterIndex = -1
-  for (let index = 0; index < allLines.length; index += 1) {
-    const text = (allLines[index]?.text ?? "").trim()
-    if (!text || parseValidStandaloneRomanNumeral(text)) {
-      continue
-    }
-    if (
-      /^volume\s+/i.test(text) ||
-      CHAPTER_PATTERN.test(text) ||
-      /^letter\s+/i.test(text)
-    ) {
-      firstVolumeOrLetterIndex = index
-      break
-    }
-  }
-  if (firstVolumeOrLetterIndex < 0) {
-    return false
-  }
-  return startIndex < firstVolumeOrLetterIndex
 }
 
 function countDistinctPagesForLineText(allLines, text) {
@@ -4466,10 +4399,18 @@ function isRecurringBookTitleRunningHeadLine(text) {
   if (!trimmed) {
     return false
   }
-  // Saddleback editions repeat this exact running head in the margin.
-  // Do not generalize to other all-caps lines — that drops real chapter
-  // headings such as "CHAPTER I" / "CHAPTER ONE" in Moby Dick and Narnia.
-  return /^THE JUNGLE BOOK$/i.test(trimmed)
+  if (/^THE JUNGLE BOOK$/i.test(trimmed)) {
+    return true
+  }
+  if (!/^[A-Z][A-Z\s'’"“”!.,\u2013\u2014-]{6,60}$/.test(trimmed)) {
+    return false
+  }
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 8 || letters !== letters.toUpperCase()) {
+    return false
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  return words.length >= 2 && words.length <= 6
 }
 
 function isSaddlebackChapterNumberLine(text, line, pageMetrics) {
@@ -9853,7 +9794,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       continue
     }
 
-    if (printedToc?.isSaddlebackDotLeader && printedToc?.chapters?.size) {
+    if (printedToc?.chapters?.size) {
       const opener = tryConsumeSaddlebackChapterOpener(
         allLines,
         index,
@@ -9934,17 +9875,10 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
     const romanPart = parseValidStandaloneRomanNumeral(text)
     if (
       romanPart &&
-      !isFrontMatterRomanNumeralTocEntry(allLines, index) &&
-      romanPartOpenerHasFollowingBody(allLines, index) &&
       isRomanPartOpenerLine(text, {
         distinctPageCount: countDistinctPagesForLineText(allLines, text),
         fontSize: line.fontSize ?? 0,
         centered: Boolean(line.centered),
-        romanNumeralsOnPage: countRomanNumeralsOnPage(
-          allLines,
-          entry.pageIndex,
-          text
-        ),
       })
     ) {
       pendingConnective = null
