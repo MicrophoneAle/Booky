@@ -1135,6 +1135,39 @@
   color: inherit;
 }
 
+.book-page__chapter-opener {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0 0 0.45rem;
+}
+
+.book-page__chapter-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.15rem 0.35rem;
+  border: 2px solid currentColor;
+  font-family: var(--ff-heading, var(--font-heading));
+  font-size: max(1.1rem, calc(var(--fs-body, 10px) * 1.8));
+  font-weight: 700;
+  line-height: 1;
+}
+
+.book-page__chapter-heading--saddleback {
+  flex: 1 1 auto;
+  font-size: max(1rem, calc(var(--fs-body, 10px) * 1.55));
+  text-align: left;
+}
+
+.book-page__chapter-opener + .book-page__text,
+.book-page__chapter-opener + .book-page__text--first {
+  margin-top: 0.45rem;
+}
+
 .book-page__chapter-heading + .book-page__subtitle {
   margin-top: 0.18rem;
 }

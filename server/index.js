@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 98
+const PARSER_VERSION = 99
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 
 function bbNormalizeLetters(text) {
@@ -3120,6 +3120,16 @@ function extractTrailingYearTitleFromFileName(fileName) {
 function inferBookTitleFromEarlyBlocks(blocks) {
   const candidates = []
   const scan = blocks.slice(0, 40)
+  const titleCountByPage = new Map()
+
+  for (const block of scan) {
+    const text = (block.text ?? "").trim()
+    if (!looksLikeStandaloneBookTitle(text)) {
+      continue
+    }
+    const page = block.sourcePdfPageIndex ?? 0
+    titleCountByPage.set(page, (titleCountByPage.get(page) ?? 0) + 1)
+  }
 
   for (const block of scan) {
     const text = (block.text ?? "").trim()
@@ -3139,6 +3149,11 @@ function inferBookTitleFromEarlyBlocks(blocks) {
       continue
     }
     if (/^to\s+[A-Z]/i.test(text) && text.length < 90) {
+      continue
+    }
+
+    const page = block.sourcePdfPageIndex ?? 0
+    if ((titleCountByPage.get(page) ?? 0) >= 3) {
       continue
     }
 
@@ -3274,20 +3289,179 @@ function humanizeBookTitleFromFileName(fileName) {
   return applyBookTitleCasing(title.replace(/\s+/g, " ").trim())
 }
 
+function looksLikeStandaloneBookTitle(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 90 || trimmed.length < 6) {
+    return false
+  }
+  if (CHAPTER_PATTERN.test(trimmed)) {
+    return false
+  }
+  if (/\bcontents\b/i.test(trimmed)) {
+    return false
+  }
+  if (isAuthorBylineHeadingText(trimmed)) {
+    return false
+  }
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 2 || words.length > 12) {
+    return false
+  }
+
+  return words.every(
+    (word) =>
+      /^[A-Z][a-z]+(?:[''-][A-Z]?[a-z]+)?$/.test(word) ||
+      BOOK_TITLE_MINOR_WORDS.has(word.toLowerCase())
+  )
+}
+
+function isPublisherCatalogInEarlyBlocks(blocks) {
+  const titleCountByPage = new Map()
+
+  for (const block of blocks.slice(0, 40)) {
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      continue
+    }
+
+    const text = (block.text ?? "").trim()
+    if (!looksLikeStandaloneBookTitle(text)) {
+      continue
+    }
+
+    const page = block.sourcePdfPageIndex ?? 0
+    titleCountByPage.set(page, (titleCountByPage.get(page) ?? 0) + 1)
+  }
+
+  for (const count of titleCountByPage.values()) {
+    if (count >= 3) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function titlesRoughlyMatch(left, right) {
+  const leftKey = normalizeTitleComparisonKey(left)
+  const rightKey = normalizeTitleComparisonKey(right)
+  if (!leftKey || !rightKey) {
+    return false
+  }
+  return leftKey === rightKey || leftKey.includes(rightKey) || rightKey.includes(leftKey)
+}
+
+function stripPublisherCatalogBlocks(blocks, bookTitle) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  const bookKey = normalizeTitleComparisonKey(bookTitle)
+  if (!bookKey) {
+    return blocks
+  }
+
+  const firstChapterIndex = findFirstChapterBlockIndex(blocks)
+  const scanEnd = firstChapterIndex > 0 ? firstChapterIndex : Math.min(blocks.length, 32)
+  const titleLikeByPage = new Map()
+
+  for (let index = 0; index < scanEnd; index += 1) {
+    const block = blocks[index]
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      continue
+    }
+
+    const text = (block.text ?? "").trim()
+    if (!looksLikeStandaloneBookTitle(text)) {
+      continue
+    }
+
+    const page = block.sourcePdfPageIndex ?? 0
+    if (!titleLikeByPage.has(page)) {
+      titleLikeByPage.set(page, [])
+    }
+    titleLikeByPage.get(page).push({
+      index,
+      key: normalizeTitleComparisonKey(text),
+    })
+  }
+
+  const dropIndices = new Set()
+  const catalogPages = new Set()
+  for (const [page, entries] of titleLikeByPage.entries()) {
+    if (entries.length >= 3) {
+      catalogPages.add(page)
+    }
+  }
+
+  for (const [page, entries] of titleLikeByPage.entries()) {
+    if (!catalogPages.has(page)) {
+      continue
+    }
+
+    for (const entry of entries) {
+      const matchesBook =
+        entry.key === bookKey ||
+        entry.key.includes(bookKey) ||
+        bookKey.includes(entry.key)
+      if (!matchesBook) {
+        dropIndices.add(entry.index)
+      }
+    }
+  }
+
+  if (catalogPages.size > 0) {
+    for (let index = 0; index < scanEnd; index += 1) {
+      if (dropIndices.has(index)) {
+        continue
+      }
+
+      const block = blocks[index]
+      const page = block?.sourcePdfPageIndex ?? 0
+      if (!catalogPages.has(page)) {
+        continue
+      }
+      if (block?.type === "image" || block?.type === "image_candidate") {
+        continue
+      }
+
+      const blockKey = normalizeTitleComparisonKey(block?.text)
+      const matchesBook =
+        blockKey &&
+        (blockKey === bookKey ||
+          blockKey.includes(bookKey) ||
+          bookKey.includes(blockKey))
+      if (!matchesBook) {
+        dropIndices.add(index)
+      }
+    }
+  }
+
+  if (dropIndices.size === 0) {
+    return blocks
+  }
+
+  return blocks.filter((_, index) => !dropIndices.has(index))
+}
+
 function resolveBookTitle(parsedText, fileName = "", blocks = []) {
   const fromMeta = sanitizePdfTitle(parsedText?.info?.Title ?? "")
-  if (fromMeta && !looksLikeFilenameSlug(fromMeta)) {
+  const fromFile = humanizeBookTitleFromFileName(fileName)
+  const fromBlocks = inferBookTitleFromEarlyBlocks(blocks)
+  const catalogPresent = isPublisherCatalogInEarlyBlocks(blocks)
+
+  if (fromMeta && !looksLikeFilenameSlug(fromMeta) && !/^untitled$/i.test(fromMeta)) {
     return fromMeta
   }
 
-  const fromBlocks = inferBookTitleFromEarlyBlocks(blocks)
-  if (fromBlocks && !looksLikeFilenameSlug(fromBlocks)) {
-    return fromBlocks
+  if (fromFile && !looksLikeFilenameSlug(fromFile)) {
+    if (catalogPresent || !fromBlocks || titlesRoughlyMatch(fromFile, fromBlocks)) {
+      return fromFile
+    }
   }
 
-  const fromFile = humanizeBookTitleFromFileName(fileName)
-  if (fromFile && !looksLikeFilenameSlug(fromFile)) {
-    return fromFile
+  if (fromBlocks && !looksLikeFilenameSlug(fromBlocks)) {
+    return fromBlocks
   }
 
   const yearFromFile = extractTrailingYearTitleFromFileName(fileName)
@@ -3319,6 +3493,8 @@ function contentStartsWithBookTitle(blocks, bookTitle) {
     return false
   }
 
+  const minMatchLength = Math.max(8, Math.floor(normalizedBook.length * 0.7))
+
   for (const block of blocks.slice(0, 20)) {
     if (!block?.isHeading) {
       continue
@@ -3332,16 +3508,130 @@ function contentStartsWithBookTitle(blocks, bookTitle) {
       continue
     }
 
+    if (normalizedBlock === normalizedBook) {
+      return true
+    }
+
     if (
-      normalizedBlock === normalizedBook ||
-      normalizedBlock.includes(normalizedBook) ||
-      normalizedBook.includes(normalizedBlock)
+      normalizedBlock.length >= minMatchLength &&
+      (normalizedBlock.includes(normalizedBook) || normalizedBook.includes(normalizedBlock))
     ) {
       return true
     }
   }
 
   return false
+}
+
+function isGarbledSplitBookTitleText(text, bookTitle) {
+  const normalizedBlock = normalizeTitleComparisonKey(text)
+  const normalizedBook = normalizeTitleComparisonKey(bookTitle)
+  if (!normalizedBlock || !normalizedBook || normalizedBlock.length >= normalizedBook.length) {
+    return false
+  }
+  return (
+    normalizedBook.startsWith(normalizedBlock) ||
+    normalizedBlock === "thebook" ||
+    normalizedBlock === "the"
+  )
+}
+
+function extractTitlePageAuthorFromPageData(pageData) {
+  for (let pageIndex = 0; pageIndex < Math.min(2, pageData.length); pageIndex += 1) {
+    for (const line of pageData[pageIndex]?.lines ?? []) {
+      const text = (line.text ?? "").trim()
+      if (!text || text.length > 48) {
+        continue
+      }
+      if (/^by\s+/i.test(text)) {
+        return text
+      }
+      if (
+        /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2}$/.test(text) &&
+        !/^(?:The|Book|Jungle|Count|Gulliver|Prince|Prince|Oliver|Hound|Last|Three|Musketeers)$/i.test(
+          text
+        )
+      ) {
+        return text
+      }
+    }
+  }
+  return ""
+}
+
+function injectCoverTitlePage(
+  blocks,
+  { bookTitle, authorText = "", pageData = [], fileName = "" } = {}
+) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  const resolvedTitle =
+    bookTitle && !/^untitled$/i.test(bookTitle)
+      ? bookTitle
+      : humanizeBookTitleFromFileName(fileName)
+  if (!resolvedTitle) {
+    return blocks
+  }
+
+  const coverImageIndex = blocks.findIndex(
+    (block) =>
+      (block?.type === "image" || block?.type === "image_candidate") &&
+      (block.pageNumber ?? (block.sourcePdfPageIndex ?? 0) + 1) === 1 &&
+      block.imageRole === PDF_IMAGE_ROLE.FULL_PAGE_ILLUSTRATION
+  )
+
+  const garbledTitleIndex = blocks.findIndex(
+    (block, index) =>
+      index < 16 &&
+      block?.type !== "image" &&
+      block?.type !== "image_candidate" &&
+      isGarbledSplitBookTitleText(block?.text, resolvedTitle)
+  )
+
+  let result = [...blocks]
+  if (garbledTitleIndex >= 0) {
+    result.splice(garbledTitleIndex, 1)
+  }
+
+  const titlePageBlocks = [
+    {
+      text: resolvedTitle,
+      isHeading: true,
+      fontSize: 24,
+      textAlign: "center",
+      centered: true,
+      isTitlePage: true,
+      sourcePdfPageIndex: 0,
+    },
+  ]
+
+  const resolvedAuthor =
+    sanitizePdfAuthor(authorText) || extractTitlePageAuthorFromPageData(pageData)
+  if (resolvedAuthor && !isScannerWatermarkLine(resolvedAuthor)) {
+    titlePageBlocks.push({
+      text: /^by\s/i.test(resolvedAuthor) ? resolvedAuthor : `By ${resolvedAuthor}`,
+      isHeading: true,
+      fontSize: 13,
+      textAlign: "center",
+      centered: true,
+      isTitlePage: true,
+      sourcePdfPageIndex: 0,
+    })
+  }
+
+  if (coverImageIndex >= 0) {
+    result[coverImageIndex] = {
+      ...result[coverImageIndex],
+      isTitlePageCover: true,
+    }
+    const insertAt = coverImageIndex + 1
+    result.splice(insertAt, 0, ...titlePageBlocks)
+    return result
+  }
+
+  return [...titlePageBlocks, ...result]
 }
 
 function isDialogueAttributionFragment(text) {
@@ -8029,6 +8319,10 @@ function isChapterHeading(block) {
     return true
   }
 
+  if (block?.storyChapterNumber != null && block?.isChapterStart) {
+    return true
+  }
+
   return false
 }
 
@@ -8924,21 +9218,24 @@ function detectChapters(content, bookTitle = "") {
         let id = slugify(canonicalTitle)
         let chapterTitle = block.chapterTitle ?? rawTitle
         const isFableTitle = isFableStoryTitleBlock(block)
+        const isSaddlebackStoryTitle =
+          block.storyChapterNumber != null && block.isChapterStart
 
-        if (isFableTitle) {
+        if (isFableTitle || isSaddlebackStoryTitle) {
           isChapterStart = true
           if (seenChapterIds.has(id)) {
             id = `${id}-${currentFlatIndex}`
           }
         }
 
-        if (!isFableTitle && partLabel) {
+        if (!isFableTitle && !isSaddlebackStoryTitle && partLabel) {
           currentPartId = slugify(partLabel)
           currentPartTitle = partLabel
           id = slugify(block.chapterTitle ?? partLabel)
           chapterTitle = block.chapterTitle ?? partLabel
         } else if (
           !isFableTitle &&
+          !isSaddlebackStoryTitle &&
           currentPartId &&
           (CHAPTER_NUMBER_REGEX.test(canonicalTitle) ||
             /^(chapter|letter)\s+/i.test(canonicalTitle))
@@ -8948,6 +9245,7 @@ function detectChapters(content, bookTitle = "") {
           chapterTitle = `${currentPartTitle ?? currentPartId} — ${chapterLabel}`
         } else if (
           !isFableTitle &&
+          !isSaddlebackStoryTitle &&
           (PART_HEADING_PATTERN.test(canonicalTitle) ||
             VOLUME_HEADING_PATTERN.test(canonicalTitle))
         ) {
@@ -8962,14 +9260,17 @@ function detectChapters(content, bookTitle = "") {
             title: chapterTitle,
             pageIndex: page.pageIndex,
             blockIndex,
+            ...(block.storyChapterNumber != null
+              ? { storyChapterNumber: String(block.storyChapterNumber) }
+              : {}),
           })
           currentChapterId = id
           chapterId = id
-          if (!isFableTitle) {
+          if (!isFableTitle && !isSaddlebackStoryTitle) {
             isChapterStart = true
           }
           displayChapterTitle = chapterTitle
-        } else if (isFableTitle) {
+        } else if (isFableTitle || isSaddlebackStoryTitle) {
           chapterId = currentChapterId
           displayChapterTitle = chapterTitle
         } else {
@@ -9404,6 +9705,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
           {
             text: chapterTitle,
             chapterTitle,
+            storyChapterNumber: opener.chapterNumber,
             isHeading: true,
             fontSize: CHAPTER_DISPLAY_FONT_SIZE,
             isChapterStart: true,
@@ -10592,38 +10894,7 @@ async function parsePdfBuffer(
 
   const bookTitle = resolveBookTitle(parsedText, fileName, blocks)
 
-  if (!contentStartsWithBookTitle(blocks, bookTitle)) {
-    const authorText = sanitizePdfAuthor(parsedText?.info?.Author ?? "")
-    const synthetic = []
-
-    if (bookTitle && !looksLikeFilenameSlug(bookTitle) && !/^untitled$/i.test(bookTitle)) {
-      synthetic.push({
-        text: bookTitle,
-        isHeading: true,
-        fontSize: 20,
-        chapterId: null,
-        sourcePdfPageIndex: 0,
-      })
-    }
-
-    if (authorText) {
-      const authorLine = /^by\s/i.test(authorText) ? authorText : `By ${authorText}`
-      if (!isScannerWatermarkLine(authorLine)) {
-        synthetic.push({
-          text: authorLine,
-          isHeading: true,
-          fontSize: 13,
-          chapterId: null,
-          sourcePdfPageIndex: 0,
-        })
-      }
-    }
-
-    if (synthetic.length > 0) {
-      blocks = [...synthetic, ...blocks]
-    }
-  }
-
+  blocks = stripPublisherCatalogBlocks(blocks, bookTitle)
   blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle)
 
   reportProgress({
@@ -10686,6 +10957,13 @@ async function parsePdfBuffer(
       start: PARSE_PROGRESS_ILLUSTRATION_START_PERCENT,
       end: PARSE_PROGRESS_ILLUSTRATION_END_PERCENT,
     },
+  })
+
+  blocks = injectCoverTitlePage(blocks, {
+    bookTitle,
+    authorText: sanitizePdfAuthor(parsedText?.info?.Author ?? ""),
+    pageData,
+    fileName,
   })
 
   if (printedToc) {

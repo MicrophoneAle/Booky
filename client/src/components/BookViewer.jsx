@@ -24,6 +24,7 @@ import {
   inferBlockIsChapterStart,
   isChapterBoundaryText,
   isFableStoryTitleBlock,
+  isSaddlebackStoryChapterBlock,
   isEpigraphOrChapterOpenerProse,
   isFullPageIllustrationItem,
   normalizeImageDimensions,
@@ -83,7 +84,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 98
+const PARSER_VERSION = 99
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -1887,6 +1888,7 @@ function groupBlocksForDisplay(blocks) {
         imageRole: block.imageRole ?? null,
         boundaryKind: block.chapterMetadata?.boundaryKind ?? null,
         isChapterBoundary: Boolean(block.isChapterBoundary),
+        isTitlePageCover: Boolean(block.isTitlePageCover),
         chapterMetadata: block.chapterMetadata ?? null,
         coordinates: block.coordinates ?? null,
         dimensions: normalizeImageDimensions(block),
@@ -1901,8 +1903,26 @@ function groupBlocksForDisplay(blocks) {
     }
 
     if (block.isHeading) {
+      if (block.isTitlePage) {
+        const titlePageType =
+          /^by\s+/i.test(text) || (block.fontSize ?? 0) <= 14
+            ? /^by\s+/i.test(text)
+              ? "author"
+              : "subtitle"
+            : "title"
+        visualItems.push({
+          type: titlePageType,
+          text,
+          fontSize: block.fontSize ?? 16,
+          isTitlePage: true,
+          textAlign: block.textAlign,
+        })
+        continue
+      }
+
       const isFableTitle = isFableStoryTitleBlock(block)
-      const headingFontSize = isFableTitle ? 15 : (block.fontSize ?? 16)
+      const isSaddlebackTitle = isSaddlebackStoryChapterBlock(block)
+      const headingFontSize = isFableTitle || isSaddlebackTitle ? 15 : (block.fontSize ?? 16)
       const isChapterStart = inferBlockIsChapterStart(block)
       let headingText = text
       if (
@@ -1964,6 +1984,7 @@ function groupBlocksForDisplay(blocks) {
       const itemType =
         isChapterStart ||
         isFableTitle ||
+        isSaddlebackTitle ||
         CHAPTER_WITH_SUBTITLE_REGEX.test(headingText)
           ? "chapter"
           : resolveHeadingVisualType(headingFontSize, headingText)
@@ -1975,6 +1996,10 @@ function groupBlocksForDisplay(blocks) {
         chapterId: block.chapterId ?? null,
         chapterTitle: block.chapterTitle ?? headingText,
         isChapterStart,
+        ...(block.storyChapterNumber != null
+          ? { storyChapterNumber: block.storyChapterNumber }
+          : {}),
+        ...(isSaddlebackTitle ? { isSaddlebackChapter: true } : {}),
       })
       continue
     }
@@ -2154,6 +2179,21 @@ function appendVisualItem(body, item, previousItem = null, pageLayout = null) {
   }
 
   if (item.type === "chapter") {
+    if (item.storyChapterNumber != null) {
+      const opener = document.createElement("div")
+      opener.className = "book-page__chapter-opener"
+      const number = document.createElement("span")
+      number.className = "book-page__chapter-number"
+      number.textContent = String(item.storyChapterNumber)
+      const chapterHeading = document.createElement("h2")
+      chapterHeading.className =
+        "book-page__chapter-heading book-page__chapter-heading--saddleback"
+      chapterHeading.textContent = item.text
+      opener.append(number, chapterHeading)
+      body.appendChild(opener)
+      return
+    }
+
     const chapterHeading = document.createElement("h2")
     chapterHeading.className = "book-page__chapter-heading"
     chapterHeading.textContent = item.text
@@ -3222,6 +3262,24 @@ function BookPageContent({
           }
 
           if (item.type === "chapter") {
+            if (item.storyChapterNumber != null) {
+              return (
+                <div key={index} className="book-page__chapter-opener">
+                  <span className="book-page__chapter-number">
+                    {item.storyChapterNumber}
+                  </span>
+                  <h2 className="book-page__chapter-heading book-page__chapter-heading--saddleback">
+                    {highlightTextContent(
+                      item.text,
+                      searchQuery,
+                      highlightTracker,
+                      activeSearchOccurrence
+                    )}
+                  </h2>
+                </div>
+              )
+            }
+
             return (
               <h2 key={index} className="book-page__chapter-heading">
                 {highlightTextContent(

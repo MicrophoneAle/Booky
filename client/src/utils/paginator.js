@@ -625,6 +625,10 @@ function isPureAllCapsTitleText(text) {
   return words.length >= 1 && words.length <= 14
 }
 
+export function isSaddlebackStoryChapterBlock(block) {
+  return block?.storyChapterNumber != null && block?.isChapterStart === true
+}
+
 export function isFableStoryTitleBlock(block) {
   if (!block?.isHeading) {
     return false
@@ -710,6 +714,10 @@ export function inferBlockIsChapterStart(block) {
     return true
   }
 
+  if (isSaddlebackStoryChapterBlock(block)) {
+    return true
+  }
+
   const numericCheckRegex =
     /^(\d{1,2}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\.?$/i
   if (
@@ -760,6 +768,9 @@ export function isFrontMatterVisualType(type) {
 
 function qualifiesAsFrontMatterPlaceable(placeable) {
   const item = placeable.item
+  if (item?.isTitlePageCover && placeable.type === "image") {
+    return true
+  }
   if (isTocChapterListingText(item?.text)) {
     return false
   }
@@ -923,9 +934,19 @@ export function shouldCenterTitlePage(visualItems) {
 }
 
 export function isTitlePageVisualItems(visualItems) {
+  if (visualItems.length === 0) {
+    return false
+  }
+
+  let startIndex = 0
+  if (visualItems[0]?.type === "image" && visualItems[0]?.isTitlePageCover) {
+    startIndex = 1
+  }
+
+  const titleItems = visualItems.slice(startIndex)
   return (
-    visualItems.length > 0 &&
-    visualItems.every((item) => isFrontMatterVisualType(item.type))
+    titleItems.length > 0 &&
+    titleItems.every((item) => isFrontMatterVisualType(item.type))
   )
 }
 
@@ -954,6 +975,7 @@ export function flattenDocument(document) {
           src: block.src,
           imageRole: block.imageRole ?? null,
           isChapterBoundary: Boolean(block.isChapterBoundary),
+          isTitlePageCover: Boolean(block.isTitlePageCover),
           boundaryKind: block.chapterMetadata?.boundaryKind ?? null,
           chapterMetadata: {
             ...(block.chapterMetadata ?? {}),
@@ -982,6 +1004,10 @@ export function flattenDocument(document) {
           ? block.chapterTitle ?? chapterTitleById[chapterId] ?? null
           : null,
         isChapterStart: inferBlockIsChapterStart(block),
+        ...(block.storyChapterNumber != null
+          ? { storyChapterNumber: block.storyChapterNumber }
+          : {}),
+        ...(block.isTitlePage ? { isTitlePage: true } : {}),
         ...(block.isIndented ? { isIndented: true } : {}),
         ...(block.textAlign === "center" ? { textAlign: "center" } : {}),
         ...(block.bold ? { bold: true } : {}),
