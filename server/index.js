@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 102
+const PARSER_VERSION = 103
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 
 function bbNormalizeLetters(text) {
@@ -1828,29 +1828,27 @@ function isDropCapChapterSubtitleArtifact(text) {
     return false
   }
 
-  if (words.every((word) => word.replace(/[^A-Za-z]/g, "").length <= 3)) {
+  if (/\b[A-Z]\s+[A-Z][a-z]{1,4}\b/.test(trimmed)) {
+    return true
+  }
+
+  if (/^[A-Z](?:\s+[A-Z]{1,3}){1,5}$/.test(trimmed)) {
     return true
   }
 
   if (
-    words.some((word) => /^[A-Z][a-z]{1,4}$/.test(word)) &&
-    words.length <= 5
+    words.length <= 3 &&
+    words.every((word) => word.replace(/[^A-Za-z]/g, "").length <= 3) &&
+    words.some((word) => word.replace(/[^A-Za-z]/g, "").length <= 2)
   ) {
     return true
   }
 
   if (
     words.length <= 4 &&
-    /^(?:I|We|He|She|They|It|My|On|In|At|To|No|So|As|By|Or|An)\b/.test(trimmed)
+    /^(?:I|We|He|She|They|It|My|Mr\.?|Mrs\.?|Miss|When|Had)\s+/i.test(trimmed) &&
+    trimmed.length <= 24
   ) {
-    return true
-  }
-
-  if (/\b[A-Z]\s+[A-Z][a-z]{1,4}\b/.test(trimmed)) {
-    return true
-  }
-
-  if (/^[A-Z](?:\s+[A-Z]{1,3}){1,5}$/.test(trimmed)) {
     return true
   }
 
@@ -1922,7 +1920,7 @@ function shouldUsePrintedTocChapterSubtitle(tocSubtitle, parts) {
     return false
   }
 
-  return !isDropCapChapterSubtitleArtifact(trimmed)
+  return true
 }
 
 
@@ -10101,26 +10099,6 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
         const nextEntry = allLines[cursor]
         const nextText = nextEntry.text.trim()
         const nextFontSize = nextEntry.line.fontSize ?? 0
-        const chapterOnlyHeading = isChapterOnlyHeadingText(text)
-
-        if (chapterOnlyHeading) {
-          if (
-            nextFontSize >= MULTILINE_CHAPTER_WRAP_MIN_FONT_SIZE &&
-            isLargeFontAllCapsChapterWrapLine(nextText, nextEntry.line)
-          ) {
-            titleFragments.push(nextText)
-            cursor += 1
-            continue
-          }
-
-          if (isDisplayChapterTitleLine(nextText, nextEntry.line)) {
-            titleFragments.push(nextText)
-            cursor += 1
-            continue
-          }
-
-          break
-        }
 
         if (
           nextFontSize >= MULTILINE_CHAPTER_WRAP_MIN_FONT_SIZE &&
