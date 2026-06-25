@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 97
+const PARSER_VERSION = 98
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 
 function bbNormalizeLetters(text) {
@@ -4032,7 +4032,248 @@ function isSpacedRunningHeaderLine(text) {
 
 const EMBEDDED_RUNNING_HEADER_REGEX =
   /\s+(?:THE[A-Z0-9"“”'.,\u2013\u2014-]{8,80}|[A-Z][A-Z0-9"“”'.,\u2013\u2014-\s]{8,80})\s+\d{1,4}\s+/g
+const STORY_SECTION_RUNNING_HEAD_REGEX = /^.{1,80}\s•\s*\d{1,3}$/
+const EMBEDDED_STORY_SECTION_RUNNING_HEAD_REGEX = /\s+[^.!?\n]{1,72}\s•\s*\d{1,3}\s+/g
+const EMBEDDED_RECURRING_BOOK_TITLE_REGEX = /\bTHE JUNGLE BOOK\b/gi
+const SADDLEBACK_CHAPTER_DIGIT_MIN_FONT = 30
 const EMBEDDED_CHAPTER_PLACEHOLDER_REGEX = /\bCHAPTER\s*HEADING\s*GOES\s*HERE\b/gi
+
+function isStorySectionRunningHeadLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!STORY_SECTION_RUNNING_HEAD_REGEX.test(trimmed)) {
+    return false
+  }
+  if (/[.!?]/.test(trimmed)) {
+    return false
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  return words.length >= 2 && words.length <= 10
+}
+
+function isRecurringBookTitleRunningHeadLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  if (/^THE JUNGLE BOOK$/i.test(trimmed)) {
+    return true
+  }
+  if (!/^[A-Z][A-Z\s'’"“”!.,\u2013\u2014-]{6,60}$/.test(trimmed)) {
+    return false
+  }
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 8 || letters !== letters.toUpperCase()) {
+    return false
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  return words.length >= 2 && words.length <= 6
+}
+
+function isSaddlebackChapterNumberLine(text, line, pageMetrics) {
+  const trimmed = (text ?? "").trim()
+  if (!/^\d{1,2}$/.test(trimmed)) {
+    return false
+  }
+  const fontSize = line?.fontSize ?? 0
+  const bodySize = pageMetrics?.bodyFontSize ?? 12
+  return fontSize >= Math.max(SADDLEBACK_CHAPTER_DIGIT_MIN_FONT, bodySize * 2.2)
+}
+
+function isSaddlebackTitleFragmentLine(text, line, pageMetrics) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 56) {
+    return false
+  }
+  if (/^\d{1,3}$/.test(trimmed)) {
+    return false
+  }
+  if (isStorySectionRunningHeadLine(trimmed) || isRecurringBookTitleRunningHeadLine(trimmed)) {
+    return false
+  }
+  const fontSize = line?.fontSize ?? 0
+  const bodySize = pageMetrics?.bodyFontSize ?? 12
+  if (fontSize < Math.max(18, bodySize * 1.45)) {
+    return false
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 1 || words.length > 5) {
+    return false
+  }
+  if (
+    looksLikeChapterOpeningProse(trimmed) &&
+    (words.length > 4 || fontSize < Math.max(20, bodySize * 1.8))
+  ) {
+    return false
+  }
+  return /^[A-Z"'\u201c]/.test(trimmed)
+}
+
+function isSaddlebackLayoutPreservationLine(line, pageLines) {
+  const text = (line?.text ?? "").trim()
+  if (!text) {
+    return false
+  }
+  const pageMetrics = computePageLineMetrics(pageLines ?? [])
+  return (
+    isSaddlebackChapterNumberLine(text, line, pageMetrics) ||
+    isSaddlebackTitleFragmentLine(text, line, pageMetrics)
+  )
+}
+
+function normalizeSaddlebackTitleText(text) {
+  return (text ?? "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function titlesMatchSaddlebackOpener(combined, expectedTitle) {
+  const combinedNorm = normalizeSaddlebackTitleText(combined)
+  const expectedNorm = normalizeSaddlebackTitleText(expectedTitle)
+  if (!combinedNorm || !expectedNorm) {
+    return false
+  }
+  if (
+    expectedNorm.startsWith(combinedNorm) ||
+    combinedNorm.startsWith(expectedNorm)
+  ) {
+    return true
+  }
+  const expectedWords = expectedNorm.split(/\s+/).filter(Boolean)
+  const combinedWords = combinedNorm.split(/\s+/).filter(Boolean)
+  if (combinedWords.length >= 2) {
+    return expectedNorm.includes(combinedNorm)
+  }
+  return expectedWords[0] === combinedWords[0]
+}
+
+function cleanStoryChapterTitle(text) {
+  return (text ?? "")
+    .replace(/^[\s\u201c\u201d"'`]+|[\s\u201c\u201d"'`]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function tryConsumeSaddlebackChapterOpener(
+  allLines,
+  startIndex,
+  printedToc,
+  nextChapterKey = 1
+) {
+  if (!printedToc?.chapters?.size || startIndex >= allLines.length) {
+    return null
+  }
+
+  const chapterKey = String(nextChapterKey)
+  const expectedTitle = printedToc.chapters.get(chapterKey)
+  if (!expectedTitle) {
+    return null
+  }
+
+  const startPage = allLines[startIndex].pageIndex
+  let cursor = startIndex
+
+  while (cursor < allLines.length && allLines[cursor].pageIndex === startPage) {
+    const candidateText = allLines[cursor].text.trim()
+    if (
+      isStorySectionRunningHeadLine(candidateText) ||
+      isRecurringBookTitleRunningHeadLine(candidateText)
+    ) {
+      cursor += 1
+      continue
+    }
+    break
+  }
+
+  let digitIndex = -1
+  let chapterNumber = null
+
+  for (
+    let scanIndex = cursor;
+    scanIndex < Math.min(cursor + 6, allLines.length);
+    scanIndex += 1
+  ) {
+    if (allLines[scanIndex].pageIndex !== startPage) {
+      break
+    }
+
+    const candidateText = allLines[scanIndex].text.trim()
+    if (
+      isSaddlebackChapterNumberLine(
+        candidateText,
+        allLines[scanIndex].line,
+        allLines[scanIndex].pageMetrics
+      )
+    ) {
+      digitIndex = scanIndex
+      chapterNumber = candidateText
+      break
+    }
+  }
+
+  if (chapterNumber && printedToc.chapters.has(chapterNumber)) {
+    const title = printedToc.chapters.get(chapterNumber)
+    let endIndex = digitIndex + 1
+    while (endIndex < allLines.length && allLines[endIndex].pageIndex === startPage) {
+      const candidateText = allLines[endIndex].text.trim()
+      if (
+        isSaddlebackTitleFragmentLine(
+          candidateText,
+          allLines[endIndex].line,
+          allLines[endIndex].pageMetrics
+        )
+      ) {
+        endIndex += 1
+        continue
+      }
+      break
+    }
+
+    return {
+      chapterNumber,
+      title,
+      nextIndex: endIndex,
+      pageIndex: startPage,
+      line: allLines[digitIndex].line,
+    }
+  }
+
+  const fragments = []
+  let endIndex = cursor
+  while (endIndex < allLines.length && allLines[endIndex].pageIndex === startPage) {
+    const candidateText = allLines[endIndex].text.trim()
+    if (
+      isSaddlebackTitleFragmentLine(
+        candidateText,
+        allLines[endIndex].line,
+        allLines[endIndex].pageMetrics
+      )
+    ) {
+      fragments.push(candidateText)
+      endIndex += 1
+      continue
+    }
+    break
+  }
+
+  if (fragments.length === 0) {
+    return null
+  }
+
+  const combined = fragments.join(" ").replace(/\s+/g, " ").trim()
+  if (!titlesMatchSaddlebackOpener(combined, expectedTitle)) {
+    return null
+  }
+
+  return {
+    chapterNumber: chapterKey,
+    title: expectedTitle,
+    nextIndex: endIndex,
+    pageIndex: startPage,
+    line: allLines[cursor].line,
+  }
+}
 
 function isDisplayChapterTitleText(text) {
   const trimmed = (text ?? "").trim()
@@ -4454,6 +4695,8 @@ function stripInlineArtifacts(text) {
 
   return text
     .replace(INLINE_PAGE_DECORATOR_REGEX, " ")
+    .replace(EMBEDDED_STORY_SECTION_RUNNING_HEAD_REGEX, " ")
+    .replace(EMBEDDED_RECURRING_BOOK_TITLE_REGEX, " ")
     .replace(RUNNING_HEADER_INLINE_REGEX, " ")
     .replace(EMBEDDED_RUNNING_HEADER_REGEX, " ")
     .replace(EMBEDDED_ROMAN_SECTION_RUNNING_HEAD_REGEX, " ")
@@ -4694,6 +4937,9 @@ function isRunningHeaderMergedLine(text) {
     return true
   }
   if (isSpacedRunningHeaderLine(trimmed)) {
+    return true
+  }
+  if (isStorySectionRunningHeadLine(trimmed) || isRecurringBookTitleRunningHeadLine(trimmed)) {
     return true
   }
   if (
@@ -4973,6 +5219,9 @@ function explainShouldDropExtractedLine(
   }
   if (isRunningHeaderMergedLine(trimmed)) {
     return { drop: true, reason: "running-header-merged" }
+  }
+  if (isStorySectionRunningHeadLine(trimmed) || isRecurringBookTitleRunningHeadLine(trimmed)) {
+    return { drop: true, reason: "story-section-running-head" }
   }
   if (isScannerWatermarkLine(trimmed)) {
     return { drop: true, reason: "scanner-watermark" }
@@ -7470,8 +7719,14 @@ async function extractPdfStructure(
         })
       }
 
+      const preserveSaddlebackLayoutLine = isSaddlebackLayoutPreservationLine(
+        line,
+        page.lines
+      )
+
       if (
-        shouldDropExtractedLine(
+        !preserveSaddlebackLayoutLine &&
+        (shouldDropExtractedLine(
           line.text,
           distinctPageCount,
           occurrencesOnThisPage,
@@ -7489,7 +7744,8 @@ async function extractPdfStructure(
             pageIndex,
             lineFirstPageIndex
           )) ||
-        isStandalonePageNumberText(normalizedForDropCheck)
+        (isStandalonePageNumberText(normalizedForDropCheck) &&
+          !preserveSaddlebackLayoutLine))
       ) {
         if (bbMatchesPhrase(line.text)) {
           bbLog("extractPdfStructure-filter", {
@@ -9090,7 +9346,7 @@ function splitDialogueHeavyBlocks(blocks) {
   return result
 }
 
-function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
+function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc = null } = {}) {
   const blocks = []
   const allLines = []
   const totalPages = pageData.length
@@ -9120,6 +9376,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
   let index = 0
   let inPrintedTocSection = false
   const sectionLabelState = { lastRepeatedSectionLabel: null }
+  let saddlebackChapterCursor = 1
 
   while (index < allLines.length) {
     const entry = allLines[index]
@@ -9130,6 +9387,41 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
     if (isScannerWatermarkLine(text)) {
       index += 1
       continue
+    }
+
+    if (printedToc?.chapters?.size) {
+      const opener = tryConsumeSaddlebackChapterOpener(
+        allLines,
+        index,
+        printedToc,
+        saddlebackChapterCursor
+      )
+      if (opener) {
+        pendingConnective = null
+        const chapterTitle = cleanStoryChapterTitle(opener.title) || opener.title
+        const pushed = pushHeadingBlock(
+          blocks,
+          {
+            text: chapterTitle,
+            chapterTitle,
+            isHeading: true,
+            fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+            isChapterStart: true,
+            centered: true,
+            textAlign: "center",
+            chapterId: null,
+          },
+          "saddlebackChapterOpener",
+          opener.pageIndex,
+          opener.line
+        )
+        if (pushed) {
+          saddlebackChapterCursor = Number(opener.chapterNumber) + 1
+        }
+        nonEmptyLineIndex += opener.nextIndex - index - 1
+        index = opener.nextIndex
+        continue
+      }
     }
 
     if (isSceneBreakDividerText(text)) {
@@ -9151,7 +9443,19 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress } = {}) {
       continue
     }
 
-    if (isStandalonePageNumberText(text)) {
+    if (
+      isStandalonePageNumberText(text) &&
+      !isSaddlebackChapterNumberLine(text, line, entry.pageMetrics)
+    ) {
+      pendingConnective = null
+      index += 1
+      continue
+    }
+
+    if (
+      isStorySectionRunningHeadLine(text) ||
+      isRecurringBookTitleRunningHeadLine(text)
+    ) {
       pendingConnective = null
       index += 1
       continue
@@ -10262,6 +10566,7 @@ async function parsePdfBuffer(
 
   let blocks = applyBlockTransformPipeline(
     buildBlocksFromLines(pageData, headingStrings, {
+      printedToc: printedTocFromPages,
       onProgress(current, total) {
         reportProgress({
           phase: "structuring",
@@ -10291,7 +10596,7 @@ async function parsePdfBuffer(
     const authorText = sanitizePdfAuthor(parsedText?.info?.Author ?? "")
     const synthetic = []
 
-    if (bookTitle && !looksLikeFilenameSlug(bookTitle)) {
+    if (bookTitle && !looksLikeFilenameSlug(bookTitle) && !/^untitled$/i.test(bookTitle)) {
       synthetic.push({
         text: bookTitle,
         isHeading: true,
