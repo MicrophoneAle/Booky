@@ -189,7 +189,7 @@ function shouldAcceptTocReanchor(expected, anchor, located, tocOrderCursor) {
     const anchorNum = Number.parseInt(anchor.key, 10)
     if (Number.isFinite(expectedNum) && Number.isFinite(anchorNum)) {
       // Allow a wider forward window so a confident plaque OCR can recover from
-      // sequential cursor drift (e.g. bannerless chapters 10–11, failed arches).
+      // sequential cursor drift (e.g. failed arches).
       return anchorNum >= expectedNum && anchorNum <= expectedNum + 12
     }
   }
@@ -228,65 +228,6 @@ function countUpcomingInterludesAtCursor(printedToc, tocOrderCursor) {
   }
 
   return count
-}
-
-function countInterludesAfterUpcomingBannerlessChapters(printedToc, tocOrderCursor) {
-  if (!printedToc?.ordered?.length || !tocOrderCursor) {
-    return 0
-  }
-
-  let index = tocOrderCursor.index
-  let bannerlessChapters = 0
-  let firstChapterKey = null
-
-  while (index < printedToc.ordered.length) {
-    const entry = printedToc.ordered[index]
-    if (entry.kind === "part") {
-      index += 1
-      continue
-    }
-
-    if (entry.kind === "chapter") {
-      if (!firstChapterKey) {
-        firstChapterKey = entry.key
-      }
-      bannerlessChapters += 1
-      index += 1
-      continue
-    }
-
-    if (entry.kind === "interlude") {
-      const firstChapterNum = Number.parseInt(firstChapterKey, 10)
-      // Only the first interlude batch is preceded by bannerless chapters 10
-      // and 11 (they have no arch banners in this edition). Later interlude
-      // sections follow real chapter arches and must not skip chapter slots.
-      if (
-        bannerlessChapters === 2 &&
-        firstChapterNum === 10
-      ) {
-        let interludeCount = 0
-        while (index < printedToc.ordered.length) {
-          const next = printedToc.ordered[index]
-          if (next.kind === "part") {
-            index += 1
-            continue
-          }
-          if (next.kind === "interlude") {
-            interludeCount += 1
-            index += 1
-            continue
-          }
-          break
-        }
-        return interludeCount
-      }
-      return 0
-    }
-
-    break
-  }
-
-  return 0
 }
 
 function countInterludeNamesFromTextBlocks(blocks, interludesIndex) {
@@ -443,7 +384,6 @@ function supplementBannerlessPrintedChapters(blocks, _printedToc) {
 export {
   buildTocMetadataForChapterHeading,
   collectFollowingTextBlocks,
-  countInterludesAfterUpcomingBannerlessChapters,
   countUpcomingInterludesAtCursor,
   extractChapterKeyFromOcrNumber,
   extractTocAnchorFromOcrLabel,

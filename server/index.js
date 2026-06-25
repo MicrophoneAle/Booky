@@ -32,13 +32,12 @@ import {
 } from "./reformattedExportService.js"
 import {
   extractChapterKeyFromOcrNumber,
-  countInterludesAfterUpcomingBannerlessChapters,
   scanPendingInterludesFromBlocks,
   takeNextSequentialInterludeTocEntry,
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 95
+const PARSER_VERSION = 96
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 
 function bbNormalizeLetters(text) {
@@ -6323,21 +6322,6 @@ async function finalizeIllustrationBlocks(
       )
       if (interludesFromText > 0) {
         pendingInterludes = interludesFromText
-      }
-
-      if (
-        printedToc &&
-        tocOrderCursor &&
-        isChapterBannerCandidate(block) &&
-        pendingInterludes === 0
-      ) {
-        const interludesFromToc = countInterludesAfterUpcomingBannerlessChapters(
-          printedToc,
-          tocOrderCursor
-        )
-        if (interludesFromToc > 0) {
-          pendingInterludes = interludesFromToc
-        }
       }
 
       lastInterludeTextScanIndex = index
