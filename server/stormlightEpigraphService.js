@@ -230,6 +230,109 @@ function countUpcomingInterludesAtCursor(printedToc, tocOrderCursor) {
   return count
 }
 
+function isLastChapterSlotBeforePart(printedToc, tocOrderCursor) {
+  if (!printedToc?.ordered?.length || !tocOrderCursor) {
+    return false
+  }
+
+  const entry = printedToc.ordered[tocOrderCursor.index]
+  if (!entry || entry.kind !== "chapter") {
+    return false
+  }
+
+  return printedToc.ordered[tocOrderCursor.index + 1]?.kind === "part"
+}
+
+function advanceTocCursorPastNextPartDivider(printedToc, tocOrderCursor) {
+  if (!printedToc?.ordered?.length || !tocOrderCursor) {
+    return false
+  }
+
+  const partIndex = tocOrderCursor.index + 1
+  if (printedToc.ordered[partIndex]?.kind !== "part") {
+    return false
+  }
+
+  tocOrderCursor.index = partIndex + 1
+  return true
+}
+
+function seekTocCursorToFirstChapterAfterNthPart(printedToc, tocOrderCursor, partOrdinal) {
+  if (!printedToc?.ordered?.length || !tocOrderCursor || partOrdinal < 1) {
+    return false
+  }
+
+  let count = 0
+  for (let index = 0; index < printedToc.ordered.length; index += 1) {
+    if (printedToc.ordered[index].kind !== "part") {
+      continue
+    }
+
+    count += 1
+    if (count === partOrdinal) {
+      tocOrderCursor.index = index + 1
+      return true
+    }
+  }
+
+  return false
+}
+
+function isLikelyStructuralPartDividerPlate(block) {
+  if (!block || (block.type !== "image" && block.type !== "image_candidate")) {
+    return false
+  }
+
+  const coords = block.coordinates ?? {}
+  const pageWidth = coords.pageWidth ?? 0
+  const pageHeight = coords.pageHeight ?? 0
+  const width = coords.width ?? 0
+  const height = coords.height ?? 0
+  if (!pageWidth || !pageHeight) {
+    return false
+  }
+
+  const widthRatio = width / pageWidth
+  const heightRatio = height / pageHeight
+  if (widthRatio < 0.4 || heightRatio < 0.45) {
+    return false
+  }
+
+  if (
+    widthRatio >= 0.34 &&
+    widthRatio <= 0.4 &&
+    heightRatio >= 0.14 &&
+    heightRatio <= 0.2
+  ) {
+    return false
+  }
+
+  return true
+}
+
+function scanStructuralPartDividerPlate(blocks, fromIndex, toIndex) {
+  if (!Array.isArray(blocks)) {
+    return false
+  }
+
+  const start = Math.max(0, fromIndex)
+  const end = Math.min(blocks.length, toIndex)
+
+  for (let index = start; index < end; index += 1) {
+    const block = blocks[index]
+    if (isLikelyStructuralPartDividerPlate(block)) {
+      return true
+    }
+
+    const text = (block?.text ?? "").trim()
+    if (/^Part\s+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\b/i.test(text)) {
+      return true
+    }
+  }
+
+  return false
+}
+
 function countInterludeNamesFromTextBlocks(blocks, interludesIndex) {
   for (
     let index = interludesIndex + 1;
@@ -382,13 +485,17 @@ function supplementBannerlessPrintedChapters(blocks, _printedToc) {
 }
 
 export {
+  advanceTocCursorPastNextPartDivider,
   buildTocMetadataForChapterHeading,
   collectFollowingTextBlocks,
   countUpcomingInterludesAtCursor,
   extractChapterKeyFromOcrNumber,
   extractTocAnchorFromOcrLabel,
   hasBackMatterHeadingText,
+  isLastChapterSlotBeforePart,
   scanPendingInterludesFromBlocks,
+  scanStructuralPartDividerPlate,
+  seekTocCursorToFirstChapterAfterNthPart,
   supplementBannerlessPrintedChapters,
   takeNextSequentialTocEntry,
   takeNextSequentialInterludeTocEntry,

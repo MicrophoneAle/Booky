@@ -31,13 +31,17 @@ import {
   buildReformattedPdfBuffer,
 } from "./reformattedExportService.js"
 import {
+  advanceTocCursorPastNextPartDivider,
   extractChapterKeyFromOcrNumber,
+  isLastChapterSlotBeforePart,
   scanPendingInterludesFromBlocks,
+  scanStructuralPartDividerPlate,
+  seekTocCursorToFirstChapterAfterNthPart,
   takeNextSequentialInterludeTocEntry,
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 96
+const PARSER_VERSION = 97
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 
 function bbNormalizeLetters(text) {
@@ -6248,6 +6252,9 @@ async function finalizeIllustrationBlocks(
 
   let lastInterludeTextScanIndex =
     frontMatterCutoffIndex >= 0 ? frontMatterCutoffIndex + 1 : 0
+  let lastPartPlateScanIndex =
+    frontMatterCutoffIndex >= 0 ? frontMatterCutoffIndex + 1 : 0
+  let partBoundaryCount = 0
 
   function boundaryDedupeKey(analysisResult) {
     const kind = analysisResult?.boundaryKind
@@ -6324,6 +6331,26 @@ async function finalizeIllustrationBlocks(
         pendingInterludes = interludesFromText
       }
 
+      if (
+        printedToc &&
+        tocOrderCursor &&
+        scanStructuralPartDividerPlate(blocks, lastPartPlateScanIndex, index) &&
+        isLastChapterSlotBeforePart(printedToc, tocOrderCursor)
+      ) {
+        advanceTocCursorPastNextPartDivider(printedToc, tocOrderCursor)
+        if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
+          console.log(
+            "[partCursor]",
+            JSON.stringify({
+              reason: "structural-divider-plate",
+              atIndex: index,
+              cursor: tocOrderCursor.index,
+            })
+          )
+        }
+      }
+
+      lastPartPlateScanIndex = index
       lastInterludeTextScanIndex = index
 
       if (frontMatterCutoffIndex >= 0 && index <= frontMatterCutoffIndex) {
@@ -6450,6 +6477,31 @@ async function finalizeIllustrationBlocks(
         pendingInterludes = 0
       } else if (finalResult.boundaryKind === "part") {
         pendingInterludes = 0
+        partBoundaryCount += 1
+        if (
+          printedToc &&
+          tocOrderCursor &&
+          isLastChapterSlotBeforePart(printedToc, tocOrderCursor)
+        ) {
+          advanceTocCursorPastNextPartDivider(printedToc, tocOrderCursor)
+        } else if (printedToc && tocOrderCursor) {
+          seekTocCursorToFirstChapterAfterNthPart(
+            printedToc,
+            tocOrderCursor,
+            partBoundaryCount
+          )
+        }
+        if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
+          console.log(
+            "[partCursor]",
+            JSON.stringify({
+              reason: "ocr-part-boundary",
+              atIndex: index,
+              partBoundaryCount,
+              cursor: tocOrderCursor?.index ?? null,
+            })
+          )
+        }
       } else if (finalResult.boundaryKind === "epilogue") {
         pendingInterludes = 0
       }
