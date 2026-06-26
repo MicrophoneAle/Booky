@@ -294,15 +294,38 @@ function isLikelyStructuralPartDividerPlate(block) {
 
   const widthRatio = width / pageWidth
   const heightRatio = height / pageHeight
+  const aspectRatio = height > 0 ? width / height : 0
   if (widthRatio < 0.4 || heightRatio < 0.45) {
     return false
   }
 
+  // Exclude the landscape chapter-arch band (wide, short banners).
   if (
     widthRatio >= 0.34 &&
     widthRatio <= 0.4 &&
     heightRatio >= 0.14 &&
     heightRatio <= 0.2
+  ) {
+    return false
+  }
+
+  // Exclude the portrait chapter-opener plate band. These are mid-height,
+  // portrait-or-squarish full-page character/flashback plates that OPEN a
+  // chapter (e.g. the Way of Kings chapter-69 opener on p1051: widthRatio
+  // 0.475, heightRatio 0.553, aspect 0.664). They are illustrations, never
+  // structural part dividers, yet their geometry slips past the coarse
+  // widthRatio/heightRatio floors above. A genuine part-divider plate is a
+  // large near-full-page graphic (heightRatio >= 0.58) or a wide landscape
+  // banner (aspect >= 1.0), so both still pass this carve-out. This mirrors
+  // the arch-band exclusion directly above and must keep the large
+  // near-full-page plates that Parts One-Three rely on matching.
+  if (
+    aspectRatio > 0 &&
+    aspectRatio < 1.0 &&
+    heightRatio >= 0.45 &&
+    heightRatio < 0.58 &&
+    widthRatio >= 0.4 &&
+    widthRatio < 0.5
   ) {
     return false
   }
@@ -406,7 +429,36 @@ function buildTocMetadataForChapterHeading(
     if (anchor) {
       const expected = peekExpectedTocAnchor(printedToc, tocOrderCursor)
       const located = findTocEntryByAnchorFromCursor(printedToc, tocOrderCursor, anchor)
-      if (located && shouldAcceptTocReanchor(expected, anchor, located, tocOrderCursor)) {
+      const accepted = Boolean(
+        located && shouldAcceptTocReanchor(expected, anchor, located, tocOrderCursor)
+      )
+
+      // TEMPORARY diagnostic (BOOKY_FRONTMATTER_DEBUG only): trace OCR re-anchors.
+      // Remove in cleanup.
+      if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
+        console.log(
+          "[tocReanchor]",
+          JSON.stringify({
+            blockIndex,
+            ocrNumberLabel,
+            anchor,
+            expected,
+            located: located
+              ? {
+                  index: located.index,
+                  kind: located.entry.kind,
+                  key: located.entry.key ?? null,
+                  label: located.entry.label ?? null,
+                }
+              : null,
+            accepted,
+            cursorBefore: tocOrderCursor.index,
+            cursorAfter: accepted && located ? located.index + 1 : tocOrderCursor.index,
+          })
+        )
+      }
+
+      if (accepted) {
         tocOrderCursor.index = located.index + 1
         return printedTocEntryToOcrMetadata(located.entry)
       }

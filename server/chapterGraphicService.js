@@ -130,6 +130,52 @@ function logChapterGraphicDecision(message, context = {}) {
   }
 }
 
+// TEMPORARY Step-A diagnostic (BOOKY_CHAPTER_GRAPHIC_DEBUG only). Logs every image
+// whose geometry sits in the portrait-chapter-opener band so we can confirm the band
+// only captures real chapter openers and not character/sketchbook/map plates. Remove
+// in the cleanup commit.
+function logPortraitOpenerBandDiagnostic(imageBlock, blocks, blockIndex) {
+  if (process.env.BOOKY_CHAPTER_GRAPHIC_DEBUG !== "1") {
+    return
+  }
+
+  const coords = imageBlock?.coordinates ?? {}
+  const pageWidth = coords.pageWidth ?? 0
+  const pageHeight = coords.pageHeight ?? 0
+  const width = coords.width ?? 0
+  const height = coords.height ?? 0
+  if (!pageWidth || !pageHeight || !width || !height) {
+    return
+  }
+
+  const widthRatio = width / pageWidth
+  const heightRatio = height / pageHeight
+  const aspect = width / height
+
+  if (!(aspect < 1.0 && heightRatio >= 0.45 && heightRatio < 0.58 && widthRatio >= 0.4)) {
+    return
+  }
+
+  const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex, 8)
+  console.log(
+    "[portraitBandScan]",
+    JSON.stringify({
+      pageNumber: imageBlock.pageNumber ?? 0,
+      imageRole: imageBlock.imageRole ?? null,
+      widthRatio: Number(widthRatio.toFixed(3)),
+      heightRatio: Number(heightRatio.toFixed(3)),
+      aspect: Number(aspect.toFixed(3)),
+      narrativeStarted: hasNarrativeStartedBefore(blocks, blockIndex),
+      isArchBlock: isLikelyChapterArchBannerBlock(imageBlock),
+      hasEpigraph: hasEpigraphFollowUp(followingBlocks),
+      followingCaption: hasNonChapterCaption(followingBlocks),
+      nearbyCaption: hasNearbyNonChapterCaption(blocks, imageBlock),
+      samePageChars: countSamePageTextChars(blocks, imageBlock),
+      following: followingBlocks.slice(0, 3).map(({ text }) => text.slice(0, 70)),
+    })
+  )
+}
+
 function isCoverPageImage(imageBlock) {
   const width = imageBlock?.coordinates?.width ?? 0
   const height = imageBlock?.coordinates?.height ?? 0
@@ -1158,6 +1204,8 @@ function analyzeChapterGraphicFromContext({
   if (!imageBlock || imageBlock.type !== "image_candidate") {
     return { ...SAFE_FALLBACK }
   }
+
+  logPortraitOpenerBandDiagnostic(imageBlock, blocks, blockIndex)
 
   // Front-matter art (the Roshar map spread, title-page art) is interleaved before
   // the injected Prelude heading. It must never be classified as a chapter banner,

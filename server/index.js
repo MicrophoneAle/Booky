@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 114
+const PARSER_VERSION = 115
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -7052,6 +7052,125 @@ async function finalizeIllustrationBlocks(
   const finalizedByIndex = new Map()
   const tocOrderCursor = printedToc ? { index: 0 } : null
   const assignedBoundaryKeys = new Set()
+  // Printed-TOC slots already reconciled by the bannerless last-chapter-of-a-part
+  // mechanism (Bug 2), keyed by the chapter slot index, so a part boundary is
+  // never skipped twice when more than one illustration sits on the same slot.
+  const reconciledBannerlessPartSlots = new Set()
+
+  // TEMPORARY diagnostic (BOOKY_FRONTMATTER_DEBUG only): dump the printed-TOC
+  // ordered slots so we can inspect the chapter-69 region. Remove in cleanup.
+  if (process.env.BOOKY_FRONTMATTER_DEBUG === "1" && printedToc?.ordered?.length) {
+    console.log(
+      "[tocOrderedDump]",
+      JSON.stringify(
+        printedToc.ordered.map((entry, i) => ({
+          i,
+          kind: entry.kind,
+          key: entry.key ?? null,
+          label: entry.label ?? null,
+          title: entry.title ?? null,
+        }))
+      )
+    )
+  }
+
+  // TEMPORARY Step-A diagnostic (BOOKY_FRONTMATTER_DEBUG only). Remove in cleanup.
+  // A.1: dump every block in the chapter 68 -> 70 region (PDF pages 1033-1052) so we
+  // can see whether a real Part Five divider (structural plate or "Part Five" text
+  // heading) exists, or whether the only structural-divider match is the p1051 plate.
+  // A.2: book-wide list of every structural-divider-plate geometry match and every
+  // "Part N" text heading, to confirm no second plate triggers the false seek.
+  if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
+    const geomOf = (b) => {
+      const c = b?.coordinates ?? {}
+      const pw = c.pageWidth ?? 0
+      const ph = c.pageHeight ?? 0
+      const w = c.width ?? 0
+      const h = c.height ?? 0
+      if (!pw || !ph || !w || !h) {
+        return null
+      }
+      return {
+        widthRatio: Number((w / pw).toFixed(3)),
+        heightRatio: Number((h / ph).toFixed(3)),
+        aspect: Number((w / h).toFixed(3)),
+      }
+    }
+    // Mirror of isLikelyStructuralPartDividerPlate (stormlightEpigraphService.js).
+    const matchesStructuralDividerPlate = (b) => {
+      const g = geomOf(b)
+      if (!g) {
+        return false
+      }
+      if (g.widthRatio < 0.4 || g.heightRatio < 0.45) {
+        return false
+      }
+      if (
+        g.widthRatio >= 0.34 &&
+        g.widthRatio <= 0.4 &&
+        g.heightRatio >= 0.14 &&
+        g.heightRatio <= 0.2
+      ) {
+        return false
+      }
+      return true
+    }
+    const pageOfBlock = (b) =>
+      b?.pageNumber ??
+      (Number.isFinite(b?.sourcePdfPageIndex) ? b.sourcePdfPageIndex + 1 : 0)
+
+    blocks.forEach((b, i) => {
+      const pg = pageOfBlock(b)
+      if (pg >= 1033 && pg <= 1052) {
+        if (b?.type === "image" || b?.type === "image_candidate") {
+          console.log(
+            "[regionDump]",
+            JSON.stringify({
+              i,
+              pg,
+              type: b.type,
+              imageRole: b.imageRole ?? null,
+              geom: geomOf(b),
+              structuralDividerPlate: matchesStructuralDividerPlate(b),
+            })
+          )
+        } else {
+          const t = (b?.text ?? "").trim()
+          if (t) {
+            console.log(
+              "[regionDump]",
+              JSON.stringify({
+                i,
+                pg,
+                type: "text",
+                isPart: /^Part\s+/i.test(t),
+                text: t.slice(0, 80),
+              })
+            )
+          }
+        }
+      }
+    })
+
+    blocks.forEach((b) => {
+      if (
+        (b?.type === "image" || b?.type === "image_candidate") &&
+        matchesStructuralDividerPlate(b)
+      ) {
+        console.log(
+          "[structPlateBookwide]",
+          JSON.stringify({ pg: b.pageNumber ?? null, imageRole: b.imageRole ?? null, geom: geomOf(b) })
+        )
+      }
+      const t = (b?.text ?? "").trim()
+      if (/^Part\s+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\b/i.test(t)) {
+        console.log(
+          "[partTextHeading]",
+          JSON.stringify({ pg: b.pageNumber ?? null, text: t.slice(0, 60) })
+        )
+      }
+    })
+  }
 
   // If the prelude was already emitted as a text heading upstream, don't let a
   // banner re-emit it. boundaryDedupeKey dedupes prelude/prologue/epilogue by kind.
@@ -7212,6 +7331,7 @@ async function finalizeIllustrationBlocks(
         scanStructuralPartDividerPlate(blocks, lastPartPlateScanIndex, index) &&
         isLastChapterSlotBeforePart(printedToc, tocOrderCursor)
       ) {
+        const cursorBeforePartSeek = tocOrderCursor.index
         advanceTocCursorPastNextPartDivider(printedToc, tocOrderCursor)
         if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
           console.log(
@@ -7219,6 +7339,7 @@ async function finalizeIllustrationBlocks(
             JSON.stringify({
               reason: "structural-divider-plate",
               atIndex: index,
+              cursorBefore: cursorBeforePartSeek,
               cursor: tocOrderCursor.index,
             })
           )
@@ -7323,19 +7444,110 @@ async function finalizeIllustrationBlocks(
         buildSequentialInterludeTocEntry,
       })
 
+      const cursorAfterAnalyze = tocOrderCursor?.index ?? 0
+
       let finalResult = analysisResult
       const dedupeKey = boundaryDedupeKey(analysisResult)
+      let wasDeduped = false
       if (
         dedupeKey &&
         analysisResult.isChapterBoundary &&
         assignedBoundaryKeys.has(dedupeKey)
       ) {
         finalResult = { ...SAFE_FALLBACK }
+        wasDeduped = true
         if (tocOrderCursor) {
           tocOrderCursor.index = tocCursorBefore
         }
       } else if (dedupeKey && analysisResult.isChapterBoundary) {
         assignedBoundaryKeys.add(dedupeKey)
+      }
+
+      // Bannerless last-chapter-of-a-part reconciliation (Bug 2). Driven purely
+      // by the printed-TOC slot structure, not by image geometry. When the
+      // sequential cursor is parked on a chapter slot whose very next slot is a
+      // part divider (isLastChapterSlotBeforePart) and the image we are
+      // processing is NOT itself a chapter boundary, that chapter has no banner
+      // of its own - its opener is an illustration (e.g. the Way of Kings
+      // chapter-69 "Justice" portrait plate on p1051, correctly left as art).
+      // Without this, the cursor never leaves the bannerless slot, so the next
+      // real banner (p1052 "Sea Of Glass") would steal it and the whole tail
+      // shifts by one. We advance the cursor past the bannerless chapter slot
+      // AND the immediately-following part slot so the next banner lands on the
+      // correct chapter slot, and we carry the bannerless chapter's printed-TOC
+      // entry on this block so it is surfaced into the table of contents at the
+      // right reading-order position. The chapterSequence guard scopes this to
+      // an active image-banner numbering flow (Stormlight-style), so books whose
+      // chapters come from text headings - and whose cursor never advances - are
+      // a no-op. The other 22 portrait plates never sit on a
+      // last-chapter-before-part cursor slot, so they are a no-op too.
+      let bannerlessChapterMeta = null
+      if (
+        printedToc &&
+        tocOrderCursor &&
+        chapterSequence >= 1 &&
+        !finalResult?.isChapterBoundary &&
+        block?.type === "image_candidate" &&
+        isLastChapterSlotBeforePart(printedToc, tocOrderCursor) &&
+        !reconciledBannerlessPartSlots.has(tocOrderCursor.index)
+      ) {
+        const bannerlessSlot = printedToc.ordered?.[tocOrderCursor.index]
+        if (bannerlessSlot && bannerlessSlot.kind === "chapter") {
+          reconciledBannerlessPartSlots.add(tocOrderCursor.index)
+          bannerlessChapterMeta = {
+            boundaryKind: "chapter",
+            number: (bannerlessSlot.label ?? "").toString().trim() || null,
+            title: (bannerlessSlot.title ?? "").toString().trim() || null,
+            includeInToc: true,
+          }
+          const cursorBeforeReconcile = tocOrderCursor.index
+          advanceTocCursorPastNextPartDivider(printedToc, tocOrderCursor)
+          if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
+            console.log(
+              "[bannerlessReconcile]",
+              JSON.stringify({
+                atIndex: index,
+                pageNumber: block.pageNumber,
+                slot: {
+                  kind: bannerlessSlot.kind,
+                  label: bannerlessSlot.label ?? null,
+                  title: bannerlessSlot.title ?? null,
+                },
+                cursorBefore: cursorBeforeReconcile,
+                cursorAfter: tocOrderCursor.index,
+              })
+            )
+          }
+        }
+      }
+
+      // TEMPORARY diagnostic (BOOKY_FRONTMATTER_DEBUG only): trace the cursor
+      // across the chapter 66-71 region (PDF pages ~1000-1095). Remove in cleanup.
+      if (
+        process.env.BOOKY_FRONTMATTER_DEBUG === "1" &&
+        (block.pageNumber ?? 0) >= 1000 &&
+        (block.pageNumber ?? 0) <= 1095
+      ) {
+        console.log(
+          "[cursorTrace]",
+          JSON.stringify({
+            index,
+            pageNumber: block.pageNumber,
+            imageRole: block.imageRole,
+            ocrKind: ocrMetadata?.boundaryKind ?? null,
+            ocrNumber: ocrMetadata?.number ?? null,
+            cursorBefore: tocCursorBefore,
+            cursorAfterAnalyze,
+            cursorFinal: tocOrderCursor?.index ?? null,
+            returnedKind: analysisResult?.boundaryKind ?? null,
+            returnedNumber: analysisResult?.number ?? null,
+            returnedTitle: analysisResult?.title ?? null,
+            dedupeKey,
+            keyAlreadyAssigned: wasDeduped,
+            finalKind: finalResult?.boundaryKind ?? null,
+            finalNumber: finalResult?.number ?? null,
+          })
+        )
       }
 
       if (finalResult.boundaryKind === "interlude_divider") {
@@ -7353,18 +7565,22 @@ async function finalizeIllustrationBlocks(
       } else if (finalResult.boundaryKind === "part") {
         pendingInterludes = 0
         partBoundaryCount += 1
+        const cursorBeforePartSeek = tocOrderCursor?.index ?? null
+        let partSeekKind = "none"
         if (
           printedToc &&
           tocOrderCursor &&
           isLastChapterSlotBeforePart(printedToc, tocOrderCursor)
         ) {
           advanceTocCursorPastNextPartDivider(printedToc, tocOrderCursor)
+          partSeekKind = "advancePastNextPartDivider"
         } else if (printedToc && tocOrderCursor) {
           seekTocCursorToFirstChapterAfterNthPart(
             printedToc,
             tocOrderCursor,
             partBoundaryCount
           )
+          partSeekKind = "seekToFirstChapterAfterNthPart"
         }
         if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
           console.log(
@@ -7373,6 +7589,8 @@ async function finalizeIllustrationBlocks(
               reason: "ocr-part-boundary",
               atIndex: index,
               partBoundaryCount,
+              partSeekKind,
+              cursorBefore: cursorBeforePartSeek,
               cursor: tocOrderCursor?.index ?? null,
             })
           )
@@ -7406,7 +7624,14 @@ async function finalizeIllustrationBlocks(
         )
       }
 
-      finalizedByIndex.set(index, finalizeVisionImageBlock(block, finalResult))
+      let finalizedBlock = finalizeVisionImageBlock(block, finalResult)
+      if (bannerlessChapterMeta) {
+        finalizedBlock = {
+          ...finalizedBlock,
+          bannerlessChapterAfter: bannerlessChapterMeta,
+        }
+      }
+      finalizedByIndex.set(index, finalizedBlock)
       releaseImageBlockBinary(blocks[index])
 
       processedCandidates += 1
@@ -9631,6 +9856,36 @@ function appendImageBoundaryChapters(content, chapters, seenChapterIds) {
   for (const page of content) {
     for (let blockIndex = 0; blockIndex < (page.blocks ?? []).length; blockIndex += 1) {
       const block = page.blocks[blockIndex]
+
+      // Surface a bannerless last-chapter-of-a-part (e.g. Way of Kings ch69
+      // "Justice", whose opener is an illustration left as art) into the table
+      // of contents at this reading-order position. The carrier image is NOT a
+      // chapter boundary - it is not promoted to a banner and still renders as
+      // a plain illustration; it only conveys the printed-TOC entry that the
+      // cursor reconciliation (Bug 2) attached. sortChaptersByReadingOrder then
+      // places it between its neighbouring banners using the carrier's position.
+      if (block?.type === "image" && block.bannerlessChapterAfter) {
+        const bannerlessTitle = formatImageBoundaryChapterTitle(
+          block.bannerlessChapterAfter
+        )
+        const bannerlessId =
+          slugify(bannerlessTitle) ||
+          `bannerless-chapter-${page.pageIndex}-${blockIndex}`
+        if (!seenChapterIds.has(bannerlessId)) {
+          seenChapterIds.add(bannerlessId)
+          chapters.push({
+            id: bannerlessId,
+            title: bannerlessTitle,
+            pageIndex: page.pageIndex,
+            blockIndex,
+            ...(Number.isFinite(block.pageNumber)
+              ? { sourcePageNumber: block.pageNumber }
+              : {}),
+            ...(BOOKY_TOC_ORDER_DEBUG ? { __tocSource: "bannerless" } : {}),
+          })
+        }
+      }
+
       if (block?.type !== "image" || !block.isChapterBoundary) {
         continue
       }
