@@ -61,31 +61,22 @@ function formatWordCount(document) {
   return `${(count / 1000).toFixed(1)}k words`
 }
 
-/** Saturated spine hues only — no browns (folio face is already leather brown). */
-const SPINE_COLORS = [
-  "#a83232", // crimson
-  "#2d8a5e", // emerald
-  "#3a62b8", // sapphire
-  "#8e44ad", // plum
-  "#1f8a8a", // teal
-  "#4a8c3a", // forest
-  "#b83d6b", // rose
-  "#2563a8", // ocean
-  "#5c3d8a", // violet
-  "#2a6b4a", // pine
-  "#c43a5a", // cherry
-  "#6a3ecf", // purple
-  "#2a9eae", // cyan
-  "#d44d8f", // magenta
-  "#3d7adb", // cobalt
-]
-
+/**
+ * Folio spine color. The hue is spread around the full color wheel via the
+ * golden angle (137.508 degrees) so that even similar document IDs land on
+ * well-separated colors instead of clustering in the blue/purple range. A small
+ * difference in the id hash becomes a large jump in hue, giving a varied shelf.
+ * Saturation and lightness stay in a jewel-tone band: vivid enough to read
+ * against the leather folio face, and saturated enough that warm hues never wash
+ * out into leather brown.
+ */
 function getSpineColor(documentId) {
   let hash = 0
   for (let index = 0; index < documentId.length; index += 1) {
-    hash = documentId.charCodeAt(index) + ((hash << 5) - hash)
+    hash = (documentId.charCodeAt(index) + ((hash << 5) - hash)) | 0
   }
-  return SPINE_COLORS[Math.abs(hash) % SPINE_COLORS.length]
+  const hue = (Math.abs(hash) * 137.508) % 360
+  return `hsl(${hue.toFixed(1)}, 64%, 47%)`
 }
 
 function EditTitleIcon() {

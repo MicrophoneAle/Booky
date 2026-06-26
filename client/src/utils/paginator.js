@@ -347,6 +347,18 @@ export function extractImageChapterTocEntries(document) {
         continue
       }
 
+      // A chapter image boundary whose metadata resolves only to the bare
+      // "Chapter" fallback (no number, no title, no usable raw text) is a
+      // meaningless TOC entry produced when a decorative or stray image is
+      // misflagged as a chapter boundary (e.g. Oliver Twist's end-matter logo).
+      // Drop it, mirroring the server-side guard in appendImageBoundaryChapters.
+      // Real chapters resolve to "Chapter 5" / "5: Title", and named sections
+      // (prelude, prologue, part, interlude, ...) keep their own labels, so this
+      // removes only the empty fallback.
+      if (formatImageChapterTocTitle(metadata) === "Chapter") {
+        continue
+      }
+
       entries.push({
         id: block.id,
         chapterMetadata: metadata,
