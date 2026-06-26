@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 113
+const PARSER_VERSION = 114
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -12058,6 +12058,20 @@ async function parsePdfBuffer(
     pageData,
     fileName,
   })
+
+  // In a poetry collection the recurring decorative plates (e.g. the woven
+  // "I Shall Not Be Moved" quilt that opens a sub-collection) are extracted as
+  // mid-size "chapter_heading" images and would otherwise be crammed beneath the
+  // preceding poem. Present them as full-page illustrations that occupy their own
+  // page so they read as the section plates they are. The cover, already a
+  // full_page_illustration, is left untouched.
+  if (isPoetryCollection) {
+    blocks = blocks.map((block) =>
+      block?.type === "image" && block.imageRole === "chapter_heading"
+        ? { ...block, imageRole: "full_page_illustration", forcesOwnPage: true }
+        : block
+    )
+  }
 
   if (printedToc) {
     blocks = supplementBannerlessPrintedChapters(blocks, printedToc)

@@ -84,7 +84,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 113
+const PARSER_VERSION = 114
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -1900,6 +1900,7 @@ function groupBlocksForDisplay(blocks) {
         boundaryKind: block.chapterMetadata?.boundaryKind ?? null,
         isChapterBoundary: Boolean(block.isChapterBoundary),
         isTitlePageCover: Boolean(block.isTitlePageCover),
+        ...(block.forcesOwnPage ? { forcesOwnPage: true } : {}),
         chapterMetadata: block.chapterMetadata ?? null,
         coordinates: block.coordinates ?? null,
         dimensions: normalizeImageDimensions(block),
@@ -2474,6 +2475,12 @@ function isChapterBoundaryPlaceable(placeable) {
 function requiresChapterNewPagePlaceable(placeable) {
   if (isFrontMatterPlaceable(placeable)) {
     return false
+  }
+
+  // A standalone plate (e.g. a poetry-collection section illustration) opens its
+  // own page rather than sharing one with the preceding poem.
+  if (placeable.item?.forcesOwnPage) {
+    return true
   }
 
   if (isChapterBoundaryPlaceable(placeable)) {
