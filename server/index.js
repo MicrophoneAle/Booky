@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 106
+const PARSER_VERSION = 107
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -9043,6 +9043,56 @@ function mergeChapterSubtitleBlocks(blocks, printedToc = null) {
             isHeading: true,
             isChapterStart: true,
           })
+
+          // The body often re-renders the same subtitle right after the bare
+          // chapter number. Now that the heading carries the printed-TOC
+          // subtitle, consume that redundant copy so it is not duplicated by a
+          // later trailing-fragment merge or shown twice in the reading view.
+          //
+          // Case 1: the title is its own block (or split across blocks), so the
+          // following block(s) are fragments of the subtitle. Drop them, but only
+          // once the full subtitle has appeared - prose is never a substring of
+          // the subtitle, so real body text stays untouched.
+          const tocKey = normalizeChapterSubtitleForMatch(tocSubtitle)
+          let cursor = index + 1
+          let sawFullSubtitle = false
+          while (cursor < blocks.length) {
+            const candidate = blocks[cursor]
+            const candidateText = (candidate?.text ?? "").trim()
+            if (!candidateText || candidate?.isChapterStart) {
+              break
+            }
+            const candidateKey = normalizeChapterSubtitleForMatch(candidateText)
+            if (!candidateKey || !tocKey.includes(candidateKey)) {
+              break
+            }
+            if (candidateKey === tocKey) {
+              sawFullSubtitle = true
+            }
+            cursor += 1
+          }
+          if (sawFullSubtitle) {
+            index = cursor - 1
+            continue
+          }
+
+          // Case 2: the title is glued to the front of the first prose block.
+          // Split it off only when the prefix exactly matches the printed-TOC
+          // subtitle, so prose for chapters whose title was dropped is untouched.
+          const followingBlock = blocks[index + 1]
+          const glued = followingBlock?.isHeading
+            ? null
+            : splitEmbeddedSubtitleUsingPrintedToc(followingBlock?.text, tocSubtitle)
+          if (glued) {
+            merged.push({
+              ...followingBlock,
+              text: glued.prose,
+              isHeading: false,
+              isChapterStart: false,
+            })
+            index += 1
+          }
+          continue
         } else {
           const displayTitle = formatChapterLabel(parts.kind, parts.number, "")
           merged.push({
