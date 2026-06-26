@@ -1300,6 +1300,18 @@
   text-indent: 0;
 }
 
+/* Verse lines: preserve a poem's exact line breaks. Each source line is its own
+   paragraph, set flush-left with no indent, no justification, and no hyphenation
+   so it reads as written. Consecutive lines inherit the body line-height and the
+   zero margin of .book-page__text, keeping a stanza tight. */
+.book-page__text--verse {
+  margin: 0;
+  text-align: left;
+  text-indent: 0;
+  hyphens: none;
+  line-height: var(--lh-body, 1.15);
+}
+
 .book-page__text--center {
   margin: 0;
   line-height: var(--lh-display, 1.2);

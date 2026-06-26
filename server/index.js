@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 112
+const PARSER_VERSION = 113
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -8638,6 +8638,20 @@ function isChapterHeading(block) {
     return false
   }
 
+  // Poem titles in a poetry collection are explicit chapter starts; their
+  // mixed-case wording would not match any prose heading pattern below.
+  if (block?.isPoemTitle === true) {
+    return true
+  }
+
+  // Verse lines are never headings even when their wording happens to match a
+  // structural pattern - e.g. a printed-contents "PART ONE" running label, or a
+  // poem line that opens with a chapter-like word - so they cannot leak into the
+  // table of contents.
+  if (block?.isVerse === true) {
+    return false
+  }
+
   const text = block.text.trim()
 
   if (isOrphanChapterSubtitleFragment(text)) {
@@ -9799,22 +9813,28 @@ function detectChapters(content, bookTitle = "") {
         const isFableTitle = isFableStoryTitleBlock(block)
         const isSaddlebackStoryTitle =
           block.storyChapterNumber != null && block.isChapterStart
+        // Each poem is a self-contained chapter. Like fable titles it is always a
+        // chapter start, is never folded under a part prefix, and gets a unique id
+        // even when a poem title repeats across the omnibus (e.g. "Shaker, Why
+        // Don't You Sing?").
+        const isPoemTitle = block.isPoemTitle === true
+        const isStandaloneStoryTitle =
+          isFableTitle || isSaddlebackStoryTitle || isPoemTitle
 
-        if (isFableTitle || isSaddlebackStoryTitle) {
+        if (isStandaloneStoryTitle) {
           isChapterStart = true
           if (seenChapterIds.has(id)) {
             id = `${id}-${currentFlatIndex}`
           }
         }
 
-        if (!isFableTitle && !isSaddlebackStoryTitle && partLabel) {
+        if (!isStandaloneStoryTitle && partLabel) {
           currentPartId = slugify(partLabel)
           currentPartTitle = partLabel
           id = slugify(block.chapterTitle ?? partLabel)
           chapterTitle = block.chapterTitle ?? partLabel
         } else if (
-          !isFableTitle &&
-          !isSaddlebackStoryTitle &&
+          !isStandaloneStoryTitle &&
           currentPartId &&
           (CHAPTER_NUMBER_REGEX.test(canonicalTitle) ||
             /^(chapter|letter)\s+/i.test(canonicalTitle))
@@ -9823,8 +9843,7 @@ function detectChapters(content, bookTitle = "") {
           const chapterLabel = block.chapterTitle ?? rawTitle
           chapterTitle = `${currentPartTitle ?? currentPartId} — ${chapterLabel}`
         } else if (
-          !isFableTitle &&
-          !isSaddlebackStoryTitle &&
+          !isStandaloneStoryTitle &&
           (PART_HEADING_PATTERN.test(canonicalTitle) ||
             VOLUME_HEADING_PATTERN.test(canonicalTitle))
         ) {
@@ -9846,11 +9865,11 @@ function detectChapters(content, bookTitle = "") {
           })
           currentChapterId = id
           chapterId = id
-          if (!isFableTitle && !isSaddlebackStoryTitle) {
+          if (!isStandaloneStoryTitle) {
             isChapterStart = true
           }
           displayChapterTitle = chapterTitle
-        } else if (isFableTitle || isSaddlebackStoryTitle) {
+        } else if (isStandaloneStoryTitle) {
           chapterId = currentChapterId
           displayChapterTitle = chapterTitle
         } else {
@@ -10389,6 +10408,182 @@ function splitDialogueHeavyBlocks(blocks) {
   }
 
   return result
+}
+
+// Detect a poetry collection (e.g. an omnibus of verse) so the dedicated verse
+// block builder can be used instead of the prose-oriented one. The signal is
+// robust: across the document a large majority of non-empty lines are short and
+// do not end on sentence punctuation (verse lines), and many pages open with a
+// prominent short lead line over body-font lines (poem titles). Prose books -
+// even dialogue-heavy ones - score far below these thresholds, so this never
+// trips for novels or fable anthologies.
+function documentIsPoetryCollection(pageData) {
+  if (!Array.isArray(pageData) || pageData.length === 0) {
+    return false
+  }
+
+  const fontSizes = []
+  let totalNonEmpty = 0
+  for (const page of pageData) {
+    for (const line of page?.lines ?? []) {
+      const text = (line.text ?? "").trim()
+      if (!text) {
+        continue
+      }
+      totalNonEmpty += 1
+      const fontSize = line.fontSize ?? 0
+      if (Number.isFinite(fontSize) && fontSize > 0) {
+        fontSizes.push(fontSize)
+      }
+    }
+  }
+
+  if (totalNonEmpty < 200) {
+    return false
+  }
+
+  const bodyFont = medianValue(fontSizes)
+  if (bodyFont <= 0) {
+    return false
+  }
+
+  let shortUnterminated = 0
+  let titlePages = 0
+  for (const page of pageData) {
+    const lines = (page?.lines ?? [])
+      .map((line) => ({ text: (line.text ?? "").trim(), fontSize: line.fontSize ?? 0 }))
+      .filter((entry) => entry.text)
+    if (lines.length === 0) {
+      continue
+    }
+
+    for (const { text } of lines) {
+      const wordCount = text.split(/\s+/).filter(Boolean).length
+      if (text.length <= 55 && wordCount <= 11 && !/[.!?:;]["'\u201d]?$/.test(text)) {
+        shortUnterminated += 1
+      }
+    }
+
+    const lead = lines[0]
+    const followers = lines.slice(1, 3)
+    if (
+      lead.fontSize >= bodyFont * 1.15 &&
+      lead.fontSize <= bodyFont * 1.55 &&
+      lead.text.length <= 60 &&
+      followers.length >= 2 &&
+      followers.every((entry) => entry.fontSize < bodyFont * 1.15)
+    ) {
+      titlePages += 1
+    }
+  }
+
+  const poetryRatio = shortUnterminated / totalNonEmpty
+  return poetryRatio >= 0.6 && titlePages >= 15
+}
+
+// Dedicated block builder for poetry collections. Unlike the prose builder it
+// never reflows consecutive lines into paragraphs: every source line is emitted
+// as its own verse block so the reader preserves the poem's line breaks. A
+// prominent short line that sits above body-font lines is promoted to a poem
+// title (chapter start). The front matter (also-by lists, the printed contents,
+// dedications) is not structured into chapters - those lines simply pass through
+// as verse blocks, since none of them are prominent-line-over-body-lines poems.
+function buildPoetryBlocksFromLines(pageData, { onProgress } = {}) {
+  const blocks = []
+  const allLines = []
+  const totalPages = pageData.length
+
+  for (let pageIndex = 0; pageIndex < pageData.length; pageIndex += 1) {
+    const pageLines = pageData[pageIndex].lines ?? []
+    for (const line of pageLines) {
+      const text = (line.text ?? "").trim()
+      if (text) {
+        allLines.push({ line, text, pageIndex })
+      }
+    }
+    if (onProgress && (pageIndex % 20 === 0 || pageIndex === totalPages - 1)) {
+      onProgress(pageIndex + 1, totalPages)
+    }
+  }
+
+  const docBodyFont = medianValue(
+    allLines.map((entry) => entry.line.fontSize ?? 0).filter((value) => value > 0)
+  )
+  const titleMinFont = docBodyFont * 1.15
+  const titleMaxFont = docBodyFont * 1.55
+
+  const isBodyFontEntry = (entry) =>
+    Boolean(entry) && (entry.line.fontSize ?? 0) < titleMinFont
+
+  const isPoemTitleEntry = (entry) => {
+    if (!entry) {
+      return false
+    }
+    const fontSize = entry.line.fontSize ?? 0
+    if (fontSize < titleMinFont || fontSize > titleMaxFont) {
+      return false
+    }
+    const text = entry.text
+    if (text.length > 60) {
+      return false
+    }
+    if (isStandalonePageNumberText(text) || isScannerWatermarkLine(text)) {
+      return false
+    }
+    // Front-matter list headers are prominent too; never treat them as poems.
+    if (/^(?:contents|table of contents|also by\b)/i.test(text)) {
+      return false
+    }
+    return true
+  }
+
+  for (let index = 0; index < allLines.length; index += 1) {
+    const entry = allLines[index]
+    const { text, pageIndex } = entry
+
+    if (isScannerWatermarkLine(text) || isStandalonePageNumberText(text)) {
+      continue
+    }
+
+    // Poem title: a prominent short line immediately followed by body-font verse
+    // lines. Requiring two following body lines keeps printed-contents entries
+    // (a prominent line followed by another prominent line) from being promoted.
+    if (
+      isPoemTitleEntry(entry) &&
+      isBodyFontEntry(allLines[index + 1]) &&
+      isBodyFontEntry(allLines[index + 2])
+    ) {
+      const title = text.replace(/\s+/g, " ").trim()
+      blocks.push(
+        withSourcePdfPage(
+          {
+            text: title,
+            chapterTitle: title,
+            isHeading: true,
+            isChapterStart: true,
+            isPoemTitle: true,
+            fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+          },
+          pageIndex
+        )
+      )
+      continue
+    }
+
+    blocks.push(
+      withSourcePdfPage(
+        {
+          text: text.replace(/\s+/g, " ").trim(),
+          isHeading: false,
+          isVerse: true,
+          fontSize: 12,
+        },
+        pageIndex
+      )
+    )
+  }
+
+  return blocks
 }
 
 function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc = null } = {}) {
@@ -11747,23 +11942,32 @@ async function parsePdfBuffer(
   })
 
   const printedTocFromPages = extractPrintedTocFromPageData(pageData)
+  const isPoetryCollection = documentIsPoetryCollection(pageData)
 
-  let blocks = applyBlockTransformPipeline(
-    buildBlocksFromLines(pageData, headingStrings, {
-      printedToc: printedTocFromPages,
-      onProgress(current, total) {
-        reportProgress({
-          phase: "structuring",
-          label: "Organizing book text",
-          structureStep: "lines",
-          current,
-          total,
-          percent: structurePhasePercent("lines", current, total),
-        })
-      },
-    }),
-    { printedToc: printedTocFromPages }
-  )
+  const reportLineProgress = (current, total) => {
+    reportProgress({
+      phase: "structuring",
+      label: "Organizing book text",
+      structureStep: "lines",
+      current,
+      total,
+      percent: structurePhasePercent("lines", current, total),
+    })
+  }
+
+  // Poetry collections are built by a dedicated verse builder that preserves
+  // each source line and promotes poem titles to chapters. It deliberately
+  // bypasses the prose-oriented transform pipeline (paragraph reflow, chapter /
+  // subtitle merging) which would destroy the line breaks the verse relies on.
+  let blocks = isPoetryCollection
+    ? buildPoetryBlocksFromLines(pageData, { onProgress: reportLineProgress })
+    : applyBlockTransformPipeline(
+        buildBlocksFromLines(pageData, headingStrings, {
+          printedToc: printedTocFromPages,
+          onProgress: reportLineProgress,
+        }),
+        { printedToc: printedTocFromPages }
+      )
 
   reportProgress({
     phase: "structuring",
@@ -11776,8 +11980,13 @@ async function parsePdfBuffer(
 
   const bookTitle = resolveBookTitle(parsedText, fileName, blocks)
 
-  blocks = stripPublisherCatalogBlocks(blocks, bookTitle)
-  blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle)
+  // The prose front-matter and printed-TOC cleaners assume reflowed prose and
+  // would drop verse lines that happen to resemble catalog or contents entries,
+  // so they are skipped for poetry collections.
+  if (!isPoetryCollection) {
+    blocks = stripPublisherCatalogBlocks(blocks, bookTitle)
+    blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle)
+  }
 
   reportProgress({
     phase: "structuring",
@@ -11790,10 +11999,12 @@ async function parsePdfBuffer(
 
   const printedToc =
     printedTocFromPages ?? extractPrintedTocLookup(blocks)
-  blocks = excludePrintedTocBlocks(blocks)
-  blocks = normalizeFrontAndBackMatterBlocks(blocks)
-  blocks = injectStormlightPreludeHeading(blocks)
-  blocks = injectStormlightPrologueHeading(blocks, printedToc)
+  if (!isPoetryCollection) {
+    blocks = excludePrintedTocBlocks(blocks)
+    blocks = normalizeFrontAndBackMatterBlocks(blocks)
+    blocks = injectStormlightPreludeHeading(blocks)
+    blocks = injectStormlightPrologueHeading(blocks, printedToc)
+  }
 
   reportProgress({
     phase: "structuring",
@@ -12230,6 +12441,7 @@ app.post("/admin/reparse", async (req, res) => {
 export {
   parsePdfBuffer,
   extractLinesByPosition,
+  documentIsPoetryCollection,
   normalizeExtractedText,
   classifyPdfImageRole,
   isChapterHeaderCandidate,

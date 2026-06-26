@@ -84,7 +84,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 112
+const PARSER_VERSION = 113
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -1174,6 +1174,16 @@ function isChapterBoundaryItem(item) {
 function proseParagraphClassName(previousItem, proseItem = null) {
   const classes = ["book-page__text"]
 
+  // Verse lines render flush-left with no first-line indent and tight spacing so
+  // a poem's line breaks are preserved exactly as written.
+  if (proseItem?.isVerse) {
+    classes.push("book-page__text--verse")
+    if (proseItem?.italic) {
+      classes.push("book-page__text--italic")
+    }
+    return classes.join(" ")
+  }
+
   if (proseItem?.isContinuation) {
     classes.push("book-page__text--continuation")
   } else if (proseItem?.isIndented) {
@@ -1830,6 +1840,7 @@ function groupBlocksForDisplay(blocks) {
 
     const last = visualItems[visualItems.length - 1]
     if (!last || last.type !== "prose") return false
+    if (last.isVerse) return false
     if (proseShouldBeCentered(last)) return false
     if (last.bold || last.italic || (last.runs?.length ?? 0) > 1) return false
 
@@ -2006,6 +2017,18 @@ function groupBlocksForDisplay(blocks) {
 
     if (isStandaloneUrl(text)) {
       pushProse(text)
+      continue
+    }
+
+    // Verse lines are never reflowed into a paragraph: each becomes its own prose
+    // item so the poem's original line breaks are preserved on the page.
+    if (block.isVerse) {
+      visualItems.push({
+        type: "prose",
+        text,
+        isVerse: true,
+        ...(block.italic ? { italic: true } : {}),
+      })
       continue
     }
 
@@ -2511,6 +2534,7 @@ function getChapterItemFromPlaceable(placeable) {
 
 function proseFormattingFields(proseItem) {
   return {
+    ...(proseItem.isVerse ? { isVerse: true } : {}),
     ...(proseItem.isIndented ? { isIndented: true } : {}),
     ...(proseItem.isContinuation ? { isContinuation: true } : {}),
     ...(proseShouldBeCentered(proseItem) ? { textAlign: "center" } : {}),
@@ -2540,6 +2564,13 @@ function pagePlaceablesFit(bodyEl, pagePlaceables, pageLayout) {
 
 function splitProseAcrossPages(proseItem, bodyEl, pageLayout, alreadyOnPage) {
   if (proseShouldBeCentered(proseItem)) {
+    return null
+  }
+
+  // A verse line is an indivisible unit - never break it across pages mid-line.
+  // It is short enough to always fit a fresh page, so it simply flows to the
+  // next page intact when it does not fit the current one.
+  if (proseItem.isVerse) {
     return null
   }
 
