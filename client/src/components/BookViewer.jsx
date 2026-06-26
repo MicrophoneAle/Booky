@@ -5054,8 +5054,55 @@ export default function BookViewer({
             )
         )
 
+    // In the image-chapter TOC, banners normally supply every chapter, so text
+    // chapter entries are dropped to avoid duplicating a banner. That assumption
+    // breaks for a bannerless chapter (e.g. Way of Kings ch69 "Justice", whose
+    // opener is a plain illustration with no banner): it has a server-side text
+    // chapter entry but no image entry, so it would otherwise vanish. Add back
+    // ONLY the text chapter entries that no image entry already represents,
+    // matched with chapterTitlesReferToSameChapter (the same dedupe the
+    // non-image branch uses for imageEntriesForToc). This is strictly additive -
+    // any chapter covered by a banner matches an image entry and is excluded, so
+    // banner-covered chapters are never duplicated. A bannerless chapter opens on
+    // the page of the banner that immediately follows it, so when it has no
+    // measured page of its own it borrows that following entry's page for
+    // display/navigation; chapterPageMap itself is left untouched.
+    const unmatchedTextChapterEntries = useImageChapterToc
+      ? textChapterEntries
+          .filter(
+            (textEntry) =>
+              !imageEntries.some((imageEntry) =>
+                chapterTitlesReferToSameChapter(
+                  textEntry.title,
+                  imageEntry.title
+                )
+              )
+          )
+          .map((textEntry) => {
+            if (textEntry.pageNum != null) {
+              return textEntry
+            }
+            const followingEntry = imageEntries
+              .filter(
+                (imageEntry) =>
+                  imageEntry.pageNum != null &&
+                  Number.isFinite(imageEntry.readingOrder) &&
+                  Number.isFinite(textEntry.readingOrder) &&
+                  imageEntry.readingOrder >= textEntry.readingOrder
+              )
+              .sort((left, right) => left.readingOrder - right.readingOrder)[0]
+            return followingEntry
+              ? { ...textEntry, pageNum: followingEntry.pageNum }
+              : textEntry
+          })
+      : []
+
     const combined = useImageChapterToc
-      ? [...textSectionEntries, ...imageEntriesForToc]
+      ? [
+          ...textSectionEntries,
+          ...unmatchedTextChapterEntries,
+          ...imageEntriesForToc,
+        ]
       : [...textEntries, ...imageEntriesForToc]
 
     return dedupeTocEntries(
