@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 104
+const PARSER_VERSION = 105
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 
@@ -9432,6 +9432,9 @@ function appendImageBoundaryChapters(content, chapters, seenChapterIds) {
         title,
         pageIndex: page.pageIndex,
         blockIndex,
+        ...(Number.isFinite(block.pageNumber)
+          ? { sourcePageNumber: block.pageNumber }
+          : {}),
       })
     }
   }
