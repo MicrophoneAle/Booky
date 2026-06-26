@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 107
+const PARSER_VERSION = 108
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -9494,9 +9494,56 @@ function appendImageBoundaryChapters(content, chapters, seenChapterIds) {
   return chapters
 }
 
+// Classifies an explicit "Chapter N" heading by its numeral style. Returns
+// "arabic" for digit-numbered chapters, "roman" for roman-numeral chapters, and
+// null for anything that is not a "Chapter <numeral>" heading (parts, volumes,
+// spelled-out numbers, standalone numerals, etc.). Only the literal "Chapter"
+// keyword is considered, so epistolary "Letter <roman>" dividers are untouched.
+function chapterHeadingNumeralStyle(text) {
+  const match = (text ?? "").trim().match(/^chapter\s+(\S+)/i)
+  if (!match) {
+    return null
+  }
+  const token = match[1].replace(/[.,:;)\]]+$/, "")
+  if (/^\d{1,3}$/.test(token)) {
+    return "arabic"
+  }
+  if (parseValidStandaloneRomanNumeral(token)) {
+    return "roman"
+  }
+  return null
+}
+
+// A document "establishes" arabic chapter numbering when it has multiple arabic
+// "Chapter N" headings that outnumber any roman-numeral "Chapter X" headings. In
+// that case a roman-numeral chapter heading is a foreign artifact - for example
+// the Goldstein book ("Chapter I", "Chapter III") nested inside 1984's prose,
+// which numbers its real chapters with arabic numerals. The Metamorphosis is not
+// affected: its dividers are standalone numerals (no "Chapter" keyword) handled
+// by the romanPart path, and it has zero arabic chapter headings. Moby Dick is
+// not affected either: its chapters are roman with no arabic counterpart.
+function documentEstablishesArabicChapterNumbering(flatBlocks) {
+  let arabicChapterCount = 0
+  let romanChapterCount = 0
+  for (const block of flatBlocks ?? []) {
+    if (block?.isChapterStart !== true) {
+      continue
+    }
+    const style = chapterHeadingNumeralStyle(block.chapterTitle ?? block.text)
+    if (style === "arabic") {
+      arabicChapterCount += 1
+    } else if (style === "roman") {
+      romanChapterCount += 1
+    }
+  }
+  return arabicChapterCount >= 2 && arabicChapterCount > romanChapterCount
+}
+
 function detectChapters(content, bookTitle = "") {
   const trimmedBookTitle = (bookTitle ?? "").trim()
   const flatBlocks = flattenContentBlocks(content)
+  const arabicChaptersEstablished =
+    documentEstablishesArabicChapterNumbering(flatBlocks)
   let flatBlockIndex = 0
 
   if (!contentHasChapterHeadings(content) && trimmedBookTitle) {
@@ -9550,6 +9597,22 @@ function detectChapters(content, bookTitle = "") {
       }
 
       if (isChapterHeading(block)) {
+        // Foreign roman-numeral chapter heading inside an arabic-numbered work
+        // (e.g. the Goldstein book's "Chapter I"/"Chapter III" embedded in 1984's
+        // prose). Keep the line as body text within the current chapter so it
+        // does not pollute the table of contents.
+        if (
+          arabicChaptersEstablished &&
+          chapterHeadingNumeralStyle(block.chapterTitle ?? block.text) === "roman"
+        ) {
+          return {
+            ...block,
+            chapterId: currentChapterId,
+            isChapterStart: false,
+            isHeading: false,
+          }
+        }
+
         const rawTitle = (block.chapterTitle ?? block.text ?? "").trim()
         const headingText = (block.text ?? rawTitle).trim()
         const canonicalTitle = normalizeHeadingCandidate(headingText) || headingText
