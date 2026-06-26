@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 110
+const PARSER_VERSION = 111
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -2882,10 +2882,11 @@ function isWrappedDisplayTitleHeadLine(text) {
 }
 
 // The short trailing line that completes a wrapped display title (e.g. "KING",
-// "COCK", "FISH"). It is one or two all-caps words at the same prominent font as
-// the head, is not a structural label, and does not begin with an article (which
-// would mark a subtitle such as "A NOVEL" rather than a wrapped noun).
-function isWrappedDisplayTitleTailLine(text, line, bodyFontSize) {
+// "COCK", "FISH", "SWEET HERBS"). It is one or two all-caps words, is not a
+// structural label, and does not begin with an article (which would mark a
+// subtitle such as "A NOVEL" rather than a wrapped noun). Font prominence is
+// checked by the caller against the head and the following body line.
+function isWrappedDisplayTitleTailLine(text) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
     return false
@@ -2902,9 +2903,6 @@ function isWrappedDisplayTitleTailLine(text, line, bodyFontSize) {
     return false
   }
   if (isNarrativeSentenceLine(trimmed)) {
-    return false
-  }
-  if (bodyFontSize > 0 && (line?.fontSize ?? 0) < bodyFontSize * 1.35) {
     return false
   }
   if (
@@ -3090,7 +3088,11 @@ function isFableStoryTitleBlock(block) {
     block.isChapterStart &&
     (block.textAlign === "center" || block.centered)
   ) {
-    if (countWordsInText(text) >= 8) {
+    // Centered all-caps lines of up to eight words are treated as decorative
+    // prose by isCenteredDecorativeProseText, so an eight-word story title (e.g.
+    // "THE DRUM AND THE VASE OF SWEET HERBS") must stay recognized here to keep
+    // its heading status; only reject longer lines that are likely sentences.
+    if (countWordsInText(text) > 8) {
       return false
     }
     return true
@@ -10347,22 +10349,25 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
     // the following prose. Merge them into one chapter-start heading up front,
     // before any downstream branch can mishandle the pieces.
     {
-      const wrapMetrics = entry.pageMetrics ?? line.pageMetrics
-      const wrapBodyFontSize = wrapMetrics?.bodyFontSize ?? 0
       const tailEntry = allLines[index + 1]
       const afterTailEntry = allLines[index + 2]
+      const headFontSize = line.fontSize ?? 0
+      const tailFontSize = tailEntry?.line?.fontSize ?? 0
+      const afterFontSize = afterTailEntry?.line?.fontSize ?? 0
+      // A wrapped display title's two physical lines share the same large font,
+      // and that font sits well above the body line that follows. Comparing the
+      // head/tail font to the following body line is robust on sparse title
+      // pages where the per-page median font is skewed by the title itself.
       if (
-        wrapBodyFontSize > 0 &&
         tailEntry &&
         afterTailEntry &&
         tailEntry.pageIndex === entry.pageIndex &&
-        (line.fontSize ?? 0) >= wrapBodyFontSize * 1.35 &&
+        headFontSize > 0 &&
+        Math.abs(headFontSize - tailFontSize) <= 1.5 &&
+        afterFontSize > 0 &&
+        headFontSize >= afterFontSize * 1.2 &&
         isWrappedDisplayTitleHeadLine(text) &&
-        isWrappedDisplayTitleTailLine(
-          tailEntry.text,
-          tailEntry.line,
-          wrapBodyFontSize
-        ) &&
+        isWrappedDisplayTitleTailLine(tailEntry.text) &&
         /[a-z]/.test(afterTailEntry.text ?? "")
       ) {
         const mergedTitle = joinWrappedText(text.trim(), tailEntry.text.trim())
