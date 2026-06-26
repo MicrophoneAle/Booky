@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 108
+const PARSER_VERSION = 109
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -11294,12 +11294,34 @@ function stripBoldFromCenteredProseBlock(block) {
   }
 }
 
+// A centered title "opens a new story section" when the next meaningful block
+// is narrative prose rather than another heading. This separates an anthology
+// fable title (followed by the fable's prose) from back-to-back display lines
+// such as a back-matter advertisement list, where one heading follows another.
+function centeredTitleOpensNewStorySection(blocks, index) {
+  for (let cursor = index + 1; cursor < blocks.length; cursor += 1) {
+    const next = blocks[cursor]
+    if (next?.type === "image" || next?.type === "image_candidate") {
+      continue
+    }
+    const nextText = (next?.text ?? "").trim()
+    if (!nextText) {
+      continue
+    }
+    if (next.isHeading || next.isChapterStart) {
+      return false
+    }
+    return isNarrativeSentenceLine(nextText) || nextText.length >= 40
+  }
+  return false
+}
+
 function normalizeCenteredDecorativeProseBlocks(blocks) {
   if (!Array.isArray(blocks) || blocks.length === 0) {
     return blocks
   }
 
-  return blocks.map((block) => {
+  return blocks.map((block, index) => {
     if (block?.type === "image" || block?.type === "image_candidate") {
       return block
     }
@@ -11315,6 +11337,22 @@ function normalizeCenteredDecorativeProseBlocks(blocks) {
       (block?.isHeading && isCenteredDecorativeProseText(text, lineLike, null))
 
     if (!shouldNormalize) {
+      return block
+    }
+
+    // Defer to story-title detection: in an anthology each fable opens with a
+    // short centered title (often all-caps) that is a genuine promoted chapter
+    // start followed by the fable's narrative prose. The decorative-prose
+    // normalization would otherwise strip that heading status and merge the
+    // title into the body. Genuine centered decorative prose (temporal scene
+    // markers, repeated chant lines such as 1984's "DOWN WITH BIG BROTHER",
+    // centered dialogue fragments) is never promoted to a heading and never
+    // opens a new section, so it is left untouched here.
+    if (
+      !isTemporalSceneMarkerText(text) &&
+      isFableStoryTitleBlock(block) &&
+      centeredTitleOpensNewStorySection(blocks, index)
+    ) {
       return block
     }
 
