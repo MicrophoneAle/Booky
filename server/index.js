@@ -41,8 +41,9 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 103
+const PARSER_VERSION = 104
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
+const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 
 function bbNormalizeLetters(text) {
   return (text ?? "").replace(/\s+/g, "").toLowerCase()
@@ -9558,6 +9559,19 @@ function detectChapters(content, bookTitle = "") {
           displayChapterTitle = chapterTitle
         } else {
           chapterId = currentChapterId
+          if (BOOKY_TOC_MISS_DEBUG) {
+            console.log(
+              "[tocDemote]",
+              JSON.stringify({
+                text: headingText.slice(0, 80),
+                chapterTitle: chapterTitle.slice(0, 80),
+                collidedId: id,
+                hadIsChapterStart: block.isChapterStart === true,
+                pageIndex: page.pageIndex,
+                blockIndex,
+              })
+            )
+          }
         }
       }
 
@@ -9574,7 +9588,65 @@ function detectChapters(content, bookTitle = "") {
 
   appendImageBoundaryChapters(content, chapters, seenChapterIds)
 
+  if (BOOKY_TOC_MISS_DEBUG) {
+    logTocMissDiagnostics(updatedContent, chapters)
+  }
+
   return { chapters, content: updatedContent }
+}
+
+function logTocMissDiagnostics(content, chapters) {
+  const chapterIdSet = new Set(chapters.map((chapter) => chapter.id))
+  const chapterPositionSet = new Set(
+    chapters.map((chapter) => `${chapter.pageIndex}:${chapter.blockIndex}`)
+  )
+
+  for (const page of content) {
+    const blocks = page.blocks ?? []
+    for (let blockIndex = 0; blockIndex < blocks.length; blockIndex += 1) {
+      const block = blocks[blockIndex]
+      const isImageBoundary =
+        block?.type === "image" &&
+        block.isChapterBoundary === true &&
+        block.chapterMetadata?.includeInToc !== false
+      const isTextStart = block?.type !== "image" && block?.isChapterStart === true
+
+      if (!isImageBoundary && !isTextStart) {
+        continue
+      }
+
+      let computedSlug
+      let title
+      let boundaryKind
+      if (isImageBoundary) {
+        title = formatImageBoundaryChapterTitle(block.chapterMetadata)
+        computedSlug = slugify(title) || `image-boundary-${page.pageIndex}-${blockIndex}`
+        boundaryKind = block.chapterMetadata?.boundaryKind ?? null
+      } else {
+        title = (block.chapterTitle ?? block.text ?? "").trim()
+        computedSlug = block.chapterId ?? slugify(title)
+        boundaryKind = block.chapterMetadata?.boundaryKind ?? null
+      }
+
+      const positionKey = `${page.pageIndex}:${blockIndex}`
+      const registered =
+        chapterIdSet.has(computedSlug) || chapterPositionSet.has(positionKey)
+
+      if (!registered) {
+        console.log(
+          "[tocMiss]",
+          JSON.stringify({
+            text: (block.text ?? "").slice(0, 80),
+            chapterTitle: (block.chapterTitle ?? "").slice(0, 80),
+            boundaryKind,
+            pageIndex: page.pageIndex,
+            blockIndex,
+            slug: computedSlug,
+          })
+        )
+      }
+    }
+  }
 }
 
 function isAuthorStructuralLine(text) {

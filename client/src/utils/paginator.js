@@ -83,6 +83,25 @@ function extractVolumePartKey(text) {
   return `${match[1]} ${match[2]}`.toLowerCase()
 }
 
+/**
+ * Returns the normalized section label that trails a volume/part prefix, e.g.
+ * "volume i - letter ii" -> "letter ii", bare "volume i" -> "". Used to tell
+ * distinct sub-sections of the same volume/part apart in the TOC.
+ * @param {string} lowerTitle already-lowercased title
+ * @param {string} partKey lowercased volume/part key, e.g. "volume i"
+ * @returns {string}
+ */
+function volumePartSectionTail(lowerTitle, partKey) {
+  const index = lowerTitle.indexOf(partKey)
+  if (index === -1) {
+    return lowerTitle
+  }
+  return lowerTitle
+    .slice(index + partKey.length)
+    .replace(/[\s\u00a0\u2014\u2013-]+/g, " ")
+    .trim()
+}
+
 function isChapterBoundaryVisualItem(item) {
   if (!item) {
     return false
@@ -395,9 +414,18 @@ export function chapterTitlesReferToSameChapter(apiTitle, candidateTitle) {
     }
 
     if (!apiNamesChapter) {
-      return apiPart
-        ? apiPart === candidatePart
-        : apiLower === candidateLower
+      if (apiPart && candidatePart) {
+        // Same volume/part prefix only collapses when the trailing section
+        // label also matches (e.g. "Part Two" == "PART TWO"). Distinct
+        // sub-sections such as "Volume I - Letter I" and "Volume I - Letter II"
+        // must stay separate TOC entries.
+        return (
+          apiPart === candidatePart &&
+          volumePartSectionTail(apiLower, apiPart) ===
+            volumePartSectionTail(candidateLower, candidatePart)
+        )
+      }
+      return apiLower === candidateLower
     }
 
     return (
