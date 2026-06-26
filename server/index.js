@@ -41,9 +41,10 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 105
+const PARSER_VERSION = 106
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
+const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
 
 function bbNormalizeLetters(text) {
   return (text ?? "").replace(/\s+/g, "").toLowerCase()
@@ -9435,6 +9436,7 @@ function appendImageBoundaryChapters(content, chapters, seenChapterIds) {
         ...(Number.isFinite(block.pageNumber)
           ? { sourcePageNumber: block.pageNumber }
           : {}),
+        ...(BOOKY_TOC_ORDER_DEBUG ? { __tocSource: "image" } : {}),
       })
     }
   }
@@ -9550,6 +9552,7 @@ function detectChapters(content, bookTitle = "") {
             ...(block.storyChapterNumber != null
               ? { storyChapterNumber: String(block.storyChapterNumber) }
               : {}),
+            ...(BOOKY_TOC_ORDER_DEBUG ? { __tocSource: "text" } : {}),
           })
           currentChapterId = id
           chapterId = id
@@ -9591,11 +9594,104 @@ function detectChapters(content, bookTitle = "") {
 
   appendImageBoundaryChapters(content, chapters, seenChapterIds)
 
+  // Text chapters and image/structural boundaries are collected in two separate
+  // passes above, so the raw array is two concatenated lists rather than one
+  // reading-order list. Merge them into a single reading-order sequence by
+  // sorting once on the content-stream position (pageIndex, then blockIndex)
+  // that every entry carries.
+  sortChaptersByReadingOrder(chapters)
+
+  if (BOOKY_TOC_ORDER_DEBUG) {
+    console.log("[tocOrder] final chapters array (reading order):")
+    chapters.forEach((chapter, index) => {
+      console.log(
+        "[tocOrder]",
+        JSON.stringify({
+          i: index,
+          title: (chapter.title ?? "").slice(0, 60),
+          pageIndex: chapter.pageIndex,
+          blockIndex: chapter.blockIndex,
+          source: chapter.__tocSource ?? "text",
+        })
+      )
+    })
+  }
+
   if (BOOKY_TOC_MISS_DEBUG) {
     logTocMissDiagnostics(updatedContent, chapters)
   }
 
   return { chapters, content: updatedContent }
+}
+
+/**
+ * Sorts the unified chapters list (text chapters plus image/structural
+ * boundaries) in place by a single reading-order key derived from each entry's
+ * position in the final content stream: pageIndex first, then blockIndex. The
+ * pageIndex here is the content page index produced by blocksToContent, not the
+ * raw PDF page. The sort is made explicitly stable via the original insertion
+ * index so entries that share an identical position keep their relative order.
+ */
+function sortChaptersByReadingOrder(chapters) {
+  const decorated = chapters.map((chapter, insertionIndex) => ({
+    chapter,
+    insertionIndex,
+  }))
+
+  decorated.sort((left, right) => {
+    const pageDelta =
+      readingOrderPageIndex(left.chapter) - readingOrderPageIndex(right.chapter)
+    if (pageDelta !== 0) {
+      return pageDelta
+    }
+
+    const blockDelta =
+      readingOrderBlockIndex(left.chapter) - readingOrderBlockIndex(right.chapter)
+    if (blockDelta !== 0) {
+      return blockDelta
+    }
+
+    return left.insertionIndex - right.insertionIndex
+  })
+
+  for (let index = 0; index < decorated.length; index += 1) {
+    chapters[index] = decorated[index].chapter
+  }
+
+  return chapters
+}
+
+/**
+ * Returns the content page index used as the primary reading-order key. Every
+ * chapter (text or image-boundary) is expected to carry a finite pageIndex; a
+ * missing key is a population bug, so it is surfaced (and pushed to the end via
+ * a sentinel rather than clustering at the top) instead of being silently
+ * normalized to 0.
+ */
+function readingOrderPageIndex(chapter) {
+  if (Number.isFinite(chapter?.pageIndex)) {
+    return chapter.pageIndex
+  }
+  if (BOOKY_TOC_ORDER_DEBUG) {
+    console.log(
+      "[tocOrder] WARNING missing pageIndex",
+      JSON.stringify({ title: (chapter?.title ?? "").slice(0, 60) })
+    )
+  }
+  return Number.MAX_SAFE_INTEGER
+}
+
+function readingOrderBlockIndex(chapter) {
+  if (Number.isFinite(chapter?.blockIndex)) {
+    return chapter.blockIndex
+  }
+  if (BOOKY_TOC_ORDER_DEBUG) {
+    console.log(
+      "[tocOrder] WARNING missing blockIndex",
+      JSON.stringify({ title: (chapter?.title ?? "").slice(0, 60) })
+    )
+  }
+  return Number.MAX_SAFE_INTEGER
 }
 
 function logTocMissDiagnostics(content, chapters) {

@@ -335,7 +335,9 @@ export function extractImageChapterTocEntries(document) {
   const entries = []
 
   for (const page of document?.content ?? []) {
-    for (const block of page?.blocks ?? []) {
+    const blocks = page?.blocks ?? []
+    for (let blockIndex = 0; blockIndex < blocks.length; blockIndex += 1) {
+      const block = blocks[blockIndex]
       if (block?.type !== "image" || block.isChapterBoundary !== true) {
         continue
       }
@@ -349,6 +351,10 @@ export function extractImageChapterTocEntries(document) {
         id: block.id,
         chapterMetadata: metadata,
         sourcePageNumber: block.pageNumber ?? null,
+        // Content-stream position (matches the server reading-order key) so the
+        // TOC can interleave image chapters with text sections on one scale.
+        pageIndex: Number.isFinite(page?.pageIndex) ? page.pageIndex : null,
+        blockIndex,
       })
     }
   }

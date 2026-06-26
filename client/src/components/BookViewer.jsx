@@ -84,7 +84,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 105
+const PARSER_VERSION = 106
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -3431,7 +3431,30 @@ function isTextSectionTocEntry(title) {
   return false
 }
 
+const TOC_BLOCK_INDEX_STRIDE = 100000
+
+/**
+ * Single reading-order key shared by text chapters and image/structural
+ * boundaries, derived from the content-stream position (pageIndex first, then
+ * blockIndex) that the server now assigns to every chapter. Using one scale for
+ * every entry keeps part dividers interleaved correctly with the chapters that
+ * surround them instead of mixing the content-page scale (sections) with the
+ * reader-page scale (chapters).
+ */
+function tocReadingOrderKey(pageIndex, blockIndex) {
+  if (!Number.isFinite(pageIndex)) {
+    return null
+  }
+  const block = Number.isFinite(blockIndex) ? blockIndex : 0
+  return pageIndex * TOC_BLOCK_INDEX_STRIDE + block
+}
+
 function tocEntrySortKey(entry) {
+  if (Number.isFinite(entry?.readingOrder)) {
+    return entry.readingOrder
+  }
+  // Fallback only for entries that lack a content-stream position (e.g. stale
+  // pre-reparse data). Fresh parses always populate readingOrder.
   if (isTextSectionTocEntry(entry.title)) {
     return entry.sourcePageNumber ?? entry.pageNum ?? Number.MAX_SAFE_INTEGER
   }
@@ -4960,6 +4983,7 @@ export default function BookViewer({
       title: formatTocChapterTitle(formatImageChapterTocTitle(entry.chapterMetadata)),
       pageNum: chapterPageMap[entry.id] ?? null,
       sourcePageNumber: entry.sourcePageNumber ?? null,
+      readingOrder: tocReadingOrderKey(entry.pageIndex, entry.blockIndex),
     }))
 
     const textEntries = (bookDocument?.chapters ?? []).map((chapter) => ({
@@ -4971,6 +4995,7 @@ export default function BookViewer({
         : Number.isFinite(chapter.pageIndex)
           ? chapter.pageIndex + 1
           : null,
+      readingOrder: tocReadingOrderKey(chapter.pageIndex, chapter.blockIndex),
     }))
 
     const textChapterEntries = textEntries.filter((entry) =>
