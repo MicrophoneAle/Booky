@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 109
+const PARSER_VERSION = 110
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -2847,6 +2847,76 @@ function isFableTitleLeadFragment(block) {
   return isHeadingIncompleteEnding(text) || /,\s*$/.test(text)
 }
 
+// The first physical line of a prominent display title that wraps. It is an
+// all-caps phrase that does not end as a complete sentence and is not a
+// structural label (Chapter/Part/Volume/standalone roman). Comma-heavy heads
+// (e.g. "THE MOUSE, THE CAT, AND THE") qualify here even though the stricter
+// isPureAllCapsTitleText rejects them, because the large font marks them as a
+// display title rather than an enumeration in prose.
+function isWrappedDisplayTitleHeadLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 80) {
+    return false
+  }
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 3 || letters !== letters.toUpperCase()) {
+    return false
+  }
+  if (/[.!?]["\u201d\u2019']?\s*$/.test(trimmed)) {
+    return false
+  }
+  if (isNarrativeSentenceLine(trimmed)) {
+    return false
+  }
+  if (
+    CHAPTER_PATTERN.test(trimmed) ||
+    PART_HEADING_PATTERN.test(normalizeHeadingCandidate(trimmed)) ||
+    VOLUME_HEADING_PATTERN.test(trimmed) ||
+    resolvePartHeadingLabel(trimmed) ||
+    parseChapterOnlyHeading(trimmed) ||
+    parseValidStandaloneRomanNumeral(trimmed)
+  ) {
+    return false
+  }
+  return true
+}
+
+// The short trailing line that completes a wrapped display title (e.g. "KING",
+// "COCK", "FISH"). It is one or two all-caps words at the same prominent font as
+// the head, is not a structural label, and does not begin with an article (which
+// would mark a subtitle such as "A NOVEL" rather than a wrapped noun).
+function isWrappedDisplayTitleTailLine(text, line, bodyFontSize) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 2 || letters !== letters.toUpperCase()) {
+    return false
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 1 || words.length > 2) {
+    return false
+  }
+  if (/^(?:a|an|the)$/i.test(words[0])) {
+    return false
+  }
+  if (isNarrativeSentenceLine(trimmed)) {
+    return false
+  }
+  if (bodyFontSize > 0 && (line?.fontSize ?? 0) < bodyFontSize * 1.35) {
+    return false
+  }
+  if (
+    CHAPTER_PATTERN.test(trimmed) ||
+    parseValidStandaloneRomanNumeral(trimmed) ||
+    resolvePartHeadingLabel(trimmed)
+  ) {
+    return false
+  }
+  return true
+}
+
 function isFableTitleTailFragmentText(text) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
@@ -4235,6 +4305,18 @@ function isCenteredDecorativeProseText(text, line = null, entry = null) {
       CHAPTER_PATTERN.test(trimmed) ||
       CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed)
     ) {
+      return false
+    }
+    // A centered all-caps line set noticeably larger than the body font is a
+    // prominent display title (e.g. anthology fable titles rendered at ~1.7x
+    // body), not decorative prose. Genuine centered decorative prose - a
+    // temporal scene marker, a repeated chant such as 1984's "DOWN WITH BIG
+    // BROTHER", a centered dialogue fragment - is set at body size. Defer to
+    // display-title detection so the larger lines can be promoted to headings.
+    const metrics = entry?.pageMetrics ?? line?.pageMetrics
+    const bodyFontSize = metrics?.bodyFontSize ?? 0
+    const lineFontSize = line?.fontSize ?? entry?.line?.fontSize ?? 0
+    if (bodyFontSize > 0 && lineFontSize >= bodyFontSize * 1.35) {
       return false
     }
     const words = trimmed.split(/\s+/).filter(Boolean)
@@ -10255,6 +10337,58 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
     if (isScannerWatermarkLine(text)) {
       index += 1
       continue
+    }
+
+    // Reassemble a prominent display title that wraps across two physical lines
+    // (e.g. "THE FROGS WHO ASKED FOR A" + "KING", "THE MOUSE, THE CAT, AND THE"
+    // + "COCK", "THE FISHERMAN AND THE LITTLE" + "FISH"). Anthology fable titles
+    // are set well above body size; when one wraps, the short all-caps tail
+    // would otherwise be dropped as a glossary artifact and the head glued onto
+    // the following prose. Merge them into one chapter-start heading up front,
+    // before any downstream branch can mishandle the pieces.
+    {
+      const wrapMetrics = entry.pageMetrics ?? line.pageMetrics
+      const wrapBodyFontSize = wrapMetrics?.bodyFontSize ?? 0
+      const tailEntry = allLines[index + 1]
+      const afterTailEntry = allLines[index + 2]
+      if (
+        wrapBodyFontSize > 0 &&
+        tailEntry &&
+        afterTailEntry &&
+        tailEntry.pageIndex === entry.pageIndex &&
+        (line.fontSize ?? 0) >= wrapBodyFontSize * 1.35 &&
+        isWrappedDisplayTitleHeadLine(text) &&
+        isWrappedDisplayTitleTailLine(
+          tailEntry.text,
+          tailEntry.line,
+          wrapBodyFontSize
+        ) &&
+        /[a-z]/.test(afterTailEntry.text ?? "")
+      ) {
+        const mergedTitle = joinWrappedText(text.trim(), tailEntry.text.trim())
+          .replace(/\s+/g, " ")
+          .trim()
+        pendingConnective = null
+        pushHeadingBlock(
+          blocks,
+          {
+            text: mergedTitle,
+            chapterTitle: mergedTitle,
+            isHeading: true,
+            fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+            isChapterStart: true,
+            centered: true,
+            textAlign: "center",
+            chapterId: null,
+          },
+          "wrappedDisplayTitle",
+          entry.pageIndex,
+          line
+        )
+        nonEmptyLineIndex += 1
+        index += 2
+        continue
+      }
     }
 
     if (printedToc?.isSaddlebackDotLeader && printedToc?.chapters?.size) {
