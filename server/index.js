@@ -41,7 +41,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 111
+const PARSER_VERSION = 112
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -9005,6 +9005,53 @@ function isEmbeddedSubtitlePrefixValid(subtitle, { tocSubtitle = null } = {}) {
   return false
 }
 
+// Recover a chapter subtitle that a drop cap has fused to the body on a single
+// extracted line. Some editions (e.g. Oliver Twist) have no printed TOC and set
+// the subtitle as an inline all-caps line; normally that line stays dedicated,
+// but when the body's drop-capped first letter is rendered ahead of the all-caps
+// subtitle and the lowercase remainder of the body is glued onto its tail, the
+// whole thing arrives as one mixed-case block, e.g.
+//   "T" + "A STRANGE INTERVIEW, WHICH IS A SEQUEL TO THE LAST CHAPTER"
+//       + "he girl's life had been squandered ..."
+// The all-caps run is the subtitle; the body is the drop cap plus the lowercase
+// remainder. The lowercase boundary is the discriminating signal: ordinary body
+// prose never begins lowercase, so this only fires on the drop-cap fusion and
+// cannot misread a normal capitalized sentence as a title. There is no length
+// cap here, so Oliver Twist's unusually long titles are preserved in full.
+function extractDropCapFusedSubtitle(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return null
+  }
+
+  const match = trimmed.match(/^([A-Z])([A-Z][A-Z'’.,\- ]*[A-Z])\s+([a-z].*)$/)
+  if (!match) {
+    return null
+  }
+
+  const dropCap = match[1]
+  const capsRun = match[2].replace(/\s+/g, " ").trim()
+  const bodyTail = match[3].trim()
+
+  const subtitleWords = capsRun.split(/\s+/).filter(Boolean)
+  if (subtitleWords.length < 3) {
+    return null
+  }
+  if (bodyTail.length < 12) {
+    return null
+  }
+
+  const subtitle = formatInferredTitleText(capsRun)
+  if (!subtitle) {
+    return null
+  }
+
+  return {
+    subtitle,
+    prose: `${dropCap}${bodyTail}`,
+  }
+}
+
 function extractEmbeddedChapterSubtitle(text, { tocSubtitle = null } = {}) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
@@ -9178,6 +9225,39 @@ function mergeChapterSubtitleBlocks(blocks, printedToc = null) {
           }
           continue
         } else {
+          // No usable printed-TOC subtitle. Editions without a printed TOC (e.g.
+          // Oliver Twist) render the subtitle inline; when a drop cap fuses it to
+          // the body on one extracted line, the bare "Chapter N" would otherwise
+          // lose its title. Recover it by splitting at the drop-cap boundary.
+          const followingBlock = blocks[index + 1]
+          const fused =
+            followingBlock && !followingBlock.isHeading
+              ? extractDropCapFusedSubtitle(followingBlock.text)
+              : null
+          if (fused) {
+            const displayTitle = formatChapterLabel(
+              parts.kind,
+              parts.number,
+              fused.subtitle
+            )
+            merged.push({
+              ...block,
+              text: displayTitle,
+              chapterTitle: displayTitle,
+              fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+              isHeading: true,
+              isChapterStart: true,
+            })
+            merged.push({
+              ...followingBlock,
+              text: fused.prose,
+              isHeading: false,
+              isChapterStart: false,
+            })
+            index += 1
+            continue
+          }
+
           const displayTitle = formatChapterLabel(parts.kind, parts.number, "")
           merged.push({
             ...block,
@@ -9552,6 +9632,19 @@ function appendImageBoundaryChapters(content, chapters, seenChapterIds) {
         kind === "interlude_divider" ||
         kind === "book_divider"
       ) {
+        continue
+      }
+
+      // A "chapter" image boundary that carries neither a number nor a title
+      // resolves only to the bare "Chapter" fallback label - a meaningless TOC
+      // entry produced when a decorative or stray image is misflagged as a
+      // chapter boundary (e.g. Oliver Twist's end-matter image at pageIndex 98).
+      // Drop it. This never affects prelude/prologue/epilogue/interlude
+      // boundaries (they have their own fallback labels) or chapter boundaries
+      // that carry a real number or title.
+      const boundaryNumber = (block.chapterMetadata?.number ?? "").toString().trim()
+      const boundaryTitle = (block.chapterMetadata?.title ?? "").toString().trim()
+      if (kind === "chapter" && !boundaryNumber && !boundaryTitle) {
         continue
       }
 
