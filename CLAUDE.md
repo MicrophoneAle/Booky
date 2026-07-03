@@ -12,7 +12,7 @@
   - **Deploy:** Vercel (client), Render (API)
 
 - **Architectural Patterns:**
-  - **Monolithic parse pipeline** on the server (`server/index.js`, ~11K lines) - extract, block-build, transform, illustrate/OCR, chapter-detect, persist
+  - **Monolithic parse pipeline** on the server (`server/index.js`, ~12.8K lines) - extract, block-build, transform, illustrate/OCR, chapter-detect, persist
   - **SPA routes:** `/` upload, `/library`, `/read/:id` reader
   - **Versioned invalidation:** `PARSER_VERSION` (server + client) forces re-parse and pagination cache bust
   - **Specialized modules** for Stormlight/illustrated books: `chapterGraphicService.js`, `stormlightEpigraphService.js`, `printedTocService.js`, `imageOcrService.js`
@@ -26,7 +26,7 @@
 Booky/
 ├── client/
 │   ├── src/
-│   │   ├── components/BookViewer.jsx   # Reader UI, pagination, TOC assembly (~6K lines)
+│   │   ├── components/BookViewer.jsx   # Reader UI, pagination, TOC assembly (~6.8K lines)
 │   │   ├── utils/paginator.js          # Page measurement, chapter page map, image TOC extraction
 │   │   ├── utils/bookCache.js          # Pagination cache (localStorage + IndexedDB)
 │   │   ├── pages/                      # Home (upload), Library, Reader
@@ -43,6 +43,7 @@ Booky/
 │   └── scripts/
 │       ├── regression/                 # `npm run regression` - 5 books, 10 general checks
 │       ├── debug-*.mjs                 # Ad-hoc book-specific diagnostics (39 scripts)
+│       ├── test-*.mjs, verify-*.mjs    # More ad-hoc diagnostics (~20 more scripts, not debug-* prefixed)
 │       └── .index-backup.js            # STALE - do not edit or import
 ├── supabase/migrations/                # parser_version, parse_status, parse_progress, parsed_cache
 └── README.md
@@ -110,8 +111,9 @@ Booky/
 - **Ch69 "Justice" / Ch70 "Sea Of Glass"** - ch69 has no arch banner; opener is a portrait illustration (p1051). Fixed in v115 via: (1) exclude portrait band from `isLikelyStructuralPartDividerPlate`, (2) `bannerlessReconcile` advances printed-TOC cursor past ch69 + Part Five, (3) `bannerlessChapterAfter` surfaces ch69 in server `chapters[]`, (4) client `unmatchedTextChapterEntries` adds bannerless text chapters when `useImageChapterToc` (>=10 image banners).
 - **False part-divider match on p1051** historically skipped slots 83-84 and mislabeled p1052 as ch69 - do not reintroduce.
 - **Parts Four/Five** exist in printed-TOC cursor but are **absent from reader TOC** by design (no text headings, filtered from image boundaries). Separate future work.
-- **WoK is NOT in `npm run regression`** - only ad-hoc scripts (`verify-wok-ch68-72.mjs`, `debug-parse-wok.mjs`). Easy to regress silently.
+- **WoK is NOT in `npm run regression`** - only ad-hoc scripts (`verify-wok-ch68-72.mjs`, `verify-wok-ch9-12.mjs`, `verify-wok-part5.mjs`, `debug-parse-wok.mjs`, `test-wok-graphic-fixes.mjs`, `server/scripts/_toc-verify.mjs`). Easy to regress silently.
 - Stale artifacts (`wok-ch68-72-debug.json`, old logs) show pre-fix behavior - ignore them.
+- `chapterGraphicService.js` has a `logPortraitOpenerBandDiagnostic` ("Step-A diagnostic", `[portraitBandScan]` logs) gated on `BOOKY_CHAPTER_GRAPHIC_DEBUG`, added while chasing ch69 - commented `// Remove in the cleanup commit`, still present.
 
 ### Parse performance
 
@@ -149,7 +151,7 @@ Booky/
 ### Repo hygiene debt
 
 - README still says PARSER_VERSION 89 (actual: 115).
-- 39 `debug-*.mjs` scripts, committed log files, TEMPORARY diagnostics in `finalizeIllustrationBlocks` marked "Remove in cleanup".
+- ~60 ad-hoc scripts under `server/scripts/` (39 `debug-*.mjs` plus `test-*`/`verify-*`/misc), committed log files (`server/*.log`, e.g. `wok-cursor.log`, `wok-stepA.log`, `toc-verify.log` - these violate the "don't commit log dumps" rule in §3 but are already in the repo), TEMPORARY diagnostics marked "Remove in cleanup" in both `finalizeIllustrationBlocks` (`server/index.js`) and `chapterGraphicService.js` (`logPortraitOpenerBandDiagnostic`).
 - `visionService.js` deprecated/unused; `client/src/lib/supabase.js` unused; root `package.json` `canvas` dep unused.
 
 ---
