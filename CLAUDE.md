@@ -141,6 +141,7 @@ Booky/
 
 - `tocOrderCursor` state in `finalizeIllustrationBlocks` is order-dependent - parallelizing OCR without ordered merge will break chapter numbering.
 - `boundaryDedupeKey` collisions drop boundaries to `SAFE_FALLBACK` and rewind cursor - watch for duplicate chapter numbers in logs.
+- `readingOrderPageIndex`/`readingOrderBlockIndex` (`server/index.js`, used by `sortChaptersByReadingOrder`) fall back to `Number.MAX_SAFE_INTEGER` when a chapter's `pageIndex`/`blockIndex` is missing/non-finite - an entry with no finite position sorts to the **end** of the TOC rather than clustering at the top or throwing. A chapter silently landing last in the TOC is a symptom of a missing `pageIndex`/`blockIndex` upstream, not a sort bug.
 - `chapterTitlesReferToSameChapter` dedupes by chapter **number**, not exact title string.
 
 ### Caching / stale data
