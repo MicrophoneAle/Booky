@@ -47,7 +47,8 @@ Create `server/.env`:
 PORT=3000
 CLIENT_URL=http://localhost:5173
 
-# Clerk
+# Clerk (publishable key is required by @clerk/express middleware)
+CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 
 # Supabase (service role — server only)
@@ -77,10 +78,6 @@ Create `client/.env`:
 ```env
 VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
 VITE_API_URL=http://localhost:3000
-
-# Optional — only if the client talks to Supabase directly
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJ...
 ```
 
 ```bash
