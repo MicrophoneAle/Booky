@@ -524,6 +524,34 @@ function clearDocumentParseProgress(documentId) {
     .from("documents")
     .update({ parse_progress: null })
     .eq("id", documentId)
+    .then(({ error }) => {
+      if (error) {
+        console.warn(
+          `[parse-progress] Failed to clear progress for ${documentId}:`,
+          error.message
+        )
+      }
+    })
+}
+
+// Single write path for parse_status so a failed Supabase update is always
+// logged - a silently dropped ERROR write leaves a document stuck "pending"
+// with no trace of why.
+async function setDocumentParseStatus(documentId, parseStatus, userId = null) {
+  let query = supabase
+    .from("documents")
+    .update({ parse_status: parseStatus })
+    .eq("id", documentId)
+  if (userId) {
+    query = query.eq("user_id", userId)
+  }
+  const { error } = await query
+  if (error) {
+    console.error(
+      `[parse-status] Failed to set parse_status=${parseStatus} for ${documentId}:`,
+      error.message
+    )
+  }
 }
 
 const supabase = createClient(
@@ -1023,10 +1051,8 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
       },
     })
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to load document.",
-    })
+    console.error(`[documents] Failed to load document ${req.params.id}:`, error)
+    res.status(500).json({ success: false, error: "Failed to load document." })
   }
 })
 
@@ -1073,10 +1099,8 @@ app.post("/documents/:id/reparse", requireAuth, async (req, res) => {
       },
     })
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to re-parse document.",
-    })
+    console.error(`[documents] Re-parse failed for ${req.params.id}:`, error)
+    res.status(500).json({ success: false, error: "Failed to re-parse document." })
   }
 })
 
@@ -1125,10 +1149,8 @@ app.post("/documents/:id/retry-parse", requireAuth, async (req, res) => {
 
     res.json({ success: true, retrying: true })
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to retry processing.",
-    })
+    console.error(`[documents] Retry-parse failed for ${req.params.id}:`, error)
+    res.status(500).json({ success: false, error: "Failed to retry processing." })
   }
 })
 
@@ -11596,6 +11618,14 @@ async function resolveWordCountForDocument(documentRow, userId) {
       .update({ word_count: fromContent })
       .eq("id", documentRow.id)
       .eq("user_id", userId)
+      .then(({ error }) => {
+        if (error) {
+          console.warn(
+            `[word-count] Failed to backfill word_count for ${documentRow.id}:`,
+            error.message
+          )
+        }
+      })
     return fromContent
   }
 
@@ -11922,17 +11952,15 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
 
     setDocumentParseProgress(documentId, {
       phase: "error",
-      label: errorMessage,
+      // Internal exception text stays in server logs; clients polling the
+      // status endpoint get a generic label instead.
+      label: "Processing failed. Please retry.",
       current: 0,
       total: 0,
       percent: 0,
     })
 
-    await supabase
-      .from("documents")
-      .update({ parse_status: PARSE_STATUS.ERROR })
-      .eq("id", documentId)
-      .eq("user_id", userId)
+    await setDocumentParseStatus(documentId, PARSE_STATUS.ERROR, userId)
   } finally {
     clearInterval(progressHeartbeat)
     backgroundParseInFlight.delete(documentId)
@@ -12412,7 +12440,16 @@ async function parsePdfBuffer(
 }
 
 function isValidAdminSecret(secret) {
-  return Boolean(process.env.ADMIN_SECRET) && secret === process.env.ADMIN_SECRET
+  const expected = process.env.ADMIN_SECRET
+  if (!expected || typeof secret !== "string") {
+    return false
+  }
+  // Constant-time comparison so response timing does not reveal how many
+  // leading characters of the secret matched. Buffers must be equal length
+  // for timingSafeEqual, so hash both sides first.
+  const secretDigest = crypto.createHash("sha256").update(secret).digest()
+  const expectedDigest = crypto.createHash("sha256").update(expected).digest()
+  return crypto.timingSafeEqual(secretDigest, expectedDigest)
 }
 
 function contentLooksStale(content) {
@@ -12477,10 +12514,7 @@ async function reparseDocumentInBackgroundFromRow(documentRow, { skipIfParseBusy
     }
   } catch (error) {
     console.error(`Background re-parse failed for ${documentId}:`, error)
-    await supabase
-      .from("documents")
-      .update({ parse_status: PARSE_STATUS.ERROR })
-      .eq("id", documentId)
+    await setDocumentParseStatus(documentId, PARSE_STATUS.ERROR)
   } finally {
     backgroundParseInFlight.delete(documentId)
   }
@@ -12536,10 +12570,7 @@ async function reparseDocumentIfOutdatedCore(documentRow) {
 
     return { updated: true }
   } catch (error) {
-    await supabase
-      .from("documents")
-      .update({ parse_status: PARSE_STATUS.ERROR })
-      .eq("id", documentRow.id)
+    await setDocumentParseStatus(documentRow.id, PARSE_STATUS.ERROR)
     throw error
   }
 }
@@ -12591,10 +12622,7 @@ async function reparseOutdatedDocuments({ limit = 5 } = {}) {
         id: documentRow.id,
         error: error instanceof Error ? error.message : "Re-parse failed",
       })
-      await supabase
-        .from("documents")
-        .update({ parse_status: PARSE_STATUS.ERROR })
-        .eq("id", documentRow.id)
+      await setDocumentParseStatus(documentRow.id, PARSE_STATUS.ERROR)
     }
   }
 
@@ -12618,7 +12646,19 @@ const upload = multer({
 app.post("/upload", requireAuth, (req, res) => {
   upload.single("file")(req, res, async (uploadError) => {
     if (uploadError) {
-      res.status(500).json({ success: false, error: uploadError.message })
+      // Client mistakes (too large, wrong type) are 4xx, not 500. Multer size
+      // rejections carry code LIMIT_FILE_SIZE; the PDF fileFilter rejection is
+      // a plain Error with our own message.
+      if (uploadError instanceof multer.MulterError) {
+        const status = uploadError.code === "LIMIT_FILE_SIZE" ? 413 : 400
+        const message =
+          uploadError.code === "LIMIT_FILE_SIZE"
+            ? "File is too large (max 50 MB)."
+            : "Invalid upload request."
+        res.status(status).json({ success: false, error: message })
+        return
+      }
+      res.status(400).json({ success: false, error: uploadError.message })
       return
     }
 
@@ -12626,14 +12666,30 @@ app.post("/upload", requireAuth, (req, res) => {
       const uploadedFile = req.file
 
       if (!uploadedFile) {
-        res.status(500).json({ success: false, error: "No file uploaded." })
+        res.status(400).json({ success: false, error: "No file uploaded." })
+        return
+      }
+
+      // The multer fileFilter only sees the client-declared MIME type, which
+      // is trivially spoofed. Check the PDF magic bytes so arbitrary payloads
+      // never reach storage or the parse pipeline.
+      if (!uploadedFile.buffer?.subarray(0, 5).toString("latin1").startsWith("%PDF-")) {
+        res.status(400).json({ success: false, error: "File is not a valid PDF." })
         return
       }
 
       const title =
         humanizeBookTitleFromFileName(uploadedFile.originalname) ||
         uploadedFile.originalname.replace(/\.pdf$/i, "")
-      const storagePath = `${Date.now()}-${uploadedFile.originalname}`
+      // Storage keys must not inherit path separators or exotic characters
+      // from the client-supplied filename.
+      const safeFileName =
+        uploadedFile.originalname
+          .replace(/\.pdf$/i, "")
+          .replace(/[^a-zA-Z0-9._-]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 120) || "document"
+      const storagePath = `${Date.now()}-${safeFileName}.pdf`
       const { data: storageData, error: storageError } = await supabase.storage
         .from("pdfs")
         .upload(storagePath, uploadedFile.buffer, {
@@ -12681,10 +12737,8 @@ app.post("/upload", requireAuth, (req, res) => {
         },
       })
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to parse PDF.",
-      })
+      console.error("[upload] Upload failed:", error)
+      res.status(500).json({ success: false, error: "Upload failed." })
     }
   })
 })
@@ -12700,10 +12754,8 @@ app.post("/admin/reparse", async (req, res) => {
     const summary = await reparseOutdatedDocuments()
     res.json(summary)
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Re-parse failed",
-    })
+    console.error("[admin] Reparse failed:", error)
+    res.status(500).json({ success: false, error: "Re-parse failed" })
   }
 })
 
@@ -12738,6 +12790,20 @@ app.use((error, req, res, _next) => {
 })
 
 if (isServerEntryPoint) {
+  // Background parse work runs detached from any request (setImmediate /
+  // void promises), so a missed rejection there would otherwise kill the
+  // process with no context. Log and keep serving; parse_status/error paths
+  // already mark affected documents.
+  process.on("unhandledRejection", (reason) => {
+    console.error(
+      "[process] Unhandled promise rejection:",
+      reason instanceof Error ? (reason.stack ?? reason.message) : reason
+    )
+  })
+  process.on("uncaughtException", (error) => {
+    console.error("[process] Uncaught exception:", error.stack ?? error)
+  })
+
   const PORT = process.env.PORT || 3000
   app.listen(PORT, () => {
     console.log(`Server on port ${PORT}`)

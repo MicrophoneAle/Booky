@@ -25,16 +25,23 @@ export default function Reader() {
       setLoading(true)
       setError(null)
 
-      try {
+      // Clerk session tokens are short-lived, so every request (especially
+      // during the multi-minute parse poll) fetches a fresh one instead of
+      // reusing the token from the initial load.
+      const authHeaders = async () => {
         const token = await getToken()
         if (!token) {
           throw new Error("Unauthorized")
         }
+        return {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      }
+
+      try {
         const response = await fetch(`${API_URL}/documents/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: await authHeaders(),
         })
         const data = await response.json()
 
@@ -52,16 +59,19 @@ export default function Reader() {
             await new Promise((resolve) => setTimeout(resolve, 3000))
             if (cancelled) return
 
-            const statusResponse = await fetch(
-              `${API_URL}/documents/${encodeURIComponent(id)}/status`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-              }
-            )
-            const statusData = await statusResponse.json()
+            // A transient network blip mid-poll should retry on the next
+            // tick, not surface an error screen for a book that is still
+            // parsing fine.
+            let statusData
+            try {
+              const statusResponse = await fetch(
+                `${API_URL}/documents/${encodeURIComponent(id)}/status`,
+                { headers: await authHeaders() }
+              )
+              statusData = await statusResponse.json()
+            } catch {
+              continue
+            }
 
             if (statusData.parse_status === "error") {
               throw new Error("Processing failed. Try uploading again.")
@@ -73,10 +83,7 @@ export default function Reader() {
           }
 
           const retryResponse = await fetch(`${API_URL}/documents/${id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+            headers: await authHeaders(),
           })
           const retryData = await retryResponse.json()
 

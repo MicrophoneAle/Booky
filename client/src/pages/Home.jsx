@@ -485,6 +485,9 @@ export default function Home() {
 
     const token = await getToken()
     if (!token) {
+      // The slow-wake hint timer must not fire after we bail into the error
+      // state, or it would overwrite the error message flags.
+      clearTimeout(wakeTimer)
       setUploadState((state) => ({
         ...state,
         phase: "error",

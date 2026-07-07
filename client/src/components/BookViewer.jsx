@@ -3928,6 +3928,8 @@ export default function BookViewer({
   const [customEditDraft, setCustomEditDraft] = useState("")
   const customEditInputRef = useRef(null)
   const customEditSuppressCommitRef = useRef(false)
+  const customBlurCommitTimerRef = useRef(null)
+  const bookmarkDismissAnimationRef = useRef(null)
   const [tocOpen, setTocOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -4025,7 +4027,8 @@ export default function BookViewer({
   const deferCustomBlurCommit = useCallback(
     (field) => {
       const draft = customEditDraft
-      window.setTimeout(() => {
+      clearTimeout(customBlurCommitTimerRef.current)
+      customBlurCommitTimerRef.current = window.setTimeout(() => {
         if (customEditSuppressCommitRef.current) {
           customEditSuppressCommitRef.current = false
           return
@@ -4087,6 +4090,20 @@ export default function BookViewer({
   useEffect(() => {
     displayedPagesCountRef.current = pages.length
   }, [pages.length])
+
+  // Unmount-only cleanup for work scheduled outside effects (callbacks and
+  // idle-time builds): otherwise a pending timer / idle callback / animation
+  // can fire setState after the reader unmounts.
+  useEffect(() => {
+    return () => {
+      // Invalidates any pending schedulePageTextMapBuild idle callback via
+      // its buildId guard.
+      pageTextMapBuildIdRef.current += 1
+      clearTimeout(resumeHighlightTimerRef.current)
+      clearTimeout(customBlurCommitTimerRef.current)
+      bookmarkDismissAnimationRef.current?.cancel()
+    }
+  }, [])
 
   useEffect(() => {
     prevPaginationSettingsRef.current = null
@@ -5878,6 +5895,7 @@ export default function BookViewer({
       }
     )
 
+    bookmarkDismissAnimationRef.current = animation
     animation.onfinish = () => {
       setBookmarkHidden(true)
     }

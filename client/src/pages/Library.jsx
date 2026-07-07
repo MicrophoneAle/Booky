@@ -568,6 +568,14 @@ export default function Library() {
   const [reloadKey, setReloadKey] = useState(0)
   const getTokenRef = useRef(getToken)
   getTokenRef.current = getToken
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   const libraryCacheKey = userId ? `booky-library-${userId}` : null
 
@@ -618,11 +626,12 @@ export default function Library() {
         }
 
         const docs = data.documents ?? []
+        if (!isMountedRef.current) return
         setDocuments(docs)
         writeCachedDocuments(docs)
       } catch (fetchError) {
         // Keep showing cached documents on a background refresh failure.
-        if (!background) {
+        if (!background && isMountedRef.current) {
           setError(
             fetchError instanceof Error
               ? fetchError.message
@@ -631,7 +640,7 @@ export default function Library() {
           setDocuments([])
         }
       } finally {
-        if (!background) {
+        if (!background && isMountedRef.current) {
           setLoading(false)
         }
       }
