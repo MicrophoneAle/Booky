@@ -433,31 +433,6 @@ function buildTocMetadataForChapterHeading(
         located && shouldAcceptTocReanchor(expected, anchor, located, tocOrderCursor)
       )
 
-      // TEMPORARY diagnostic (BOOKY_FRONTMATTER_DEBUG only): trace OCR re-anchors.
-      // Remove in cleanup.
-      if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
-        console.log(
-          "[tocReanchor]",
-          JSON.stringify({
-            blockIndex,
-            ocrNumberLabel,
-            anchor,
-            expected,
-            located: located
-              ? {
-                  index: located.index,
-                  kind: located.entry.kind,
-                  key: located.entry.key ?? null,
-                  label: located.entry.label ?? null,
-                }
-              : null,
-            accepted,
-            cursorBefore: tocOrderCursor.index,
-            cursorAfter: accepted && located ? located.index + 1 : tocOrderCursor.index,
-          })
-        )
-      }
-
       if (accepted) {
         tocOrderCursor.index = located.index + 1
         return printedTocEntryToOcrMetadata(located.entry)
@@ -532,10 +507,6 @@ function takeNextSequentialTocEntryForImageBanner(printedToc, tocOrderCursor) {
   }
 }
 
-function supplementBannerlessPrintedChapters(blocks, _printedToc) {
-  return blocks
-}
-
 export {
   advanceTocCursorPastNextPartDivider,
   buildTocMetadataForChapterHeading,
@@ -548,7 +519,6 @@ export {
   scanPendingInterludesFromBlocks,
   scanStructuralPartDividerPlate,
   seekTocCursorToFirstChapterAfterNthPart,
-  supplementBannerlessPrintedChapters,
   takeNextSequentialTocEntry,
   takeNextSequentialInterludeTocEntry,
   takeNextSequentialTocEntryForImageBanner,

@@ -113,7 +113,7 @@ Booky/
 - **Parts Four/Five** exist in printed-TOC cursor but are **absent from reader TOC** by design (no text headings, filtered from image boundaries). Separate future work.
 - **WoK is NOT in `npm run regression`** - only ad-hoc scripts (`verify-wok-ch68-72.mjs`, `verify-wok-ch9-12.mjs`, `verify-wok-part5.mjs`, `debug-parse-wok.mjs`, `test-wok-graphic-fixes.mjs`, `server/scripts/_toc-verify.mjs`). Easy to regress silently.
 - Stale artifacts (`wok-ch68-72-debug.json`, old logs) show pre-fix behavior - ignore them.
-- `chapterGraphicService.js` has a `logPortraitOpenerBandDiagnostic` ("Step-A diagnostic", `[portraitBandScan]` logs) gated on `BOOKY_CHAPTER_GRAPHIC_DEBUG`, added while chasing ch69 - commented `// Remove in the cleanup commit`, still present.
+- The TEMPORARY ch69 diagnostics (`[tocOrderedDump]`, `[regionDump]`, `[cursorTrace]`, `[tocReanchor]`, `[portraitBandScan]`, Step-A dumps) were removed in the cleanup pass. The load-bearing operational logs (`[bannerlessReconcile]`, `[partCursor]`, `[boundarySummary]`) remain behind their debug flags.
 
 ### Parse performance
 
@@ -151,9 +151,8 @@ Booky/
 
 ### Repo hygiene debt
 
-- README still says PARSER_VERSION 89 (actual: 115).
-- ~60 ad-hoc scripts under `server/scripts/` (39 `debug-*.mjs` plus `test-*`/`verify-*`/misc), committed log files (`server/*.log`, e.g. `wok-cursor.log`, `wok-stepA.log`, `toc-verify.log` - these violate the "don't commit log dumps" rule in §3 but are already in the repo), TEMPORARY diagnostics marked "Remove in cleanup" in both `finalizeIllustrationBlocks` (`server/index.js`) and `chapterGraphicService.js` (`logPortraitOpenerBandDiagnostic`).
-- `visionService.js` deprecated/unused; `client/src/lib/supabase.js` unused; root `package.json` `canvas` dep unused.
+- ~60 ad-hoc scripts under `server/scripts/` (39 `debug-*.mjs` plus `test-*`/`verify-*`/misc), committed log files (`server/*.log`, e.g. `wok-cursor.log`, `wok-stepA.log`, `toc-verify.log` - these violate the "don't commit log dumps" rule in §3 but are already in the repo).
+- Root `package.json` `canvas` dep unused. (`visionService.js` and `client/src/lib/supabase.js` were deleted in the cleanup pass.)
 
 ---
 

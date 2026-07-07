@@ -160,13 +160,5 @@ export default function Reader() {
     )
   }
 
-  return (
-    <BookViewer
-      document={bookDocument}
-      initialPage={initialPage}
-      onPageChange={(pageNumber) => {
-        console.log(pageNumber)
-      }}
-    />
-  )
+  return <BookViewer document={bookDocument} initialPage={initialPage} />
 }

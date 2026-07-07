@@ -41,7 +41,6 @@ import { FullscreenIcon } from "./FullscreenButton"
 import "../pages/Reader.css"
 import "./BookViewer.css"
 
-const NAVBAR_HEIGHT_PX = 44
 const PAGE_WIDTH_PX = 400
 const PAGE_CONTENT_INSET_PX = 72
 const PAGE_HEIGHT_PX = 600
@@ -55,7 +54,6 @@ const PAGE_NUMBER_RESERVED_PX = PAGE_FOOTER_RESERVE_PX
 const BODY_DESCENDER_PAD_PX = 5
 const PAGE_CONTENT_FIT_BUFFER_PX = 3
 const PAGE_FIT_OVERFLOW_TOLERANCE_PX = 0
-const MOBILE_PAGE_NUMBER_GAP_PX = 3
 /** Compact mobile footer reserve (page number line + small breathing room). */
 const MOBILE_PAGE_NUMBER_RESERVED_PX = 12
 /** Gap above page number + number line in mobile fullscreen. */
@@ -68,17 +66,6 @@ const MOBILE_FULLSCREEN_PAGE_NUMBER_RESERVED_PX =
   MOBILE_FULLSCREEN_FOOTER_BLOCK_PX
 const CONTENT_HEIGHT_SAFETY_BUFFER_PX = 4
 const BODY_BOTTOM_PADDING_PX = 2
-/**
- * Exact body (text) height for a mobile-fullscreen page. Kept in lock-step with
- * the measurement math in getLayoutHeights so the displayed body is the same
- * height the text was paginated for — no gap above the page number, no clipping.
- */
-const MOBILE_FULLSCREEN_CONTENT_HEIGHT_PX =
-  MOBILE_FULLSCREEN_PAGE_HEIGHT_PX -
-  MOBILE_FULLSCREEN_TOP_INSET_PX -
-  MOBILE_FULLSCREEN_BOTTOM_CHROME_PX -
-  MOBILE_FULLSCREEN_FOOTER_BLOCK_PX -
-  BODY_BOTTOM_PADDING_PX
 const TRIVIAL_LAST_PAGE_CHAR_LIMIT = 50
 const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
@@ -1064,28 +1051,6 @@ function resolveMarginCss(settingsOrKey) {
   return MARGIN_MAP[marginKey] ?? MARGIN_MAP.normal
 }
 
-function getPageMarginPx(settingsOrKey) {
-  const remPx =
-    typeof document !== "undefined"
-      ? parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-      : 16
-  const raw = resolveMarginCss(settingsOrKey)
-  return raw === "0px" ? 0 : parseFloat(raw) * remPx
-}
-
-function getPagePaddingStyle(settingsOrKey) {
-  const pad = resolveMarginCss(settingsOrKey)
-  if (pad === "0px") {
-    return { padding: 0 }
-  }
-  return {
-    paddingTop: pad,
-    paddingRight: pad,
-    paddingLeft: pad,
-    paddingBottom: 0,
-  }
-}
-
 function formatFontSizeChipLabel(size, settings) {
   if (size === "custom") {
     const bodyPx = sanitizeCustomFontSizePx(settings?.customFontSizePx)
@@ -1145,16 +1110,11 @@ function getPageChromeStyle(settingsOrKey, isMobileViewport = false) {
   }
 }
 
-const IMPLIED_LIST_LINE_REGEX = /^(Add|Test|Explore|Verify|Ensure|Click)\b/i
 const TRIVIAL_LIST_PAGE_CHAR_LIMIT = 30
 const STANDALONE_URL_REGEX = /^https?:\/\/\S+$/i
 
-const LEVEL_0_NUMBER_REGEX = /^(\d+[\.\)])\s*(.*)$/
-const LEVEL_0_BULLET_REGEX = /^([•·])\s*(.*)$/
-const LEVEL_1_LETTERED_REGEX = /^([a-z][\.\)])\s+(.+)$/i
 const CHAPTER_LABEL_REGEX =
   /^(Chapter|Part|Section|Prologue|Epilogue)\s+(\d+|[IVXLCDM]+|[A-Za-z]+)$/i
-const LEVEL_2_MARKER_REGEX = /^((?:[ivxlcdm]+|\([a-z]\))[\.\)])\s*(.*)$/i
 const EMBEDDED_LIST_MARKER_REGEX = /\s+(\d+[\.\)]|[a-z][\.\)])\s+/gi
 let listGroupCounter = 0
 
@@ -1293,104 +1253,6 @@ function isStandaloneUrl(text) {
   return STANDALONE_URL_REGEX.test(text.trim())
 }
 
-function isImpliedListLine(text) {
-  return IMPLIED_LIST_LINE_REGEX.test(text.trim())
-}
-
-function isListMarkerLine(text, pendingListItems = []) {
-  return (
-    parseListLine(text, pendingListItems) !== null ||
-    parseLoneMarker(text, pendingListItems) !== null
-  )
-}
-
-function buildNumberedListText(marker, body) {
-  const trimmedBody = body.trim()
-  return trimmedBody ? `${marker} ${trimmedBody}`.replace(/\s+/g, " ").trim() : marker
-}
-
-function parseListLine(text, pendingListItems = []) {
-  const trimmed = text.trim()
-  if (!trimmed) return null
-
-  let match = trimmed.match(LEVEL_0_NUMBER_REGEX)
-  if (match) {
-    const marker = match[1]
-    const body = match[2].trim()
-    return {
-      level: 0,
-      marker,
-      hasBullet: false,
-      text: buildNumberedListText(marker, body),
-      markerOnly: !body,
-    }
-  }
-
-  match = trimmed.match(LEVEL_0_BULLET_REGEX)
-  if (match) {
-    const marker = match[1]
-    const body = match[2].trim()
-    return {
-      level: 0,
-      marker,
-      hasBullet: true,
-      text: body,
-      markerOnly: !body,
-    }
-  }
-
-  match = trimmed.match(LEVEL_2_MARKER_REGEX)
-  if (match) {
-    const marker = match[1]
-    const body = match[2].trim()
-    return {
-      level: 2,
-      marker,
-      hasBullet: false,
-      text: buildNumberedListText(marker, body),
-      markerOnly: !body,
-    }
-  }
-
-  match = trimmed.match(LEVEL_1_LETTERED_REGEX)
-  if (match) {
-    const marker = match[1]
-    const body = match[2].trim()
-    return {
-      level: 1,
-      marker,
-      hasBullet: false,
-      text: buildNumberedListText(marker, body),
-      markerOnly: !body,
-    }
-  }
-
-  return null
-}
-
-function parseLoneMarker(text, pendingListItems = []) {
-  const trimmed = text.trim()
-  if (!trimmed) return null
-
-  if (/^\d+[\.\)]$/.test(trimmed)) {
-    return { level: 0, markerOnly: true, text: "" }
-  }
-
-  if (/^[•·\-—]$/.test(trimmed)) {
-    return { level: 0, markerOnly: true, text: "" }
-  }
-
-  if (/^[a-z][\.\)]$/i.test(trimmed)) {
-    return { level: 1, markerOnly: true, text: "" }
-  }
-
-  if (/^(?:[ivxlcdm]+|\([a-z]\))[\.\)]$/i.test(trimmed)) {
-    return { level: 2, markerOnly: true, text: "" }
-  }
-
-  return null
-}
-
 function createListNode(item) {
   return {
     text: item.text,
@@ -1398,15 +1260,6 @@ function createListNode(item) {
     marker: item.marker ?? "",
     hasBullet: Boolean(item.hasBullet),
     children: [],
-  }
-}
-
-function toFlatListItem(parsed) {
-  return {
-    text: parsed.text,
-    level: parsed.level,
-    marker: parsed.marker,
-    hasBullet: parsed.hasBullet,
   }
 }
 

@@ -97,7 +97,7 @@ PDFs are parsed on the server (`server/index.js`). The pipeline:
 4. Detect chapters and assign boundaries
 5. Persist structured content to Supabase
 
-**Parser version** is `89` (`PARSER_VERSION` in `server/index.js` and `client/src/components/BookViewer.jsx`). Bump both when parser output changes so cached pagination and stored documents re-parse correctly.
+**Parser version** is defined by `PARSER_VERSION` in `server/index.js` and `client/src/components/BookViewer.jsx` (currently `115` - the two must match). Bump both when parser output changes so cached pagination and stored documents re-parse correctly.
 
 ### Regression tests
 

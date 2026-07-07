@@ -12,7 +12,6 @@ import { getDocument, OPS, ImageKind } from "pdfjs-dist/legacy/build/pdf.mjs"
 import { createCanvas, loadImage } from "@napi-rs/canvas/node-canvas.js"
 import {
   analyzeChapterGraphicFromContext,
-  analyzeChapterHeadingBanner,
   shouldSkipChapterGraphicAnalysis,
   SAFE_FALLBACK,
 } from "./chapterGraphicService.js"
@@ -21,6 +20,15 @@ import {
   ocrIllustrationMetadata,
   terminateOcrWorker,
 } from "./imageOcrService.js"
+import {
+  classifyPdfImageRole,
+  isChapterLikeOcrMetadata,
+  isFullPageHeightIllustrationBlock,
+  isFullPageSpreadHalf,
+  isLikelyChapterArchBannerBlock,
+  isTallChapterArchBannerBlock,
+  PDF_IMAGE_ROLE,
+} from "./pdfImageRoleUtils.js"
 import {
   extractPrintedTocLookup,
   extractPrintedTocFromPageData,
@@ -69,7 +77,6 @@ const PDF_IMAGE_RESOLVE_TIMEOUT_MS = 8000
 const PDF_PAGE_OPERATION_TIMEOUT_MS = 45_000
 const PDF_LARGE_BOOK_PAGE_THRESHOLD = 120
 const PDF_LARGE_FILE_BYTES = 12 * 1024 * 1024
-const ILLUSTRATION_VISION_CONCURRENCY = 4
 const BOOK_ASSET_UPLOAD_CONCURRENCY = 2
 const BOOK_ASSET_UPLOAD_MAX_RETRIES = 6
 const BOOK_ASSET_UPLOAD_RETRY_BASE_MS = 1200
@@ -210,7 +217,6 @@ const parseProgressDbWriteAt = new Map()
 const PARSE_PROGRESS_DB_WRITE_MS = 750
 const PDF_PAGE_EXTRACTION_CONCURRENCY = 6
 const PDF_TEXT_EXTRACTION_CONCURRENCY = 8
-const PDF_IMAGE_EXTRACTION_CONCURRENCY = 4
 const EXTRACT_PROGRESS_TEXT_SHARE = 0.62
 const EXTRACT_PROGRESS_IMAGE_SHARE = 0.38
 
@@ -1004,7 +1010,7 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
       return
     }
 
-    const cached = readParsedCache(data)
+    const cached = readStoredDocumentContent(data)
     if (cached) {
       res.json({
         success: true,
@@ -6227,16 +6233,6 @@ function imageMetricsFromTransform(transform, pageWidth, pageHeight) {
   }
 }
 
-import {
-  classifyPdfImageRole,
-  isChapterLikeOcrMetadata,
-  isFullPageHeightIllustrationBlock,
-  isFullPageSpreadHalf,
-  isLikelyChapterArchBannerBlock,
-  isTallChapterArchBannerBlock,
-  PDF_IMAGE_ROLE,
-} from "./pdfImageRoleUtils.js"
-
 /** @deprecated Use classifyPdfImageRole — kept for regression scripts. */
 function isChapterHeaderCandidate(metrics) {
   return classifyPdfImageRole(metrics) != null
@@ -7079,121 +7075,6 @@ async function finalizeIllustrationBlocks(
   // never skipped twice when more than one illustration sits on the same slot.
   const reconciledBannerlessPartSlots = new Set()
 
-  // TEMPORARY diagnostic (BOOKY_FRONTMATTER_DEBUG only): dump the printed-TOC
-  // ordered slots so we can inspect the chapter-69 region. Remove in cleanup.
-  if (process.env.BOOKY_FRONTMATTER_DEBUG === "1" && printedToc?.ordered?.length) {
-    console.log(
-      "[tocOrderedDump]",
-      JSON.stringify(
-        printedToc.ordered.map((entry, i) => ({
-          i,
-          kind: entry.kind,
-          key: entry.key ?? null,
-          label: entry.label ?? null,
-          title: entry.title ?? null,
-        }))
-      )
-    )
-  }
-
-  // TEMPORARY Step-A diagnostic (BOOKY_FRONTMATTER_DEBUG only). Remove in cleanup.
-  // A.1: dump every block in the chapter 68 -> 70 region (PDF pages 1033-1052) so we
-  // can see whether a real Part Five divider (structural plate or "Part Five" text
-  // heading) exists, or whether the only structural-divider match is the p1051 plate.
-  // A.2: book-wide list of every structural-divider-plate geometry match and every
-  // "Part N" text heading, to confirm no second plate triggers the false seek.
-  if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
-    const geomOf = (b) => {
-      const c = b?.coordinates ?? {}
-      const pw = c.pageWidth ?? 0
-      const ph = c.pageHeight ?? 0
-      const w = c.width ?? 0
-      const h = c.height ?? 0
-      if (!pw || !ph || !w || !h) {
-        return null
-      }
-      return {
-        widthRatio: Number((w / pw).toFixed(3)),
-        heightRatio: Number((h / ph).toFixed(3)),
-        aspect: Number((w / h).toFixed(3)),
-      }
-    }
-    // Mirror of isLikelyStructuralPartDividerPlate (stormlightEpigraphService.js).
-    const matchesStructuralDividerPlate = (b) => {
-      const g = geomOf(b)
-      if (!g) {
-        return false
-      }
-      if (g.widthRatio < 0.4 || g.heightRatio < 0.45) {
-        return false
-      }
-      if (
-        g.widthRatio >= 0.34 &&
-        g.widthRatio <= 0.4 &&
-        g.heightRatio >= 0.14 &&
-        g.heightRatio <= 0.2
-      ) {
-        return false
-      }
-      return true
-    }
-    const pageOfBlock = (b) =>
-      b?.pageNumber ??
-      (Number.isFinite(b?.sourcePdfPageIndex) ? b.sourcePdfPageIndex + 1 : 0)
-
-    blocks.forEach((b, i) => {
-      const pg = pageOfBlock(b)
-      if (pg >= 1033 && pg <= 1052) {
-        if (b?.type === "image" || b?.type === "image_candidate") {
-          console.log(
-            "[regionDump]",
-            JSON.stringify({
-              i,
-              pg,
-              type: b.type,
-              imageRole: b.imageRole ?? null,
-              geom: geomOf(b),
-              structuralDividerPlate: matchesStructuralDividerPlate(b),
-            })
-          )
-        } else {
-          const t = (b?.text ?? "").trim()
-          if (t) {
-            console.log(
-              "[regionDump]",
-              JSON.stringify({
-                i,
-                pg,
-                type: "text",
-                isPart: /^Part\s+/i.test(t),
-                text: t.slice(0, 80),
-              })
-            )
-          }
-        }
-      }
-    })
-
-    blocks.forEach((b) => {
-      if (
-        (b?.type === "image" || b?.type === "image_candidate") &&
-        matchesStructuralDividerPlate(b)
-      ) {
-        console.log(
-          "[structPlateBookwide]",
-          JSON.stringify({ pg: b.pageNumber ?? null, imageRole: b.imageRole ?? null, geom: geomOf(b) })
-        )
-      }
-      const t = (b?.text ?? "").trim()
-      if (/^Part\s+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\b/i.test(t)) {
-        console.log(
-          "[partTextHeading]",
-          JSON.stringify({ pg: b.pageNumber ?? null, text: t.slice(0, 60) })
-        )
-      }
-    })
-  }
-
   // If the prelude was already emitted as a text heading upstream, don't let a
   // banner re-emit it. boundaryDedupeKey dedupes prelude/prologue/epilogue by kind.
   if (
@@ -7466,18 +7347,14 @@ async function finalizeIllustrationBlocks(
         buildSequentialInterludeTocEntry,
       })
 
-      const cursorAfterAnalyze = tocOrderCursor?.index ?? 0
-
       let finalResult = analysisResult
       const dedupeKey = boundaryDedupeKey(analysisResult)
-      let wasDeduped = false
       if (
         dedupeKey &&
         analysisResult.isChapterBoundary &&
         assignedBoundaryKeys.has(dedupeKey)
       ) {
         finalResult = { ...SAFE_FALLBACK }
-        wasDeduped = true
         if (tocOrderCursor) {
           tocOrderCursor.index = tocCursorBefore
         }
@@ -7541,35 +7418,6 @@ async function finalizeIllustrationBlocks(
             )
           }
         }
-      }
-
-      // TEMPORARY diagnostic (BOOKY_FRONTMATTER_DEBUG only): trace the cursor
-      // across the chapter 66-71 region (PDF pages ~1000-1095). Remove in cleanup.
-      if (
-        process.env.BOOKY_FRONTMATTER_DEBUG === "1" &&
-        (block.pageNumber ?? 0) >= 1000 &&
-        (block.pageNumber ?? 0) <= 1095
-      ) {
-        console.log(
-          "[cursorTrace]",
-          JSON.stringify({
-            index,
-            pageNumber: block.pageNumber,
-            imageRole: block.imageRole,
-            ocrKind: ocrMetadata?.boundaryKind ?? null,
-            ocrNumber: ocrMetadata?.number ?? null,
-            cursorBefore: tocCursorBefore,
-            cursorAfterAnalyze,
-            cursorFinal: tocOrderCursor?.index ?? null,
-            returnedKind: analysisResult?.boundaryKind ?? null,
-            returnedNumber: analysisResult?.number ?? null,
-            returnedTitle: analysisResult?.title ?? null,
-            dedupeKey,
-            keyAlreadyAssigned: wasDeduped,
-            finalKind: finalResult?.boundaryKind ?? null,
-            finalNumber: finalResult?.number ?? null,
-          })
-        )
       }
 
       if (finalResult.boundaryKind === "interlude_divider") {
@@ -11643,10 +11491,6 @@ function toPublicDocument(documentRow, wordCount) {
   }
 }
 
-function hasValidParsedCache(documentRow) {
-  return Boolean(readStoredDocumentContent(documentRow))
-}
-
 function readStoredDocumentContent(documentRow) {
   if (Array.isArray(documentRow?.content) && documentRow.content.length > 0) {
     return {
@@ -11671,10 +11515,6 @@ function readStoredDocumentContent(documentRow) {
   } catch {
     return null
   }
-}
-
-function readParsedCache(documentRow) {
-  return readStoredDocumentContent(documentRow)
 }
 
 function buildParsedCacheFields() {
