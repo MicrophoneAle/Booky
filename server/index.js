@@ -49,7 +49,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 115
+const PARSER_VERSION = 116
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -7070,10 +7070,6 @@ async function finalizeIllustrationBlocks(
   const finalizedByIndex = new Map()
   const tocOrderCursor = printedToc ? { index: 0 } : null
   const assignedBoundaryKeys = new Set()
-  // Printed-TOC slots already reconciled by the bannerless last-chapter-of-a-part
-  // mechanism (Bug 2), keyed by the chapter slot index, so a part boundary is
-  // never skipped twice when more than one illustration sits on the same slot.
-  const reconciledBannerlessPartSlots = new Set()
 
   // If the prelude was already emitted as a text heading upstream, don't let a
   // banner re-emit it. boundaryDedupeKey dedupes prelude/prologue/epilogue by kind.
@@ -7362,64 +7358,6 @@ async function finalizeIllustrationBlocks(
         assignedBoundaryKeys.add(dedupeKey)
       }
 
-      // Bannerless last-chapter-of-a-part reconciliation (Bug 2). Driven purely
-      // by the printed-TOC slot structure, not by image geometry. When the
-      // sequential cursor is parked on a chapter slot whose very next slot is a
-      // part divider (isLastChapterSlotBeforePart) and the image we are
-      // processing is NOT itself a chapter boundary, that chapter has no banner
-      // of its own - its opener is an illustration (e.g. the Way of Kings
-      // chapter-69 "Justice" portrait plate on p1051, correctly left as art).
-      // Without this, the cursor never leaves the bannerless slot, so the next
-      // real banner (p1052 "Sea Of Glass") would steal it and the whole tail
-      // shifts by one. We advance the cursor past the bannerless chapter slot
-      // AND the immediately-following part slot so the next banner lands on the
-      // correct chapter slot, and we carry the bannerless chapter's printed-TOC
-      // entry on this block so it is surfaced into the table of contents at the
-      // right reading-order position. The chapterSequence guard scopes this to
-      // an active image-banner numbering flow (Stormlight-style), so books whose
-      // chapters come from text headings - and whose cursor never advances - are
-      // a no-op. The other 22 portrait plates never sit on a
-      // last-chapter-before-part cursor slot, so they are a no-op too.
-      let bannerlessChapterMeta = null
-      if (
-        printedToc &&
-        tocOrderCursor &&
-        chapterSequence >= 1 &&
-        !finalResult?.isChapterBoundary &&
-        block?.type === "image_candidate" &&
-        isLastChapterSlotBeforePart(printedToc, tocOrderCursor) &&
-        !reconciledBannerlessPartSlots.has(tocOrderCursor.index)
-      ) {
-        const bannerlessSlot = printedToc.ordered?.[tocOrderCursor.index]
-        if (bannerlessSlot && bannerlessSlot.kind === "chapter") {
-          reconciledBannerlessPartSlots.add(tocOrderCursor.index)
-          bannerlessChapterMeta = {
-            boundaryKind: "chapter",
-            number: (bannerlessSlot.label ?? "").toString().trim() || null,
-            title: (bannerlessSlot.title ?? "").toString().trim() || null,
-            includeInToc: true,
-          }
-          const cursorBeforeReconcile = tocOrderCursor.index
-          advanceTocCursorPastNextPartDivider(printedToc, tocOrderCursor)
-          if (process.env.BOOKY_FRONTMATTER_DEBUG === "1") {
-            console.log(
-              "[bannerlessReconcile]",
-              JSON.stringify({
-                atIndex: index,
-                pageNumber: block.pageNumber,
-                slot: {
-                  kind: bannerlessSlot.kind,
-                  label: bannerlessSlot.label ?? null,
-                  title: bannerlessSlot.title ?? null,
-                },
-                cursorBefore: cursorBeforeReconcile,
-                cursorAfter: tocOrderCursor.index,
-              })
-            )
-          }
-        }
-      }
-
       if (finalResult.boundaryKind === "interlude_divider") {
         pendingInterludes = countInterludeNamesInDivider(ocrMetadata) || 3
       } else if (finalResult.boundaryKind === "interlude") {
@@ -7494,14 +7432,7 @@ async function finalizeIllustrationBlocks(
         )
       }
 
-      let finalizedBlock = finalizeVisionImageBlock(block, finalResult)
-      if (bannerlessChapterMeta) {
-        finalizedBlock = {
-          ...finalizedBlock,
-          bannerlessChapterAfter: bannerlessChapterMeta,
-        }
-      }
-      finalizedByIndex.set(index, finalizedBlock)
+      finalizedByIndex.set(index, finalizeVisionImageBlock(block, finalResult))
       releaseImageBlockBinary(blocks[index])
 
       processedCandidates += 1
@@ -9726,35 +9657,6 @@ function appendImageBoundaryChapters(content, chapters, seenChapterIds) {
   for (const page of content) {
     for (let blockIndex = 0; blockIndex < (page.blocks ?? []).length; blockIndex += 1) {
       const block = page.blocks[blockIndex]
-
-      // Surface a bannerless last-chapter-of-a-part (e.g. Way of Kings ch69
-      // "Justice", whose opener is an illustration left as art) into the table
-      // of contents at this reading-order position. The carrier image is NOT a
-      // chapter boundary - it is not promoted to a banner and still renders as
-      // a plain illustration; it only conveys the printed-TOC entry that the
-      // cursor reconciliation (Bug 2) attached. sortChaptersByReadingOrder then
-      // places it between its neighbouring banners using the carrier's position.
-      if (block?.type === "image" && block.bannerlessChapterAfter) {
-        const bannerlessTitle = formatImageBoundaryChapterTitle(
-          block.bannerlessChapterAfter
-        )
-        const bannerlessId =
-          slugify(bannerlessTitle) ||
-          `bannerless-chapter-${page.pageIndex}-${blockIndex}`
-        if (!seenChapterIds.has(bannerlessId)) {
-          seenChapterIds.add(bannerlessId)
-          chapters.push({
-            id: bannerlessId,
-            title: bannerlessTitle,
-            pageIndex: page.pageIndex,
-            blockIndex,
-            ...(Number.isFinite(block.pageNumber)
-              ? { sourcePageNumber: block.pageNumber }
-              : {}),
-            ...(BOOKY_TOC_ORDER_DEBUG ? { __tocSource: "bannerless" } : {}),
-          })
-        }
-      }
 
       if (block?.type !== "image" || !block.isChapterBoundary) {
         continue

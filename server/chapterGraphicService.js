@@ -59,28 +59,39 @@ const CHAPTER_LABEL_REGEX =
 const CHAPTER_WITH_SUBTITLE_REGEX =
   /^(chapter|letter)\s+(\d{1,3}|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten)\s*[-:–—]\s+\S/i
 
+// A caption line OPENS with its caption phrase (allowing only an owner prefix
+// like "Shallan's Sketchbook:"), mirroring how isIllustrationsListEntryLine in
+// server/index.js anchors at line start for exactly this reason. Never match
+// these phrases as free substrings: ordinary narration mentions sketchbooks,
+// maps, and Roshar constantly, and a mid-sentence match in a nearby prose
+// block silently disqualifies a real chapter arch (unanchored /sketchbook/i
+// suppressed the WoK ch70 "Sea Of Glass" arch on p1074 via "...a blank page
+// in her sketchbook" on p1075).
 const NON_CHAPTER_CAPTION_PATTERNS = [
-  /^map of\b/i,
-  /\bmap of\b/i,
+  /^(?:prime )?map of\b/i,
   /^gallery of maps\b/i,
   /^detail of\b/i,
   /^relief of\b/i,
   /^charcoal rubbing of\b/i,
   /^circa \d{4}\.?$/i,
-  /created by His Majesty/i,
-  /by the painter/i,
+  /^created by His Majesty/i,
+  /^by the painter\b/i,
   /^old friend,/i,
   /^scholar, circa/i,
   /^adolin, the visions/i,
   /^ROSHAR$/i,
-  /\broshar\b/i,
-  /codes of war/i,
-  /alethi codes/i,
-  /sketchbook/i,
-  /journal entry/i,
+  /^(?:the )?alethi codes of war\b/i,
+  /^codes of war\b/i,
+  /^(?:shallan['’]s\s+)?sketchbook:/i,
+  /^navani['’]s notebook\b/i,
+  /^journal entry\b/i,
   /^purports to be\b/i,
 ]
 
+/** Plate captions are short standalone lines; longer text is narration. */
+const MAX_CAPTION_LINE_LENGTH = 80
+
+// Same line-start discipline as NON_CHAPTER_CAPTION_PATTERNS above.
 const MAP_OR_DIVIDER_TEXT_PATTERNS = [
   /^ROSHAR$/i,
   /^THE STORMLIGHT ARCHIVE$/i,
@@ -89,10 +100,10 @@ const MAP_OR_DIVIDER_TEXT_PATTERNS = [
   /^TWO$/i,
   /^THREE$/i,
   /^THE WAY OF KINGS$/i,
-  /4,500 years later/i,
-  /codes of war/i,
-  /alethi codes/i,
-  /sketchbook/i,
+  /^4,500 years later\b/i,
+  /^(?:the )?alethi codes of war\b/i,
+  /^codes of war\b/i,
+  /^(?:shallan['’]s\s+)?sketchbook:/i,
 ]
 
 const FRONT_MATTER_SERIES_MARKERS = [
@@ -342,7 +353,12 @@ function isMapOrGalleryIllustration(blocks, blockIndex, imageBlock) {
     return true
   }
 
-  const nearby = collectNearbyTextLines(blocks, imageBlock, 1)
+  // Only caption-shaped lines may disqualify: an anchored phrase can still open
+  // a narrative-length paragraph in the +-1-page window, and prose must never
+  // veto a chapter arch. Real plate captions are short standalone lines.
+  const nearby = collectNearbyTextLines(blocks, imageBlock, 1).filter(
+    (text) => text.length <= MAX_CAPTION_LINE_LENGTH
+  )
   if (nearby.some((text) => MAP_OR_DIVIDER_TEXT_PATTERNS.some((pattern) => pattern.test(text)))) {
     return true
   }
@@ -388,18 +404,30 @@ function isMapOrGalleryIllustration(blocks, blockIndex, imageBlock) {
  * never consume sequential chapter numbers.
  */
 function qualifiesAsPrintedTocBannerSlot(imageBlock, blocks, blockIndex, ocrMetadata) {
-  if (!imageBlock) {
+  // Every rejection names its sub-gate so a silently-suppressed real arch is
+  // diagnosable from BOOKY_CHAPTER_GRAPHIC_DEBUG output alone. Through v115
+  // this path had no logging, which hid the WoK ch70 arch suppression.
+  const rejectSlot = (gate) => {
+    logChapterGraphicDecision("printed_toc_banner_slot_rejected", {
+      gate,
+      pageNumber: imageBlock?.pageNumber ?? null,
+      imageRole: imageBlock?.imageRole ?? null,
+    })
     return false
   }
 
+  if (!imageBlock) {
+    return rejectSlot("missing_image_block")
+  }
+
   if (ocrMetadata?.boundaryKind === "book_divider") {
-    return false
+    return rejectSlot("ocr_book_divider")
   }
 
   // OCR-confirmed part and interlude dividers never take a sequential chapter slot.
   const ocrKind = ocrMetadata?.boundaryKind
   if (ocrKind === "part" || ocrKind === "interlude_divider") {
-    return false
+    return rejectSlot("ocr_part_or_interlude_divider")
   }
 
   // Full-page art (tall plates, character portraits, sketchbook pages) is never
@@ -407,13 +435,13 @@ function qualifiesAsPrintedTocBannerSlot(imageBlock, blocks, blockIndex, ocrMeta
   // These rejections run before any OCR shortcut so a plate cannot consume a
   // sequential chapter slot and shift every later banner.
   if (imageBlock.imageRole === "full_page_illustration") {
-    return false
+    return rejectSlot("full_page_illustration_role")
   }
   if (isFullPageHeightIllustrationBlock(imageBlock)) {
-    return false
+    return rejectSlot("full_page_height_geometry")
   }
   if (isMapOrGalleryIllustration(blocks, blockIndex, imageBlock)) {
-    return false
+    return rejectSlot("map_or_gallery_illustration")
   }
 
   const isStandardChapterArch =
@@ -421,12 +449,12 @@ function qualifiesAsPrintedTocBannerSlot(imageBlock, blocks, blockIndex, ocrMeta
     isLikelyChapterArchBannerBlock(imageBlock)
 
   if (!isStandardChapterArch && hasNearbyNonChapterCaption(blocks, imageBlock)) {
-    return false
+    return rejectSlot("nearby_non_chapter_caption")
   }
 
   const followingBlocks = collectFollowingTextBlocks(blocks, blockIndex, 8)
   if (!isStandardChapterArch && hasNonChapterCaption(followingBlocks)) {
-    return false
+    return rejectSlot("following_non_chapter_caption")
   }
 
   const hasBannerGeometry =
@@ -435,7 +463,7 @@ function qualifiesAsPrintedTocBannerSlot(imageBlock, blocks, blockIndex, ocrMeta
     isChapterTitleStripBlock(imageBlock)
 
   if (!hasBannerGeometry) {
-    return false
+    return rejectSlot("no_banner_geometry")
   }
 
   // Interleave already classified these as chapter_heading on arch geometry.
@@ -454,7 +482,11 @@ function qualifiesAsPrintedTocBannerSlot(imageBlock, blocks, blockIndex, ocrMeta
     hasNarrativeFollowUp(followingBlocks) ||
     hasSamePageProseBeforeImage(blocks, blockIndex, imageBlock)
 
-  return hasOpenerSignal
+  if (!hasOpenerSignal) {
+    return rejectSlot("no_opener_signal")
+  }
+
+  return true
 }
 
 function isEndOfChapterTallArt(blocks, blockIndex, imageBlock) {

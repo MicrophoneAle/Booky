@@ -71,7 +71,7 @@ const TYPESETTING_REPAGINATION_DELAY_MS = 32
 const PAGINATION_INITIAL_PAGES = 80
 const PAGINATION_BATCH_PAGES = 80
 /** Keep in sync with server/index.js PARSER_VERSION — invalidates pagination cache when bumped. */
-const PARSER_VERSION = 115
+const PARSER_VERSION = 116
 /** Bump only when client pagination/measurement logic changes (not server parser). */
 const PAGINATION_MEASUREMENT_VERSION = 24
 const PAGINATION_CACHE_PREFIX = "booky-pages|"
@@ -4926,9 +4926,10 @@ export default function BookViewer({
 
     // In the image-chapter TOC, banners normally supply every chapter, so text
     // chapter entries are dropped to avoid duplicating a banner. That assumption
-    // breaks for a bannerless chapter (e.g. Way of Kings ch69 "Justice", whose
-    // opener is a plain illustration with no banner): it has a server-side text
-    // chapter entry but no image entry, so it would otherwise vanish. Add back
+    // breaks for a genuinely bannerless chapter (none in Way of Kings as of
+    // v116 - all 75 have real arch banners - but other illustrated books may
+    // have one): it has a server-side text chapter entry but no image entry,
+    // so it would otherwise vanish. Add back
     // ONLY the text chapter entries that no image entry already represents,
     // matched with chapterTitlesReferToSameChapter (the same dedupe the
     // non-image branch uses for imageEntriesForToc). This is strictly additive -

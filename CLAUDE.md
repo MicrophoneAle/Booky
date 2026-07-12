@@ -57,7 +57,7 @@ Booky/
 | `client/src/components/BookViewer.jsx` | Reader, `tocEntries` assembly, `PAGINATION_MEASUREMENT_VERSION`, layout measurement. **Client TOC bugs live here.** |
 | `client/src/utils/paginator.js` | `buildChapterPageMap`, `extractImageChapterTocEntries`, pagination measurement. |
 | `server/chapterGraphicService.js` | `analyzeChapterGraphicFromContext` - decides if an image is a chapter banner vs illustration. |
-| `server/stormlightEpigraphService.js` | Printed-TOC sequential cursor, `isLikelyStructuralPartDividerPlate`, bannerless reconciliation helpers. |
+| `server/stormlightEpigraphService.js` | Printed-TOC sequential cursor, `isLikelyStructuralPartDividerPlate`, part-divider cursor helpers. |
 | `server/printedTocService.js` | Builds `printedToc.ordered` (chapters, parts, interludes, prelude, etc.). |
 | `server/imageOcrService.js` | Single shared Tesseract worker; OCR is a major parse-time bottleneck. |
 | `server/scripts/regression/run.mjs` | Regression entry point; 5 books in harness, snapshots gitignored. |
@@ -66,7 +66,7 @@ Booky/
 
 | Constant | Location | Current | When to bump |
 |----------|----------|---------|--------------|
-| `PARSER_VERSION` | `server/index.js` + `client/.../BookViewer.jsx` | **115** | Any server parser output change |
+| `PARSER_VERSION` | `server/index.js` + `client/.../BookViewer.jsx` | **116** | Any server parser output change |
 | `PAGINATION_MEASUREMENT_VERSION` | `client/.../BookViewer.jsx` only | **24** | Client pagination/measurement logic only |
 
 ---
@@ -77,7 +77,7 @@ Booky/
 
 - **Do not alter Supabase migrations in place** - add new migrations only (`supabase/migrations/`).
 - **Do not widen global chapter-arch geometry thresholds** in `chapterGraphicService.js` / `pdfImageRoleUtils.js` without regression on WoK, Treasure Island, Oliver Twist - phantom chapters are the usual failure mode.
-- **Do not promote portrait illustration plates to chapter banners** to fix WoK ch69 - use printed-TOC cursor reconciliation (`bannerlessChapterAfter`) instead.
+- **Do not promote portrait illustration plates to chapter banners** - WoK ch69/ch70 openers (p1051/p1073) are plain art; both chapters have real arch banners (p1052/p1074). Keep `NON_CHAPTER_CAPTION_PATTERNS` / `MAP_OR_DIVIDER_TEXT_PATTERNS` start-anchored and caption-length-gated - unanchored substring matching against nearby prose is what suppressed the ch70 arch through v115.
 - **Do not edit** `server/scripts/.index-backup.js` or `.index-054fc07.js` - orphaned snapshots at PARSER_VERSION 97-100.
 - **Do not force-push** `main`; do not skip git hooks unless explicitly requested.
 - **Do not commit** `.env`, secrets, or large log dumps (`wok-*.log`, `toc-verify.log`).
@@ -108,12 +108,12 @@ Booky/
 
 ### Way of Kings (Stormlight) - highest complexity
 
-- **Ch69 "Justice" / Ch70 "Sea Of Glass"** - ch69 has no arch banner; opener is a portrait illustration (p1051). Fixed in v115 via: (1) exclude portrait band from `isLikelyStructuralPartDividerPlate`, (2) `bannerlessReconcile` advances printed-TOC cursor past ch69 + Part Five, (3) `bannerlessChapterAfter` surfaces ch69 in server `chapters[]`, (4) client `unmatchedTextChapterEntries` adds bannerless text chapters when `useImageChapterToc` (>=10 image banners).
-- **False part-divider match on p1051** historically skipped slots 83-84 and mislabeled p1052 as ch69 - do not reintroduce.
+- **Ch69 "Justice" / Ch70 "Sea Of Glass"** - corrected in v116. The v115 "bannerless ch69" model was WRONG: ch69 has a real arch banner (p1052, followed by the Tanatanev death-rattle epigraph + Navani warcamp prose) and ch70 has one too (p1074, followed by Shallan's hospital-room prose and the Shadesmar beads scene). Through v115 the p1074 arch was silently suppressed because unanchored `/sketchbook/i` in `isMapOrGalleryIllustration`'s +-1-page scan matched ordinary narration on p1075 ("...a blank page in her sketchbook"), and `bannerlessReconcile` then papered over the missing slot by skipping ch69 + Part Five at the cursor, mislabeling p1052 as ch70 (both TOC entries navigated to Justice; Sea Of Glass was unreachable). v116 removed `bannerlessReconcile`/`bannerlessChapterAfter` entirely, start-anchored all caption patterns, and added a caption line-length gate. Both plates (p1051, p1073) stay plain illustrations. Verify this region with content evidence (Navani/Shallan/Jasnah name counts between arches), never with title greps - contiguous numbering does NOT prove correct anchoring.
+- **False part-divider match on p1051** historically skipped printed-TOC slots and shifted the tail; the portrait-band carve-out in `isLikelyStructuralPartDividerPlate` prevents this - do not remove it.
 - **Parts Four/Five** exist in printed-TOC cursor but are **absent from reader TOC** by design (no text headings, filtered from image boundaries). Separate future work.
 - **WoK is NOT in `npm run regression`** - only ad-hoc scripts (`verify-wok-ch68-72.mjs`, `verify-wok-ch9-12.mjs`, `verify-wok-part5.mjs`, `debug-parse-wok.mjs`, `test-wok-graphic-fixes.mjs`, `server/scripts/_toc-verify.mjs`). Easy to regress silently.
 - Stale artifacts (`wok-ch68-72-debug.json`, old logs) show pre-fix behavior - ignore them.
-- The TEMPORARY ch69 diagnostics (`[tocOrderedDump]`, `[regionDump]`, `[cursorTrace]`, `[tocReanchor]`, `[portraitBandScan]`, Step-A dumps) were removed in the cleanup pass. The load-bearing operational logs (`[bannerlessReconcile]`, `[partCursor]`, `[boundarySummary]`) remain behind their debug flags.
+- The TEMPORARY ch69 diagnostics (`[tocOrderedDump]`, `[regionDump]`, `[cursorTrace]`, `[tocReanchor]`, `[portraitBandScan]`, Step-A dumps) were removed in the cleanup pass; `[bannerlessReconcile]` went with the mechanism in v116. The load-bearing operational logs (`[partCursor]`, `[boundarySummary]`, `[chapterAssign]`, and `printed_toc_banner_slot_rejected` which names the sub-gate on every rejected banner slot) remain behind their debug flags.
 
 ### Parse performance
 
@@ -134,8 +134,8 @@ Booky/
 
 ### Client TOC assembly (`BookViewer.jsx`)
 
-- When `imageEntries.length >= 10`, `useImageChapterToc` uses **image banners only** for chapters plus text *sections* (prelude, parts, etc.). Bannerless chapters need `unmatchedTextChapterEntries` - without it they vanish from rendered TOC even if present in `bookDocument.chapters`.
-- `chapterPageMap` maps chapters via `isChapterBoundary` visual items - bannerless ch69 may lack its own measured page and borrow the next banner's page for display.
+- When `imageEntries.length >= 10`, `useImageChapterToc` uses **image banners only** for chapters plus text *sections* (prelude, parts, etc.). `unmatchedTextChapterEntries` additively covers text chapters with no matching banner - as of v116 no WoK chapter depends on it (all 75 have banners), but keep it for genuinely bannerless books.
+- `chapterPageMap` maps chapters via `isChapterBoundary` visual items - a chapter entry without its own measured page borrows the next banner's page for display.
 
 ### TOC cursor / sequential assignment
 
