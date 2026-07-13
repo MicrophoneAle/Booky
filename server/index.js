@@ -353,6 +353,32 @@ function mergeParseProgressSnapshot(previous, patch) {
   const patchRank = parseProgressPhaseRank(patch.phase ?? prev.phase)
 
   if (patch.phase && patchRank < prevRank) {
+    // finalizeIllustrationBlocks interleaves classification-only and OCR
+    // candidates in one loop, so classification updates keep arriving after
+    // the snapshot phase has advanced to ocr_illustrations. Dropping them
+    // froze the illustrations counter short of its total for the rest of the
+    // phase; fold their counter progress in while keeping the later phase.
+    if (
+      patch.phase === "classifying_illustrations" &&
+      prev.phase === "ocr_illustrations"
+    ) {
+      const illustrations = bumpParseCounter(
+        {
+          ...emptyParseCounters().illustrations,
+          ...(prev.counters?.illustrations ?? {}),
+        },
+        patch.illustrationCurrent ?? patch.current,
+        patch.illustrationTotal ?? patch.total
+      )
+      return {
+        ...prev,
+        counters: { ...(prev.counters ?? emptyParseCounters()), illustrations },
+        illustrationCurrent: illustrations.current,
+        illustrationTotal: illustrations.total,
+        percent: Math.max(prev.percent ?? 0, patch.percent ?? 0),
+        updatedAt: Date.now(),
+      }
+    }
     return {
       ...prev,
       percent: Math.max(prev.percent ?? 0, patch.percent ?? 0),
@@ -6711,13 +6737,21 @@ function isTextHeavyIllustrationPage(pageTextCharCounts, imageBlock) {
   )
 }
 
-function shouldRunIllustrationOcr(block, _ocrMetadata, pageTextCharCounts) {
+function shouldRunIllustrationOcr(block, _ocrMetadata, pageTextCharCounts, printedToc = null) {
   if (block.imageRole === "illustration") {
     return false
   }
 
   if (block.imageRole === "chapter_heading" || isLikelyChapterArchBannerBlock(block)) {
     if (isTextHeavyIllustrationPage(pageTextCharCounts, block)) {
+      return false
+    }
+    // Printed-TOC books number arch banners from the sequential TOC cursor,
+    // so reading the stone plaque adds nothing there - skip the OCR call.
+    // Full-page dividers keep OCR below (PART / INTERLUDES detection), and
+    // books without a printed TOC keep plaque OCR as their only source of
+    // chapter numbers and titles.
+    if (printedToc) {
       return false
     }
     return true
@@ -6751,7 +6785,7 @@ function shouldSkipChapterHeadingCandidate(block, blocks, blockIndex) {
   return shouldSkipChapterGraphicAnalysis(block, blocks, blockIndex)
 }
 
-function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, blocks) {
+function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, blocks, printedToc = null) {
   let count = 0
 
   for (const { block, index: blockIndex } of candidateEntries) {
@@ -6761,6 +6795,7 @@ function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, blocks) {
 
     if (block.imageRole === "chapter_heading") {
       if (
+        !printedToc &&
         !shouldSkipChapterHeadingCandidate(block, blocks, blockIndex) &&
         !isTextHeavyIllustrationPage(pageTextCharCounts, block)
       ) {
@@ -6771,6 +6806,7 @@ function countPlannedOcrEntries(candidateEntries, pageTextCharCounts, blocks) {
 
     if (isLikelyChapterArchBannerBlock(block)) {
       if (
+        !printedToc &&
         !shouldSkipChapterGraphicAnalysis(block, blocks, blockIndex) &&
         !isTextHeavyIllustrationPage(pageTextCharCounts, block)
       ) {
@@ -7064,7 +7100,8 @@ async function finalizeIllustrationBlocks(
   const plannedOcrTotal = countPlannedOcrEntries(
     candidateEntries,
     pageTextCharCounts,
-    blocks
+    blocks,
+    printedToc
   )
 
   const finalizedByIndex = new Map()
@@ -7286,7 +7323,7 @@ async function finalizeIllustrationBlocks(
       }
 
       let ocrMetadata = null
-      const shouldRunOcr = shouldRunIllustrationOcr(block, null, pageTextCharCounts)
+      const shouldRunOcr = shouldRunIllustrationOcr(block, null, pageTextCharCounts, printedToc)
 
       if (imageBuffer?.length && shouldRunOcr) {
         onProgress?.({
