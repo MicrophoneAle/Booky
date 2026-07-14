@@ -66,7 +66,7 @@ Booky/
 
 | Constant | Location | Current | When to bump |
 |----------|----------|---------|--------------|
-| `PARSER_VERSION` | `server/index.js` + `client/.../BookViewer.jsx` | **117** | Any server parser output change |
+| `PARSER_VERSION` | `server/index.js` + `client/.../BookViewer.jsx` | **118** | Any server parser output change |
 | `PAGINATION_MEASUREMENT_VERSION` | `client/.../BookViewer.jsx` only | **24** | Client pagination/measurement logic only |
 
 ---

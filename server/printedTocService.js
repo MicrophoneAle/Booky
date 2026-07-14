@@ -475,4 +475,5 @@ export {
   lookupPrintedTocTitle,
   lookupPrintedTocNumberLabel,
   titleCaseTocTitle,
+  parseSpelledChapterMarker,
 }

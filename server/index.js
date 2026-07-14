@@ -33,6 +33,7 @@ import {
   extractPrintedTocLookup,
   extractPrintedTocFromPageData,
   lookupPrintedTocTitle,
+  parseSpelledChapterMarker,
 } from "./printedTocService.js"
 import {
   buildReformattedHtml,
@@ -49,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 117
+const PARSER_VERSION = 118
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -1713,6 +1714,20 @@ function isPrintedTocTitlePageLine(text) {
   return words.length >= 2 && words.length <= 14 && titlePart.length <= 90
 }
 
+function isFusedSpelledChapterTocResidue(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  // Letter-spaced printed-TOC markers collapse to a single token
+  // ("CHAPTERELEVEN", "CHAPTERTWENTY-EIGHT"). Real chapter headings keep a
+  // space ("Chapter Eleven") and must not be treated as TOC residue.
+  if (/\s/.test(trimmed)) {
+    return false
+  }
+  return parseSpelledChapterMarker(trimmed) != null
+}
+
 function isPrintedTocEntryLine(text) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
@@ -1722,6 +1737,13 @@ function isPrintedTocEntryLine(text) {
     return true
   }
   if (isPrintedTocHeading(trimmed)) {
+    return true
+  }
+  // Fused letter-spaced printed-TOC markers such as "CHAPTERELEVEN" /
+  // "CHAPTERTWENTY-EIGHT". Short forms ONE-TEN were previously swallowed by the
+  // glossary all-caps length gate (/^[A-Z]{3,12}$/); ELEVEN+ and hyphenated
+  // compounds escape that gate and must be filtered here explicitly.
+  if (isFusedSpelledChapterTocResidue(trimmed)) {
     return true
   }
   if (isTocChapterListingLine(trimmed)) {
@@ -11094,7 +11116,8 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       isTocDenseListingLine(text) ||
       isTocPageReferenceLine(text) ||
       isRunningHeaderMergedLine(text) ||
-      isGlossarySidebarLine(text)
+      isGlossarySidebarLine(text) ||
+      isFusedSpelledChapterTocResidue(text)
     ) {
       pendingConnective = null
       index += 1
