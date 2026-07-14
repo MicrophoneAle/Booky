@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 118
+const PARSER_VERSION = 119
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -3127,7 +3127,7 @@ function mergeMultilineFableTitleBlocks(blocks) {
 }
 
 const FABLE_NON_STORY_HEADING_REGEX =
-  /^(introduction|preface|prologue|epilogue|conclusion|contents|illustrations)$/i
+  /^(introduction|preface|prologue|epilogue|conclusion|contents|illustrations|acknowledge?ments?)$/i
 
 function isFableStoryTitleBlock(block) {
   if (!block?.isHeading || block?.type === "image") {
@@ -3811,7 +3811,51 @@ function isGarbledSplitBookTitleText(text, bookTitle) {
   )
 }
 
-function extractTitlePageAuthorFromPageData(pageData) {
+// A small-caps title-page byline extracts with its tracked capitals split out
+// as lone letters ("by Robe R t Louis s tevenson"). Rejoin each lone letter
+// with its neighboring fragment, then recase the damaged words so the byline
+// reads "by Robert Louis Stevenson". Clean bylines have no lone-letter tokens
+// (initials keep their periods) and pass through untouched.
+function repairSmallCapsSplitByline(text) {
+  const trimmed = (text ?? "").trim()
+  const tokens = trimmed.split(/\s+/).filter(Boolean)
+  if (!tokens.some((token, index) => index > 0 && /^[A-Za-z]$/.test(token))) {
+    return trimmed
+  }
+
+  const words = []
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index]
+    if (index === 0 || !/^[A-Za-z]$/.test(token)) {
+      words.push(token)
+      continue
+    }
+    const next = tokens[index + 1]
+    if (next && /^[a-z]{2,}/.test(next)) {
+      words.push(token + next)
+      index += 1
+    } else if (words.length > 0) {
+      words[words.length - 1] += token
+    } else {
+      words.push(token)
+    }
+  }
+
+  return words
+    .map((word, index) => {
+      if (index === 0 || !(/^[a-z]/.test(word) || /[a-z][A-Z]/.test(word))) {
+        return word
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    })
+    .join(" ")
+}
+
+function extractTitlePageAuthorFromPageData(pageData, knownTitles = []) {
+  const knownTitleKeys = knownTitles
+    .map((title) => normalizeTitleComparisonKey(title))
+    .filter(Boolean)
+
   for (let pageIndex = 0; pageIndex < Math.min(2, pageData.length); pageIndex += 1) {
     for (const line of pageData[pageIndex]?.lines ?? []) {
       const text = (line.text ?? "").trim()
@@ -3819,7 +3863,12 @@ function extractTitlePageAuthorFromPageData(pageData) {
         continue
       }
       if (/^by\s+/i.test(text)) {
-        return text
+        return repairSmallCapsSplitByline(text)
+      }
+      // A title page often repeats the work's own title in a name-like layout
+      // ("Treasure Island"); the book's known titles are never its author.
+      if (knownTitleKeys.includes(normalizeTitleComparisonKey(text))) {
+        continue
       }
       if (
         /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2}$/.test(text) &&
@@ -3883,7 +3932,11 @@ function injectCoverTitlePage(
   ]
 
   const resolvedAuthor =
-    sanitizePdfAuthor(authorText) || extractTitlePageAuthorFromPageData(pageData)
+    sanitizePdfAuthor(authorText) ||
+    extractTitlePageAuthorFromPageData(pageData, [
+      resolvedTitle,
+      humanizeBookTitleFromFileName(fileName),
+    ])
   if (resolvedAuthor && !isScannerWatermarkLine(resolvedAuthor)) {
     titlePageBlocks.push({
       text: /^by\s/i.test(resolvedAuthor) ? resolvedAuthor : `By ${resolvedAuthor}`,
@@ -9936,6 +9989,25 @@ function detectChapters(content, bookTitle = "") {
         const headingText = (block.text ?? rawTitle).trim()
         const canonicalTitle = normalizeHeadingCandidate(headingText) || headingText
         const partLabel = resolvePartHeadingLabel(headingText)
+
+        // A reprinted copy of the book's own title (back-matter house ad,
+        // series teaser page) is never a chapter of itself. Keep the line as a
+        // display heading inside the current chapter instead of a TOC entry.
+        // Poem titles are exempt: a collection's title poem legitimately shares
+        // the book title.
+        if (
+          trimmedBookTitle &&
+          block.isPoemTitle !== true &&
+          !CHAPTER_PATTERN.test(canonicalTitle) &&
+          normalizeTitleComparisonKey(canonicalTitle) ===
+            normalizeTitleComparisonKey(trimmedBookTitle)
+        ) {
+          return {
+            ...block,
+            chapterId,
+            isChapterStart: false,
+          }
+        }
         let id = slugify(canonicalTitle)
         let chapterTitle = block.chapterTitle ?? rawTitle
         const isFableTitle = isFableStoryTitleBlock(block)
