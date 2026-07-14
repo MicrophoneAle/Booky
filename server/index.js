@@ -49,7 +49,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 116
+const PARSER_VERSION = 117
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -4398,8 +4398,47 @@ function isCenteredDecorativeProseText(text, line = null, entry = null) {
   return false
 }
 
+function isQuotedEpistolarySalutationLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  // Quoted letter openings such as "My dear Sir," / "DEAR SIR," are often set a
+  // point or two larger than body type. That modest bump must not promote them
+  // to headings. Require an opening quote and a bare trailing comma so real
+  // chapter titles and hyphen-continued openings ("Dear Sir,-") stay intact.
+  if (!/^["\u201c\u2018']/.test(trimmed)) {
+    return false
+  }
+  if (!/,\s*$/.test(trimmed) || /[-–—]\s*$/.test(trimmed)) {
+    return false
+  }
+
+  const core = trimmed
+    .replace(/^["\u201c\u2018']+\s*/, "")
+    .replace(/,\s*$/, "")
+    .replace(/\s+/g, " ")
+    .trim()
+  if (!core || core.length > 48) {
+    return false
+  }
+
+  const words = core.split(/\s+/).filter(Boolean)
+  if (words.length < 2 || words.length > 6) {
+    return false
+  }
+
+  return /^(?:My\s+)?Dear\s+[A-Za-z][A-Za-z.'-]*(?:\s+[A-Za-z][A-Za-z.'-]*){0,3}$/i.test(
+    core
+  )
+}
+
 function isLikelyAllCapsDisplayTitle(text, line = null, entry = null) {
   if (isCenteredDecorativeProseText(text, line, entry)) {
+    return false
+  }
+  if (isQuotedEpistolarySalutationLine(text)) {
     return false
   }
   if (!isPureAllCapsTitleText(text)) {
@@ -4441,6 +4480,9 @@ function isLikelyAllCapsDisplayTitle(text, line = null, entry = null) {
 function isProminentDisplayTitleLine(text, line, entry = null) {
   const trimmed = (text ?? "").trim()
   if (!trimmed || isScannerWatermarkLine(trimmed)) {
+    return false
+  }
+  if (isQuotedEpistolarySalutationLine(trimmed)) {
     return false
   }
   if (isCenteredDecorativeProseText(trimmed, line, entry)) {
@@ -10210,6 +10252,10 @@ function isHeadingLine(text, line, headingStrings, entry = null) {
     return false
   }
 
+  if (isQuotedEpistolarySalutationLine(text)) {
+    return false
+  }
+
   if (isCenteredDecorativeProseText(text, line, entry)) {
     return false
   }
@@ -10297,6 +10343,16 @@ function shouldStartNewProseBlock(line, previousBlock, entry = null, previousEnt
   }
 
   if (previousBlock && isVerseLineText(previousBlock.text)) {
+    return true
+  }
+
+  // Keep quoted letter salutations as their own prose blocks. Otherwise a narrow
+  // gap can glue "DEAR SIR," onto the following paragraph once it is no longer
+  // classified as a heading.
+  if (
+    isQuotedEpistolarySalutationLine(text) ||
+    isQuotedEpistolarySalutationLine(prevTrim)
+  ) {
     return true
   }
 
