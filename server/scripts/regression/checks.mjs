@@ -17,6 +17,47 @@ const EBOOK_WATERMARK_SITE_REGEX =
 
 const MAX_FAILURES_PER_CHECK = 100
 
+const CHAPTER_WORD_NUMBERS =
+  "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty"
+
+const STRUCTURAL_HEADING_WORDS =
+  "chapter|letter|part|section|book|volume|preface|introduction|prologue|epilogue|conclusion|appendix|stave"
+
+// Mirrors the shape of the parser's own chapter-heading detection in
+// server/index.js (CHAPTER_PATTERN / CHAPTER_ONLY_HEADING_REGEX /
+// CHAPTER_WITH_SUBTITLE_REGEX): a bare structural label like "Chapter 5" or
+// "Part One".
+const STRUCTURAL_HEADING_BARE_REGEX = new RegExp(
+  `^(?:${STRUCTURAL_HEADING_WORDS})\\s+(?:\\d{1,3}|[ivxlcdm]+|${CHAPTER_WORD_NUMBERS})\\.?\\s*$`,
+  "i"
+)
+
+// A structural label with a subtitle, e.g. "Chapter LXIII - Cutting In" or
+// "Chapter 5 - Oliver Mingles With New Associates." - the subtitle's own
+// grammar (dangling prepositions, length, mid-clause punctuation) says
+// nothing about whether the block itself is mid-sentence prose.
+const STRUCTURAL_HEADING_WITH_SUBTITLE_REGEX = new RegExp(
+  `^(?:${STRUCTURAL_HEADING_WORDS})\\s+(?:\\d{1,3}|[ivxlcdm]+|${CHAPTER_WORD_NUMBERS})\\s*[-\\u2014\\u2013]\\s+\\S`,
+  "i"
+)
+
+// Non-numbered structural sections that are also never mid-sentence prose.
+const NON_NUMBERED_STRUCTURAL_HEADING_REGEX =
+  /^(?:preface|introduction|prologue|epilogue|conclusion|dedication|contents)\.?$/i
+
+function isStructuralChapterHeading(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+
+  return (
+    STRUCTURAL_HEADING_BARE_REGEX.test(trimmed) ||
+    STRUCTURAL_HEADING_WITH_SUBTITLE_REGEX.test(trimmed) ||
+    NON_NUMBERED_STRUCTURAL_HEADING_REGEX.test(trimmed)
+  )
+}
+
 function blockText(block) {
   return (block?.text ?? "").trim()
 }
@@ -108,6 +149,10 @@ export function noMidSentenceHeadings(blocks) {
 
     const text = blockText(block)
     if (!text) {
+      return
+    }
+
+    if (isStructuralChapterHeading(text)) {
       return
     }
 
@@ -408,6 +453,10 @@ export function noEmptyBlocks(blocks) {
   const failures = []
 
   blocks.forEach((block, index) => {
+    if (block?.type === "image") {
+      return
+    }
+
     const text = block?.text ?? ""
     if (!text.trim()) {
       failures.push(`[block ${index}] Empty block`)
