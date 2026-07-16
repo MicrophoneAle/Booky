@@ -1420,6 +1420,80 @@ function pdfBufferLikelyContainsToUnicodeCMaps(buffer) {
   return false
 }
 
+// Finds every ">>" in `text` immediately (after optional whitespace)
+// followed by "stream\r?\n", in a single forward pass - mirrors the
+// ">>\s*stream\r?\n" portion of the object-stream pattern below without
+// backtracking.
+function findPdfStreamStartCandidates(text) {
+  const candidates = []
+  const whitespaceRunRegex = /\s*/y
+  let searchFrom = 0
+
+  while (true) {
+    const closeIndex = text.indexOf(">>", searchFrom)
+    if (closeIndex === -1) {
+      break
+    }
+
+    whitespaceRunRegex.lastIndex = closeIndex + 2
+    const afterWhitespace = closeIndex + 2 + whitespaceRunRegex.exec(text)[0].length
+
+    if (text.startsWith("stream", afterWhitespace)) {
+      const afterStreamKeyword = afterWhitespace + "stream".length
+      if (text[afterStreamKeyword] === "\r" && text[afterStreamKeyword + 1] === "\n") {
+        candidates.push({
+          dictCloseIndex: closeIndex,
+          streamContentStart: afterStreamKeyword + 2,
+        })
+      } else if (text[afterStreamKeyword] === "\n") {
+        candidates.push({
+          dictCloseIndex: closeIndex,
+          streamContentStart: afterStreamKeyword + 1,
+        })
+      }
+    }
+
+    searchFrom = closeIndex + 2
+  }
+
+  return candidates
+}
+
+// Finds the earliest "endstream" at or after `fromIndex` that is
+// immediately preceded by \r?\n - mirrors "\r?\nendstream" without
+// backtracking.
+function findNextPdfEndstreamBoundary(text, fromIndex) {
+  let searchFrom = fromIndex
+
+  while (true) {
+    const index = text.indexOf("endstream", searchFrom)
+    if (index === -1) {
+      return null
+    }
+
+    if (index >= 1 && text[index - 1] === "\n") {
+      const contentEnd = index >= 2 && text[index - 2] === "\r" ? index - 2 : index - 1
+      return { contentEnd, afterEndstream: index + "endstream".length }
+    }
+
+    searchFrom = index + "endstream".length
+  }
+}
+
+// Extracts every "N 0 obj << ... >> stream\r?\n ... \r?\nendstream" span
+// from a raw PDF buffer. This used to be a single regex with two chained
+// lazy wildcards ("<<([\s\S]*?)>>...stream\r?\n([\s\S]*?)\r?\nendstream")
+// scanned across the whole file - on PDFs with many "N 0 obj <<" dict
+// headers that never resolve to a real stream (font/encoding/page dicts
+// with no stream of their own), that pattern backtracks across large spans
+// of the file for every such header. Measured: 15s on a 0.6MB PDF with zero
+// real streams, versus <=200ms on every other sample asset. This rewrite
+// finds the same spans with two linear forward passes (indexOf-based, no
+// backtracking) instead of one backtracking regex. It mirrors the original
+// pattern's exact lazy-matching semantics: each "N 0 obj <<" header pairs
+// with the nearest qualifying ">> ... stream" span and the nearest
+// subsequent "endstream" after it, however far forward either is - verified
+// byte-identical against the old implementation across the full sample set.
 function extractToUnicodeCMapTextsFromPdfBuffer(buffer) {
   if (!pdfBufferLikelyContainsToUnicodeCMaps(buffer)) {
     return []
@@ -1427,12 +1501,48 @@ function extractToUnicodeCMapTextsFromPdfBuffer(buffer) {
 
   const pdfText = Buffer.from(buffer).toString("latin1")
   const cmapTexts = []
-  const streamRegex =
-    /(\d+) 0 obj\s*<<([\s\S]*?)>>\s*stream\r?\n([\s\S]*?)\r?\nendstream/g
+  const streamStartCandidates = findPdfStreamStartCandidates(pdfText)
 
-  for (const match of pdfText.matchAll(streamRegex)) {
-    const body = match[2]
-    const raw = Buffer.from(match[3], "latin1")
+  const objHeaderRegex = /(\d+) 0 obj/g
+  const whitespaceRunRegex = /\s*/y
+  let candidateIndex = 0
+  let endstreamCursor = 0
+  let headerMatch
+
+  while ((headerMatch = objHeaderRegex.exec(pdfText)) !== null) {
+    let cursor = headerMatch.index + headerMatch[0].length
+    whitespaceRunRegex.lastIndex = cursor
+    cursor += whitespaceRunRegex.exec(pdfText)[0].length
+
+    if (!pdfText.startsWith("<<", cursor)) {
+      continue
+    }
+    const dictBodyStart = cursor + 2
+
+    while (
+      candidateIndex < streamStartCandidates.length &&
+      streamStartCandidates[candidateIndex].dictCloseIndex < dictBodyStart
+    ) {
+      candidateIndex += 1
+    }
+    if (candidateIndex >= streamStartCandidates.length) {
+      break
+    }
+
+    const { dictCloseIndex, streamContentStart } = streamStartCandidates[candidateIndex]
+    const body = pdfText.slice(dictBodyStart, dictCloseIndex)
+
+    const endBoundary = findNextPdfEndstreamBoundary(
+      pdfText,
+      Math.max(streamContentStart, endstreamCursor)
+    )
+    if (!endBoundary) {
+      break
+    }
+    endstreamCursor = endBoundary.afterEndstream
+
+    const rawSlice = pdfText.slice(streamContentStart, endBoundary.contentEnd)
+    const raw = Buffer.from(rawSlice, "latin1")
     let decoded = raw
     if (/\/Filter\s*\/FlateDecode/.test(body)) {
       try {
@@ -1445,6 +1555,8 @@ function extractToUnicodeCMapTextsFromPdfBuffer(buffer) {
     if (text.includes("begincmap")) {
       cmapTexts.push(text)
     }
+
+    objHeaderRegex.lastIndex = endBoundary.afterEndstream
   }
 
   return cmapTexts
