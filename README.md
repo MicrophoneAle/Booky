@@ -360,6 +360,9 @@ npm run dev    # http://localhost:5173
 ---
 
 ## Regression & verification
+**Parser version** is defined by `PARSER_VERSION` in `server/index.js` and `client/src/components/BookViewer.jsx` (currently `120` - the two must match). Bump both when parser output changes so cached pagination and stored documents re-parse correctly.
+
+### Regression tests
 
 Place test PDFs in `client/src/assets/`, then from `server/`:
 

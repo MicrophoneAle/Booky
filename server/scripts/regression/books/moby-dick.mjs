@@ -6,7 +6,6 @@ export default {
   file: "herman-melville-moby-dick.pdf",
   skipGeneralChecks: [
     "indentationConsistency",
-    "noMidSentenceHeadings",
     "headingDensitySane",
   ],
   assertions: [

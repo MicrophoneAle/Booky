@@ -33,6 +33,20 @@ function partChapterGroups(chapters) {
   return partGroups
 }
 
+// Orwell's 1984 has a fixed, well-known structure: Part One has 8 chapters,
+// Part Two has 9, Part Three has 6. Hardcoding these (rather than deriving
+// the expected range from whatever numbers happen to be present in the
+// parsed output) is what lets the assertion below catch truncation - a part
+// silently missing its last N chapters still has a self-consistent
+// min..max range in the observed data, so a range derived from that data
+// can never detect the loss. Only a range checked against an independent
+// ground truth can.
+const EXPECTED_PART_CHAPTER_COUNTS = {
+  "PART ONE": 8,
+  "PART TWO": 9,
+  "PART THREE": 6,
+}
+
 export default {
   id: "orwell1984",
   name: "1984",
@@ -51,29 +65,31 @@ export default {
       (ctx) => {
         const partGroups = partChapterGroups(ctx.chapters)
 
-        for (const numbers of partGroups.values()) {
-          const sorted = [...new Set(numbers)].sort((a, b) => a - b)
-          if (sorted.length === 0) {
-            continue
-          }
+        if (partGroups.size === 0) {
+          return false
+        }
 
-          const min = sorted[0]
-          const max = sorted[sorted.length - 1]
+        for (const [partLabel, expectedCount] of Object.entries(
+          EXPECTED_PART_CHAPTER_COUNTS
+        )) {
+          const sorted = [...new Set(partGroups.get(partLabel) ?? [])].sort(
+            (a, b) => a - b
+          )
+
           const expected = []
-          for (let number = min; number <= max; number += 1) {
+          for (let number = 1; number <= expectedCount; number += 1) {
             expected.push(number)
           }
 
           const missing = expected.filter((number) => !sorted.includes(number))
-          const hasLowChapters =
-            sorted.includes(1) && sorted.includes(2) && sorted.includes(3)
+          const extra = sorted.filter((number) => number > expectedCount)
 
-          if (missing.length > 0 || !hasLowChapters) {
+          if (missing.length > 0 || extra.length > 0) {
             return false
           }
         }
 
-        return partGroups.size > 0
+        return true
       },
     ],
     [

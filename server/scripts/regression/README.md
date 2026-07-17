@@ -17,9 +17,9 @@ Exit code `0` when every selected book passes **blocking** checks, book-specific
 
 **Blocking general checks** (must pass): mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, word count vs raw (when `pdftotext` is available).
 
-**Advisory general checks** (reported as `[WARN]`, do not fail the run): orphaned fragments, paragraph continuity, indentation sampling. These surface parser debt on large books without blocking legacy parity tests.
+**Advisory general checks** (reported as `[WARN]`, do not fail the run): scanner watermarks, dialogue attribution centering, orphaned fragments, paragraph continuity, indentation sampling. These surface parser debt on large books without blocking legacy parity tests.
 
-`monte-cristo` is large and may take several minutes. `oldman` and `orwell1984` are faster.
+`monte-cristo` is the largest book (~1086 pages) and typically takes 30-45s; `oldman` and `orwell1984` are much faster.
 
 ### Prerequisites
 
@@ -37,6 +37,8 @@ scripts/regression/
     oldman.mjs
     orwell1984.mjs
     monte-cristo.mjs
+    pride-prejudice.mjs
+    moby-dick.mjs
 ```
 
 Legacy scripts (`test-oldman.mjs`, etc.) are unchanged and can still be run directly.
@@ -58,6 +60,8 @@ npm run regression:update
 
 - **oldman** and **orwell1984**: pass blocking checks and book-specific assertions (parity with legacy scripts).
 - **monte-cristo**: book-specific assertions pass; blocking check may still flag rare false headings (e.g. long prose lines misclassified). Fix in `index.js`, then re-run with `--update-snapshots`.
+- **pride-prejudice**: passes all blocking checks, assertions, and snapshot diff.
+- **moby-dick**: book-specific assertions pass; `dialogueSplitCheck` may still flag a handful of quoted short lines after mid-sentence prose.
 
 ## Add a new book
 
@@ -99,16 +103,18 @@ Each book exports:
 
 ## General checks (`checks.mjs`)
 
-1. **No mid-sentence headings** — dangling endings, lowercase start, length, continuation pronouns
-2. **No orphaned fragments** — short non-terminal prose, lowercase continuations
-3. **Paragraph continuity** — split mid-sentence / mid-clause across prose blocks
-4. **Heading density sane** — global ratio and 20-block windows
-5. **Word count vs raw** — parsed vs `pdftotext` (≥ 85%)
-6. **Chapter structure sane** — count, title length, duplicates, prose-like titles
-7. **No TOC leakage** — heading runs in first 5% of blocks
-8. **Indentation consistent** — sampled middle prose blocks (`isIndented` rate)
-9. **No empty blocks**
-10. **Dialogue split check** — quoted short lines after mid-sentence prose
+1. **No mid-sentence headings** — dangling endings, lowercase start, length, continuation pronouns; exempts chapter-shaped headings (`Chapter N`, `Chapter N - Subtitle`, `Part One`, etc.) regardless of how their subtitle reads
+2. **No scanner watermarks** — ebook-site watermark phrases in block text
+3. **Dialogue attribution not centered** — short centered lines shaped like a name/attribution
+4. **No orphaned fragments** — short non-terminal prose, lowercase continuations
+5. **Paragraph continuity** — split mid-sentence / mid-clause across prose blocks
+6. **Heading density sane** — global ratio and 20-block windows
+7. **Word count vs raw** — parsed vs `pdftotext` (≥ 85%)
+8. **Chapter structure sane** — count, title length, duplicates, prose-like titles
+9. **No TOC leakage** — heading runs in first 5% of blocks
+10. **Indentation consistent** — sampled middle prose blocks (`isIndented` rate)
+11. **No empty blocks** — skips `type: "image"` blocks, which legitimately have no text
+12. **Dialogue split check** — quoted short lines after mid-sentence prose
 
 ## Snapshots
 
