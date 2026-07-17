@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 120
+const PARSER_VERSION = 121
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -5465,6 +5465,17 @@ function isAdjacentPageProseEcho(text, pageIndex, pagesBeforeFilter, line = null
   // Centered lines, such as 1984 diary chants, are deliberate content even when
   // the same phrase appears inside prose on a neighboring page.
   if (line?.centered) {
+    return false
+  }
+  // A chapter-opening heading ("Chapter VIII") is echoed verbatim inside a
+  // neighboring page's running header ("150 Chapter VIII"); the heading is the
+  // source of that echo, not a duplicate of it, so it is never dropped here.
+  // Running headers themselves stay droppable: merged forms carry page numbers
+  // (failing CHAPTER_PATTERN's anchors) and render at body font size.
+  if (
+    CHAPTER_PATTERN.test(trimmed) &&
+    (line?.fontSize ?? 0) >= CHAPTER_HEADING_MIN_FONT_SIZE
+  ) {
     return false
   }
 
