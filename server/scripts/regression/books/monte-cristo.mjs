@@ -5,6 +5,22 @@ const falseHeadingPatterns = [
   /old man uttered a cry.*he fell/i,
 ]
 
+// Confirmed via a raw pdftotext extraction of the source PDF (independent of
+// the parser): "Chapter 1." through "Chapter 117." all appear as heading
+// lines, no gaps, no duplicates. Chapter numbering runs continuously across
+// all five VOLUME divisions (unlike 1984's per-part restart) - so this is a
+// single 1..117 range, not a group of per-volume ranges.
+const MONTE_CRISTO_EXPECTED_CHAPTER_COUNT = 117
+
+function arabicChapterNumbers(chapters) {
+  return chapters
+    .map((chapter) => {
+      const match = (chapter?.title ?? "").match(/Chapter\s+(\d+)\b/i)
+      return match ? Number(match[1]) : null
+    })
+    .filter((number) => number !== null)
+}
+
 export default {
   id: "monte-cristo",
   name: "The Count of Monte Cristo",
@@ -122,8 +138,23 @@ export default {
       (ctx) => ctx.wordCount > 400000,
     ],
     [
-      "At least 100 chapters detected",
-      (ctx) => ctx.chapters.length >= 100,
+      "Chapters 1-117 present with no gaps (raw PDF chapter headings)",
+      (ctx) => {
+        const numbers = arabicChapterNumbers(ctx.chapters)
+        const present = new Set(numbers)
+
+        const missing = []
+        for (let number = 1; number <= MONTE_CRISTO_EXPECTED_CHAPTER_COUNT; number += 1) {
+          if (!present.has(number)) {
+            missing.push(number)
+          }
+        }
+        const extra = numbers.filter(
+          (number) => number > MONTE_CRISTO_EXPECTED_CHAPTER_COUNT
+        )
+
+        return missing.length === 0 && extra.length === 0
+      },
     ],
     [
       '"three." wrap fragment is not a heading',
