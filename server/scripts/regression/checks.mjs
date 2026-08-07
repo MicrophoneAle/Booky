@@ -397,6 +397,24 @@ export function chapterStructureSane(blocks, config) {
   return result(failures)
 }
 
+// Heading-styled blocks that legitimately cluster in front matter: the cover
+// title and author byline that injectCoverTitlePage synthesizes (both marked
+// isTitlePage), plus the source title page's own byline and dedication lines.
+// Several of these in a row is normal front matter, not leaked contents text.
+//
+// The byline/dedication test intentionally mirrors isDedicationAddresseeLine in
+// server/index.js, added for the stripPublisherCatalogBlocks fix. It is
+// duplicated rather than imported because checks.mjs is dependency-free -
+// importing server/index.js would start the Express app and require Supabase
+// credentials just to run the checks. Keep the two in sync.
+function isFrontMatterHeadingBlock(block) {
+  if (block?.isTitlePage === true) {
+    return true
+  }
+
+  return /^(?:to|by)\s+[a-z]/i.test(String(block?.text ?? "").trim())
+}
+
 export function noTocLeakage(blocks) {
   const failures = []
   const cutoff = Math.max(1, Math.floor(blocks.length * 0.05))
@@ -406,6 +424,14 @@ export function noTocLeakage(blocks) {
   let maxRun = 0
 
   for (const block of prefix) {
+    // Front matter is transparent to the run: it neither extends a run nor
+    // breaks one. Breaking would let a genuine contents leak escape detection
+    // whenever one of its entries happened to be dedication-shaped ("To the
+    // Lighthouse"), which is the shape this check does still catch.
+    if (block?.isHeading && isFrontMatterHeadingBlock(block)) {
+      continue
+    }
+
     if (block?.isHeading) {
       run += 1
       maxRun = Math.max(maxRun, run)
