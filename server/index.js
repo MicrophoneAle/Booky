@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 125
+const PARSER_VERSION = 126
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -2793,6 +2793,112 @@ function excludePrintedTocBlocks(blocks) {
     for (let dropIndex = runStart; dropIndex < runStart + runLength; dropIndex += 1) {
       dropIndices.add(dropIndex)
     }
+  }
+
+  return blocks.filter((_, index) => !dropIndices.has(index))
+}
+
+// Poetry collections deliberately bypass excludePrintedTocBlocks so the prose
+// cleaners cannot reflow verse, but that bypass also left printed tables of
+// contents sitting in the reading text (maya_angelou carries ten pages of
+// poem-title listing before its first poem). Running the prose exclusion here
+// would not help: every predicate it uses keys on a trailing page number or a
+// "Chapter N" marker, and a poetry contents page is a bare list of poem titles,
+// so only the "Contents" line itself matches - one block out of 182.
+//
+// Matching listing text against poem titles is NOT a safe alternative. The
+// listing carries its own extraction errors ("A Zono Man" for the poem "A Zorro
+// Man") so it under-matches, and many real verse lines are identical to poem
+// titles ("When I think about myself,") so it over-matches into the body.
+//
+// The listing is therefore removed by whole pages, anchored on the "Contents"
+// line and bounded hard by the first promoted poem title. This leans on an
+// invariant buildPoetryBlocksFromLines already maintains on purpose: a poem
+// title is promoted to isChapterStart only when two body-font verse lines
+// follow it, so contents entries - a prominent line followed by another
+// prominent line - stay unpromoted. Consumption stops at the first page that
+// does not look like a listing, which is what protects the dedication page that
+// follows the contents in this book.
+const POETRY_TOC_MIN_ENTRIES_PER_PAGE = 5
+const POETRY_TOC_MAX_ENTRY_LENGTH = 90
+const POETRY_TOC_MAX_PAGES = 40
+
+function stripPoetryPrintedTocPages(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  // Nothing at or after the first promoted poem may ever be removed here.
+  const firstPoemIndex = blocks.findIndex((block) => block?.isChapterStart)
+  const limit = firstPoemIndex >= 0 ? firstPoemIndex : blocks.length
+
+  const anchorIndex = blocks.findIndex(
+    (block, index) =>
+      index < limit &&
+      block?.type !== "image" &&
+      block?.type !== "image_candidate" &&
+      isPrintedTocHeading((block?.text ?? "").trim())
+  )
+  if (anchorIndex < 0) {
+    return blocks
+  }
+
+  const anchorPage = blocks[anchorIndex]?.sourcePdfPageIndex
+  if (!Number.isFinite(anchorPage)) {
+    return blocks
+  }
+
+  const pageEntries = new Map()
+  for (let index = anchorIndex; index < limit; index += 1) {
+    const page = blocks[index]?.sourcePdfPageIndex
+    if (!Number.isFinite(page) || page < anchorPage) {
+      continue
+    }
+    if (!pageEntries.has(page)) {
+      pageEntries.set(page, [])
+    }
+    pageEntries.get(page).push(index)
+  }
+
+  const isListingPage = (indices) => {
+    const textIndices = indices.filter(
+      (index) =>
+        blocks[index]?.type !== "image" && blocks[index]?.type !== "image_candidate"
+    )
+    if (textIndices.length < POETRY_TOC_MIN_ENTRIES_PER_PAGE) {
+      return false
+    }
+
+    return textIndices.every((index) => {
+      const block = blocks[index]
+      if (block?.isChapterStart || block?.isPoemTitle) {
+        return false
+      }
+      const text = (block?.text ?? "").trim()
+      return text.length > 0 && text.length <= POETRY_TOC_MAX_ENTRY_LENGTH
+    })
+  }
+
+  const dropIndices = new Set()
+  const orderedPages = [...pageEntries.keys()].sort((left, right) => left - right)
+  let consumedPages = 0
+
+  for (const page of orderedPages) {
+    if (consumedPages >= POETRY_TOC_MAX_PAGES) {
+      break
+    }
+    const indices = pageEntries.get(page)
+    if (!isListingPage(indices)) {
+      break
+    }
+    for (const index of indices) {
+      dropIndices.add(index)
+    }
+    consumedPages += 1
+  }
+
+  if (dropIndices.size === 0) {
+    return blocks
   }
 
   return blocks.filter((_, index) => !dropIndices.has(index))
@@ -12614,6 +12720,11 @@ async function parsePdfBuffer(
     blocks = normalizeFrontAndBackMatterBlocks(blocks)
     blocks = injectStormlightPreludeHeading(blocks)
     blocks = injectStormlightPrologueHeading(blocks, printedToc)
+  } else {
+    // Printed-TOC removal is a separate concern from verse preservation, so it
+    // runs for poetry too - via the page-anchored variant, which touches only
+    // whole contents pages ahead of the first poem and never reflows a line.
+    blocks = stripPoetryPrintedTocPages(blocks)
   }
 
   reportProgress({
