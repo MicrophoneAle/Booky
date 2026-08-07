@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 121
+const PARSER_VERSION = 125
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -2869,7 +2869,7 @@ function parseChapterHeadingWithInlineTitle(text) {
   return {
     kind: match[1],
     number: match[2],
-    subtitle: formatInferredTitleText(subtitle),
+    subtitle: formatChapterSubtitleText(subtitle),
   }
 }
 
@@ -2921,7 +2921,7 @@ function mergeMultilineChapterTitleBlocks(blocks) {
     const rawSubtitle = titleFragments.join(" ").replace(/\s+/g, " ").trim()
     const subtitle =
       rawSubtitle && !isDropCapChapterSubtitleArtifact(rawSubtitle)
-        ? formatInferredTitleText(rawSubtitle)
+        ? formatChapterSubtitleText(rawSubtitle)
         : ""
     const displayTitle = formatChapterLabel(parts.kind, parts.number, subtitle)
 
@@ -2994,7 +2994,7 @@ function mergeInlineChapterLabelTitles(blocks) {
       cursor += 1
     }
 
-    const subtitle = formatInferredTitleText(
+    const subtitle = formatChapterSubtitleText(
       [parts.title, ...tailFragments].join(" ").replace(/\s+/g, " ").trim()
     )
     const displayTitle = formatChapterLabel(parts.kind, parts.number, subtitle)
@@ -3038,7 +3038,7 @@ function mergeTrailingChapterTitleFragments(blocks) {
         )
         if (match) {
           const label = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase()
-          const combinedSubtitle = formatInferredTitleText(
+          const combinedSubtitle = formatChapterSubtitleText(
             `${match[3]} ${tailFragments.join(" ")}`.replace(/\s+/g, " ").trim()
           )
           const displayTitle = `${label} ${match[2]} - ${combinedSubtitle}`
@@ -3484,6 +3484,34 @@ function formatInferredTitleText(text) {
   return applyBookTitleCasing(trimmed)
 }
 
+// Chapter subtitles, unlike inferred book titles, come from text the subtitle
+// detector (isChapterSubtitleWord et al.) has already validated using the source
+// PDF's own capitalization - that detection would be undermined by re-deriving
+// casing afterward, and applyBookTitleCasing's English-only minor-word list
+// mangles non-English names it doesn't recognize (French "de"/"du" get
+// capitalized, mid-title "The" after an em-dash gets lowercased). All-caps
+// source text carries no usable casing information though (e.g. Oliver Twist's
+// drop-cap-fused subtitles render in full capitals in the PDF), so that case
+// still needs derivation via applyBookTitleCasing; only already-mixed-case
+// source text is trusted verbatim.
+function formatChapterSubtitleText(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return ""
+  }
+
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (
+    letters.length >= 4 &&
+    letters === letters.toUpperCase() &&
+    /[A-Z]/.test(letters)
+  ) {
+    return applyBookTitleCasing(trimmed.toLowerCase())
+  }
+
+  return trimmed
+}
+
 function looksLikeFilenameSlug(title) {
   const trimmed = (title ?? "").trim()
   if (!trimmed) {
@@ -3776,6 +3804,11 @@ function titlesRoughlyMatch(left, right) {
   return leftKey === rightKey || leftKey.includes(rightKey) || rightKey.includes(leftKey)
 }
 
+function isDedicationAddresseeLine(text) {
+  const trimmed = (text ?? "").trim()
+  return /^(?:to|by)\s+[a-z]/i.test(trimmed)
+}
+
 function stripPublisherCatalogBlocks(blocks, bookTitle) {
   if (!Array.isArray(blocks) || blocks.length === 0) {
     return blocks
@@ -3797,7 +3830,12 @@ function stripPublisherCatalogBlocks(blocks, bookTitle) {
     }
 
     const text = (block.text ?? "").trim()
-    if (!looksLikeStandaloneBookTitle(text)) {
+    // Dedication lines ("To Charlie Shribner", "By Ernest Hemingway") coincidentally
+    // satisfy the Title-Case "looks like a book title" shape. On chapterless books the
+    // scan window runs past the front matter into real prose without an early chapter
+    // boundary to stop it, so counting these toward the catalog threshold can flag a
+    // page that mixes a dedication with genuine narrative content, not a catalog list.
+    if (!looksLikeStandaloneBookTitle(text) || isDedicationAddresseeLine(text)) {
       continue
     }
 
@@ -3867,6 +3905,102 @@ function stripPublisherCatalogBlocks(blocks, bookTitle) {
   }
 
   return blocks.filter((_, index) => !dropIndices.has(index))
+}
+
+// Trailing non-narrative matter: publisher catalogs, distribution/license
+// boilerplate, and production notes appended after the story ends. Detection is
+// deliberately anchored on literal trigger lines rather than any structural
+// "looks non-narrative" heuristic - a general heuristic cannot tell a final
+// epilogue from boilerplate, and an over-broad match here eats real content
+// (the failure mode stripPublisherCatalogBlocks hit on The Old Man and the
+// Sea). Every anchor is additionally position-gated to the last stretch of the
+// book so a coincidental mid-narrative match can never truncate the story.
+const TRAILING_MATTER_ANCHOR_PATTERNS = [
+  // Project Gutenberg transcriber/license boilerplate
+  /^\*{3,}\s*This file should be named\b/i,
+  /^START: FULL LICENSE\b/i,
+  /^\*{3}\s*END OF TH(?:E|IS) PROJECT GUTENBERG\b/i,
+  /^End of (?:the )?Project Gutenberg\b/i,
+  // Publisher catalog/announcement sections (all-caps exact, case-sensitive)
+  /^ANNOUNCEMENTS$/,
+  // Distributor promo + copyright-information tails
+  /^This book was distributed courtesy of:?$/i,
+  /^COPYRIGHT INFORMATION$/,
+  /^More classics here:?$/i,
+  // Production/adaptation notes ("This book was adaptated into LaTeX ... from
+  // the Gutenberg project" - the source PDF itself misspells "adaptated")
+  /^This book was adapt(?:at)?ed into\b[\s\S]*\bGutenberg\b/i,
+]
+
+const TRAILING_MATTER_MAX_PAGES_FROM_END = 12
+const TRAILING_MATTER_MIN_INDEX_RATIO = 0.8
+
+function isTrailingEditionNoticeAnchor(blocks, index) {
+  const text = (blocks[index]?.text ?? "").trim()
+  if (!/^This is a work of fiction\./.test(text)) {
+    return false
+  }
+
+  // Require corroborating legal lines nearby so an in-story sentence that
+  // happens to open the same way can never trigger the strip.
+  let seen = 0
+  for (let cursor = index; cursor < blocks.length && seen < 8; cursor += 1) {
+    const candidate = blocks[cursor]
+    if (candidate?.type === "image" || candidate?.type === "image_candidate") {
+      continue
+    }
+    seen += 1
+    const candidateText = (candidate?.text ?? "").trim()
+    if (/^Copyright\s*(?:©|\(c\))/i.test(candidateText) || /^ISBN[:\s]/.test(candidateText)) {
+      return true
+    }
+  }
+  return false
+}
+
+function stripTrailingNonNarrativeMatterBlocks(blocks) {
+  if (!Array.isArray(blocks) || blocks.length < 40) {
+    return blocks
+  }
+
+  let maxSourcePage = -1
+  for (const block of blocks) {
+    if (Number.isFinite(block?.sourcePdfPageIndex)) {
+      maxSourcePage = Math.max(maxSourcePage, block.sourcePdfPageIndex)
+    }
+  }
+
+  const minIndex = Math.floor(blocks.length * TRAILING_MATTER_MIN_INDEX_RATIO)
+
+  for (let index = minIndex; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      continue
+    }
+
+    const page = block?.sourcePdfPageIndex
+    if (
+      maxSourcePage >= 0 &&
+      Number.isFinite(page) &&
+      page < maxSourcePage - TRAILING_MATTER_MAX_PAGES_FROM_END
+    ) {
+      continue
+    }
+
+    const text = (block?.text ?? "").trim()
+    if (!text) {
+      continue
+    }
+
+    const isAnchor =
+      TRAILING_MATTER_ANCHOR_PATTERNS.some((pattern) => pattern.test(text)) ||
+      isTrailingEditionNoticeAnchor(blocks, index)
+    if (isAnchor) {
+      return blocks.slice(0, index)
+    }
+  }
+
+  return blocks
 }
 
 function resolveBookTitle(parsedText, fileName = "", blocks = []) {
@@ -4242,8 +4376,13 @@ const HEADING_FONT_BODY_RATIO = 1.15
 const INTER_LINE_GAP_MAX_FOR_MEDIAN_PX = 20
 const HEADING_STRING_MIN_FONT_SIZE = 16
 
+// "if" is excluded from the shared word list and matched separately with a negative
+// lookbehind for a preceding apostrophe: elided-article place names ending in "d'If" /
+// "l'If" (e.g. Monte Cristo's Chateau d'If) are complete, not dangling, but a genuine
+// standalone trailing "if" (preceded by whitespace or punctuation, not an apostrophe)
+// should still be flagged.
 const HEADING_DANGLING_ENDING_REGEX =
-  /\b(?:of|the|a|an|and|but|or|nor|for|yet|so|left|fell|was|be|on|in|at|to|by|with|from|into|that|which|who|as|if|their|his|her|its|our|your|had|has|have|not|are|were|is)\s*$/i
+  /\b(?:of|the|a|an|and|but|or|nor|for|yet|so|left|fell|was|be|on|in|at|to|by|with|from|into|that|which|who|as|their|his|her|its|our|your|had|has|have|not|are|were|is)\s*$|(?<!['‘’ʼ`])\bif\s*$/i
 const RUNNING_HEADER_MIN_PAGES = 3
 const CENTERED_LINE_LEFT_GAP_MIN_PX = 20
 const CENTERED_LINE_CENTER_TOLERANCE_PX = 25
@@ -9288,7 +9427,7 @@ function splitEmbeddedSubtitleUsingPrintedToc(text, tocSubtitle) {
   }
 
   return {
-    subtitle: formatInferredTitleText(tocSubtitle),
+    subtitle: formatChapterSubtitleText(tocSubtitle),
     prose,
   }
 }
@@ -9396,7 +9535,7 @@ function extractDropCapFusedSubtitle(text) {
     return null
   }
 
-  const subtitle = formatInferredTitleText(capsRun)
+  const subtitle = formatChapterSubtitleText(capsRun)
   if (!subtitle) {
     return null
   }
@@ -9443,7 +9582,7 @@ function extractEmbeddedChapterSubtitle(text, { tocSubtitle = null } = {}) {
     }
 
     const candidate = {
-      subtitle: formatInferredTitleText(subtitle),
+      subtitle: formatChapterSubtitleText(subtitle),
       prose,
     }
 
@@ -11332,7 +11471,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       }
 
       const subtitle = titleFragments.length
-        ? formatInferredTitleText(titleFragments.join(" ").replace(/\s+/g, " ").trim())
+        ? formatChapterSubtitleText(titleFragments.join(" ").replace(/\s+/g, " ").trim())
         : ""
       const safeSubtitle =
         subtitle && !isDropCapChapterSubtitleArtifact(subtitle) ? subtitle : ""
@@ -12548,6 +12687,11 @@ async function parsePdfBuffer(
     blocks = supplementBannerlessPrintedChapters(blocks, printedToc)
     blocks = reanchorLatePartHeadingBlocks(blocks, printedToc)
   }
+
+  // Runs after image interleave/classification so trailing art plates on
+  // stripped pages (e.g. the Way of Kings back-matter plate) go with the text
+  // instead of dangling as the book's final content.
+  blocks = stripTrailingNonNarrativeMatterBlocks(blocks)
 
   await terminateOcrWorker()
 
