@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 126
+const PARSER_VERSION = 127
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -2823,6 +2823,38 @@ const POETRY_TOC_MIN_ENTRIES_PER_PAGE = 5
 const POETRY_TOC_MAX_ENTRY_LENGTH = 90
 const POETRY_TOC_MAX_PAGES = 40
 
+// Upper bound for the prose front-matter cleaners when they run over a poetry
+// collection. Verse blocks carry no font or heading styling to distinguish them
+// from a publisher catalog listing, so a page of short title-case poem lines -
+// or of printed-TOC entries - satisfies the same "several title-like lines on
+// one page" shape a catalog page does. Bounding the scan to the stretch strictly
+// before the printed-TOC heading and before the first promoted poem keeps those
+// cleaners on real front matter: they can never reach a poem, and they can never
+// consume the "Contents" anchor that stripPoetryPrintedTocPages needs.
+function findPoetryFrontMatterLimit(blocks) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return 0
+  }
+
+  let limit = blocks.length
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    if (block?.isChapterStart || block?.isPoemTitle) {
+      limit = index
+      break
+    }
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      continue
+    }
+    if (isPrintedTocHeading((block?.text ?? "").trim())) {
+      limit = index
+      break
+    }
+  }
+
+  return limit
+}
+
 function stripPoetryPrintedTocPages(blocks) {
   if (!Array.isArray(blocks) || blocks.length === 0) {
     return blocks
@@ -3915,7 +3947,7 @@ function isDedicationAddresseeLine(text) {
   return /^(?:to|by)\s+[a-z]/i.test(trimmed)
 }
 
-function stripPublisherCatalogBlocks(blocks, bookTitle) {
+function stripPublisherCatalogBlocks(blocks, bookTitle, { scanLimit } = {}) {
   if (!Array.isArray(blocks) || blocks.length === 0) {
     return blocks
   }
@@ -3926,7 +3958,10 @@ function stripPublisherCatalogBlocks(blocks, bookTitle) {
   }
 
   const firstChapterIndex = findFirstChapterBlockIndex(blocks)
-  const scanEnd = firstChapterIndex > 0 ? firstChapterIndex : Math.min(blocks.length, 32)
+  let scanEnd = firstChapterIndex > 0 ? firstChapterIndex : Math.min(blocks.length, 32)
+  if (Number.isFinite(scanLimit)) {
+    scanEnd = Math.min(scanEnd, scanLimit)
+  }
   const titleLikeByPage = new Map()
 
   for (let index = 0; index < scanEnd; index += 1) {
@@ -4041,6 +4076,74 @@ const TRAILING_MATTER_ANCHOR_PATTERNS = [
 const TRAILING_MATTER_MAX_PAGES_FROM_END = 12
 const TRAILING_MATTER_MIN_INDEX_RATIO = 0.8
 
+// Library of Congress cataloging-in-publication records are printed on the last
+// page of many trade editions, and the block set carries no literal "Library of
+// Congress" line for the anchor list above to match. They are recognized instead
+// by the fields the record format mandates - none of which is a phrase a
+// narrative would produce.
+const CATALOGING_RECORD_FIELD_PATTERNS = [
+  // LC call number, e.g. "PS3551.N464A17 1994"
+  /^[A-Z]{1,3}\d{2,5}(?:\.[A-Z0-9]+){1,3}(?:\s+\d{4}[a-z]?)?$/,
+  // Collation statement
+  /^p\.\s*cm\.?$/i,
+  // Dewey class number, e.g. "8n'.54-dc20 94-14501"
+  /(?:^|\s)\d{1,3}\S{0,12}[-–—]{1,2}dc\d{2}\b/i,
+  // Added-entry tracing, e.g. "I. Title."
+  /^[IVXL]+\.\s*Title\.?$/,
+  // Bracketed uniform title, e.g. "[Poems]"
+  /^\[[A-Z][A-Za-z][A-Za-z .,'’-]{0,38}\]$/,
+]
+
+// Main-entry heading that opens the record, e.g. "Angelou, Maya."
+const CATALOGING_RECORD_MAIN_ENTRY_PATTERN =
+  /^[A-Z][A-Za-z'’-]+,\s+[A-Z][A-Za-z'’.-]*\.?$/
+
+const CATALOGING_RECORD_WINDOW_BLOCKS = 8
+
+function matchedCatalogingFieldIndex(text) {
+  return CATALOGING_RECORD_FIELD_PATTERNS.findIndex((pattern) => pattern.test(text))
+}
+
+function isTrailingCatalogingRecordAnchor(blocks, index) {
+  const text = (blocks[index]?.text ?? "").trim()
+  const anchorField = matchedCatalogingFieldIndex(text)
+  if (anchorField < 0 && !CATALOGING_RECORD_MAIN_ENTRY_PATTERN.test(text)) {
+    return false
+  }
+
+  // A lone field can occur by coincidence (a surname-comma line in dialogue, a
+  // bracketed stage direction), so require two distinct field types across the
+  // record, at least one of them below the anchor. That makes the anchor fire on
+  // the first line of the record - which is where the strip must begin - without
+  // letting any single line trigger it.
+  const seenFields = new Set()
+  if (anchorField >= 0) {
+    seenFields.add(anchorField)
+  }
+
+  let corroborating = 0
+  let scanned = 0
+  for (
+    let cursor = index + 1;
+    cursor < blocks.length && scanned < CATALOGING_RECORD_WINDOW_BLOCKS;
+    cursor += 1
+  ) {
+    const candidate = blocks[cursor]
+    if (candidate?.type === "image" || candidate?.type === "image_candidate") {
+      continue
+    }
+    scanned += 1
+
+    const field = matchedCatalogingFieldIndex((candidate?.text ?? "").trim())
+    if (field >= 0) {
+      corroborating += 1
+      seenFields.add(field)
+    }
+  }
+
+  return corroborating > 0 && seenFields.size >= 2
+}
+
 function isTrailingEditionNoticeAnchor(blocks, index) {
   const text = (blocks[index]?.text ?? "").trim()
   if (!/^This is a work of fiction\./.test(text)) {
@@ -4100,7 +4203,8 @@ function stripTrailingNonNarrativeMatterBlocks(blocks) {
 
     const isAnchor =
       TRAILING_MATTER_ANCHOR_PATTERNS.some((pattern) => pattern.test(text)) ||
-      isTrailingEditionNoticeAnchor(blocks, index)
+      isTrailingEditionNoticeAnchor(blocks, index) ||
+      isTrailingCatalogingRecordAnchor(blocks, index)
     if (isAnchor) {
       return blocks.slice(0, index)
     }
@@ -10200,16 +10304,17 @@ function normalizeTitleComparisonKey(text) {
     .trim()
 }
 
-function dedupeFrontMatterTitleBlocks(blocks, bookTitle) {
+function dedupeFrontMatterTitleBlocks(blocks, bookTitle, { scanLimit } = {}) {
   const bookKey = normalizeTitleComparisonKey(bookTitle)
   if (!bookKey) {
     return blocks
   }
 
+  const windowEnd = Number.isFinite(scanLimit) ? Math.min(20, scanLimit) : 20
   let keptTitleBlock = false
 
   return blocks.filter((block, index) => {
-    if (index >= 20) {
+    if (index >= windowEnd) {
       return true
     }
 
@@ -12696,13 +12801,21 @@ async function parsePdfBuffer(
 
   const bookTitle = resolveBookTitle(parsedText, fileName, blocks)
 
-  // The prose front-matter and printed-TOC cleaners assume reflowed prose and
-  // would drop verse lines that happen to resemble catalog or contents entries,
-  // so they are skipped for poetry collections.
-  if (!isPoetryCollection) {
-    blocks = stripPublisherCatalogBlocks(blocks, bookTitle)
-    blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle)
-  }
+  // Removing publisher front matter is a separate concern from preserving verse,
+  // so the front-matter cleaners run for poetry too - but bounded to the stretch
+  // ahead of the printed-TOC heading and the first poem. Unbounded, their
+  // "several title-like lines on one page" test flags the printed contents page
+  // of a poetry collection as a catalog page and consumes the "Contents" anchor
+  // stripPoetryPrintedTocPages depends on.
+  const frontMatterScanLimit = isPoetryCollection
+    ? findPoetryFrontMatterLimit(blocks)
+    : undefined
+  blocks = stripPublisherCatalogBlocks(blocks, bookTitle, {
+    scanLimit: frontMatterScanLimit,
+  })
+  blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle, {
+    scanLimit: frontMatterScanLimit,
+  })
 
   reportProgress({
     phase: "structuring",
