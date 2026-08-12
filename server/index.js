@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 132
+const PARSER_VERSION = 133
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -3466,6 +3466,22 @@ function isFableStoryTitleBlock(block) {
     return true
   }
 
+  // Single-line comma titles (e.g. "THE HAWK, KITE, AND PIGEONS") fail
+  // isPureAllCapsTitleText but are still fable story openings when set in the
+  // display-title size band. Body-ratio is skipped here (pageMetrics are gone
+  // by transform time); the size band plus wrap-head refusals gate the match.
+  if (
+    fontSize >= 20 &&
+    fontSize <= 35 &&
+    isCompleteLargeFontAllCapsCommaTitle(
+      text,
+      { fontSize },
+      { pageMetrics: { bodyFontSize: 0 } }
+    )
+  ) {
+    return true
+  }
+
   return false
 }
 
@@ -4784,15 +4800,103 @@ function endsWithSentenceTerminator(text) {
   return ENDS_WITH_SENTENCE_TERMINATOR_REGEX.test(trimmed)
 }
 
+// A display-sized all-caps title line (anthology fable titles at ~25pt). Used to
+// exempt those lines from heading-gate prose-continuation so a leading "THE "
+// is not treated as a connective when the previous block is incomplete junk
+// (illustration OCR). Requires pure-title shape and type well above body size
+// (~1.5x, and at least 20pt) so modest all-caps back-matter labels (e.g. WoK
+// "THE END OF ENDNOTE") stay out of this path.
+function isDisplaySizedAllCapsTitleLine(text, line = null, entry = null) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 90) {
+    return false
+  }
+  const lineFontSize = line?.fontSize ?? 0
+  if (lineFontSize < 20) {
+    return false
+  }
+  const bodyFontSize =
+    entry?.pageMetrics?.bodyFontSize ?? line?.pageMetrics?.bodyFontSize ?? 0
+  if (bodyFontSize > 0 && lineFontSize < bodyFontSize * 1.5) {
+    return false
+  }
+  if (!isPureAllCapsTitleText(trimmed)) {
+    return false
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  return words.length >= 2 && words.length <= 14
+}
+
+// Single-line all-caps titles that contain internal commas but are already
+// complete (e.g. "THE HAWK, KITE, AND PIGEONS"). isPureAllCapsTitleText rejects
+// these via isIncompleteAllCapsWrapLine's any-comma rule, which exists to keep
+// wrap heads such as "THE MOUSE, THE FROG, AND THE" from promoting alone.
+// Gate on display font size and refuse lines that still look like wrap heads
+// (trailing comma/dash or dangling article) so wrappedDisplayTitle merge stays
+// responsible for multi-line titles.
+function isCompleteLargeFontAllCapsCommaTitle(text, line = null, entry = null) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 90) {
+    return false
+  }
+  if (isTocChapterListingLine(trimmed) || isTocDenseListingLine(trimmed)) {
+    return false
+  }
+  if (isNarrativeSentenceLine(trimmed) || isScannerWatermarkLine(trimmed)) {
+    return false
+  }
+  if ((trimmed.match(/,/g) ?? []).length < 1) {
+    return false
+  }
+  if (/[-\u2014\u2013,]\s*$/.test(trimmed)) {
+    return false
+  }
+  if (HEADING_DANGLING_ENDING_REGEX.test(trimmed)) {
+    return false
+  }
+  if (/[.!?][\u201d"\u2019']?\s*$/.test(trimmed)) {
+    return false
+  }
+  const letters = trimmed.replace(/[^A-Za-z]/g, "")
+  if (letters.length < 3 || letters !== letters.toUpperCase()) {
+    return false
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length < 2 || words.length > 14) {
+    return false
+  }
+  const lineFontSize = line?.fontSize ?? 0
+  if (lineFontSize < 20) {
+    return false
+  }
+  const bodyFontSize =
+    entry?.pageMetrics?.bodyFontSize ?? line?.pageMetrics?.bodyFontSize ?? 0
+  if (bodyFontSize > 0 && lineFontSize < bodyFontSize * 1.5) {
+    return false
+  }
+  return true
+}
+
 // Heading-only variant of isProseLineContinuation: when the previous block ends
 // with terminal punctuation plus one or more closing quotes (nested dialogue),
 // treat it as a completed sentence and apply only the post-sentence continuation
 // rules. The shared isProseLineContinuation still uses the legacy single-closer
 // regex so ordinary paragraph merges stay byte-stable.
-function isHeadingProseLineContinuation(text, previousBlock) {
+function isHeadingProseLineContinuation(text, previousBlock, line = null, entry = null) {
   const trimmed = (text ?? "").trim()
   const prevTrim = (previousBlock?.text ?? "").trim()
   if (!trimmed || !prevTrim || previousBlock?.isHeading) {
+    return false
+  }
+  // Display-sized all-caps titles are never prose continuations for heading
+  // gating - even when they start with THE and the previous block is incomplete
+  // illustration OCR ("LIVINGSTAN BOL"). Includes complete single-line comma
+  // titles ("THE HAWK, KITE, AND PIGEONS") which isPureAllCapsTitleText rejects.
+  // Lowercase "the ..." still continues via isProseLineContinuation's /^[a-z]/ branch.
+  if (
+    isDisplaySizedAllCapsTitleLine(trimmed, line, entry) ||
+    isCompleteLargeFontAllCapsCommaTitle(trimmed, line, entry)
+  ) {
     return false
   }
   if (endsWithSentenceTerminator(prevTrim)) {
@@ -5314,7 +5418,10 @@ function isLikelyAllCapsDisplayTitle(text, line = null, entry = null) {
   if (isQuotedEpistolarySalutationLine(text)) {
     return false
   }
-  if (!isPureAllCapsTitleText(text)) {
+  const pureTitle = isPureAllCapsTitleText(text)
+  const commaTitle =
+    !pureTitle && isCompleteLargeFontAllCapsCommaTitle(text, line, entry)
+  if (!pureTitle && !commaTitle) {
     return false
   }
 
@@ -12401,7 +12508,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
     const skipHeadingForProseContinuation =
       headingPreviousBlock &&
       !headingPreviousBlock.isHeading &&
-      isHeadingProseLineContinuation(text, headingPreviousBlock)
+      isHeadingProseLineContinuation(text, headingPreviousBlock, line, entry)
 
     if (
       !skipHeadingForProseContinuation &&
