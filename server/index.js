@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 127
+const PARSER_VERSION = 128
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -4213,24 +4213,43 @@ function stripTrailingNonNarrativeMatterBlocks(blocks) {
   return blocks
 }
 
+// A reprint series prints its brand masthead above the work's own title on the
+// title page ("Core Classics(R)" over "Treasure Island"), and the masthead is
+// the larger, earlier line - so block inference picks the brand, not the book.
+// The registered-trademark or trademark mark is what separates the two: a series
+// brand is a mark its publisher must assert, and a book title essentially never
+// carries one. Only the block-inferred candidate is tested; a mark inside a
+// metadata or filename title is not evidence of the same confusion.
+function looksLikeSeriesBrandTitle(title) {
+  const trimmed = (title ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  return /[®™]|\((?:R|TM)\)/i.test(trimmed)
+}
+
 function resolveBookTitle(parsedText, fileName = "", blocks = []) {
   const fromMeta = sanitizePdfTitle(parsedText?.info?.Title ?? "")
   const fromFile = humanizeBookTitleFromFileName(fileName)
   const fromBlocks = inferBookTitleFromEarlyBlocks(blocks)
   const catalogPresent = isPublisherCatalogInEarlyBlocks(blocks)
 
+  // Kept out of the ranked branches below but still available as a last resort:
+  // a masthead beats returning no title at all.
+  const rankedFromBlocks = looksLikeSeriesBrandTitle(fromBlocks) ? "" : fromBlocks
+
   if (fromMeta && !looksLikeFilenameSlug(fromMeta) && !/^untitled$/i.test(fromMeta)) {
     return fromMeta
   }
 
   if (fromFile && !looksLikeFilenameSlug(fromFile)) {
-    if (catalogPresent || !fromBlocks || titlesRoughlyMatch(fromFile, fromBlocks)) {
+    if (catalogPresent || !rankedFromBlocks || titlesRoughlyMatch(fromFile, rankedFromBlocks)) {
       return fromFile
     }
   }
 
-  if (fromBlocks && !looksLikeFilenameSlug(fromBlocks)) {
-    return fromBlocks
+  if (rankedFromBlocks && !looksLikeFilenameSlug(rankedFromBlocks)) {
+    return rankedFromBlocks
   }
 
   const yearFromFile = extractTrailingYearTitleFromFileName(fileName)
@@ -4254,6 +4273,56 @@ function sanitizePdfAuthor(author) {
 
 function isAuthorBylineHeadingText(text) {
   return /^by\s+/i.test((text ?? "").trim())
+}
+
+// The Author field records whoever produced the PDF, which is only sometimes the
+// person who wrote the book. Distrusting it needs two independent signals, since
+// a correct author is the common case and dropping one is its own defect:
+//
+//   1. The same producer wrote an unusable Title, so its metadata is unreliable
+//      as a whole rather than wrong in one field.
+//   2. The name appears nowhere in the document text. A real author is named on
+//      the title page, in a byline, or in the back-matter biography; a
+//      production credit that appears in no printed line is not the author.
+//
+// Either signal alone produces false positives on this sample - a junk Title
+// accompanies correct authors, and a correct author can be missing from the
+// opening pages while appearing later - so both are required.
+function metadataAuthorLooksLikeProducerCredit(authorText, metaTitle, pageData) {
+  const author = (authorText ?? "").trim()
+  if (!author) {
+    return false
+  }
+
+  const titleUsable =
+    Boolean(metaTitle) &&
+    !looksLikeFilenameSlug(metaTitle) &&
+    !/^untitled$/i.test((metaTitle ?? "").trim())
+  if (titleUsable) {
+    return false
+  }
+
+  const nameParts = author
+    .toLowerCase()
+    .split(/[^a-z]+/)
+    .filter((part) => part.length > 2)
+  if (nameParts.length === 0) {
+    return false
+  }
+
+  for (const page of pageData ?? []) {
+    for (const line of page?.lines ?? []) {
+      const text = (line.text ?? "").toLowerCase()
+      if (!text) {
+        continue
+      }
+      if (nameParts.every((part) => text.includes(part))) {
+        return false
+      }
+    }
+  }
+
+  return true
 }
 
 function contentStartsWithBookTitle(blocks, bookTitle) {
@@ -4379,7 +4448,7 @@ function extractTitlePageAuthorFromPageData(pageData, knownTitles = []) {
 
 function injectCoverTitlePage(
   blocks,
-  { bookTitle, authorText = "", pageData = [], fileName = "" } = {}
+  { bookTitle, authorText = "", metaTitle = "", pageData = [], fileName = "" } = {}
 ) {
   if (!Array.isArray(blocks) || blocks.length === 0) {
     return blocks
@@ -4425,8 +4494,16 @@ function injectCoverTitlePage(
     },
   ]
 
+  const metadataAuthor = metadataAuthorLooksLikeProducerCredit(
+    sanitizePdfAuthor(authorText),
+    metaTitle,
+    pageData
+  )
+    ? ""
+    : sanitizePdfAuthor(authorText)
+
   const resolvedAuthor =
-    sanitizePdfAuthor(authorText) ||
+    metadataAuthor ||
     extractTitlePageAuthorFromPageData(pageData, [
       resolvedTitle,
       humanizeBookTitleFromFileName(fileName),
@@ -12889,6 +12966,7 @@ async function parsePdfBuffer(
   blocks = injectCoverTitlePage(blocks, {
     bookTitle,
     authorText: sanitizePdfAuthor(parsedText?.info?.Author ?? ""),
+    metaTitle: parsedText?.info?.Title ?? "",
     pageData,
     fileName,
   })
