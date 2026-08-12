@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 128
+const PARSER_VERSION = 129
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -4071,6 +4071,12 @@ const TRAILING_MATTER_ANCHOR_PATTERNS = [
   // Production/adaptation notes ("This book was adaptated into LaTeX ... from
   // the Gutenberg project" - the source PDF itself misspells "adaptated")
   /^This book was adapt(?:at)?ed into\b[\s\S]*\bGutenberg\b/i,
+  // Saddleback Jungle Book back-cover synopsis. That edition's "Saddleback
+  // E-Book" footer does not survive into text blocks, and it shares no Core
+  // Classics series-listing line with the Treasure Island back cover, so the
+  // only safe hook is this literal marketing opening - unique in the corpus
+  // and never a narrative closer.
+  /^In long ago India, a toddler wanders off\b/,
 ]
 
 const TRAILING_MATTER_MAX_PAGES_FROM_END = 12
@@ -4099,6 +4105,17 @@ const CATALOGING_RECORD_MAIN_ENTRY_PATTERN =
   /^[A-Z][A-Za-z'’-]+,\s+[A-Z][A-Za-z'’.-]*\.?$/
 
 const CATALOGING_RECORD_WINDOW_BLOCKS = 8
+
+// Core Classics small-caps mastheads extract with tracked capitals split into
+// lone letters ("Co R e C LA ssi C s"). Clean "Core Classics" also appears.
+const CORE_CLASSICS_SPACED_PATTERN = /Co\s*R\s*e\s+C\s*LA\s*ssi\s*C\s*s/i
+const CORE_CLASSICS_PLAIN_PATTERN = /Core\s*Classics/i
+
+const CORE_CLASSICS_BACK_COVER_WINDOW_BLOCKS = 8
+
+function mentionsCoreClassics(text) {
+  return CORE_CLASSICS_SPACED_PATTERN.test(text) || CORE_CLASSICS_PLAIN_PATTERN.test(text)
+}
 
 function matchedCatalogingFieldIndex(text) {
   return CATALOGING_RECORD_FIELD_PATTERNS.findIndex((pattern) => pattern.test(text))
@@ -4167,6 +4184,103 @@ function isTrailingEditionNoticeAnchor(blocks, index) {
   return false
 }
 
+function isCoreClassicsSeriesListingLine(text) {
+  const trimmed = (text ?? "").trim()
+  return mentionsCoreClassics(trimmed) && /\btitles include:?$/i.test(trimmed)
+}
+
+function isCoreClassicsBackCoverMastheadLine(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed || trimmed.length > 80) {
+    return false
+  }
+  if (!mentionsCoreClassics(trimmed)) {
+    return false
+  }
+  // Masthead lines carry a trademark mark and/or the Core Knowledge prefix.
+  return /[®™]|\((?:R|TM)\)/i.test(trimmed) || /^Core Knowledge\b/i.test(trimmed)
+}
+
+function isCoreClassicsAbridgedFeatureBullet(text) {
+  return /^[•·\-]\s*Abridged texts for young readers\b/i.test((text ?? "").trim())
+}
+
+function hasCoreClassicsBackCoverCorroboration(blocks, index) {
+  let seenListing = isCoreClassicsSeriesListingLine((blocks[index]?.text ?? "").trim())
+  let seenMasthead = isCoreClassicsBackCoverMastheadLine((blocks[index]?.text ?? "").trim())
+  let seenBullet = isCoreClassicsAbridgedFeatureBullet((blocks[index]?.text ?? "").trim())
+
+  let scanned = 0
+  for (
+    let cursor = index + 1;
+    cursor < blocks.length && scanned < CORE_CLASSICS_BACK_COVER_WINDOW_BLOCKS;
+    cursor += 1
+  ) {
+    const candidate = blocks[cursor]
+    if (candidate?.type === "image" || candidate?.type === "image_candidate") {
+      continue
+    }
+    scanned += 1
+    const candidateText = (candidate?.text ?? "").trim()
+    if (isCoreClassicsSeriesListingLine(candidateText)) {
+      seenListing = true
+    }
+    if (isCoreClassicsBackCoverMastheadLine(candidateText)) {
+      seenMasthead = true
+    }
+    if (isCoreClassicsAbridgedFeatureBullet(candidateText)) {
+      seenBullet = true
+    }
+  }
+
+  return [seenListing, seenMasthead, seenBullet].filter(Boolean).length >= 2
+}
+
+function isTrailingCoreClassicsBackCoverAnchor(blocks, index) {
+  const text = (blocks[index]?.text ?? "").trim()
+  if (!text) {
+    return false
+  }
+
+  if (isCoreClassicsSeriesListingLine(text) || isCoreClassicsBackCoverMastheadLine(text)) {
+    return hasCoreClassicsBackCoverCorroboration(blocks, index)
+  }
+
+  // Marketing blurb printed on the same page as the series promo, immediately
+  // before it. Same-page gating keeps an earlier author-bio paragraph from
+  // matching just because the promo appears a few blocks later.
+  const page = blocks[index]?.sourcePdfPageIndex
+  if (!Number.isFinite(page) || text.length < 120) {
+    return false
+  }
+
+  let scanned = 0
+  for (
+    let cursor = index + 1;
+    cursor < blocks.length && scanned < 6;
+    cursor += 1
+  ) {
+    const candidate = blocks[cursor]
+    if (candidate?.type === "image" || candidate?.type === "image_candidate") {
+      continue
+    }
+    scanned += 1
+    if (candidate?.sourcePdfPageIndex !== page) {
+      return false
+    }
+    const candidateText = (candidate?.text ?? "").trim()
+    if (
+      (isCoreClassicsSeriesListingLine(candidateText) ||
+        isCoreClassicsBackCoverMastheadLine(candidateText)) &&
+      hasCoreClassicsBackCoverCorroboration(blocks, cursor)
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
 function stripTrailingNonNarrativeMatterBlocks(blocks) {
   if (!Array.isArray(blocks) || blocks.length < 40) {
     return blocks
@@ -4204,13 +4318,68 @@ function stripTrailingNonNarrativeMatterBlocks(blocks) {
     const isAnchor =
       TRAILING_MATTER_ANCHOR_PATTERNS.some((pattern) => pattern.test(text)) ||
       isTrailingEditionNoticeAnchor(blocks, index) ||
-      isTrailingCatalogingRecordAnchor(blocks, index)
+      isTrailingCatalogingRecordAnchor(blocks, index) ||
+      isTrailingCoreClassicsBackCoverAnchor(blocks, index)
     if (isAnchor) {
       return blocks.slice(0, index)
     }
   }
 
   return blocks
+}
+
+// Core Knowledge licence/title-page leftovers that are not publisher catalogs
+// and are not the book title: a small-caps series tagline ("Co R e C LA ssi C s
+// Ab R idged ...") and the trademark-enumeration line on the licence page.
+// Bounded to the pre-chapter window so narrative mentions of the foundation
+// cannot match.
+function isGarbledCoreClassicsSeriesTagline(text) {
+  const trimmed = (text ?? "").trim()
+  if (!CORE_CLASSICS_SPACED_PATTERN.test(trimmed)) {
+    return false
+  }
+  return /Ab\s*R\s*idged/i.test(trimmed) && /y\s*oung|Re\s*A\s*de/i.test(trimmed)
+}
+
+function isCoreKnowledgeTrademarkBoilerplateLine(text) {
+  const trimmed = (text ?? "").trim()
+  return (
+    mentionsCoreClassics(trimmed) &&
+    /are trademarks of the Core Knowledge Foundation\.?$/i.test(trimmed)
+  )
+}
+
+function stripCoreKnowledgeFrontMatterBoilerplate(blocks, { scanLimit } = {}) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    return blocks
+  }
+
+  const firstChapterIndex = findFirstChapterBlockIndex(blocks)
+  let scanEnd = firstChapterIndex > 0 ? firstChapterIndex : Math.min(blocks.length, 32)
+  if (Number.isFinite(scanLimit)) {
+    scanEnd = Math.min(scanEnd, scanLimit)
+  }
+
+  const dropIndices = new Set()
+  for (let index = 0; index < scanEnd; index += 1) {
+    const block = blocks[index]
+    if (block?.type === "image" || block?.type === "image_candidate") {
+      continue
+    }
+    const text = (block?.text ?? "").trim()
+    if (!text) {
+      continue
+    }
+    if (isGarbledCoreClassicsSeriesTagline(text) || isCoreKnowledgeTrademarkBoilerplateLine(text)) {
+      dropIndices.add(index)
+    }
+  }
+
+  if (dropIndices.size === 0) {
+    return blocks
+  }
+
+  return blocks.filter((_, index) => !dropIndices.has(index))
 }
 
 // A reprint series prints its brand masthead above the work's own title on the
@@ -12891,6 +13060,9 @@ async function parsePdfBuffer(
     scanLimit: frontMatterScanLimit,
   })
   blocks = dedupeFrontMatterTitleBlocks(blocks, bookTitle, {
+    scanLimit: frontMatterScanLimit,
+  })
+  blocks = stripCoreKnowledgeFrontMatterBoilerplate(blocks, {
     scanLimit: frontMatterScanLimit,
   })
 
