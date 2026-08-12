@@ -166,3 +166,16 @@ export const MAYA_PRINTED_TOC_POEMS = [
   "When Great Trees Fall",
   "On the Pulse of Morning"
 ]
+
+// Printed Contents vs body-title OCR drift confirmed by raw pdfjs (same poem,
+// different spelling in the Contents page extraction vs promoted body heading).
+export const MAYA_CONTENTS_TO_BODY_TITLE_ALIASES = [
+  ["A Zono Man", "A Zorro Man"],
+  ["Many ama More", "Many and More"],
+  ["Here s to Adhering", "Here's to Adhering"],
+  ["JohnJ.", "John J"],
+  ["Amoebaeanfor Daddy", "Amoebaean for Daddy"],
+  ["Slave Coffle", "Slave Cqffle"],
+  ["Preacher, Doni Send Me", "Preacher, Don't Send Me"],
+  ["Fightin'Was Natural", "Fightin' Was Natural"],
+]

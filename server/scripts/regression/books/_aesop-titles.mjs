@@ -149,3 +149,44 @@ export const AESOP_PRINTED_TOC_TITLES = [
   "The Squirrel in Service",
   "The Wolf and the Cat"
 ]
+
+// Printed APPENDIX mini-index (source PDF pages 13-14): 28 shorter classroom
+// reprints of primary fables (same titles, different prose). "Note" on p215 is
+// front matter for the appendix, not a fable title.
+export const AESOP_APPENDIX_TOC_TITLES = [
+  "The Wolf and the Lamb",
+  "The Fox and the Lion",
+  "The Dog and his Shadow",
+  "The Crab and his Mother",
+  "The Fox and the Grapes",
+  "The Wolf and the Crane",
+  "The Ants and the Grasshoppers",
+  "The Frogs who asked for a King",
+  "The Donkey in the Lion's Skin",
+  "The Mice in Council",
+  "The Kid and the Wolf",
+  "The Hawk and the Nightingale",
+  "The Crow and the Pitcher",
+  "The Ant and the Dove",
+  "The Ox and the Frog",
+  "The Bat and the Weasels",
+  "The Fox and the Goat",
+  "The Woman and her Hen",
+  "The Dog in the Manger",
+  "The Mouse, the Frog, and the Hawk",
+  "The Shepherd Boy and the Wolf",
+  "The Fisherman and the Little Fish",
+  "The Fox and the Crow",
+  "The Partridge and the Fowler",
+  "The Thirsty Pigeon",
+  "The Three Tradesmen",
+  "The Hares and the Frogs",
+  "The Eagle and the Fox",
+]
+
+export const AESOP_PRIMARY_TOC_ENTRY_COUNT = AESOP_PRINTED_TOC_TITLES.length
+export const AESOP_APPENDIX_TOC_ENTRY_COUNT = AESOP_APPENDIX_TOC_TITLES.length
+// Primary TOC lists "The Kid and the Wolf" twice (printed pp. 23 and 161).
+export const AESOP_PRIMARY_TOC_UNIQUE_KEY_COUNT = 148
+export const AESOP_EXPECTED_STORY_OPENING_COUNT =
+  AESOP_PRIMARY_TOC_ENTRY_COUNT + AESOP_APPENDIX_TOC_ENTRY_COUNT

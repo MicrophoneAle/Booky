@@ -1,11 +1,43 @@
-import { findChapter, normalizeTitleKey } from "../helpers.mjs"
-import { AESOP_PRINTED_TOC_TITLES } from "./_aesop-titles.mjs"
+import {
+  consumeExactTitlesFromPool,
+  filterStoryChapters,
+  findChapter,
+  normalizeTitleKey,
+} from "../helpers.mjs"
+import {
+  AESOP_APPENDIX_TOC_ENTRY_COUNT,
+  AESOP_APPENDIX_TOC_TITLES,
+  AESOP_EXPECTED_STORY_OPENING_COUNT,
+  AESOP_PRIMARY_TOC_ENTRY_COUNT,
+  AESOP_PRIMARY_TOC_UNIQUE_KEY_COUNT,
+  AESOP_PRINTED_TOC_TITLES,
+} from "./_aesop-titles.mjs"
 
-// Printed CONTENTS (source PDF pages 8-14): Part I fables followed by the
-// Krylov/Wiltse Part II set, ending at "The Wolf and the Cat" before a Note
-// and a trailing reprinted mini-index. Confirmed by raw pdfjs extraction;
-// expected set is the unique primary TOC titles before that Note.
-const AESOP_EXPECTED_COUNT = AESOP_PRINTED_TOC_TITLES.length
+// Appendix reprints share title keys with the primary set but are separate
+// openings; the printed appendix mini-index spells "Shepherd Boy" without the
+// apostrophe used in the primary TOC and body.
+const AESOP_APPENDIX_TITLE_ALIASES = new Map([
+  [
+    normalizeTitleKey("The Shepherd Boy and the Wolf"),
+    normalizeTitleKey("The Shepherd's Boy and the Wolf"),
+  ],
+])
+
+function consumeAppendixTitlesFromPool(pool, expectedTitles) {
+  for (const title of expectedTitles) {
+    const key = normalizeTitleKey(title)
+    const aliasKey = AESOP_APPENDIX_TITLE_ALIASES.get(key)
+    let index = pool.indexOf(key)
+    if (index === -1 && aliasKey) {
+      index = pool.indexOf(aliasKey)
+    }
+    if (index === -1) {
+      return false
+    }
+    pool.splice(index, 1)
+  }
+  return true
+}
 
 export default {
   id: "aesop",
@@ -14,35 +46,43 @@ export default {
   skipGeneralChecks: ["headingDensitySane", "indentationConsistency"],
   assertions: [
     [
-      `primary printed-TOC fable count (${AESOP_EXPECTED_COUNT})`,
+      `total story openings (${AESOP_EXPECTED_STORY_OPENING_COUNT} = primary ${AESOP_PRIMARY_TOC_ENTRY_COUNT} + appendix ${AESOP_APPENDIX_TOC_ENTRY_COUNT})`,
+      (ctx) => filterStoryChapters(ctx.chapters).length === AESOP_EXPECTED_STORY_OPENING_COUNT,
+    ],
+    [
+      `primary printed-TOC entry coverage (${AESOP_PRIMARY_TOC_ENTRY_COUNT} entries, ${AESOP_PRIMARY_TOC_UNIQUE_KEY_COUNT} unique keys)`,
       (ctx) => {
-        const storyChapters = ctx.chapters.filter(
-          (chapter) =>
-            !/^(?:Introduction|Preface|Contents|Part\b)/i.test(
-              (chapter.title ?? "").trim()
-            )
+        const pool = filterStoryChapters(ctx.chapters).map((chapter) =>
+          normalizeTitleKey(chapter.title)
         )
-        return storyChapters.length === AESOP_EXPECTED_COUNT
+        return consumeExactTitlesFromPool(pool, AESOP_PRINTED_TOC_TITLES)
       },
     ],
     [
-      "every primary printed-TOC fable title present",
+      `appendix printed-TOC reprint coverage (${AESOP_APPENDIX_TOC_ENTRY_COUNT} entries)`,
+      (ctx) => {
+        const pool = filterStoryChapters(ctx.chapters).map((chapter) =>
+          normalizeTitleKey(chapter.title)
+        )
+        if (!consumeExactTitlesFromPool(pool, AESOP_PRINTED_TOC_TITLES)) {
+          return false
+        }
+        if (pool.length !== AESOP_APPENDIX_TOC_ENTRY_COUNT) {
+          return false
+        }
+        return consumeAppendixTitlesFromPool(pool, AESOP_APPENDIX_TOC_TITLES)
+      },
+    ],
+    [
+      `every primary printed-TOC unique title present (${AESOP_PRIMARY_TOC_UNIQUE_KEY_COUNT} keys, exact match)`,
       (ctx) => {
         const present = new Set(
           ctx.chapters.map((chapter) => normalizeTitleKey(chapter.title))
         )
-        return AESOP_PRINTED_TOC_TITLES.every((title) => {
-          const key = normalizeTitleKey(title)
-          if (present.has(key)) {
-            return true
-          }
-          for (const candidate of present) {
-            if (candidate.includes(key) || key.includes(candidate)) {
-              return true
-            }
-          }
-          return false
-        })
+        const uniquePrimaryKeys = new Set(
+          AESOP_PRINTED_TOC_TITLES.map((title) => normalizeTitleKey(title))
+        )
+        return [...uniquePrimaryKeys].every((key) => present.has(key))
       },
     ],
     [
