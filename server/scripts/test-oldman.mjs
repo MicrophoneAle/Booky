@@ -54,13 +54,19 @@ const checks = [
       return eyes && (eyes.text ?? "").length < 120
     },
   ],
+  // Source dedication is three lines ("To Charlie Shribner" / "And" /
+  // "To Max Perkins"). The pre-fix assertion expected the buggy merge
+  // "To Charlie Shribner And"; the two addressee lines must stay separate.
   [
-    "dedication and",
+    "dedication lines present",
     () => {
-      const dedication = blocks.find((entry) =>
-        /^To Charlie Shribner And$/i.test((entry.text ?? "").trim())
+      const charlie = blocks.some((entry) =>
+        /^To Charlie Shribner$/i.test((entry.text ?? "").trim())
       )
-      return Boolean(dedication)
+      const max = blocks.some((entry) =>
+        /^To Max Perkins$/i.test((entry.text ?? "").trim())
+      )
+      return charlie && max
     },
   ],
   [
