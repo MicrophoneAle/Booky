@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 131
+const PARSER_VERSION = 132
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -4761,6 +4761,59 @@ function proseFormattingDiffers(line, previousBlock) {
   const lineCentered = Boolean(line.centered)
   const prevCentered = previousBlock.textAlign === "center"
   return lineCentered !== prevCentered
+}
+
+// Trailing closers observed after [.!?] in the sample PDF set: straight quotes,
+// curly left/right singles and doubles, and ')'. Zero or more are allowed so a
+// bare "ended." still matches, while nested closes such as danger.'"(U+2019 then
+// U+201D) also match. A bare quote with no terminal punctuation before it does
+// not match - the pattern still requires [.!?].
+//
+// Used only by the heading-continuation gate below. Widening the same test inside
+// isProseLineContinuation / dialogue-split / extract-merge moved block boundaries
+// on most sample books; those consumers stay on the legacy single-closer pattern
+// until a dedicated reflow review.
+const ENDS_WITH_SENTENCE_TERMINATOR_REGEX =
+  /[.!?]["'\u2018\u2019\u201c\u201d)]*\s*$/
+
+function endsWithSentenceTerminator(text) {
+  const trimmed = (text ?? "").trim()
+  if (!trimmed) {
+    return false
+  }
+  return ENDS_WITH_SENTENCE_TERMINATOR_REGEX.test(trimmed)
+}
+
+// Heading-only variant of isProseLineContinuation: when the previous block ends
+// with terminal punctuation plus one or more closing quotes (nested dialogue),
+// treat it as a completed sentence and apply only the post-sentence continuation
+// rules. The shared isProseLineContinuation still uses the legacy single-closer
+// regex so ordinary paragraph merges stay byte-stable.
+function isHeadingProseLineContinuation(text, previousBlock) {
+  const trimmed = (text ?? "").trim()
+  const prevTrim = (previousBlock?.text ?? "").trim()
+  if (!trimmed || !prevTrim || previousBlock?.isHeading) {
+    return false
+  }
+  if (endsWithSentenceTerminator(prevTrim)) {
+    if (isVerseLineText(trimmed) || isVerseLineText(prevTrim)) {
+      return false
+    }
+    if (previousBlock.textAlign === "center") {
+      return false
+    }
+    if (isAllCapsCalloutLine(trimmed)) {
+      return false
+    }
+    if (/^[a-z(\u201c]/.test(trimmed)) {
+      return true
+    }
+    if (/^(and|but|or|then|who|which|that|as|if|like|sea)\s/i.test(trimmed)) {
+      return true
+    }
+    return false
+  }
+  return isProseLineContinuation(text, previousBlock)
 }
 
 function isProseLineContinuation(text, previousBlock) {
@@ -12348,7 +12401,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
     const skipHeadingForProseContinuation =
       headingPreviousBlock &&
       !headingPreviousBlock.isHeading &&
-      isProseLineContinuation(text, headingPreviousBlock)
+      isHeadingProseLineContinuation(text, headingPreviousBlock)
 
     if (
       !skipHeadingForProseContinuation &&
