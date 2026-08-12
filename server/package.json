@@ -10,7 +10,9 @@
     "diff-pdf": "node scripts/diff-pdf-parsed.mjs",
     "diff-pdf:all": "node scripts/diff-pdf-parsed.mjs --all",
     "regression": "node scripts/regression/run.mjs",
-    "regression:update": "node scripts/regression/run.mjs --update-snapshots"
+    "regression:full": "node scripts/regression/run.mjs --full",
+    "regression:update": "node scripts/regression/run.mjs --update-snapshots",
+    "test:assets": "node scripts/test-all-assets.mjs"
   },
   "keywords": [],
   "author": "",

@@ -3,6 +3,7 @@
  *
  *   node scripts/regression/run.mjs
  *   node scripts/regression/run.mjs --book=oldman
+ *   node scripts/regression/run.mjs --full
  *   node scripts/regression/run.mjs --update-snapshots
  */
 
@@ -26,6 +27,15 @@ import orwell1984 from "./books/orwell1984.mjs"
 import monteCristo from "./books/monte-cristo.mjs"
 import pridePrejudice from "./books/pride-prejudice.mjs"
 import mobyDick from "./books/moby-dick.mjs"
+import treasureIsland from "./books/treasure-island.mjs"
+import frankenstein from "./books/frankenstein.mjs"
+import oliverTwist from "./books/oliver-twist.mjs"
+import jungleBook from "./books/jungle-book.mjs"
+import aesop from "./books/aesop.mjs"
+import metamorphosis from "./books/metamorphosis.mjs"
+import narnia from "./books/narnia.mjs"
+import mayaAngelou from "./books/maya-angelou.mjs"
+import wayOfKings from "./books/way-of-kings.mjs"
 
 process.env.SUPABASE_URL ??= "https://example.supabase.co"
 process.env.SUPABASE_SERVICE_KEY ??= "test-service-key"
@@ -34,7 +44,22 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ASSETS_DIR = path.resolve(__dirname, "../../../client/src/assets")
 const SNAPSHOTS_DIR = path.resolve(__dirname, "snapshots")
 
-const BOOKS = [oldman, orwell1984, monteCristo, pridePrejudice, mobyDick]
+// Default suite: original five plus the newly covered sample books that parse
+// in a routine local timeframe. Way of Kings is OCR-heavy (~minutes) and is
+// opt-in via --full / npm run regression:full so CI can still run it without
+// forcing every local invocation to pay that cost.
+const CORE_BOOKS = [oldman, orwell1984, monteCristo, pridePrejudice, mobyDick]
+const EXTENDED_BOOKS = [
+  treasureIsland,
+  frankenstein,
+  oliverTwist,
+  jungleBook,
+  aesop,
+  metamorphosis,
+  narnia,
+  mayaAngelou,
+]
+const SLOW_BOOKS = [wayOfKings]
 
 const MAX_FAILURE_LINES = 4
 const DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -53,15 +78,23 @@ const BLOCKING_GENERAL_CHECK_IDS = new Set([
 const args = process.argv.slice(2)
 const bookFilter = parseArgValue("--book")
 const updateSnapshots = args.includes("--update-snapshots")
+const includeFull = args.includes("--full")
+
+const BOOKS = includeFull
+  ? [...CORE_BOOKS, ...EXTENDED_BOOKS, ...SLOW_BOOKS]
+  : [...CORE_BOOKS, ...EXTENDED_BOOKS]
+const ALL_KNOWN_BOOKS = [...CORE_BOOKS, ...EXTENDED_BOOKS, ...SLOW_BOOKS]
 
 const { parsePdfBuffer, PARSER_VERSION } = await import("../../index.js")
 
 let booksToRun = BOOKS
 if (bookFilter) {
-  booksToRun = BOOKS.filter((book) => book.id === bookFilter)
+  booksToRun = ALL_KNOWN_BOOKS.filter((book) => book.id === bookFilter)
   if (booksToRun.length === 0) {
     console.error(`Unknown book id: ${bookFilter}`)
-    console.error(`Available: ${BOOKS.map((book) => book.id).join(", ")}`)
+    console.error(
+      `Available: ${ALL_KNOWN_BOOKS.map((book) => book.id).join(", ")}`
+    )
     process.exit(1)
   }
 }

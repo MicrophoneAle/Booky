@@ -9,7 +9,8 @@ From the `server` directory:
 ```bash
 node scripts/regression/run.mjs
 node scripts/regression/run.mjs --book=oldman
-node scripts/regression/run.mjs --book=monte-cristo
+node scripts/regression/run.mjs --book=way-of-kings
+node scripts/regression/run.mjs --full
 node scripts/regression/run.mjs --update-snapshots
 ```
 
@@ -19,7 +20,15 @@ Exit code `0` when every selected book passes **blocking** checks, book-specific
 
 **Advisory general checks** (reported as `[WARN]`, do not fail the run): scanner watermarks, dialogue attribution centering, orphaned fragments, paragraph continuity, indentation sampling. These surface parser debt on large books without blocking legacy parity tests.
 
-`monte-cristo` is the largest book (~1086 pages) and typically takes 30-45s; `oldman` and `orwell1984` are much faster.
+### Suite tiers
+
+| Command | Books |
+|---------|-------|
+| `npm run regression` | 13 books - original five plus Treasure Island, Frankenstein, Oliver Twist, Jungle Book, Aesop, Metamorphosis, Narnia, Maya Angelou |
+| `npm run regression:full` | All 14 sample PDFs, including Way of Kings (OCR-heavy; minutes, not seconds) |
+| `npm run test:assets` | Lightweight parse of every PDF under `client/src/assets/` (blocking general checks only; no book-specific assertions) |
+
+Way of Kings is opt-in via `--full` because a full illustrated parse dominates local turnaround. It remains runnable in CI through `regression:full` / `--book=way-of-kings`.
 
 ### Prerequisites
 
@@ -32,6 +41,7 @@ Exit code `0` when every selected book passes **blocking** checks, book-specific
 scripts/regression/
   run.mjs           # Entry point
   checks.mjs        # General checks (exported functions)
+  helpers.mjs       # Shared assertion helpers (contiguity, roman/arabic)
   snapshots/        # Gitignored JSON baselines
   books/
     oldman.mjs
@@ -39,6 +49,15 @@ scripts/regression/
     monte-cristo.mjs
     pride-prejudice.mjs
     moby-dick.mjs
+    treasure-island.mjs
+    frankenstein.mjs
+    oliver-twist.mjs
+    jungle-book.mjs
+    aesop.mjs
+    metamorphosis.mjs
+    narnia.mjs
+    maya-angelou.mjs
+    way-of-kings.mjs
 ```
 
 Legacy scripts (`test-oldman.mjs`, etc.) are unchanged and can still be run directly.
@@ -47,7 +66,9 @@ Legacy scripts (`test-oldman.mjs`, etc.) are unchanged and can still be run dire
 
 ```bash
 npm run regression
+npm run regression:full
 npm run regression:update
+npm run test:assets
 ```
 
 ### Per-book options
@@ -62,11 +83,23 @@ npm run regression:update
 - **monte-cristo**: book-specific assertions pass; blocking check may still flag rare false headings (e.g. long prose lines misclassified). Fix in `index.js`, then re-run with `--update-snapshots`.
 - **pride-prejudice**: passes all blocking checks, assertions, and snapshot diff.
 - **moby-dick**: book-specific assertions pass; `dialogueSplitCheck` may still flag a handful of quoted short lines after mid-sentence prose.
+- Snapshots are gitignored and currently stale for several books (many frozen at older `parserVersion` values). Snapshot refresh is a separate triage task - do not `--update-snapshots` casually.
+
+## Ground-truth convention
+
+Book-specific assertions must be derived **independently of parser output**:
+
+1. Prefer the edition's own printed Contents / TOC pages (raw pdfjs or `pdftotext`).
+2. Otherwise use a reliable external reference for that edition (standard chapter maps, publisher listings).
+3. Never set expected counts or title lists from a fresh `parsePdfBuffer` run of the same book - that makes truncation invisible by construction.
+
+Numbered books should assert **true contiguity** (all of `1..N` present, no gaps), not a count threshold or endpoint-only presence. Named-chapter books should assert the printed title set (or a complete enumerated list from the printed TOC).
 
 ## Add a new book
 
 1. Put the PDF in `client/src/assets/`.
-2. Create `server/scripts/regression/books/mybook.mjs`:
+2. Establish ground truth from the PDF's printed TOC / raw text (see above).
+3. Create `server/scripts/regression/books/mybook.mjs`:
 
 ```javascript
 export default {
@@ -74,19 +107,19 @@ export default {
   name: "My Book Title",
   file: "My Book.pdf",
   assertions: [
-    // Optional: ["label", (ctx) => boolean],
+    // ["label", (ctx) => boolean],
   ],
 }
 ```
 
-3. Import the config and add it to the `BOOKS` array in `run.mjs`.
-4. Run once to verify output:
+4. Import the config in `run.mjs` and add it to `EXTENDED_BOOKS` (or `SLOW_BOOKS` if it is too heavy for the default suite).
+5. Run once to verify:
 
 ```bash
-node scripts/regression/run.mjs --book=mybook --update-snapshots
+node scripts/regression/run.mjs --book=mybook
 ```
 
-5. Commit the book config; snapshots stay local (gitignored) unless you choose to check them in.
+6. Commit the book config; snapshots stay local (gitignored) unless you choose to check them in after a dedicated refresh.
 
 ## Book config
 
