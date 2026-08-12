@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 129
+const PARSER_VERSION = 130
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -6297,6 +6297,53 @@ function isShortLineSubstringOfLongerLine(shortText, longTexts) {
   return false
 }
 
+const PROMINENT_TITLE_WORD_REGEX = /^[A-Z][A-Za-z'\u2019-]{2,}$/
+
+// A single title-case word rendered prominently larger than the page's body
+// text and optically centered on the page's line bounds is display typography
+// (a poem or section title), not a margin callout. Poetry collections set
+// one-word poem titles this way (Maya Angelou: "Tears", "Willie", "Alone"),
+// and the generic keep path above requires two or more words, so without this
+// carve-out they are deleted as right-displaced callouts before the poetry
+// promotion logic ever sees them. Centering is measured with
+// measuredRightEdge (exact glyph widths): the character-count rightEdge
+// estimate skews wide at display sizes and misplaces the optical center.
+// Requires a lowercase letter so all-caps margin labels stay droppable, and
+// three or more characters so orphan drop-cap letters are never kept. Bare
+// conjunctions/articles are excluded: a display-set "And" between dedication
+// lines (Old Man and the Sea) is connective text, not a title.
+function isProminentCenteredTitleWordLine(line, text, pageFontMedian, bounds) {
+  if (!PROMINENT_TITLE_WORD_REGEX.test(text) || !/[a-z]/.test(text)) {
+    return false
+  }
+  if (PROSE_BLOCKLIST_WORD_REGEX.test(text)) {
+    return false
+  }
+  const fontSize = line.fontSize ?? 0
+  if (
+    fontSize < HEADING_STRING_MIN_FONT_SIZE ||
+    (pageFontMedian > 0 && fontSize < pageFontMedian * 1.2)
+  ) {
+    return false
+  }
+  const columnWidth = bounds.right - bounds.left
+  if (!(columnWidth > 0)) {
+    return false
+  }
+  const left = Number.isFinite(line.x) ? line.x : bounds.left
+  const right = line.measuredRightEdge ?? line.rightEdge ?? left
+  const width = Math.max(0, right - left)
+  if (!(width > 0) || width / columnWidth > CENTERED_LINE_MAX_WIDTH_RATIO) {
+    return false
+  }
+  const tolerance = Math.max(
+    CENTERED_LINE_CENTER_TOLERANCE_PX * 2,
+    columnWidth * 0.12
+  )
+  const columnCenter = (bounds.left + bounds.right) / 2
+  return Math.abs((left + right) / 2 - columnCenter) <= tolerance
+}
+
 function dropMarginCalloutLines(lines, pageIndex = -1) {
   const entries = lines
     .map((line) => ({ line, text: (line.text ?? "").trim() }))
@@ -6323,6 +6370,25 @@ function dropMarginCalloutLines(lines, pageIndex = -1) {
     return lines
   }
   const bodyLeftX = medianValue(bodyXs)
+
+  // Page-level measured bounds and body font for the prominent-title-word
+  // carve-out (optical centering needs the full line extents on this page).
+  let measuredLeftBound = Infinity
+  let measuredRightBound = -Infinity
+  for (const entry of entries) {
+    const left = Number.isFinite(entry.line.x) ? entry.line.x : 0
+    const right = entry.line.measuredRightEdge ?? entry.line.rightEdge ?? left
+    if (left < measuredLeftBound) {
+      measuredLeftBound = left
+    }
+    if (right > measuredRightBound) {
+      measuredRightBound = right
+    }
+  }
+  const measuredBounds = { left: measuredLeftBound, right: measuredRightBound }
+  const pageFontMedian = medianValue(
+    entries.map((entry) => entry.line.fontSize ?? 0).filter((value) => value > 0)
+  )
 
   return entries
     .filter((entry, entryIndex) => {
@@ -6376,6 +6442,16 @@ function dropMarginCalloutLines(lines, pageIndex = -1) {
         ) {
           keep = true
           reason = "large-font-short-line"
+        } else if (
+          isProminentCenteredTitleWordLine(
+            line,
+            text,
+            pageFontMedian,
+            measuredBounds
+          )
+        ) {
+          keep = true
+          reason = "prominent-centered-title-word"
         } else if (!isShort) {
           keep = true
           reason = "not-short"
@@ -6924,11 +7000,23 @@ function groupTextItemsIntoLines(items, pageIndex = -1) {
 
     const rightEdge =
       rightmost.x + (rightmost.str?.length ?? 0) * fontSize * 0.5
+    // Exact right edge from the pdfjs item widths. The character-count
+    // estimate above skews wide (glyphs are narrower than 0.5em at display
+    // sizes), which misplaces the optical center of short prominent lines;
+    // consumers that need real centering geometry should prefer this value.
+    const measuredRightEdge = Math.max(
+      ...group.items.map((entry) =>
+        entry.width > 0
+          ? entry.x + entry.width
+          : entry.x + (entry.str?.length ?? 0) * entry.fontSize * 0.5
+      )
+    )
 
     lines.push({
       text,
       x: leftmost.x,
       rightEdge,
+      measuredRightEdge,
       y: group.y,
       fontSize,
       runs,
@@ -8717,6 +8805,7 @@ function buildPdfPageLinesFromTextContent(textContent, headingStrings, pageIndex
       str,
       x: getItemX(item),
       y: getItemY(item),
+      width: Number.isFinite(item.width) ? Math.abs(item.width) : 0,
       fontSize,
       fontName: item.fontName ?? "",
       transform: item.transform,
