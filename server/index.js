@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 130
+const PARSER_VERSION = 131
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -6073,6 +6073,13 @@ function isAdjacentPageProseEcho(text, pageIndex, pagesBeforeFilter, line = null
   ) {
     return false
   }
+  // A display-sized heading (poem titles at ~16pt, other large titles) is the
+  // SOURCE of refrain / running-header echoes, not a duplicate of them.
+  // "Take Time Out" is echoed as "Take Time Out." on the next page; the refrain
+  // itself stays droppable because it renders at body font size.
+  if ((line?.fontSize ?? 0) >= HEADING_STRING_MIN_FONT_SIZE) {
+    return false
+  }
 
   for (const offset of [-1, 1]) {
     const adjacentPage = pagesBeforeFilter[pageIndex + offset]
@@ -11638,6 +11645,17 @@ function documentIsPoetryCollection(pageData) {
   return poetryRatio >= 0.6 && titlePages >= 15
 }
 
+// All-caps FOR dedications that sit between a poem title and its verse
+// ("FOR PAUL", "FOR A. L.", "FOR DAVID P-B"). Title-case poem titles such as
+// "For Us, Who Dare Not Dare" must not match.
+function isPoetryDedicationLine(text) {
+  return /^FOR\s+\S/.test((text ?? "").trim())
+}
+
+function isPoetryBackMatterHeading(text) {
+  return /^ABOUT THE\b/i.test((text ?? "").trim())
+}
+
 // Dedicated block builder for poetry collections. Unlike the prose builder it
 // never reflows consecutive lines into paragraphs: every source line is emitted
 // as its own verse block so the reader preserves the poem's line breaks. A
@@ -11691,8 +11709,35 @@ function buildPoetryBlocksFromLines(pageData, { onProgress } = {}) {
     if (/^(?:contents|table of contents|also by\b)/i.test(text)) {
       return false
     }
+    // Dedications and back-matter headings share title font and often sit
+    // above body-font lines, but they are not poems. Keep the text; do not
+    // promote them to chapters.
+    if (isPoetryDedicationLine(text) || isPoetryBackMatterHeading(text)) {
+      return false
+    }
     return true
   }
+
+  // Body-follower cursor: skip dedications, then same-page title-font
+  // subsection headers ("The Student" under Communication II), without
+  // consuming a later poem's title on a following page. The two-body-line
+  // requirement itself is unchanged.
+  const bodyFollowerIndexAfter = (startIndex, pageIndex) => {
+    let cursor = startIndex
+    while (allLines[cursor] && isPoetryDedicationLine(allLines[cursor].text)) {
+      cursor += 1
+    }
+    while (
+      allLines[cursor] &&
+      allLines[cursor].pageIndex === pageIndex &&
+      isPoemTitleEntry(allLines[cursor])
+    ) {
+      cursor += 1
+    }
+    return cursor
+  }
+
+  const promotedPoemPages = new Set()
 
   for (let index = 0; index < allLines.length; index += 1) {
     const entry = allLines[index]
@@ -11702,15 +11747,21 @@ function buildPoetryBlocksFromLines(pageData, { onProgress } = {}) {
       continue
     }
 
-    // Poem title: a prominent short line immediately followed by body-font verse
-    // lines. Requiring two following body lines keeps printed-contents entries
-    // (a prominent line followed by another prominent line) from being promoted.
+    // Poem title: a prominent short line followed by body-font verse lines.
+    // Requiring two following body lines keeps printed-contents entries (a
+    // prominent line followed by another prominent line) from being promoted.
+    // Dedications and same-page subsection headers are skipped when counting
+    // those followers; they stay in the stream as verse. A second title-font
+    // line on a page that already opened a poem is a subsection, not a chapter.
+    const followerIndex = bodyFollowerIndexAfter(index + 1, pageIndex)
     if (
+      !promotedPoemPages.has(pageIndex) &&
       isPoemTitleEntry(entry) &&
-      isBodyFontEntry(allLines[index + 1]) &&
-      isBodyFontEntry(allLines[index + 2])
+      isBodyFontEntry(allLines[followerIndex]) &&
+      isBodyFontEntry(allLines[followerIndex + 1])
     ) {
       const title = text.replace(/\s+/g, " ").trim()
+      promotedPoemPages.add(pageIndex)
       blocks.push(
         withSourcePdfPage(
           {
