@@ -1,0 +1,3737 @@
+[
+  {
+    "book": "LWW",
+    "page": 2,
+    "chapterLine": {
+      "y": 626,
+      "text": "CHAPTER ONE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 172.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 599,
+      "text": "LUCY LOOKS INTO A WARDROBE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 280.2,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 571,
+      "text": "ONCE there were four children whose names were Peter, Susan, Edmund and Lucy. This",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 519.3,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 681,
+      "text": "C.S.LEWIS",
+      "maxFont": 12,
+      "minX": 277.4,
+      "maxX": 334.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 5,
+    "chapterLine": {
+      "y": 585,
+      "text": "CHAPTER TWO",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 557,
+      "text": "WHAT LUCY FOUND THERE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 247.3,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 530,
+      "text": "\"GOOD EVENING,\" said Lucy. But the Faun was so busy picking up its parcels that at",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 511.1,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 640,
+      "text": "\"Goodness gracious me!\" exclaimed the Faun.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 312.5,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 10,
+    "chapterLine": {
+      "y": 599,
+      "text": "CHAPTER THREE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 571,
+      "text": "EDMUND AND THE WARDROBE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 269.2,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 543,
+      "text": "Lucy ran out of the empty room into the passage and found the other three.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 449.8,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 654,
+      "text": "\"I'm here,\" she shouted. \"I'm here. I've come back I'm all right.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 396.4,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 14,
+    "chapterLine": {
+      "y": 681,
+      "text": "CHAPTER FOUR",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 179.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 654,
+      "text": "TURKISH DELIGHT",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 196.8,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 626,
+      "text": "\"BUT what are you?\" said the Queen again. \"Are you a great overgrown dwarf that has",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 509,
+      "pageW": 612
+    },
+    "prev1": null
+  },
+  {
+    "book": "LWW",
+    "page": 18,
+    "chapterLine": {
+      "y": 226,
+      "text": "CHAPTER FIVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 198,
+      "text": "BACK ON THIS SIDE OF THE DOOR",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 284.3,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 171,
+      "text": "BECAUSE the game of hide-and-seek was still going on, it took Edmund and Lucy some",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 519.7,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 281,
+      "text": "And what wonderful adventures we shall have now that we're all in it together.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 473.4,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 23,
+    "chapterLine": {
+      "y": 557,
+      "text": "CHAPTER SIX",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 166.9,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 530,
+      "text": "INTO THE FOREST",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 192.5,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 502,
+      "text": "\"I wish the Macready would hurry up and take all these people away,\" said Susan",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 481.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 612,
+      "text": "should never never shut yourself up in a wardrobe.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 333.9,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 27,
+    "chapterLine": {
+      "y": 143,
+      "text": "CHAPTER SEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 116,
+      "text": "A DAY WITH THE BEAVERS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 245.6,
+      "pageW": 612
+    },
+    "next2": null,
+    "prev1": {
+      "y": 212,
+      "text": "\"And no chance of dinner either,\" said Edmund.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 320.9,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 32,
+    "chapterLine": {
+      "y": 129,
+      "text": "CHAPTER EIGHT",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 183.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 102,
+      "text": "WHAT HAPPENED AFTER DINNER",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 280.5,
+      "pageW": 612
+    },
+    "next2": null,
+    "prev1": {
+      "y": 198,
+      "text": "have been trying to follow you, why he won't find any tracks.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 390.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 38,
+    "chapterLine": {
+      "y": 254,
+      "text": "CHAPTER NINE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 176.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 226,
+      "text": "IN THE WITCH'S HOUSE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 222.8,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 198,
+      "text": "AND now of course you want to know what had happened to Edmund. He had eaten his",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 513.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 323,
+      "text": "not a moment to lose.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 198.5,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 42,
+    "chapterLine": {
+      "y": 102,
+      "text": "CHAPTER TEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 170.8,
+      "pageW": 612
+    },
+    "next1": null,
+    "next2": null,
+    "prev1": {
+      "y": 171,
+      "text": "\"Make ready our sledge,\" ordered the Witch, \"and use the harness without bells.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 479.7,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 47,
+    "chapterLine": {
+      "y": 129,
+      "text": "CHAPTER ELEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 194.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 102,
+      "text": "ASLAN IS NEARER",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 194.5,
+      "pageW": 612
+    },
+    "next2": null,
+    "prev1": {
+      "y": 198,
+      "text": "\"Time to be moving on now.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 233.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 52,
+    "chapterLine": {
+      "y": 447,
+      "text": "CHAPTER TWELVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 196.7,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 419,
+      "text": "PETER'S FIRST BATTLE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 219.9,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 392,
+      "text": "WHILE the dwarf and the White Witch were saying this, miles away the Beavers and the",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 518.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 516,
+      "text": "\"If either of you mention that name again,\" said the Witch, \"he shall instantly be killed.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 513.9,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 57,
+    "chapterLine": {
+      "y": 516,
+      "text": "CHAPTER THIRTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 206.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 488,
+      "text": "DEEP MAGIC FROM THE DAWN OF TIME",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 316.9,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 461,
+      "text": "\"Yes! and have him rescued,\" said the Witch scornfully.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 359.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 585,
+      "text": "bargaining with.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 173.7,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 61,
+    "chapterLine": {
+      "y": 254,
+      "text": "CHAPTER FOURTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 210.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 226,
+      "text": "THE TRIUMPH OF THE WITCH",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 257,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 198,
+      "text": "As soon as the Witch had gone Aslan said, \"We must move from this place at once, it",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 500.5,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 323,
+      "text": "with her lips wide apart, picked up her skirts and fairly ran for her life.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 429.2,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 66,
+    "chapterLine": {
+      "y": 350,
+      "text": "CHAPTER FIFTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 195.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 323,
+      "text": "DEEPER MAGIC FROM BEFORE THE DAWN OF TIME",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 381.1,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 295,
+      "text": "WHILE the two girls still crouched in the bushes with their hands over their faces, they",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 509.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 419,
+      "text": "had covered their eyes.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 200.8,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 71,
+    "chapterLine": {
+      "y": 612,
+      "text": "CHAPTER SIXTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 197.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 585,
+      "text": "WHAT HAPPENED ABOUT THE STATUES",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 317.5,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 557,
+      "text": "\"WHAT an extraordinary place!\" cried Lucy. \"All those stone animals -and people too!",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 510.1,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 681,
+      "text": "themselves tumbling off his back in the middle of a wide stone courtyard full of statues.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 512.2,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LWW",
+    "page": 75,
+    "chapterLine": {
+      "y": 447,
+      "text": "CHAPTER SEVENTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 216.7,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 419,
+      "text": "THE HUNTING OF THE WHITE STAG",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 291.2,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 392,
+      "text": "THE battle was all over a few minutes after their arrival. Most of the enemy had been",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 501.2,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 516,
+      "text": "the wood re-echoed with the din of that onset.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 310.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 81,
+    "chapterLine": {
+      "y": 571,
+      "text": "CHAPTER ONE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 172.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 543,
+      "text": "THE ISLAND",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 160.2,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 516,
+      "text": "ONCE there were four children whose names were Peter, Susan, Edmund, and Lucy, and",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 518.3,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 654,
+      "text": "C.S. LEWIS",
+      "maxFont": 12,
+      "minX": 275.9,
+      "maxX": 336.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 86,
+    "chapterLine": {
+      "y": 626,
+      "text": "CHAPTER TWO",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 599,
+      "text": "THE ANCIENT TREASURE HOUSE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 276.6,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 571,
+      "text": "\"THIS wasn't a garden,\" said Susan presently. \"It was a castle and this must have been",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 504.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 695,
+      "text": "their backs and move their limbs freely.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 281.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 92,
+    "chapterLine": {
+      "y": 143,
+      "text": "CHAPTER THREE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 116,
+      "text": "THE DWARF",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 159.4,
+      "pageW": 612
+    },
+    "next2": null,
+    "prev1": {
+      "y": 212,
+      "text": "warmth. The ground was very hard and uncomfortable, but they fell asleep in the end.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 502.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 97,
+    "chapterLine": {
+      "y": 212,
+      "text": "CHAPTER FOUR",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 179.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 185,
+      "text": "THE DWARF TELLS OF PRINCE CASPIAN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 316.5,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 157,
+      "text": "PRINCE CASPIAN lived in a great castle in the centre of Narnia with his uncle, Miraz,",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 511.3,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 281,
+      "text": "But the gist of the story, as they knew it in the end, was as follows.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 411.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 104,
+    "chapterLine": {
+      "y": 157,
+      "text": "CHAPTER FIVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 129,
+      "text": "CASPIAN'S ADVENTURE IN THE MOUNTAINS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 343,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 102,
+      "text": "AFTER this, Caspian and his Tutor had many more secret conversations on the top of the",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 519.5,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 226,
+      "text": "\"Someone might begin looking for us, if we did that,\" said Doctor Cornelius.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 459.7,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 112,
+    "chapterLine": {
+      "y": 599,
+      "text": "CHAPTER SIX",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 166.9,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 571,
+      "text": "THE PEOPLE THAT LIVED IN HIDING",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 295.3,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 543,
+      "text": "Now began the happiest times that Caspian had ever known. On a fine summer morning",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 513,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 668,
+      "text": "creatures from the Old Days of Narnia still lived on in hiding.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 386.9,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 116,
+    "chapterLine": {
+      "y": 364,
+      "text": "CHAPTER SEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 336,
+      "text": "OLD NARNIA IN DANGER",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 232.7,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 309,
+      "text": "THE place where they had met the Fauns was, of course, Dancing Lawn itself, and here",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 511.5,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 433,
+      "text": "dream; but the grass was covered with little cloven hoof-marks.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 395.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 122,
+    "chapterLine": {
+      "y": 116,
+      "text": "CHAPTER EIGHT",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 183.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 88,
+      "text": "HOW THEY LEFT THE ISLAND",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 258.3,
+      "pageW": 612
+    },
+    "next2": null,
+    "prev1": {
+      "y": 185,
+      "text": "the King, the Badger, and Cornelius.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 266.2,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 137,
+    "chapterLine": {
+      "y": 557,
+      "text": "CHAPTER TEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 170.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 530,
+      "text": "THE RETURN OF THE LION",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 240.4,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 502,
+      "text": "To keep along the edge of the gorge was not so easy as it had looked. Before they had",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 502.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 640,
+      "text": "party, crying bitterly.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 192.2,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 145,
+    "chapterLine": {
+      "y": 709,
+      "text": "CHAPTER ELEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 194.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 681,
+      "text": "THE LION ROARS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 187.8,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 654,
+      "text": "WHEN the whole party was finally awake Lucy had to tell her story for the fourth time.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 511.9,
+      "pageW": 612
+    },
+    "prev1": null
+  },
+  {
+    "book": "PC",
+    "page": 151,
+    "chapterLine": {
+      "y": 502,
+      "text": "CHAPTER TWELVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 196.7,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 474,
+      "text": "SORCERY AND SUDDEN VENGEANCE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 301.8,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 447,
+      "text": "MEANWHILE Trumpkin and the two boys arrived at the dark little stone archway which",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 519.8,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 571,
+      "text": "\"I should think not,\" said Lucy.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 241,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 158,
+    "chapterLine": {
+      "y": 530,
+      "text": "CHAPTER THIRTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 206.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 502,
+      "text": "THE HIGH KING IN COMMAND",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 261.7,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 474,
+      "text": "\"Now,\" said Peter, as they finished their meal, \"Aslan and the girls (that's Queen Susan",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 508.2,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 599,
+      "text": "was delicious.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 158.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 164,
+    "chapterLine": {
+      "y": 240,
+      "text": "CHAPTER FOURTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 210.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 212,
+      "text": "HOW ALL WERE VERY BUSY",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 252.2,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 185,
+      "text": "A LITTLE before two o'clock Trumpkin and the Badger sat with the rest of the creatures",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 516.7,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 309,
+      "text": "\"That's what I'm fighting him to find out,\" said Peter.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 345.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "PC",
+    "page": 171,
+    "chapterLine": {
+      "y": 157,
+      "text": "CHAPTER FIFTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 195.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 129,
+      "text": "ASLAN MAKES A DOOR IN THE AIR",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 289,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 102,
+      "text": "AT the sight of Aslan the cheeks of the Telmarine soldiers became the colour of cold",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 498.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 226,
+      "text": "Caspian and they embraced one another; for she was his old nurse.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 410.2,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 180,
+    "chapterLine": {
+      "y": 612,
+      "text": "CHAPTER ONE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 172.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 585,
+      "text": "THE PICTURE IN THE BEDROOM",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 271,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 557,
+      "text": "THERE was a boy called Eustace Clarence Scrubb, and he almost deserved it. His",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 485.2,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 681,
+      "text": "C.S. LEWIS",
+      "maxFont": 12,
+      "minX": 275.9,
+      "maxX": 336.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 186,
+    "chapterLine": {
+      "y": 695,
+      "text": "CHAPTER TWO",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 668,
+      "text": "ON BOARD THE DAWN TREADER",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 276.8,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 640,
+      "text": "\"AH, there you are, Lucy,\" said Caspian. \"We were just waiting for you. This is my",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 491.6,
+      "pageW": 612
+    },
+    "prev1": null
+  },
+  {
+    "book": "VDT",
+    "page": 193,
+    "chapterLine": {
+      "y": 530,
+      "text": "CHAPTER THREE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 502,
+      "text": "THE LONE ISLANDS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 201.8,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 474,
+      "text": "\"LAND in sight,\" shouted the man in the bows.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 317.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 599,
+      "text": "careful to lie on his side.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 208.2,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 200,
+    "chapterLine": {
+      "y": 557,
+      "text": "CHAPTER FOUR",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 179.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 530,
+      "text": "WHAT CASPIAN DID THERE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 245.9,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 502,
+      "text": "Nert morning the Lord Bern called his guests early, and after breakfast he asked Caspian",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 516.1,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 626,
+      "text": "say exactly what) for the following day.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 281.9,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 206,
+    "chapterLine": {
+      "y": 571,
+      "text": "CHAPTER FIVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 543,
+      "text": "THE STORM AND WHAT CAME OF IT",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 295.6,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 516,
+      "text": "IT was nearly three weeks after their landing that the Dawn Treader was towed out of",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 501.4,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 640,
+      "text": "Reepicheep?\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 156.4,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 211,
+    "chapterLine": {
+      "y": 212,
+      "text": "CHAPTER SIX",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 166.9,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 185,
+      "text": "THE ADVENTURES OF EUSTACE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 271.3,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 157,
+      "text": "AT that very moment the others were washing hands and faces in the river and generally",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 515.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 281,
+      "text": "an utterly unknown valley and the sea was nowhere in sight.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 380,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 218,
+    "chapterLine": {
+      "y": 129,
+      "text": "CHAPTER SEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 102,
+      "text": "HOW THE ADVENTURE ENDED",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 264.5,
+      "pageW": 612
+    },
+    "next2": null,
+    "prev1": {
+      "y": 198,
+      "text": "exclaimed, \"Look!\" He was staring at the bracelet.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 332.4,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 225,
+    "chapterLine": {
+      "y": 433,
+      "text": "CHAPTER EIGHT",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 183.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 405,
+      "text": "TWO NARROW ESCAPES",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 227.5,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 378,
+      "text": "EVERYONE was cheerful as the Dawn Treader sailed from Dragon Island. They had fair",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 520.7,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 502,
+      "text": "above. And there, for all I know, it is hanging still and may hang till that world ends.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 497.4,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 233,
+    "chapterLine": {
+      "y": 392,
+      "text": "CHAPTER NINE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 176.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 364,
+      "text": "THE ISLAND OF THE VOICES",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 251,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 336,
+      "text": "AND now the winds which had so long been from the north-west began to blow from the",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 518.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 461,
+      "text": "running a bit low. Good night, Sir.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 260.8,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 240,
+    "chapterLine": {
+      "y": 447,
+      "text": "CHAPTER TEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 170.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 419,
+      "text": "THE MAGICIAN'S BOOK",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 223.2,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 392,
+      "text": "THE invisible people feasted their guests royally. It was very funny to see the plates and",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 515.2,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 516,
+      "text": "they all went back to the house.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 241.9,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 246,
+    "chapterLine": {
+      "y": 157,
+      "text": "CHAPTER ELEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 194.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 129,
+      "text": "THE DUFFLEPUDS MADE HAPPY",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 272.7,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 102,
+      "text": "Lucy followed the great Lion out into the passage and at once she saw coming towards",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 507.3,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 226,
+      "text": "master of this house.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 194.3,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 253,
+    "chapterLine": {
+      "y": 336,
+      "text": "CHAPTER TWELVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 196.7,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 309,
+      "text": "THE DARK ISLAND",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 197.1,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 281,
+      "text": "AFTER this adventure they sailed on south and a little east for twelve days with a gentle",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 515.3,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 405,
+      "text": "cheering.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 134.4,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 259,
+    "chapterLine": {
+      "y": 102,
+      "text": "CHAPTER THIRTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 206.1,
+      "pageW": 612
+    },
+    "next1": null,
+    "next2": null,
+    "prev1": {
+      "y": 171,
+      "text": "noticed when the albatross had disappeared.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 301.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 266,
+    "chapterLine": {
+      "y": 309,
+      "text": "CHAPTER FOURTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 210.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 281,
+      "text": "THE BEGINNING OF THE END OF THE WORLD",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 346.4,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 254,
+      "text": "Slowly the door opened again and out there came a figure as tall and straight as the girl's",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 515.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 378,
+      "text": "great gaps of white light were appearing in the greyness of the eastern sky.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 449.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 272,
+    "chapterLine": {
+      "y": 323,
+      "text": "CHAPTER FIFTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 195.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 295,
+      "text": "THE WONDERS OF THE LAST SEA",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 278.6,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 267,
+      "text": "VERY soon after they had left Ramandu's country they began to feel that they had",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 485.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 392,
+      "text": "enchantments.\" And Ramandu's daughter looked at him and smiled.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 415.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "VDT",
+    "page": 278,
+    "chapterLine": {
+      "y": 116,
+      "text": "CHAPTER SIXTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 197.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 88,
+      "text": "THE VERY END OF THE WORLD",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 267.9,
+      "pageW": 612
+    },
+    "next2": null,
+    "prev1": {
+      "y": 185,
+      "text": "exciting about a round world when you're there.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 320.4,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 287,
+    "chapterLine": {
+      "y": 612,
+      "text": "CHAPTER ONE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 172.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 571,
+      "text": "BEHIND THE GYM",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 192.5,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 543,
+      "text": "IT was a dull autumn day and Jill Pole was crying behind the gym.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 410.8,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 681,
+      "text": "By C.S. Lewis",
+      "maxFont": 12,
+      "minX": 271,
+      "maxX": 341,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 294,
+    "chapterLine": {
+      "y": 571,
+      "text": "CHAPTER TWO",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 543,
+      "text": "JILL IS GIVEN A TASK",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 213.2,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 502,
+      "text": "WITHOUT a glance at Jill the lion rose to its feet and gave one last blow. Then, as if",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 498.3,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 626,
+      "text": "So she turned and looked at the creature. It was a lion.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 350.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 300,
+    "chapterLine": {
+      "y": 364,
+      "text": "CHAPTER THREE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 336,
+      "text": "THE SAILING OF THE KING",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 241.7,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 295,
+      "text": "WHAT made Scrubb look so dingy (and Jill too, if she could only have seen herself) was",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 518.5,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 433,
+      "text": "he looked. And the second was \"How wet I am!\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 324.5,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 307,
+    "chapterLine": {
+      "y": 88,
+      "text": "CHAPTER FOUR",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 179.5,
+      "pageW": 612
+    },
+    "next1": null,
+    "next2": null,
+    "prev1": {
+      "y": 171,
+      "text": "knows what is going to happen to them next.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 305.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 314,
+    "chapterLine": {
+      "y": 295,
+      "text": "CHAPTER FIVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 267,
+      "text": "PUDDLEGLUM",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 172.5,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 226,
+      "text": "JILL. was asleep. Ever since the owls' parliament began she had been yawning terribly",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 506.8,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 364,
+      "text": "\"I think Pole's asleep,\" said Scrubb.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 261.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 321,
+    "chapterLine": {
+      "y": 599,
+      "text": "CHAPTER SIX",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 166.9,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 571,
+      "text": "THE WILD WASTE LANDS OF THE NORTH",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 323.4,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 530,
+      "text": "AT about nine o'clock next morning three lonely figures might have been seen picking",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 506,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 681,
+      "text": "road-drills and waterfalls and being in express trains in tunnels.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 395.2,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 328,
+    "chapterLine": {
+      "y": 571,
+      "text": "CHAPTER SEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 543,
+      "text": "THE HILL OF THE STRANGE TRENCHES",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 311.3,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 502,
+      "text": "THERE Is no denying it was a beast of a day. Overhead was a sunless sky, muffled in",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 502.5,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 640,
+      "text": "\"Never mind!\" said Jill, stamping her feet. \"Hot baths tonight!\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 393.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 334,
+    "chapterLine": {
+      "y": 378,
+      "text": "CHAPTER EIGHT",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 183.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 350,
+      "text": "THE HOUSE OF HARFANG",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 235.3,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 323,
+      "text": "\"Go on, Pole, do your stuff,\" whispered Scrubb.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 320.2,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 447,
+      "text": "spider.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 122.4,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 341,
+    "chapterLine": {
+      "y": 681,
+      "text": "CHAPTER NINE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 176.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 654,
+      "text": "HOW THEY DISCOVERED SOMETHING WORTH KNOWING",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 414.1,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 612,
+      "text": "THE others admitted afterwards that Jill had been wonderful that day. As soon as the",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 498.7,
+      "pageW": 612
+    },
+    "prev1": null
+  },
+  {
+    "book": "SC",
+    "page": 347,
+    "chapterLine": {
+      "y": 571,
+      "text": "CHAPTER TEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 170.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 543,
+      "text": "TRAVELS WITHOUT THE SUN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 255.9,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 502,
+      "text": "\"WHO's there?\" shouted the three travellers.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 303.5,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 640,
+      "text": "\"What make you here, creatures of the Overworld?\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 339.9,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 353,
+    "chapterLine": {
+      "y": 240,
+      "text": "CHAPTER ELEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 194.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 212,
+      "text": "IN THE DARK CASTLE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 214.1,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 185,
+      "text": "WHEN the meal (which was pigeon pie, cold ham, salad, and cakes) had been brought,",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 508.7,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 295,
+      "text": "all.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 110,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 360,
+    "chapterLine": {
+      "y": 654,
+      "text": "CHAPTER TWELVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 196.7,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 626,
+      "text": "THE QUEEN OF UNDERLAND",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 252.6,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 599,
+      "text": "TWO Earthmen entered, but instead of advancing into the room, they placed themselves",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 514,
+      "pageW": 612
+    },
+    "prev1": null
+  },
+  {
+    "book": "SC",
+    "page": 366,
+    "chapterLine": {
+      "y": 171,
+      "text": "CHAPTER THIRTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 206.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 143,
+      "text": "UNDERLAND WITHOUT THE QUEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 293.1,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 102,
+      "text": "ALL felt that they had earned what Scrubb called a \"breather\". The Witch had locked the",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 518.2,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 240,
+      "text": "\"A jolly good idea, Sir,\" said Scrubb.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 269,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 372,
+    "chapterLine": {
+      "y": 185,
+      "text": "CHAPTER FOURTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 210.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 157,
+      "text": "THE BOTTOM OF THE WORLD",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 258.3,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 116,
+      "text": "\"MY name is Golg,\" said the gnome. \"And I'll tell your Honours all I know. About an",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 502,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 267,
+      "text": "began.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 121.7,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 379,
+    "chapterLine": {
+      "y": 626,
+      "text": "CHAPTER FIFTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 195.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 599,
+      "text": "THE DISAPPEARANCE OF JILL",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 258.7,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 557,
+      "text": "THE patch of light did not show up anything down in the darkness where they were",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 492.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 681,
+      "text": "up to it?\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 134.4,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "SC",
+    "page": 384,
+    "chapterLine": {
+      "y": 267,
+      "text": "CHAPTER SIXTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 197.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 240,
+      "text": "THE HEALING OF HARMS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 233.4,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 198,
+      "text": "WHEN Jill woke next morning and found herself in a cave, she thought for one horrid",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 504.1,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 336,
+      "text": "thing, but in every age they have a different plan for getting it.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 394.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 393,
+    "chapterLine": {
+      "y": 585,
+      "text": "CHAPTER ONE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 172.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 557,
+      "text": "HOW SHASTA SET OUT ON HIS TRAVELS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 319.5,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 530,
+      "text": "THIS is the story of an adventure that happened in Narnia and Calormen and the lands",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 505.3,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 654,
+      "text": "C.S. LEWIS",
+      "maxFont": 12,
+      "minX": 275.9,
+      "maxX": 336.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 400,
+    "chapterLine": {
+      "y": 488,
+      "text": "CHAPTER TWO",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 461,
+      "text": "A WAYSIDE ADVENTURE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 232.9,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 433,
+      "text": "IT was nearly noon on the following day when Shasta was wakened by something warm",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 514.8,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 557,
+      "text": "straighter. Ready? Now: for Narnia and the North.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 336.8,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 408,
+    "chapterLine": {
+      "y": 488,
+      "text": "CHAPTER THREE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 461,
+      "text": "AT THE GATES OF TASHBAAN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 260.3,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 433,
+      "text": "\"Mr name,\" said the girl at once, \"is Aravis Tarkheena and I am the only daughter of",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 496.4,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 557,
+      "text": "wanted to read the essays.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 215.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 414,
+    "chapterLine": {
+      "y": 516,
+      "text": "CHAPTER FOUR",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 179.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 488,
+      "text": "SHASTA FALLS IN WITH THE NARNIANS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 317.2,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 461,
+      "text": "AT first Shasta could see nothing in the valley below him but a sea of mist with a few",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 502.2,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 585,
+      "text": "whatever happens.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 184.3,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 420,
+    "chapterLine": {
+      "y": 198,
+      "text": "CHAPTER FIVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 171,
+      "text": "PRINCE CORIN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 172.9,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 143,
+      "text": "\"MY dear sister and very good Lady,\" said King Edmund, \"you must now show your",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 498.8,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 267,
+      "text": "\"Oh, Edmund,\" she cried. \"What is it? There is something dreadful in your face.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 479.5,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 427,
+    "chapterLine": {
+      "y": 364,
+      "text": "CHAPTER SIX",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 166.9,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 336,
+      "text": "SHASTA AMONG THE TOMBS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 255.4,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 309,
+      "text": "SHASTA ran lightly along the roof on tiptoes. It felt hot to his bare feet. He was only a",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 509,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 433,
+      "text": "a friend of mine. Look out! I hear someone coming.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 343.9,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 432,
+    "chapterLine": {
+      "y": 474,
+      "text": "CHAPTER SEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 447,
+      "text": "ARAVIS IN TASHBAAN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 218.4,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 419,
+      "text": "WHAT had really happened was this. When Aravis saw Shasta hurried away by the",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 492,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 543,
+      "text": "wondering which was the least dangerous thing to do.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 348.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 438,
+    "chapterLine": {
+      "y": 226,
+      "text": "CHAPTER EIGHT",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 183.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 198,
+      "text": "IN THE HOUSE OF THE TISROC",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 262.1,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 171,
+      "text": "\"OH-my-father-and-oh-the-delight-of-my-eyes,\" began the young man, muttering the",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 499.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 295,
+      "text": "on the carpet.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 155.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 444,
+    "chapterLine": {
+      "y": 364,
+      "text": "CHAPTER NINE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 176.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 336,
+      "text": "ACROSS THE DESERT",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 211.1,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 309,
+      "text": "\"Hove dreadful! How perfectly dreadful!\" whimpered Lasaraleen. \"Oh darling, I am so",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 507.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 433,
+      "text": "once more totally dark, and the two girls could breathe freely again.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 416,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 451,
+    "chapterLine": {
+      "y": 626,
+      "text": "CHAPTER TEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 170.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 599,
+      "text": "THE HERMIT OF THE SOUTHERN MARCH",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 320.6,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 571,
+      "text": "AFTER they had ridden for several hours down the valley, it widened out and they could",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 517.7,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 695,
+      "text": "rhododendrons, was such a pleasant place that it made you want to ride slowly.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 470,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 457,
+    "chapterLine": {
+      "y": 116,
+      "text": "CHAPTER ELEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 194.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 88,
+      "text": "THE UNWELCOME FELLOW TRAVELLER",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 318.4,
+      "pageW": 612
+    },
+    "next2": null,
+    "prev1": {
+      "y": 185,
+      "text": "come round to the kitchen door we'll see about the other half of that mash.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 451.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 464,
+    "chapterLine": {
+      "y": 419,
+      "text": "CHAPTER TWELVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 196.7,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 392,
+      "text": "SHASTA IN NARNIA",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 201.8,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 364,
+      "text": "\"WAS it all a dream?\" wondered Shasta. But it couldn't have been a dream for there in",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 505.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 488,
+      "text": "grassy hillside under a blue sky. And there were birds singing.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 389.7,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 471,
+    "chapterLine": {
+      "y": 612,
+      "text": "CHAPTER THIRTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 206.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 585,
+      "text": "THE FIGHT AT ANVARD",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 224.7,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 557,
+      "text": "By about eleven o'clock the whole company was once more on the march, riding",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 477.5,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 681,
+      "text": "far too busy to notice us.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 213.7,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 476,
+    "chapterLine": {
+      "y": 88,
+      "text": "CHAPTER FOURTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 210.1,
+      "pageW": 612
+    },
+    "next1": null,
+    "next2": null,
+    "prev1": {
+      "y": 157,
+      "text": "all the cheering was about.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 218.5,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "HHB",
+    "page": 483,
+    "chapterLine": {
+      "y": 143,
+      "text": "CHAPTER FIFTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 195.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 116,
+      "text": "RABADASH THE RIDICULOUS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 257.6,
+      "pageW": 612
+    },
+    "next2": null,
+    "prev1": {
+      "y": 212,
+      "text": "home and freedom.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 182.8,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 491,
+    "chapterLine": {
+      "y": 612,
+      "text": "CHAPTER ONE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 172.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 585,
+      "text": "THE WRONG DOOR",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 198.3,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 557,
+      "text": "This is a story about something that happened long ago when your grandfather was a",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 497.7,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 681,
+      "text": "C. S. LEWIS",
+      "maxFont": 12,
+      "minX": 274.4,
+      "maxX": 337.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 497,
+    "chapterLine": {
+      "y": 129,
+      "text": "CHAPTER TWO",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 102,
+      "text": "DIGORY AND HIS UNCLE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 230.7,
+      "pageW": 612
+    },
+    "next2": null,
+    "prev1": {
+      "y": 185,
+      "text": "Digory and his Uncle were alone in the room.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 309.8,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 503,
+    "chapterLine": {
+      "y": 157,
+      "text": "CHAPTER THREE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 129,
+      "text": "THE WOOD BETWEEN THE WORLDS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 293.3,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 102,
+      "text": "UNCLE ANDREW and his study vanished instantly. Then, for a moment, everything",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 500.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 212,
+      "text": "else.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 111.7,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 509,
+    "chapterLine": {
+      "y": 171,
+      "text": "CHAPTER FOUR",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 179.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 143,
+      "text": "THE BELL AND THE HAMMER",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 258.4,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 116,
+      "text": "THERE was no doubt about the Magic this time. Down and down they rushed, first",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 490.8,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 226,
+      "text": "\"One - Two - Three - Go!\" said Digory. And they jumped.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 370.2,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 515,
+    "chapterLine": {
+      "y": 240,
+      "text": "CHAPTER FIVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 212,
+      "text": "THE DEPLORABLE WORD",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 233.6,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 185,
+      "text": "THE children were facing one another across the pillar where the bell hung, still",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 475.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 309,
+      "text": "And both thought it was; but they had never been more mistaken in their lives.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 467.3,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 521,
+    "chapterLine": {
+      "y": 350,
+      "text": "CHAPTER SIX",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 166.9,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 323,
+      "text": "THE BEGINNING OF UNCLE ANDREW'S TROUBLES",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 373.1,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 281,
+      "text": "\"LET go! Let go!\" screamed Polly.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 258.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 405,
+      "text": "upward and a warm green light was growing nearer over head.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 390.5,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 527,
+    "chapterLine": {
+      "y": 350,
+      "text": "CHAPTER SEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 323,
+      "text": "WHAT HAPPENED AT THE FRONT DOOR",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 315.8,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 295,
+      "text": "\"Now; slave, how long am I to wait for my chariot?\" thundered the Witch. Uncle Andrew",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 520.3,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 405,
+      "text": "eyes, stood in the doorway. It was the Witch.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 306.5,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 533,
+    "chapterLine": {
+      "y": 640,
+      "text": "CHAPTER EIGHT",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 183.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 612,
+      "text": "THE FIGHT AT THE LAMP-POST",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 266.4,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 585,
+      "text": "\"Ho! Her-ipress, are you? We'll see about that,\" said a voice. Then another voice said,",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 503.1,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 695,
+      "text": "our royal charger. We are the Empress Jadis.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 310,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 538,
+    "chapterLine": {
+      "y": 392,
+      "text": "CHAPTER NINE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 176.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 364,
+      "text": "THE FOUNDING OF NARNIA",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 246.6,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 336,
+      "text": "THE Lion was pacing to and fro about that empty land and singing his new song. It was",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 512.2,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 447,
+      "text": "For the song had now changed.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 240.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 544,
+    "chapterLine": {
+      "y": 681,
+      "text": "CHAPTER TEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 170.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 654,
+      "text": "THE FIRST JOKE AND OTHER MATTERS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 311.9,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 626,
+      "text": "IT was of course the Lion's voice. The children had long felt sure that he could speak: yet",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 519.9,
+      "pageW": 612
+    },
+    "prev1": null
+  },
+  {
+    "book": "MN",
+    "page": 549,
+    "chapterLine": {
+      "y": 309,
+      "text": "CHAPTER ELEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 194.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 281,
+      "text": "DIGORY AND HIS UNCLE ARE BOTH IN TROUBLE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 367.1,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 254,
+      "text": "You may think the animals were very stupid not to see at once that Uncle Andrew was",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 505.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 378,
+      "text": "mineral?\" That was what it really said; but all Uncle Andrew heard was \"Gr-r-rarrh-ow!\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 517.7,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 555,
+    "chapterLine": {
+      "y": 295,
+      "text": "CHAPTER TWELVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 196.7,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 267,
+      "text": "STRAWBERRY'S ADVENTURE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 256.7,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 240,
+      "text": "DIGORY kept his mouth very tight shut. He had been growing more and more",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 467.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 350,
+      "text": "\"That is well,\" said Aslan. \"And now for the Boy himself.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 372.7,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 561,
+    "chapterLine": {
+      "y": 157,
+      "text": "CHAPTER THIRTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 206.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 129,
+      "text": "AN UNEXPECTED MEETING",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 245.7,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 102,
+      "text": "\"WAKE up, Digory, wake up, Fledge,\" came the voice of Polly. \"It has turned into a",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 496.2,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 212,
+      "text": "lighted on him: but in the end he too slept.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 293.5,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "MN",
+    "page": 567,
+    "chapterLine": {
+      "y": 668,
+      "text": "CHAPTER FOURTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 210.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 640,
+      "text": "THE PLANTING OF THE TREE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 253.7,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 612,
+      "text": "\"WELL done,\" said Aslan in a voice that made the earth shake. Then Digory knew that",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 508.3,
+      "pageW": 612
+    },
+    "prev1": null
+  },
+  {
+    "book": "MN",
+    "page": 571,
+    "chapterLine": {
+      "y": 226,
+      "text": "CHAPTER FIFTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 195.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 198,
+      "text": "THE END OF THIS STORY AND THE BEGINNING OF ALL THE OTHERS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 476.2,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 171,
+      "text": "\"You need no rings when I am with you,\" said the voice of Aslan. The children blinked",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 509.4,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 295,
+      "text": "meant it, and Aslan understood.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 242.8,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 576,
+    "chapterLine": {
+      "y": 612,
+      "text": "CHAPTER ONE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 172.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 585,
+      "text": "BY CALDRON POOL",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 201.7,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 543,
+      "text": "IN the last days of Narnia, far up to the west beyond Lantern Waste and close beside the",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 514.3,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 681,
+      "text": "C.S. Lewis",
+      "maxFont": 12,
+      "minX": 279.5,
+      "maxX": 332.5,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 581,
+    "chapterLine": {
+      "y": 323,
+      "text": "CHAPTER TWO",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 295,
+      "text": "THE RASHNESS OF THE KING",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 255,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 254,
+      "text": "About three weeks later the last of the Kings of Narnia sat under the great oak which",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 497.1,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 392,
+      "text": "these things. What could a donkey know about signs?\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 352.8,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 587,
+    "chapterLine": {
+      "y": 585,
+      "text": "CHAPTER THREE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 557,
+      "text": "THE APE IN ITS GLORY",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 219.8,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 516,
+      "text": "\"MASTER Horse, Master Horse,\" said Tirian as he hastily cut its traces, \"how came these",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 522,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 654,
+      "text": "through the heart by Jewel's horn.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 252.3,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 592,
+    "chapterLine": {
+      "y": 143,
+      "text": "CHAPTER FOUR",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 179.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 116,
+      "text": "WHAT HAPPENED THAT NIGHT",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 266.5,
+      "pageW": 612
+    },
+    "next2": null,
+    "prev1": {
+      "y": 212,
+      "text": "There tie him to a tree. I will - I mean, Aslan will - do justice on him later.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 452.3,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 597,
+    "chapterLine": {
+      "y": 212,
+      "text": "CHAPTER FIVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 174.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 185,
+      "text": "HOW HELP CAME TO THE KING",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 267.3,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 143,
+      "text": "Bur his misery did not last long. Almost at once there came a bump, and then a second",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 505.8,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 281,
+      "text": "That waking was about the worst moment he had ever had in his life.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 421.5,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 603,
+    "chapterLine": {
+      "y": 709,
+      "text": "CHAPTER SIX",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 166.9,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 681,
+      "text": "A GOOD NIGHT'S WORK",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 224.7,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 654,
+      "text": "ABOUT four hours later Tirian flung himself into one of the bunks to snatch a little",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 491.9,
+      "pageW": 612
+    },
+    "prev1": null
+  },
+  {
+    "book": "LB",
+    "page": 608,
+    "chapterLine": {
+      "y": 254,
+      "text": "CHAPTER SEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 186.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 226,
+      "text": "MAINLY ABOUT DWARFS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 235,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 185,
+      "text": "THE two Calormene soldiers at the head of the column, seeing what they took for a",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 491.5,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 323,
+      "text": "lead these Narnian Dwarfs and by whose orders?\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 330.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 614,
+    "chapterLine": {
+      "y": 198,
+      "text": "CHAPTER EIGHT",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 183.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 171,
+      "text": "WHAT NEWS THE EAGLE BROUGHT",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 292.1,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 129,
+      "text": "IN the shadow of the trees on the far side of the clearing something was moving. It was",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 509.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 267,
+      "text": "dismay.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 127.6,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 620,
+    "chapterLine": {
+      "y": 626,
+      "text": "CHAPTER NINE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 176.2,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 599,
+      "text": "THE GREAT MEETING ON STABLE HILL",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 312,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 557,
+      "text": "Fop, a long time they could not speak nor even shed a tear. Then the Unicorn stamped the",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 521.3,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 695,
+      "text": "\"So,\" said the King, after a long silence, \"Narnia is no more.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 384.8,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 625,
+    "chapterLine": {
+      "y": 378,
+      "text": "CHAPTER TEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 170.8,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 350,
+      "text": "WHO WILL GO INTO THE STABLE?",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 283.1,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 309,
+      "text": "JILL felt something tickling her ear. It was Jewel the Unicorn, whispering to her with the",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 518.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 447,
+      "text": "Poggin. \"I'll be sworn that this new lie is of Ginger's making.\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 388,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 631,
+    "chapterLine": {
+      "y": 557,
+      "text": "CHAPTER ELEVEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 194.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 530,
+      "text": "THE PACE QUICKENS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 210.4,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 488,
+      "text": "QUICK as lightning, Rishda Tarkaan leaped back out of reach of the King's sword. He",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 506.3,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 626,
+      "text": "all true Narnians. Would you wait till your new masters have killed you all one by one?\"",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 515.7,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 636,
+    "chapterLine": {
+      "y": 612,
+      "text": "CHAPTER TWELVE",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 196.7,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 585,
+      "text": "THROUGH THE STABLE DOOR",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 260,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 543,
+      "text": "JILL ought to have been back at the white rock already but she had quite forgotten that",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 507.8,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 681,
+      "text": "The enemy had been reinforced. The drum had done its work.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 386.7,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 641,
+    "chapterLine": {
+      "y": 323,
+      "text": "CHAPTER THIRTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 206.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 295,
+      "text": "HOW THE DWARFS REFUSED TO BE TAKEN IN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 350.3,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 254,
+      "text": "TIRIAN had thought - or he would have thought if he had time to think at all - that they",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 511.4,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 405,
+      "text": "adventure was.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 162.1,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 648,
+    "chapterLine": {
+      "y": 530,
+      "text": "CHAPTER FOURTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 210.1,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 502,
+      "text": "NIGHT FALLS ON NARNIA",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 236.7,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 461,
+      "text": "THEY all stood beside Aslan, on his right side, and looked through the open doorway.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 505.4,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 612,
+      "text": "The Door flew open.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 190,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 653,
+    "chapterLine": {
+      "y": 309,
+      "text": "CHAPTER FIFTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 195.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 281,
+      "text": "FURTHER UP AND FURTHER IN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 264.9,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 240,
+      "text": "\"KNOW, O Warlike Kings,\" said Emeth, \"and you, O ladies whose beauty illuminates",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 504.6,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 378,
+      "text": "polishing his horn against his side.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 256.3,
+      "pageW": 612
+    }
+  },
+  {
+    "book": "LB",
+    "page": 658,
+    "chapterLine": {
+      "y": 281,
+      "text": "CHAPTER SIXTEEN",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 197.5,
+      "pageW": 612
+    },
+    "next1": {
+      "y": 254,
+      "text": "FAREWELL TO SHADOWLANDS",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 268.1,
+      "pageW": 612
+    },
+    "next2": {
+      "y": 212,
+      "text": "IF one could run without getting tired, I don't think one would often want to do anything",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 514.9,
+      "pageW": 612
+    },
+    "prev1": {
+      "y": 350,
+      "text": "one got hot or tired or out of breath.",
+      "maxFont": 12,
+      "minX": 90,
+      "maxX": 262.6,
+      "pageW": 612
+    }
+  }
+]

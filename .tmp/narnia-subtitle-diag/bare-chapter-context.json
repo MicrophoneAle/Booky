@@ -1,0 +1,29 @@
+[
+  {
+    "chapterIndex": 6,
+    "title": "Chapter SEVEN",
+    "pageIndex": 9,
+    "blockIndex": 22,
+    "prevChapter": "Chapter SIX - Into the Forest",
+    "nextChapter": "Chapter EIGHT - What Happened After Dinner",
+    "neighbors": []
+  },
+  {
+    "chapterIndex": 94,
+    "title": "Chapter ONE",
+    "pageIndex": 197,
+    "blockIndex": 35,
+    "prevChapter": "Chapter FIFTEEN - The End of This Story and the Beginning of All the Others",
+    "nextChapter": "Chapter TWO - The Rashness of the King",
+    "neighbors": []
+  },
+  {
+    "chapterIndex": 99,
+    "title": "Chapter SIX",
+    "pageIndex": 207,
+    "blockIndex": 29,
+    "prevChapter": "Chapter FIVE - How Help Came to the King",
+    "nextChapter": "Chapter SEVEN - Mainly About Dwarfs",
+    "neighbors": []
+  }
+]

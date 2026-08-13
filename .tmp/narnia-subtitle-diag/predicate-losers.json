@@ -1,0 +1,1114 @@
+{
+  "losers": [
+    {
+      "book": "LWW",
+      "page": 27,
+      "chapter": "CHAPTER SEVEN",
+      "raw": "A DAY WITH THE BEAVERS",
+      "formatted": "A Day With the Beavers",
+      "author": false,
+      "dropCap": true,
+      "wouldLose": true
+    },
+    {
+      "book": "LB",
+      "page": 576,
+      "chapter": "CHAPTER ONE",
+      "raw": "BY CALDRON POOL",
+      "formatted": "By Caldron Pool",
+      "author": true,
+      "dropCap": false,
+      "wouldLose": true
+    },
+    {
+      "book": "LB",
+      "page": 603,
+      "chapter": "CHAPTER SIX",
+      "raw": "A GOOD NIGHT'S WORK",
+      "formatted": "A Good Night's Work",
+      "author": false,
+      "dropCap": true,
+      "wouldLose": true
+    }
+  ],
+  "rows": [
+    {
+      "book": "LWW",
+      "page": 2,
+      "chapter": "CHAPTER ONE",
+      "raw": "LUCY LOOKS INTO A WARDROBE",
+      "formatted": "Lucy Looks Into a Wardrobe",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 5,
+      "chapter": "CHAPTER TWO",
+      "raw": "WHAT LUCY FOUND THERE",
+      "formatted": "What Lucy Found There",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 10,
+      "chapter": "CHAPTER THREE",
+      "raw": "EDMUND AND THE WARDROBE",
+      "formatted": "Edmund and the Wardrobe",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 14,
+      "chapter": "CHAPTER FOUR",
+      "raw": "TURKISH DELIGHT",
+      "formatted": "Turkish Delight",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 18,
+      "chapter": "CHAPTER FIVE",
+      "raw": "BACK ON THIS SIDE OF THE DOOR",
+      "formatted": "Back on This Side of the Door",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 23,
+      "chapter": "CHAPTER SIX",
+      "raw": "INTO THE FOREST",
+      "formatted": "Into the Forest",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 27,
+      "chapter": "CHAPTER SEVEN",
+      "raw": "A DAY WITH THE BEAVERS",
+      "formatted": "A Day With the Beavers",
+      "author": false,
+      "dropCap": true,
+      "wouldLose": true
+    },
+    {
+      "book": "LWW",
+      "page": 32,
+      "chapter": "CHAPTER EIGHT",
+      "raw": "WHAT HAPPENED AFTER DINNER",
+      "formatted": "What Happened After Dinner",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 38,
+      "chapter": "CHAPTER NINE",
+      "raw": "IN THE WITCH'S HOUSE",
+      "formatted": "In the Witch's House",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 42,
+      "chapter": "CHAPTER TEN",
+      "raw": "",
+      "note": "no-same-page-subtitle"
+    },
+    {
+      "book": "LWW",
+      "page": 47,
+      "chapter": "CHAPTER ELEVEN",
+      "raw": "ASLAN IS NEARER",
+      "formatted": "Aslan Is Nearer",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 52,
+      "chapter": "CHAPTER TWELVE",
+      "raw": "PETER'S FIRST BATTLE",
+      "formatted": "Peter's First Battle",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 57,
+      "chapter": "CHAPTER THIRTEEN",
+      "raw": "DEEP MAGIC FROM THE DAWN OF TIME",
+      "formatted": "Deep Magic From the Dawn of Time",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 61,
+      "chapter": "CHAPTER FOURTEEN",
+      "raw": "THE TRIUMPH OF THE WITCH",
+      "formatted": "The Triumph of the Witch",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 66,
+      "chapter": "CHAPTER FIFTEEN",
+      "raw": "DEEPER MAGIC FROM BEFORE THE DAWN OF TIME",
+      "formatted": "Deeper Magic From Before the Dawn of Time",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 71,
+      "chapter": "CHAPTER SIXTEEN",
+      "raw": "WHAT HAPPENED ABOUT THE STATUES",
+      "formatted": "What Happened About the Statues",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LWW",
+      "page": 75,
+      "chapter": "CHAPTER SEVENTEEN",
+      "raw": "THE HUNTING OF THE WHITE STAG",
+      "formatted": "The Hunting of the White Stag",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 81,
+      "chapter": "CHAPTER ONE",
+      "raw": "THE ISLAND",
+      "formatted": "The Island",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 86,
+      "chapter": "CHAPTER TWO",
+      "raw": "THE ANCIENT TREASURE HOUSE",
+      "formatted": "The Ancient Treasure House",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 92,
+      "chapter": "CHAPTER THREE",
+      "raw": "THE DWARF",
+      "formatted": "The Dwarf",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 97,
+      "chapter": "CHAPTER FOUR",
+      "raw": "THE DWARF TELLS OF PRINCE CASPIAN",
+      "formatted": "The Dwarf Tells of Prince Caspian",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 104,
+      "chapter": "CHAPTER FIVE",
+      "raw": "CASPIAN'S ADVENTURE IN THE MOUNTAINS",
+      "formatted": "Caspian's Adventure in the Mountains",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 112,
+      "chapter": "CHAPTER SIX",
+      "raw": "THE PEOPLE THAT LIVED IN HIDING",
+      "formatted": "The People That Lived in Hiding",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 116,
+      "chapter": "CHAPTER SEVEN",
+      "raw": "OLD NARNIA IN DANGER",
+      "formatted": "Old Narnia in Danger",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 122,
+      "chapter": "CHAPTER EIGHT",
+      "raw": "HOW THEY LEFT THE ISLAND",
+      "formatted": "How They Left the Island",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 137,
+      "chapter": "CHAPTER TEN",
+      "raw": "THE RETURN OF THE LION",
+      "formatted": "The Return of the Lion",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 145,
+      "chapter": "CHAPTER ELEVEN",
+      "raw": "THE LION ROARS",
+      "formatted": "The Lion Roars",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 151,
+      "chapter": "CHAPTER TWELVE",
+      "raw": "SORCERY AND SUDDEN VENGEANCE",
+      "formatted": "Sorcery and Sudden Vengeance",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 158,
+      "chapter": "CHAPTER THIRTEEN",
+      "raw": "THE HIGH KING IN COMMAND",
+      "formatted": "The High King in Command",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 164,
+      "chapter": "CHAPTER FOURTEEN",
+      "raw": "HOW ALL WERE VERY BUSY",
+      "formatted": "How All Were Very Busy",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "PC",
+      "page": 171,
+      "chapter": "CHAPTER FIFTEEN",
+      "raw": "ASLAN MAKES A DOOR IN THE AIR",
+      "formatted": "Aslan Makes a Door in the Air",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 180,
+      "chapter": "CHAPTER ONE",
+      "raw": "THE PICTURE IN THE BEDROOM",
+      "formatted": "The Picture in the Bedroom",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 186,
+      "chapter": "CHAPTER TWO",
+      "raw": "ON BOARD THE DAWN TREADER",
+      "formatted": "On Board the Dawn Treader",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 193,
+      "chapter": "CHAPTER THREE",
+      "raw": "THE LONE ISLANDS",
+      "formatted": "The Lone Islands",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 200,
+      "chapter": "CHAPTER FOUR",
+      "raw": "WHAT CASPIAN DID THERE",
+      "formatted": "What Caspian Did There",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 206,
+      "chapter": "CHAPTER FIVE",
+      "raw": "THE STORM AND WHAT CAME OF IT",
+      "formatted": "The Storm and What Came of It",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 211,
+      "chapter": "CHAPTER SIX",
+      "raw": "THE ADVENTURES OF EUSTACE",
+      "formatted": "The Adventures of Eustace",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 218,
+      "chapter": "CHAPTER SEVEN",
+      "raw": "HOW THE ADVENTURE ENDED",
+      "formatted": "How the Adventure Ended",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 225,
+      "chapter": "CHAPTER EIGHT",
+      "raw": "TWO NARROW ESCAPES",
+      "formatted": "Two Narrow Escapes",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 233,
+      "chapter": "CHAPTER NINE",
+      "raw": "THE ISLAND OF THE VOICES",
+      "formatted": "The Island of the Voices",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 240,
+      "chapter": "CHAPTER TEN",
+      "raw": "THE MAGICIAN'S BOOK",
+      "formatted": "The Magician's Book",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 246,
+      "chapter": "CHAPTER ELEVEN",
+      "raw": "THE DUFFLEPUDS MADE HAPPY",
+      "formatted": "The Dufflepuds Made Happy",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 253,
+      "chapter": "CHAPTER TWELVE",
+      "raw": "THE DARK ISLAND",
+      "formatted": "The Dark Island",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 259,
+      "chapter": "CHAPTER THIRTEEN",
+      "raw": "",
+      "note": "no-same-page-subtitle"
+    },
+    {
+      "book": "VDT",
+      "page": 266,
+      "chapter": "CHAPTER FOURTEEN",
+      "raw": "THE BEGINNING OF THE END OF THE WORLD",
+      "formatted": "The Beginning of the End of the World",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 272,
+      "chapter": "CHAPTER FIFTEEN",
+      "raw": "THE WONDERS OF THE LAST SEA",
+      "formatted": "The Wonders of the Last Sea",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "VDT",
+      "page": 278,
+      "chapter": "CHAPTER SIXTEEN",
+      "raw": "THE VERY END OF THE WORLD",
+      "formatted": "The Very End of the World",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 287,
+      "chapter": "CHAPTER ONE",
+      "raw": "BEHIND THE GYM",
+      "formatted": "Behind the Gym",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 294,
+      "chapter": "CHAPTER TWO",
+      "raw": "JILL IS GIVEN A TASK",
+      "formatted": "Jill Is Given a Task",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 300,
+      "chapter": "CHAPTER THREE",
+      "raw": "THE SAILING OF THE KING",
+      "formatted": "The Sailing of the King",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 307,
+      "chapter": "CHAPTER FOUR",
+      "raw": "",
+      "note": "no-same-page-subtitle"
+    },
+    {
+      "book": "SC",
+      "page": 314,
+      "chapter": "CHAPTER FIVE",
+      "raw": "PUDDLEGLUM",
+      "formatted": "Puddleglum",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 321,
+      "chapter": "CHAPTER SIX",
+      "raw": "THE WILD WASTE LANDS OF THE NORTH",
+      "formatted": "The Wild Waste Lands of the North",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 328,
+      "chapter": "CHAPTER SEVEN",
+      "raw": "THE HILL OF THE STRANGE TRENCHES",
+      "formatted": "The Hill of the Strange Trenches",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 334,
+      "chapter": "CHAPTER EIGHT",
+      "raw": "THE HOUSE OF HARFANG",
+      "formatted": "The House of Harfang",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 341,
+      "chapter": "CHAPTER NINE",
+      "raw": "HOW THEY DISCOVERED SOMETHING WORTH KNOWING",
+      "formatted": "How They Discovered Something Worth Knowing",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 347,
+      "chapter": "CHAPTER TEN",
+      "raw": "TRAVELS WITHOUT THE SUN",
+      "formatted": "Travels Without the Sun",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 353,
+      "chapter": "CHAPTER ELEVEN",
+      "raw": "IN THE DARK CASTLE",
+      "formatted": "In the Dark Castle",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 360,
+      "chapter": "CHAPTER TWELVE",
+      "raw": "THE QUEEN OF UNDERLAND",
+      "formatted": "The Queen of Underland",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 366,
+      "chapter": "CHAPTER THIRTEEN",
+      "raw": "UNDERLAND WITHOUT THE QUEEN",
+      "formatted": "Underland Without the Queen",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 372,
+      "chapter": "CHAPTER FOURTEEN",
+      "raw": "THE BOTTOM OF THE WORLD",
+      "formatted": "The Bottom of the World",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 379,
+      "chapter": "CHAPTER FIFTEEN",
+      "raw": "THE DISAPPEARANCE OF JILL",
+      "formatted": "The Disappearance of Jill",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "SC",
+      "page": 384,
+      "chapter": "CHAPTER SIXTEEN",
+      "raw": "THE HEALING OF HARMS",
+      "formatted": "The Healing of Harms",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 393,
+      "chapter": "CHAPTER ONE",
+      "raw": "HOW SHASTA SET OUT ON HIS TRAVELS",
+      "formatted": "How Shasta Set Out on His Travels",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 400,
+      "chapter": "CHAPTER TWO",
+      "raw": "A WAYSIDE ADVENTURE",
+      "formatted": "A Wayside Adventure",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 408,
+      "chapter": "CHAPTER THREE",
+      "raw": "AT THE GATES OF TASHBAAN",
+      "formatted": "At the Gates of Tashbaan",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 414,
+      "chapter": "CHAPTER FOUR",
+      "raw": "SHASTA FALLS IN WITH THE NARNIANS",
+      "formatted": "Shasta Falls in With the Narnians",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 420,
+      "chapter": "CHAPTER FIVE",
+      "raw": "PRINCE CORIN",
+      "formatted": "Prince Corin",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 427,
+      "chapter": "CHAPTER SIX",
+      "raw": "SHASTA AMONG THE TOMBS",
+      "formatted": "Shasta Among the Tombs",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 432,
+      "chapter": "CHAPTER SEVEN",
+      "raw": "ARAVIS IN TASHBAAN",
+      "formatted": "Aravis in Tashbaan",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 438,
+      "chapter": "CHAPTER EIGHT",
+      "raw": "IN THE HOUSE OF THE TISROC",
+      "formatted": "In the House of the Tisroc",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 444,
+      "chapter": "CHAPTER NINE",
+      "raw": "ACROSS THE DESERT",
+      "formatted": "Across the Desert",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 451,
+      "chapter": "CHAPTER TEN",
+      "raw": "THE HERMIT OF THE SOUTHERN MARCH",
+      "formatted": "The Hermit of the Southern March",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 457,
+      "chapter": "CHAPTER ELEVEN",
+      "raw": "THE UNWELCOME FELLOW TRAVELLER",
+      "formatted": "The Unwelcome Fellow Traveller",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 464,
+      "chapter": "CHAPTER TWELVE",
+      "raw": "SHASTA IN NARNIA",
+      "formatted": "Shasta in Narnia",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 471,
+      "chapter": "CHAPTER THIRTEEN",
+      "raw": "THE FIGHT AT ANVARD",
+      "formatted": "The Fight at Anvard",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "HHB",
+      "page": 476,
+      "chapter": "CHAPTER FOURTEEN",
+      "raw": "",
+      "note": "no-same-page-subtitle"
+    },
+    {
+      "book": "HHB",
+      "page": 483,
+      "chapter": "CHAPTER FIFTEEN",
+      "raw": "RABADASH THE RIDICULOUS",
+      "formatted": "Rabadash the Ridiculous",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 491,
+      "chapter": "CHAPTER ONE",
+      "raw": "THE WRONG DOOR",
+      "formatted": "The Wrong Door",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 497,
+      "chapter": "CHAPTER TWO",
+      "raw": "DIGORY AND HIS UNCLE",
+      "formatted": "Digory and His Uncle",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 503,
+      "chapter": "CHAPTER THREE",
+      "raw": "THE WOOD BETWEEN THE WORLDS",
+      "formatted": "The Wood Between the Worlds",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 509,
+      "chapter": "CHAPTER FOUR",
+      "raw": "THE BELL AND THE HAMMER",
+      "formatted": "The Bell and the Hammer",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 515,
+      "chapter": "CHAPTER FIVE",
+      "raw": "THE DEPLORABLE WORD",
+      "formatted": "The Deplorable Word",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 521,
+      "chapter": "CHAPTER SIX",
+      "raw": "THE BEGINNING OF UNCLE ANDREW'S TROUBLES",
+      "formatted": "The Beginning of Uncle Andrew's Troubles",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 527,
+      "chapter": "CHAPTER SEVEN",
+      "raw": "WHAT HAPPENED AT THE FRONT DOOR",
+      "formatted": "What Happened at the Front Door",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 533,
+      "chapter": "CHAPTER EIGHT",
+      "raw": "THE FIGHT AT THE LAMP-POST",
+      "formatted": "The Fight at the Lamp-post",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 538,
+      "chapter": "CHAPTER NINE",
+      "raw": "THE FOUNDING OF NARNIA",
+      "formatted": "The Founding of Narnia",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 544,
+      "chapter": "CHAPTER TEN",
+      "raw": "THE FIRST JOKE AND OTHER MATTERS",
+      "formatted": "The First Joke and Other Matters",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 549,
+      "chapter": "CHAPTER ELEVEN",
+      "raw": "DIGORY AND HIS UNCLE ARE BOTH IN TROUBLE",
+      "formatted": "Digory and His Uncle Are Both in Trouble",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 555,
+      "chapter": "CHAPTER TWELVE",
+      "raw": "STRAWBERRY'S ADVENTURE",
+      "formatted": "Strawberry's Adventure",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 561,
+      "chapter": "CHAPTER THIRTEEN",
+      "raw": "AN UNEXPECTED MEETING",
+      "formatted": "An Unexpected Meeting",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 567,
+      "chapter": "CHAPTER FOURTEEN",
+      "raw": "THE PLANTING OF THE TREE",
+      "formatted": "The Planting of the Tree",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "MN",
+      "page": 571,
+      "chapter": "CHAPTER FIFTEEN",
+      "raw": "THE END OF THIS STORY AND THE BEGINNING OF ALL THE OTHERS",
+      "formatted": "The End of This Story and the Beginning of All the Others",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 576,
+      "chapter": "CHAPTER ONE",
+      "raw": "BY CALDRON POOL",
+      "formatted": "By Caldron Pool",
+      "author": true,
+      "dropCap": false,
+      "wouldLose": true
+    },
+    {
+      "book": "LB",
+      "page": 581,
+      "chapter": "CHAPTER TWO",
+      "raw": "THE RASHNESS OF THE KING",
+      "formatted": "The Rashness of the King",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 587,
+      "chapter": "CHAPTER THREE",
+      "raw": "THE APE IN ITS GLORY",
+      "formatted": "The Ape in Its Glory",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 592,
+      "chapter": "CHAPTER FOUR",
+      "raw": "WHAT HAPPENED THAT NIGHT",
+      "formatted": "What Happened That Night",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 597,
+      "chapter": "CHAPTER FIVE",
+      "raw": "HOW HELP CAME TO THE KING",
+      "formatted": "How Help Came to the King",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 603,
+      "chapter": "CHAPTER SIX",
+      "raw": "A GOOD NIGHT'S WORK",
+      "formatted": "A Good Night's Work",
+      "author": false,
+      "dropCap": true,
+      "wouldLose": true
+    },
+    {
+      "book": "LB",
+      "page": 608,
+      "chapter": "CHAPTER SEVEN",
+      "raw": "MAINLY ABOUT DWARFS",
+      "formatted": "Mainly About Dwarfs",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 614,
+      "chapter": "CHAPTER EIGHT",
+      "raw": "WHAT NEWS THE EAGLE BROUGHT",
+      "formatted": "What News the Eagle Brought",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 620,
+      "chapter": "CHAPTER NINE",
+      "raw": "THE GREAT MEETING ON STABLE HILL",
+      "formatted": "The Great Meeting on Stable Hill",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 625,
+      "chapter": "CHAPTER TEN",
+      "raw": "WHO WILL GO INTO THE STABLE?",
+      "formatted": "Who Will Go Into the Stable?",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 631,
+      "chapter": "CHAPTER ELEVEN",
+      "raw": "THE PACE QUICKENS",
+      "formatted": "The Pace Quickens",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 636,
+      "chapter": "CHAPTER TWELVE",
+      "raw": "THROUGH THE STABLE DOOR",
+      "formatted": "Through the Stable Door",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 641,
+      "chapter": "CHAPTER THIRTEEN",
+      "raw": "HOW THE DWARFS REFUSED TO BE TAKEN IN",
+      "formatted": "How the Dwarfs Refused to Be Taken In",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 648,
+      "chapter": "CHAPTER FOURTEEN",
+      "raw": "NIGHT FALLS ON NARNIA",
+      "formatted": "Night Falls on Narnia",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 653,
+      "chapter": "CHAPTER FIFTEEN",
+      "raw": "FURTHER UP AND FURTHER IN",
+      "formatted": "Further up and Further In",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    },
+    {
+      "book": "LB",
+      "page": 658,
+      "chapter": "CHAPTER SIXTEEN",
+      "raw": "FAREWELL TO SHADOWLANDS",
+      "formatted": "Farewell to Shadowlands",
+      "author": false,
+      "dropCap": false,
+      "wouldLose": false
+    }
+  ]
+}

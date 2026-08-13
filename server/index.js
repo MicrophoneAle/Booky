@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 133
+const PARSER_VERSION = 134
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -2004,7 +2004,7 @@ const ALL_CAPS_CHAPTER_SUBTITLE_MIN_FONT_SIZE = 11.5
 const ALL_CAPS_CHAPTER_SUBTITLE_MAX_CHARS = 120
 const ALL_CAPS_CHAPTER_SUBTITLE_MAX_WORDS = 22
 
-function isAllCapsChapterSubtitleText(text) {
+function isAllCapsChapterSubtitleText(text, options = {}) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
     return false
@@ -2015,7 +2015,13 @@ function isAllCapsChapterSubtitleText(text) {
   if (CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed)) {
     return false
   }
-  if (isScannerWatermarkLine(trimmed) || isAuthorStructuralLine(trimmed)) {
+  // allowAuthorLikeOpening: chapter-only collector may see legitimate subtitles
+  // that begin with "By ..." (e.g. Narnia's "BY CALDRON POOL"). isAuthorStructuralLine
+  // itself stays unchanged; only this subtitle-path gate opts out.
+  if (
+    isScannerWatermarkLine(trimmed) ||
+    (!options.allowAuthorLikeOpening && isAuthorStructuralLine(trimmed))
+  ) {
     return false
   }
   if (/^[a-z]/.test(trimmed)) {
@@ -2035,8 +2041,8 @@ function isAllCapsChapterSubtitleText(text) {
   )
 }
 
-function isAllCapsChapterSubtitleLine(text, line) {
-  if (!isAllCapsChapterSubtitleText(text)) {
+function isAllCapsChapterSubtitleLine(text, line, options = {}) {
+  if (!isAllCapsChapterSubtitleText(text, options)) {
     return false
   }
   if (isDropCapChapterSubtitleArtifact(text)) {
@@ -2056,8 +2062,15 @@ function isDropCapChapterSubtitleArtifact(text) {
     return false
   }
 
-  if (/\b[A-Z]\s+[A-Z][a-z]{1,4}\b/.test(trimmed)) {
-    return true
+  // Fused drop-cap scrap: a lone capital + a tiny capitalized fragment
+  // ("A Nd", "T He"). Second-word letter count must be <= 2 so legitimate
+  // article openings like "A Day ..." / "A Good ..." (3+ letter second words)
+  // are not discarded after title-casing from all-caps source lines.
+  {
+    const scrap = trimmed.match(/\b[A-Z]\s+([A-Z][a-z]*)\b/)
+    if (scrap && scrap[1].replace(/[^A-Za-z]/g, "").length <= 2) {
+      return true
+    }
   }
 
   if (/^[A-Z](?:\s+[A-Z]{1,3}){1,5}$/.test(trimmed)) {
@@ -10003,7 +10016,7 @@ function isChapterSubtitleWord(word) {
   return /^[—–-]$/.test(trimmed)
 }
 
-function isLikelyChapterSubtitleText(text) {
+function isLikelyChapterSubtitleText(text, options = {}) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
     return false
@@ -10014,7 +10027,13 @@ function isLikelyChapterSubtitleText(text) {
   if (CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed)) {
     return false
   }
-  if (isScannerWatermarkLine(trimmed) || isAuthorStructuralLine(trimmed)) {
+  // See isAllCapsChapterSubtitleText: chapter-only collector may pass
+  // allowAuthorLikeOpening so "By Caldron Pool"-shaped subtitles are not
+  // rejected as bylines. Global isAuthorStructuralLine is unchanged.
+  if (
+    isScannerWatermarkLine(trimmed) ||
+    (!options.allowAuthorLikeOpening && isAuthorStructuralLine(trimmed))
+  ) {
     return false
   }
   if (/^["'\u201c]/.test(trimmed)) {
@@ -12172,7 +12191,14 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
     if (chapterOnlyParts) {
       pendingConnective = null
       const titleFragments = []
+      // Fragments collected from unambiguous all-caps display lines are not
+      // fused drop-cap text; skip the post-format artifact check for them.
+      let allCapsFragmentCount = 0
+      let otherFragmentCount = 0
       let cursor = index + 1
+      // Chapter-context only: allow "By ..." openings that isAuthorStructuralLine
+      // would otherwise treat as bylines (Narnia "BY CALDRON POOL").
+      const subtitlePathOptions = { allowAuthorLikeOpening: true }
 
       while (cursor < allLines.length) {
         const nextEntry = allLines[cursor]
@@ -12184,21 +12210,30 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
           isLargeFontAllCapsChapterWrapLine(nextText, nextEntry.line)
         ) {
           titleFragments.push(nextText)
-          cursor += 1
-          continue
-        }
-
-        if (isAllCapsChapterSubtitleLine(nextText, nextEntry.line)) {
-          titleFragments.push(nextText)
+          otherFragmentCount += 1
           cursor += 1
           continue
         }
 
         if (
-          isLikelyChapterSubtitleText(nextText) &&
+          isAllCapsChapterSubtitleLine(
+            nextText,
+            nextEntry.line,
+            subtitlePathOptions
+          )
+        ) {
+          titleFragments.push(nextText)
+          allCapsFragmentCount += 1
+          cursor += 1
+          continue
+        }
+
+        if (
+          isLikelyChapterSubtitleText(nextText, subtitlePathOptions) &&
           !looksLikeChapterOpeningProse(nextText)
         ) {
           titleFragments.push(nextText)
+          otherFragmentCount += 1
           cursor += 1
           continue
         }
@@ -12208,18 +12243,21 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
           CHAPTER_TITLE_TAIL_WORD_REGEX.test(nextText)
         ) {
           titleFragments.push(nextText)
+          otherFragmentCount += 1
           cursor += 1
           continue
         }
 
         if (isShortChapterHeadingSubtitleLine(nextText, nextEntry.line)) {
           titleFragments.push(nextText)
+          otherFragmentCount += 1
           cursor += 1
           continue
         }
 
         if (isDisplayChapterTitleLine(nextText, nextEntry.line)) {
           titleFragments.push(nextText)
+          otherFragmentCount += 1
           cursor += 1
           continue
         }
@@ -12230,8 +12268,20 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       const subtitle = titleFragments.length
         ? formatChapterSubtitleText(titleFragments.join(" ").replace(/\s+/g, " ").trim())
         : ""
+      const skipArtifactCheck =
+        allCapsFragmentCount > 0 && otherFragmentCount === 0
       const safeSubtitle =
-        subtitle && !isDropCapChapterSubtitleArtifact(subtitle) ? subtitle : ""
+        subtitle &&
+        (skipArtifactCheck || !isDropCapChapterSubtitleArtifact(subtitle))
+          ? subtitle
+          : ""
+
+      // If fragments were collected but rejected as artifacts, do not consume
+      // those lines - leaving them in the stream is safer than swallowing them.
+      if (titleFragments.length > 0 && !safeSubtitle) {
+        cursor = index + 1
+      }
+
       const displayTitle = formatChapterLabel(
         chapterOnlyParts.kind,
         chapterOnlyParts.number,

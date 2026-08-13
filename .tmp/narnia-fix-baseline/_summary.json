@@ -1,0 +1,75 @@
+{
+  "parserVersion": 133,
+  "books": {
+    "oldman": {
+      "file": "The Old Man and the Sea.pdf",
+      "chapterCount": 1,
+      "blockCount": 760
+    },
+    "orwell1984": {
+      "file": "orwell1984.pdf",
+      "chapterCount": 26,
+      "blockCount": 883
+    },
+    "monte-cristo": {
+      "file": "797The-Count-of-Monte-Cristo.pdf",
+      "chapterCount": 122,
+      "blockCount": 13320
+    },
+    "pride-prejudice": {
+      "file": "PrideAndPrejudice.pdf",
+      "chapterCount": 61,
+      "blockCount": 2383
+    },
+    "moby-dick": {
+      "file": "herman-melville-moby-dick.pdf",
+      "chapterCount": 125,
+      "blockCount": 2591
+    },
+    "treasure-island": {
+      "file": "Treasure Island.pdf",
+      "chapterCount": 41,
+      "blockCount": 1376
+    },
+    "frankenstein": {
+      "file": "frankenstein.pdf",
+      "chapterCount": 30,
+      "blockCount": 977
+    },
+    "oliver-twist": {
+      "file": "Oliver Twist.pdf",
+      "chapterCount": 53,
+      "blockCount": 3949
+    },
+    "jungle-book": {
+      "file": "The Jungle Book.pdf",
+      "chapterCount": 9,
+      "blockCount": 664
+    },
+    "aesop": {
+      "file": "Aesop's Fables.pdf",
+      "chapterCount": 177,
+      "blockCount": 1020
+    },
+    "metamorphosis": {
+      "file": "the-metamorphosis.pdf",
+      "chapterCount": 3,
+      "blockCount": 123
+    },
+    "narnia": {
+      "file": "Narnia.pdf",
+      "chapterCount": 110,
+      "blockCount": 9118
+    },
+    "maya-angelou": {
+      "file": "maya_angelou.pdf",
+      "chapterCount": 166,
+      "blockCount": 4246
+    },
+    "way-of-kings": {
+      "file": "The Way of Kings.pdf",
+      "chapterCount": 90,
+      "blockCount": 16083
+    }
+  }
+}

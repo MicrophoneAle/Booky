@@ -14,9 +14,9 @@ const NARNIA_BOOK_OPENERS = [
   { id: "SC", opener: /Behind the Gym/i },
   { id: "HHB", opener: /How Shasta Set Out on His Travels/i },
   { id: "MN", opener: /Wrong Door/i },
-  // Classic LB ch1 title in this PDF's text; a bare "Chapter ONE" before
-  // "The Rashness of the King" is a truncated-title defect, not a pass.
-  { id: "LB", opener: /By Night in Narnia/i },
+  // This edition's LB ch1 subtitle is "By Caldron Pool" (pdf p576) - not the
+  // classic "By Night in Narnia", which has zero occurrences in this PDF.
+  { id: "LB", opener: /By Caldron Pool/i },
 ]
 
 const NARNIA_EXPECTED_CHAPTER_TOTAL = 110
