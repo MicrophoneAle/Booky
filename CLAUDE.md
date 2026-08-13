@@ -12,11 +12,11 @@
   - **Deploy:** Vercel (client), Render (API)
 
 - **Architectural Patterns:**
-  - **Monolithic parse pipeline** on the server (`server/index.js`, ~12.8K lines) - extract, block-build, transform, illustrate/OCR, chapter-detect, persist
+  - **Monolithic parse pipeline** on the server (`server/index.js`, ~12.3K lines) - extract, block-build, transform, illustrate/OCR, chapter-detect, persist
   - **SPA routes:** `/` upload, `/library`, `/read/:id` reader
-  - **Versioned invalidation:** `PARSER_VERSION` (server + client) forces re-parse and pagination cache bust
+  - **Versioned invalidation:** `PARSER_VERSION` (server + client, must match) forces re-parse and pagination cache bust
   - **Specialized modules** for Stormlight/illustrated books: `chapterGraphicService.js`, `stormlightEpigraphService.js`, `printedTocService.js`, `imageOcrService.js`
-  - **Regression harness** (`server/scripts/regression/`) - not unit tests; snapshot + structural checks on real PDFs
+  - **Regression harness** (`server/scripts/regression/`) - not unit tests; snapshot + structural checks on real PDFs (13 books by default, 14 with `--full`)
 
 ---
 
@@ -26,7 +26,7 @@
 Booky/
 ├── client/
 │   ├── src/
-│   │   ├── components/BookViewer.jsx   # Reader UI, pagination, TOC assembly (~6.8K lines)
+│   │   ├── components/BookViewer.jsx   # Reader UI, pagination, TOC assembly (~5.9K lines)
 │   │   ├── utils/paginator.js          # Page measurement, chapter page map, image TOC extraction
 │   │   ├── utils/bookCache.js          # Pagination cache (localStorage + IndexedDB)
 │   │   ├── pages/                      # Home (upload), Library, Reader
@@ -41,9 +41,9 @@ Booky/
 │   ├── pdfImageRoleUtils.js            # Image geometry constants and helpers
 │   ├── reformattedExportService.js     # HTML/PDF export path (separate from reader parse)
 │   └── scripts/
-│       ├── regression/                 # `npm run regression` - 5 books, 10 general checks
-│       ├── debug-*.mjs                 # Ad-hoc book-specific diagnostics (39 scripts)
-│       ├── test-*.mjs, verify-*.mjs    # More ad-hoc diagnostics (~20 more scripts, not debug-* prefixed)
+│       ├── regression/                 # `npm run regression` (13) / `regression:full` (14); 12 general checks
+│       ├── debug-*.mjs                 # Ad-hoc book-specific diagnostics (~40 scripts)
+│       ├── test-*.mjs, verify-*.mjs    # More ad-hoc diagnostics (not debug-* prefixed)
 │       └── .index-backup.js            # STALE - do not edit or import
 ├── supabase/migrations/                # parser_version, parse_status, parse_progress, parsed_cache
 └── README.md
@@ -60,14 +60,16 @@ Booky/
 | `server/stormlightEpigraphService.js` | Printed-TOC sequential cursor, `isLikelyStructuralPartDividerPlate`, part-divider cursor helpers. |
 | `server/printedTocService.js` | Builds `printedToc.ordered` (chapters, parts, interludes, prelude, etc.). |
 | `server/imageOcrService.js` | Single shared Tesseract worker; OCR is a major parse-time bottleneck. |
-| `server/scripts/regression/run.mjs` | Regression entry point; 5 books in harness, snapshots gitignored. |
+| `server/scripts/regression/run.mjs` | Regression entry point; CORE+EXTENDED by default, SLOW (WoK) via `--full`; snapshots committed under `snapshots/`. |
 
 **Version constants (keep in sync when bumping):**
 
 | Constant | Location | Current | When to bump |
 |----------|----------|---------|--------------|
-| `PARSER_VERSION` | `server/index.js` + `client/.../BookViewer.jsx` | **121** | Any server parser output change |
-| `PAGINATION_MEASUREMENT_VERSION` | `client/.../BookViewer.jsx` only | **24** | Client pagination/measurement logic only |
+| `PARSER_VERSION` | `server/index.js` + `client/.../BookViewer.jsx` (**both**) | Read from those files - do not trust a hardcoded doc number | Any server parser output change |
+| `PAGINATION_MEASUREMENT_VERSION` | `client/.../BookViewer.jsx` only | Read from `BookViewer.jsx` | Client pagination/measurement logic only |
+
+Bump `PARSER_VERSION` in **both** files together. A bump invalidates parsed document caches and forces a from-scratch re-parse. Mismatching the two copies is a recurring footgun.
 
 ---
 
@@ -86,8 +88,9 @@ Booky/
 
 1. Minimal scoped diff - match surrounding naming, imports, comment style.
 2. Bump `PARSER_VERSION` in **both** `server/index.js` and `client/src/components/BookViewer.jsx`.
-3. Run `cd server && npm run regression` (and book-specific debug scripts for affected titles).
-4. For illustrated books: verify chapter count, TOC order, no phantom image boundaries.
+3. Run `cd server; npm run regression` (and `npm run regression:full` or book-specific debug scripts for illustrated titles).
+4. If output intentionally changed, refresh committed snapshots with `npm run regression:update` and include them in the same change.
+5. For illustrated books: verify chapter count, TOC order, no phantom image boundaries.
 
 **Style / lint:**
 
@@ -100,7 +103,11 @@ Booky/
 
 **Debug flags (never leave enabled in production):**
 
-`BOOKY_FRONTMATTER_DEBUG`, `BOOKY_CHAPTER_GRAPHIC_DEBUG`, `BOOKY_TOC_ORDER_DEBUG`, `BOOKY_TOC_MISS_DEBUG`, `BOOKY_HEADING_DEBUG`, `BOOKY_SUBTITLE_DEBUG`, `BOOKY_BB_DEBUG`
+`BOOKY_FRONTMATTER_DEBUG`, `BOOKY_CHAPTER_GRAPHIC_DEBUG`, `BOOKY_TOC_ORDER_DEBUG`, `BOOKY_TOC_MISS_DEBUG`, `BOOKY_HEADING_DEBUG`, `BOOKY_SUBTITLE_DEBUG`, `BOOKY_BB_DEBUG`, `BOOKY_OCR_DEBUG`
+
+**Ops / concurrency env (not debug logging):**
+
+`BOOKY_REPARSE_ON_BOOT`, `BOOKY_TEXT_EXTRACTION_CONCURRENCY`, `BOOKY_IMAGE_EXTRACTION_CONCURRENCY`
 
 ---
 
@@ -111,7 +118,7 @@ Booky/
 - **Ch69 "Justice" / Ch70 "Sea Of Glass"** - corrected in v116. The v115 "bannerless ch69" model was WRONG: ch69 has a real arch banner (p1052, followed by the Tanatanev death-rattle epigraph + Navani warcamp prose) and ch70 has one too (p1074, followed by Shallan's hospital-room prose and the Shadesmar beads scene). Through v115 the p1074 arch was silently suppressed because unanchored `/sketchbook/i` in `isMapOrGalleryIllustration`'s +-1-page scan matched ordinary narration on p1075 ("...a blank page in her sketchbook"), and `bannerlessReconcile` then papered over the missing slot by skipping ch69 + Part Five at the cursor, mislabeling p1052 as ch70 (both TOC entries navigated to Justice; Sea Of Glass was unreachable). v116 removed `bannerlessReconcile`/`bannerlessChapterAfter` entirely, start-anchored all caption patterns, and added a caption line-length gate. Both plates (p1051, p1073) stay plain illustrations. Verify this region with content evidence (Navani/Shallan/Jasnah name counts between arches), never with title greps - contiguous numbering does NOT prove correct anchoring.
 - **False part-divider match on p1051** historically skipped printed-TOC slots and shifted the tail; the portrait-band carve-out in `isLikelyStructuralPartDividerPlate` prevents this - do not remove it.
 - **Parts Four/Five** exist in printed-TOC cursor but are **absent from reader TOC** by design (no text headings, filtered from image boundaries). Separate future work.
-- **WoK is NOT in `npm run regression`** - only ad-hoc scripts (`verify-wok-ch68-72.mjs`, `verify-wok-ch9-12.mjs`, `verify-wok-part5.mjs`, `debug-parse-wok.mjs`, `test-wok-graphic-fixes.mjs`, `server/scripts/_toc-verify.mjs`). Easy to regress silently.
+- **WoK is opt-in** via `npm run regression:full` / `--book=way-of-kings` (not in the default 13-book `npm run regression`). Ad-hoc scripts remain useful (`verify-wok-ch68-72.mjs`, `verify-wok-ch9-12.mjs`, `verify-wok-part5.mjs`, `debug-parse-wok.mjs`, `test-wok-graphic-fixes.mjs`, `server/scripts/_toc-verify.mjs`). Easy to regress if you only run the default suite.
 - Stale artifacts (`wok-ch68-72-debug.json`, old logs) show pre-fix behavior - ignore them.
 - The TEMPORARY ch69 diagnostics (`[tocOrderedDump]`, `[regionDump]`, `[cursorTrace]`, `[tocReanchor]`, `[portraitBandScan]`, Step-A dumps) were removed in the cleanup pass; `[bannerlessReconcile]` went with the mechanism in v116. The load-bearing operational logs (`[partCursor]`, `[boundarySummary]`, `[chapterAssign]`, and `printed_toc_banner_slot_rejected` which names the sub-gate on every rejected banner slot) remain behind their debug flags.
 
@@ -122,15 +129,22 @@ Booky/
 - **Sequential OCR** in `finalizeIllustrationBlocks` with a single Tesseract worker - dominant cost for illustrated books (~90-150s for WoK).
 - WoK hits size tier: text/image concurrency forced to **1/1**.
 - `parsed_cache` DB column is always written `null` - no server parse cache benefit today.
+- **Render free-tier RAM (~512MB)** shapes `resolvePdfExtractionConcurrency` - high parallel pdfjs work OOMs or hangs on large illustrated books. Prefer memory-safe designs over local-CPU max throughput.
 
 ### Parser correctness (other books)
 
 - **Monte Cristo** - long prose lines misclassified as headings; blocking checks may still fail.
-- **Moby Dick** - regression **skips** `noMidSentenceHeadings` and `headingDensitySane` - can pass while broken.
-- **Treasure Island** - part titles, drop-caps, image boundaries (14+ debug scripts).
+- **Moby Dick** - regression **skips** `indentationConsistency` and `headingDensitySane` - can pass those while still having other debt (e.g. dialogue-split warnings/failures).
+- **Treasure Island** - part titles, drop-caps, image boundaries (many debug scripts).
 - **Oliver Twist** - drop-cap fused subtitles, truncated chapter titles.
 - **Aesop's Fables** - poetry collection / story-title paths.
 - **1984** - embedded Goldstein roman chapters must stay as body text, not TOC entries.
+
+### Known open / accepted state
+
+- **Maya Angelou - "On the Pulse of Morning":** no title in the PDF text layer at the poem opening; harness marks `[KNOWN GAP]` and deliberately fails that assertion rather than inventing a synthetic boundary.
+- **Maya Angelou - "Shaker, Why Don't You Sing?":** collection/section title promoted as a chapter in current output (present in the committed snapshot; not a printed Contents poem in `_maya-titles.mjs`). Accepted extra for now - do not "fix" by deleting it without a dedicated poetry-TOC pass.
+- **Deferred prose-reflow review:** `endsWithSentenceTerminator` (multi-closer after `[.!?]`) is wired only into the heading-continuation gate. Widening the same test inside `isProseLineContinuation` / dialogue-split / extract-merge moved block boundaries on most sample books; those consumers stay on the legacy single-closer pattern until a dedicated reflow review. Related dialogue-split debt across several prose books is likely the same underlying issue.
 
 ### Client TOC assembly (`BookViewer.jsx`)
 
@@ -151,7 +165,7 @@ Booky/
 
 ### Repo hygiene debt
 
-- ~60 ad-hoc scripts under `server/scripts/` (39 `debug-*.mjs` plus `test-*`/`verify-*`/misc), committed log files (`server/*.log`, e.g. `wok-cursor.log`, `wok-stepA.log`, `toc-verify.log` - these violate the "don't commit log dumps" rule in §3 but are already in the repo).
+- Many ad-hoc scripts under `server/scripts/` (~40 `debug-*.mjs` plus `test-*`/`verify-*`/misc), committed log files (`server/*.log`, e.g. `wok-cursor.log`, `wok-stepA.log`, `toc-verify.log` - these violate the "don't commit log dumps" rule in §3 but are already in the repo).
 - Root `package.json` `canvas` dep unused. (`visionService.js` and `client/src/lib/supabase.js` were deleted in the cleanup pass.)
 
 ---
@@ -162,12 +176,16 @@ Booky/
 - **Exclusions:** Do not read or analyze `client/src/assets/*.pdf`, `server/scripts/.index-backup.js`, `server/scripts/.index-054fc07.js`, `*.log`, `wok-*.txt`, `eng.traineddata`, `node_modules/`, build output, or minified bundles.
 - **Brevity:** Skip conversational filler and long post-code narration. State what changed, why, and how to verify.
 - **Investigation:** Use `grep`/`glob` before reading multi-thousand-line files; read only the relevant function regions.
+- **Ground-truth convention (harness):** Book-specific assertions must come from the edition's printed TOC (raw pdfjs/`pdftotext`) or a reliable external source - never from current parser output (self-derived expectations hide truncation).
 - **Verification commands:**
   ```bash
-  cd server && npm run regression
-  cd server && npm run regression -- --book=orwell1984
-  cd server && node scripts/debug-parse-wok.mjs
-  cd server && node scripts/test-all-assets.mjs
+  cd server; npm run regression
+  cd server; npm run regression -- --book=orwell1984
+  cd server; npm run regression:full
+  cd server; npm run test:assets
+  cd server; node scripts/debug-parse-wok.mjs
   ```
-- **Regression books in harness:** `oldman`, `orwell1984`, `monte-cristo`, `pride-prejudice`, `moby-dick` (PDFs in `client/src/assets/`).
-- **Test PDFs NOT in harness:** WoK, Treasure Island, Oliver Twist, Aesop's Fables, Frankenstein, Jungle Book, Narnia, Metamorphosis, Maya Angelou.
+- **Default regression (13):** `oldman`, `orwell1984`, `monte-cristo`, `pride-prejudice`, `moby-dick`, `treasure-island`, `frankenstein`, `oliver-twist`, `jungle-book`, `aesop`, `metamorphosis`, `narnia`, `maya-angelou`.
+- **Opt-in (`regression:full`):** also `way-of-kings`.
+- **General checks:** 12 in `server/scripts/regression/checks.mjs` (see regression README for blocking vs advisory).
+- **Snapshots:** committed under `server/scripts/regression/snapshots/` (refreshed with `npm run regression:update` when output intentionally changes).

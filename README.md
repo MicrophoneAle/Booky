@@ -1,6 +1,6 @@
 # Booky
 
-Booky turns PDF ebooks into a clean, chapter-aware reading experience in the browser. Upload a PDF; Booky extracts text and illustrations, detects chapters, and lays out paginated pages tuned for comfortable reading — with adjustable typography, progress tracking, a table of contents, and optional reformatted exports.
+Booky turns PDF ebooks into a clean, chapter-aware reading experience in the browser. Upload a PDF; Booky extracts text and illustrations, detects chapters, and lays out paginated pages tuned for comfortable reading - with adjustable typography, progress tracking, a table of contents, and optional reformatted exports.
 
 **Live app:** [booky-lemon.vercel.app](https://booky-lemon.vercel.app)
 
@@ -71,10 +71,10 @@ Booky is not a PDF renderer that paints the original page bitmap. It rebuilds a 
 
 | Constant | Location | Role |
 |----------|----------|------|
-| `PARSER_VERSION` | `server/index.js` **and** `client/.../BookViewer.jsx` | Any change to server parse output. Currently **119**. |
-| `PAGINATION_MEASUREMENT_VERSION` | `client/.../BookViewer.jsx` only | Client layout/measurement logic only. Currently **24**. |
+| `PARSER_VERSION` | `server/index.js` **and** `client/src/components/BookViewer.jsx` (both required) | Any change to server parse output. Read the integer from those files - do not trust a number copied into docs. |
+| `PAGINATION_MEASUREMENT_VERSION` | `client/src/components/BookViewer.jsx` only | Client layout/measurement logic only. |
 
-Bump `PARSER_VERSION` on both sides whenever parsed blocks, chapter metadata, or TOC-related server output changes. Bump only the measurement version when pagination packing changes but stored documents stay valid.
+**Hard rule:** `PARSER_VERSION` is duplicated in server and client and **must be bumped in both places together**. A bump invalidates stored `parser_version` documents and the client pagination cache, forcing a from-scratch re-parse. Bumping only one side is a recurring footgun. Bump only `PAGINATION_MEASUREMENT_VERSION` when pagination packing changes but stored documents stay valid.
 
 ---
 
@@ -189,7 +189,7 @@ Image candidates are inserted into the block stream near their source page coord
 | `illustration` | Mid-size inline art that is not a banner |
 | *(null / discarded)* | Too small or decorative to keep |
 
-Portrait-tall plates are explicitly **not** treated as chapter arches — a common failure mode for books that mix character art with real arch banners on the next page.
+Portrait-tall plates are explicitly **not** treated as chapter arches - a common failure mode for books that mix character art with real arch banners on the next page.
 
 ### Phase 6 — Finalize illustrations (`finalizeIllustrationBlocks`)
 
@@ -198,7 +198,7 @@ For each candidate, in document order:
 1. **Front-matter gate:** Art at or before the prologue (or prelude) text heading cannot consume chapter slots or advance the printed-TOC cursor.
 2. **Skip rules:** End-of-chapter tall art, spread continuations, map/gallery captions, flashbacks, etc. fall back to non-boundary images (`SAFE_FALLBACK`).
 3. **OCR (selective):** Tesseract may read stone plaques / divider text when the image looks like a header or section plate and page text is sparse enough. A single shared worker runs OCR sequentially (dominant cost on illustrated books).
-4. **Context analysis** (`analyzeChapterGraphicFromContext`): Combines role, nearby captions (start-anchored only — never free substring matches against prose), following epigraph/narrative signals, and OCR.
+4. **Context analysis** (`analyzeChapterGraphicFromContext`): Combines role, nearby captions (start-anchored only - never free substring matches against prose), following epigraph/narrative signals, and OCR.
 5. **Printed-TOC sequential cursor:** When a printed TOC exists, accepted chapter banners take the *next* ordered slot (`takeNextSequentialTocEntry…`). Part plates and interlude dividers advance or seek the cursor so numbering stays aligned. Duplicate boundary keys are rejected and rewind the cursor.
 6. Emit final `image` blocks with `isChapterBoundary`, `chapterMetadata` (`boundaryKind`, number, title), and storage-ready payloads.
 
@@ -254,7 +254,7 @@ The result stored in Supabase is:
 | Saddleback / numbered short-story books | Printed TOC + numbered openers |
 | Heavily illustrated / Stormlight | Geometry roles + OCR + printed-TOC cursor; front-matter art gated; portrait plates ≠ chapter banners |
 
-Way of Kings is the highest-complexity fixture and is **not** in the default regression harness — use the WoK-specific verify/debug scripts under `server/scripts/` when changing illustration or TOC cursor code.
+Way of Kings is the highest-complexity fixture. It is **not** in the default `npm run regression` suite (13 books); include it with `npm run regression:full` or `--book=way-of-kings`. Prefer WoK-specific verify/debug scripts under `server/scripts/` for targeted illustration or TOC-cursor changes.
 
 ---
 
@@ -353,28 +353,37 @@ VITE_API_URL=http://localhost:3000
 npm run dev    # http://localhost:5173
 ```
 
-### Debug flags (dev only — never leave on in production)
+### Debug flags (dev only - never leave on in production)
 
-`BOOKY_FRONTMATTER_DEBUG`, `BOOKY_CHAPTER_GRAPHIC_DEBUG`, `BOOKY_TOC_ORDER_DEBUG`, `BOOKY_TOC_MISS_DEBUG`, `BOOKY_HEADING_DEBUG`, `BOOKY_SUBTITLE_DEBUG`, `BOOKY_BB_DEBUG`
+`BOOKY_FRONTMATTER_DEBUG`, `BOOKY_CHAPTER_GRAPHIC_DEBUG`, `BOOKY_TOC_ORDER_DEBUG`, `BOOKY_TOC_MISS_DEBUG`, `BOOKY_HEADING_DEBUG`, `BOOKY_SUBTITLE_DEBUG`, `BOOKY_BB_DEBUG`, `BOOKY_OCR_DEBUG`
+
+Ops / concurrency (not debug logging): `BOOKY_REPARSE_ON_BOOT`, `BOOKY_TEXT_EXTRACTION_CONCURRENCY`, `BOOKY_IMAGE_EXTRACTION_CONCURRENCY`.
 
 ---
 
 ## Regression & verification
-**Parser version** is defined by `PARSER_VERSION` in `server/index.js` and `client/src/components/BookViewer.jsx` (currently `120` - the two must match). Bump both when parser output changes so cached pagination and stored documents re-parse correctly.
+
+`PARSER_VERSION` lives in **both** `server/index.js` and `client/src/components/BookViewer.jsx` and must always match. Read the current value from those files (docs that hardcode it go stale quickly). Bump both when parser output changes so stored documents and the client pagination cache invalidate and re-parse from scratch.
+
+Book-specific harness assertions must be derived independently of parser output (printed TOC via raw pdfjs/`pdftotext`, or a reliable external source for that edition) - never from a fresh `parsePdfBuffer` run of the same book. Details: [server/scripts/regression/README.md](server/scripts/regression/README.md).
 
 ### Regression tests
 
 Place test PDFs in `client/src/assets/`, then from `server/`:
 
 ```bash
-npm run regression
+npm run regression              # 13 books (excludes Way of Kings)
 npm run regression -- --book=orwell1984
-npm run regression:update   # refresh local snapshots
+npm run regression:full         # all 14 sample PDFs, including Way of Kings
+npm run regression:update       # rewrite committed snapshots after intentional output changes
+npm run test:assets             # lightweight parse of every PDF under client/src/assets/
 ```
 
-**Harness books:** `oldman`, `orwell1984`, `monte-cristo`, `pride-prejudice`, `moby-dick`.
+**Default harness (13):** `oldman`, `orwell1984`, `monte-cristo`, `pride-prejudice`, `moby-dick`, `treasure-island`, `frankenstein`, `oliver-twist`, `jungle-book`, `aesop`, `metamorphosis`, `narnia`, `maya-angelou`.
 
-Blocking checks include mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, and word count vs raw PDF (when `pdftotext` is available). See [server/scripts/regression/README.md](server/scripts/regression/README.md).
+**Opt-in:** `way-of-kings` via `regression:full` or `--book=way-of-kings` (OCR-heavy; minutes, not seconds).
+
+There are **12** general checks in `checks.mjs` (blocking vs advisory). Blocking checks include mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, and word count vs raw PDF (when `pdftotext` is available). Snapshots under `server/scripts/regression/snapshots/` are **committed** and diffed on every run.
 
 **Diff a single PDF:**
 
@@ -387,8 +396,9 @@ When changing the parser:
 
 1. Keep the diff scoped; match surrounding conventions.
 2. Bump `PARSER_VERSION` in **both** server and client.
-3. Run `npm run regression` (plus book-specific scripts for illustrated titles).
+3. Run `npm run regression` (plus `regression:full` or book-specific scripts for illustrated titles).
 4. For illustrated books, verify chapter count, TOC order, and that portrait plates are not phantom chapter boundaries.
+5. If parse output intentionally changed, refresh snapshots with `npm run regression:update` and commit them with the code change.
 
 ---
 
@@ -396,6 +406,8 @@ When changing the parser:
 
 - **Client:** Deploy `client/` to Vercel. Set `VITE_CLERK_PUBLISHABLE_KEY` and `VITE_API_URL` (your Render API URL).
 - **Server:** Deploy `server/` to Render (or similar). Set Clerk, Supabase, and `CLIENT_URL` / `ALLOWED_ORIGINS` to your Vercel origin (e.g. `https://booky-lemon.vercel.app`).
+
+The API is sized for a small Render instance. `resolvePdfExtractionConcurrency` in `server/index.js` deliberately caps parallel pdfjs work for large illustrated PDFs because the free-tier **512MB** RAM profile OOMs or hangs under high concurrency. That constraint should shape optimization choices more than raw local CPU throughput.
 
 CORS allows `localhost:5173`, `localhost:4173`, and `https://booky-lemon.vercel.app` by default; add more via `ALLOWED_ORIGINS` (comma-separated). Vercel preview URLs matching `*.vercel.app` are also accepted.
 

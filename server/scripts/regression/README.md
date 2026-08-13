@@ -42,7 +42,7 @@ scripts/regression/
   run.mjs           # Entry point
   checks.mjs        # General checks (exported functions)
   helpers.mjs       # Shared assertion helpers (contiguity, roman/arabic)
-  snapshots/        # Gitignored JSON baselines
+  snapshots/        # Committed JSON baselines (diffed on every run)
   books/
     oldman.mjs
     orwell1984.mjs
@@ -79,11 +79,11 @@ npm run test:assets
 
 ### Current baseline
 
-- **oldman** and **orwell1984**: pass blocking checks and book-specific assertions (parity with legacy scripts).
-- **monte-cristo**: book-specific assertions pass; blocking check may still flag rare false headings (e.g. long prose lines misclassified). Fix in `index.js`, then re-run with `--update-snapshots`.
-- **pride-prejudice**: passes all blocking checks, assertions, and snapshot diff.
-- **moby-dick**: book-specific assertions pass; `dialogueSplitCheck` may still flag a handful of quoted short lines after mid-sentence prose.
-- Snapshots are gitignored and currently stale for several books (many frozen at older `parserVersion` values). Snapshot refresh is a separate triage task - do not `--update-snapshots` casually.
+- Snapshots for all 14 books are **committed** under `snapshots/` and were refreshed at `PARSER_VERSION` 134 (`75610b9`). Normal runs fail on snapshot drift without needing a prior `--update-snapshots` on a fresh clone.
+- Book-specific assertions follow the ground-truth convention below. Maya Angelou intentionally fails `[KNOWN GAP] On the Pulse of Morning` (no title in the PDF text layer); see `maya-angelou.mjs`.
+- Moby Dick skips `indentationConsistency` and `headingDensitySane` via `skipGeneralChecks`.
+- Advisory general checks (watermarks, dialogue attribution centering, orphaned fragments, paragraph continuity, indentation) report as `[WARN]` and do not fail the run - they surface ongoing prose-reflow / dialogue-split debt without blocking structural parity.
+- Only refresh snapshots with `npm run regression:update` when parser output **intentionally** changed, then commit the JSON with the code change.
 
 ## Ground-truth convention
 
@@ -119,7 +119,7 @@ export default {
 node scripts/regression/run.mjs --book=mybook
 ```
 
-6. Commit the book config; snapshots stay local (gitignored) unless you choose to check them in after a dedicated refresh.
+6. Commit the book config **and** its snapshot JSON after an intentional `--update-snapshots` run for that book.
 
 ## Book config
 
@@ -151,12 +151,14 @@ Each book exports:
 
 ## Snapshots
 
-Written to `snapshots/<id>.json` with `--update-snapshots`. Normal runs diff:
+Written to `snapshots/<id>.json` with `--update-snapshots` (`npm run regression:update`). These files are **tracked in git**. Normal runs diff against the committed baseline:
 
 - Word count ± 2%
 - Chapter count and titles
 - Heading count ± 10%
 - First / last block text (first 80 chars)
+
+Do not treat `--update-snapshots` as a prerequisite for drift detection on a fresh clone - the baselines are already present. Refresh only when parser output is meant to change.
 
 ## Extending checks
 
