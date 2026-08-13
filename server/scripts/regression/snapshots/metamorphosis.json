@@ -1,0 +1,16 @@
+{
+  "parserVersion": 134,
+  "totalBlocks": 123,
+  "totalWords": 22562,
+  "chapterCount": 3,
+  "chapterTitles": [
+    "I",
+    "II",
+    "III"
+  ],
+  "firstBlockText": "The Metamorphosis",
+  "lastBlockText": "‘This evening she’ll be let go,’ said Mr. Samsa, but he got no answer from eithe",
+  "headingCount": 6,
+  "avgBlockLength": 993,
+  "proseBlockCount": 117
+}
