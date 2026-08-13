@@ -43,8 +43,7 @@ Booky/
 │   └── scripts/
 │       ├── regression/                 # `npm run regression` (13) / `regression:full` (14); 12 general checks
 │       ├── debug-*.mjs                 # Ad-hoc book-specific diagnostics (~40 scripts)
-│       ├── test-*.mjs, verify-*.mjs    # More ad-hoc diagnostics (not debug-* prefixed)
-│       └── .index-backup.js            # STALE - do not edit or import
+│       └── test-*.mjs, verify-*.mjs    # More ad-hoc diagnostics (not debug-* prefixed)
 ├── supabase/migrations/                # parser_version, parse_status, parse_progress, parsed_cache
 └── README.md
 ```
@@ -80,9 +79,8 @@ Bump `PARSER_VERSION` in **both** files together. A bump invalidates parsed docu
 - **Do not alter Supabase migrations in place** - add new migrations only (`supabase/migrations/`).
 - **Do not widen global chapter-arch geometry thresholds** in `chapterGraphicService.js` / `pdfImageRoleUtils.js` without regression on WoK, Treasure Island, Oliver Twist - phantom chapters are the usual failure mode.
 - **Do not promote portrait illustration plates to chapter banners** - WoK ch69/ch70 openers (p1051/p1073) are plain art; both chapters have real arch banners (p1052/p1074). Keep `NON_CHAPTER_CAPTION_PATTERNS` / `MAP_OR_DIVIDER_TEXT_PATTERNS` start-anchored and caption-length-gated - unanchored substring matching against nearby prose is what suppressed the ch70 arch through v115.
-- **Do not edit** `server/scripts/.index-backup.js` or `.index-054fc07.js` - orphaned snapshots at PARSER_VERSION 97-100.
 - **Do not force-push** `main`; do not skip git hooks unless explicitly requested.
-- **Do not commit** `.env`, secrets, or large log dumps (`wok-*.log`, `toc-verify.log`).
+- **Do not commit** `.env`, secrets, or large log dumps (`wok-*.log`, `wok-*.txt`, `toc-verify.log`, `*-debug.json` under `server/scripts/`).
 
 **Parser change protocol:**
 
@@ -119,7 +117,7 @@ Bump `PARSER_VERSION` in **both** files together. A bump invalidates parsed docu
 - **False part-divider match on p1051** historically skipped printed-TOC slots and shifted the tail; the portrait-band carve-out in `isLikelyStructuralPartDividerPlate` prevents this - do not remove it.
 - **Parts Four/Five** exist in printed-TOC cursor but are **absent from reader TOC** by design (no text headings, filtered from image boundaries). Separate future work.
 - **WoK is opt-in** via `npm run regression:full` / `--book=way-of-kings` (not in the default 13-book `npm run regression`). Ad-hoc scripts remain useful (`verify-wok-ch68-72.mjs`, `verify-wok-ch9-12.mjs`, `verify-wok-part5.mjs`, `debug-parse-wok.mjs`, `test-wok-graphic-fixes.mjs`, `server/scripts/_toc-verify.mjs`). Easy to regress if you only run the default suite.
-- Stale artifacts (`wok-ch68-72-debug.json`, old logs) show pre-fix behavior - ignore them.
+- Do not re-commit WoK debug dumps under `server/` or `server/scripts/` - they encode pre-v116 cursor behavior.
 - The TEMPORARY ch69 diagnostics (`[tocOrderedDump]`, `[regionDump]`, `[cursorTrace]`, `[tocReanchor]`, `[portraitBandScan]`, Step-A dumps) were removed in the cleanup pass; `[bannerlessReconcile]` went with the mechanism in v116. The load-bearing operational logs (`[partCursor]`, `[boundarySummary]`, `[chapterAssign]`, and `printed_toc_banner_slot_rejected` which names the sub-gate on every rejected banner slot) remain behind their debug flags.
 
 ### Parse performance
@@ -165,15 +163,14 @@ Bump `PARSER_VERSION` in **both** files together. A bump invalidates parsed docu
 
 ### Repo hygiene debt
 
-- Many ad-hoc scripts under `server/scripts/` (~40 `debug-*.mjs` plus `test-*`/`verify-*`/misc), committed log files (`server/*.log`, e.g. `wok-cursor.log`, `wok-stepA.log`, `toc-verify.log` - these violate the "don't commit log dumps" rule in §3 but are already in the repo).
-- Root `package.json` `canvas` dep unused. (`visionService.js` and `client/src/lib/supabase.js` were deleted in the cleanup pass.)
+- Many ad-hoc scripts under `server/scripts/` (~40 `debug-*.mjs` plus `test-*`/`verify-*`/misc). Prefer the regression harness for parity; keep ad-hoc scripts only when they probe regions the harness does not cover.
 
 ---
 
 ## 5. Token Efficiency & Output Protocols (Strict)
 
 - **Code modifications:** Targeted snippets or focused diffs. Do not dump entire `index.js` or `BookViewer.jsx` unless explicitly requested as complete drop-in functions.
-- **Exclusions:** Do not read or analyze `client/src/assets/*.pdf`, `server/scripts/.index-backup.js`, `server/scripts/.index-054fc07.js`, `*.log`, `wok-*.txt`, `eng.traineddata`, `node_modules/`, build output, or minified bundles.
+- **Exclusions:** Do not read or analyze `client/src/assets/*.pdf`, `*.log`, `wok-*.txt`, `eng.traineddata`, `node_modules/`, build output, or minified bundles.
 - **Brevity:** Skip conversational filler and long post-code narration. State what changed, why, and how to verify.
 - **Investigation:** Use `grep`/`glob` before reading multi-thousand-line files; read only the relevant function regions.
 - **Ground-truth convention (harness):** Book-specific assertions must come from the edition's printed TOC (raw pdfjs/`pdftotext`) or a reliable external source - never from current parser output (self-derived expectations hide truncation).

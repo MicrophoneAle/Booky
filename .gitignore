@@ -6,3 +6,11 @@ client/.env
 client/node_modules
 server/node_modules
 .tmp/
+
+# Debug / scratch dumps (do not commit)
+*.log
+server/wok-*.txt
+server/wok-*.log
+tmp-img-metrics.txt
+server/scripts/*-debug.json
+supabase/.temp/
