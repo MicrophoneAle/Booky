@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 134
+const PARSER_VERSION = 135
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -11577,6 +11577,30 @@ function shouldStartNewProseBlock(line, previousBlock, entry = null, previousEnt
     isQuotedEpistolarySalutationLine(prevTrim)
   ) {
     return true
+  }
+
+  // Opening quotation on a later PDF page is a new utterance when either (a)
+  // there is a skipped page between (Stormlight empty illustration plate before
+  // the chapter epigraph) or (b) the previous line already finished a sentence.
+  // The shared isProseLineContinuation treats leading \u201c as continuation,
+  // which glued those quotes onto the prior chapter's last paragraph (wrong
+  // sourcePdfPageIndex); splitDialogueHeavyBlocks then re-split them while
+  // inheriting that page, so the quote appeared before the chapter banner.
+  // Cross-page only - same-page dialogue merge/split is unchanged.
+  if (
+    previousBlock &&
+    entry &&
+    previousEntry &&
+    entry.pageIndex !== previousEntry.pageIndex &&
+    /^["\u201c]/.test(text)
+  ) {
+    const pageGap = entry.pageIndex - previousEntry.pageIndex
+    if (
+      pageGap >= 2 ||
+      /[.!?]["'\u201d]?\s*$/.test(prevTrim)
+    ) {
+      return true
+    }
   }
 
   if (previousBlock && isProseLineContinuation(text, previousBlock)) {
