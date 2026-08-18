@@ -456,6 +456,142 @@ export function wordCountVsRaw(blocks, config) {
   return result([], summary)
 }
 
+function normalizeWhitespace(text) {
+  return String(text ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function normalizeForMatch(text) {
+  return normalizeWhitespace(text)
+    .replace(/[\u2018\u2019]/g, "'")
+    .toLowerCase()
+}
+
+function firstWord(text) {
+  const cleaned = normalizeWhitespace(text)
+  const match = cleaned.match(/^[A-Za-z0-9]+/)
+  return match ? match[0].toLowerCase() : ""
+}
+
+function buildLinePrefixIndex(pageData) {
+  if (!Array.isArray(pageData)) return null
+
+  // Map: firstWord -> array of { pageIndex, lineTextNorm }.
+  const index = new Map()
+
+  for (let pageIndex = 0; pageIndex < pageData.length; pageIndex += 1) {
+    const lines = pageData[pageIndex]?.lines ?? []
+    for (const line of lines) {
+      const norm = normalizeForMatch(line?.text)
+      if (!norm) continue
+      // Avoid noisy candidates where matching is driven by very short/common
+      // leading tokens (e.g. single words like "way.").
+      if (norm.length < 8) continue
+
+      const key = firstWord(norm)
+      if (!key) continue
+
+      if (!index.has(key)) index.set(key, [])
+      index.get(key).push({ pageIndex, lineTextNorm: norm })
+    }
+  }
+
+  return index
+}
+
+/**
+ * Asserts that a block's sourcePdfPageIndex matches where its text appears
+ * in the extracted pdf text layer.
+ *
+ * "Consistent" is defined explicitly:
+ *   - For non-image blocks with finite sourcePdfPageIndex and non-empty text,
+ *     we locate "constituent lines" as those extracted pageData lines whose
+ *     normalized text is a prefix of the block's normalized text.
+ *   - The block's "first constituent line page" is the minimum pageIndex
+ *     among all such matching lines across the whole document.
+ *   - Blocks with zero matching constituent lines are treated as synthesized
+ *     (e.g. injected title/byline blocks) and are not reported as violations.
+ *
+ * Categorization:
+ *   - "merge" if matching constituent lines span multiple pages.
+ *   - "reorder" if matching constituent lines are on a single page but that
+ *     page differs from block.sourcePdfPageIndex.
+ */
+export function sourcePdfPageIndexConsistentWithConstituentLines(
+  blocks,
+  config
+) {
+  const failures = []
+
+  const linePrefixIndex = buildLinePrefixIndex(config?.pageData)
+  if (!linePrefixIndex) {
+    return {
+      pass: false,
+      failures: ["sourcePdfPageIndex consistency check could not build pageData index"],
+      summary: "missing pageData",
+    }
+  }
+
+  let synthCount = 0
+  let mergeCount = 0
+  let reorderCount = 0
+
+  blocks.forEach((block, blockIndex) => {
+    if (!block || block.type === "image") return
+
+    const srcPage = block?.sourcePdfPageIndex
+    if (!Number.isFinite(srcPage)) return
+
+    // Injected cover/title/byline blocks are synthetic; don't attempt to
+    // reconcile them against raw extracted line text.
+    if (block?.isTitlePage === true) {
+      synthCount += 1
+      return
+    }
+
+    const text = block?.text ?? ""
+    const textNorm = normalizeForMatch(text)
+    if (!textNorm) return
+
+    const key = firstWord(textNorm)
+    const candidates = linePrefixIndex?.get(key) ?? []
+    const pages = new Set()
+    for (const c of candidates) {
+      if (textNorm.startsWith(c.lineTextNorm)) {
+        pages.add(c.pageIndex)
+      }
+    }
+
+    if (pages.size === 0) {
+      synthCount += 1
+      return
+    }
+
+    const firstConstituentPage = Math.min(...pages)
+    const mismatch = !pages.has(srcPage)
+    if (!mismatch) return
+
+    if (pages.size > 1) {
+      mergeCount += 1
+      failures.push(
+        `[block ${blockIndex}] [MERGE] src=${srcPage} firstConstituent=${firstConstituentPage} matchPages=${Array.from(pages)
+          .sort((a, b) => a - b)
+          .join(",")} text='${truncate(text, 140)}'`
+      )
+      return
+    }
+
+    reorderCount += 1
+    failures.push(
+      `[block ${blockIndex}] [REORDER] src=${srcPage} firstConstituent=${firstConstituentPage} text='${truncate(text, 140)}'`
+    )
+  })
+
+  const summary = `violations: reorder=${reorderCount}, merge=${mergeCount}, synthesizedBlocksSkipped=${synthCount}`
+  return result(failures, failures.length ? summary : "no violations found")
+}
+
 export function chapterStructureSane(blocks, config) {
   const failures = []
   const chapters = config?.chapters ?? []
@@ -736,6 +872,12 @@ export const GENERAL_CHECKS = [
     id: "dialogueSplitCheck",
     label: "Dialogue split check",
     run: dialogueSplitCheck,
+  },
+  {
+    id: "sourcePdfPageIndexConsistentWithConstituentLines",
+    label:
+      "Block sourcePdfPageIndex matches constituent text lines",
+    run: sourcePdfPageIndexConsistentWithConstituentLines,
   },
 ]
 
