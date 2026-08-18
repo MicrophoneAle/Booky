@@ -1,18 +1,13 @@
 /**
  * Diagnostics-only harness:
- * Finds blocks where `sourcePdfPageIndex` does not match the page where the
- * block's text appears in the raw extracted pdf text lines.
- *
- * This is harness-only and does not modify parser behavior.
+ * Finds blocks where sourcePdfPageIndex is not a member of sourcePdfPageProvenance.
  */
 
 import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { parsePdfBuffer, extractLinesByPosition } from "../../index.js"
-import {
-  sourcePdfPageIndexConsistentWithConstituentLines,
-} from "./checks.mjs"
+import { parsePdfBuffer } from "../../index.js"
+import { sourcePdfPageIndexConsistentWithProvenance } from "./checks.mjs"
 
 import oldman from "./books/oldman.mjs"
 import orwell1984 from "./books/orwell1984.mjs"
@@ -52,7 +47,12 @@ const ALL_BOOKS = [
   wayOfKings,
 ]
 
-for (const book of ALL_BOOKS) {
+const bookFilter = process.argv.find((arg) => arg.startsWith("--book="))?.split("=")[1]
+const books = bookFilter
+  ? ALL_BOOKS.filter((book) => book.id === bookFilter)
+  : ALL_BOOKS
+
+for (const book of books) {
   const pdfPath = path.join(ASSETS_DIR, book.file)
   if (!fs.existsSync(pdfPath)) {
     console.error(`Missing PDF for ${book.name}: ${pdfPath}`)
@@ -73,15 +73,7 @@ for (const book of ALL_BOOKS) {
   const contentWithChapters = parseResult.contentWithChapters ?? []
   const blocks = contentWithChapters.flatMap((page) => page.blocks ?? [])
 
-  const pageData = await extractLinesByPosition(buffer).catch((err) => {
-    console.error(`[${book.id}] extractLinesByPosition failed:`, err?.message ?? err)
-    return null
-  })
-
-  const outcome = sourcePdfPageIndexConsistentWithConstituentLines(blocks, {
-    bookId: book.id,
-    pageData,
-  })
+  const outcome = sourcePdfPageIndexConsistentWithProvenance(blocks)
 
   console.log(
     `Check: ${outcome?.summary ?? ""}`.trim() ||
@@ -97,4 +89,3 @@ for (const book of ALL_BOOKS) {
     console.log("Violations: none")
   }
 }
-

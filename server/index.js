@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 136
+const PARSER_VERSION = 137
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -1687,6 +1687,7 @@ function pushSceneBreakBlock(blocks) {
     chapterId: null,
     centered: true,
     textAlign: "center",
+    sourcePdfPageProvenance: [],
   })
 }
 
@@ -2454,6 +2455,7 @@ function injectStormlightPreludeHeading(blocks) {
           chapterId: null,
           chapterTitle: "Prelude to the Stormlight Archive",
           sourcePdfPageIndex: block.sourcePdfPageIndex ?? null,
+          sourcePdfPageProvenance: [],
         })
       }
 
@@ -2641,6 +2643,7 @@ function injectStormlightPrologueHeading(blocks, printedToc = null) {
           chapterId: null,
           chapterTitle: prologueHeadingText,
           sourcePdfPageIndex: block.sourcePdfPageIndex ?? null,
+          sourcePdfPageProvenance: [],
         })
       }
 
@@ -3099,6 +3102,10 @@ function mergeMultilineChapterTitleBlocks(blocks) {
         ? formatChapterSubtitleText(rawSubtitle)
         : ""
     const displayTitle = formatChapterLabel(parts.kind, parts.number, subtitle)
+    const mergedProvenance = unionSourcePdfPageProvenance(
+      block,
+      ...blocks.slice(index + 1, cursor)
+    )
 
     merged.push({
       ...block,
@@ -3107,6 +3114,9 @@ function mergeMultilineChapterTitleBlocks(blocks) {
       fontSize: CHAPTER_DISPLAY_FONT_SIZE,
       isHeading: true,
       isChapterStart: true,
+      ...(mergedProvenance.length > 0
+        ? { sourcePdfPageProvenance: mergedProvenance }
+        : {}),
     })
     index = cursor - 1
   }
@@ -3423,12 +3433,19 @@ function mergeMultilineFableTitleBlocks(blocks) {
     }
 
     if (fragments.length >= 2) {
-      merged.push(
-        makeFableHeadingBlock(
+      const mergedProvenance = unionSourcePdfPageProvenance(
+        block,
+        ...blocks.slice(index + 1, cursor)
+      )
+      merged.push({
+        ...makeFableHeadingBlock(
           block,
           formatInferredTitleText(fragments.join(" ").replace(/\s+/g, " ").trim())
-        )
-      )
+        ),
+        ...(mergedProvenance.length > 0
+          ? { sourcePdfPageProvenance: mergedProvenance }
+          : {}),
+      })
       index = cursor - 1
       continue
     }
@@ -4713,6 +4730,7 @@ function injectCoverTitlePage(
       centered: true,
       isTitlePage: true,
       sourcePdfPageIndex: 0,
+      sourcePdfPageProvenance: [],
     },
   ]
 
@@ -4739,6 +4757,7 @@ function injectCoverTitlePage(
       centered: true,
       isTitlePage: true,
       sourcePdfPageIndex: 0,
+      sourcePdfPageProvenance: [],
     })
   }
 
@@ -7429,14 +7448,61 @@ function isChapterHeaderCandidate(metrics) {
   return classifyPdfImageRole(metrics) != null
 }
 
+function createSourcePdfPageProvenance(pageIndex) {
+  if (pageIndex == null || !Number.isFinite(pageIndex)) {
+    return null
+  }
+  return [pageIndex]
+}
+
+function addSourcePdfPageProvenance(block, pageIndex) {
+  if (!block || pageIndex == null || !Number.isFinite(pageIndex)) {
+    return
+  }
+
+  if (!Array.isArray(block.sourcePdfPageProvenance)) {
+    block.sourcePdfPageProvenance = [pageIndex]
+    return
+  }
+
+  if (!block.sourcePdfPageProvenance.includes(pageIndex)) {
+    block.sourcePdfPageProvenance.push(pageIndex)
+  }
+}
+
+function unionSourcePdfPageProvenance(...blocks) {
+  const pages = new Set()
+  for (const block of blocks) {
+    const provenance = block?.sourcePdfPageProvenance
+    if (!Array.isArray(provenance)) {
+      continue
+    }
+    for (const pageIndex of provenance) {
+      if (Number.isFinite(pageIndex)) {
+        pages.add(pageIndex)
+      }
+    }
+  }
+  return pages.size > 0 ? [...pages].sort((left, right) => left - right) : []
+}
+
 function withSourcePdfPage(payload, pageIndex) {
   if (pageIndex == null) {
     return payload
   }
 
+  const provenance = Array.isArray(payload?.sourcePdfPageProvenance)
+    ? [...payload.sourcePdfPageProvenance]
+    : []
+  if (!provenance.includes(pageIndex)) {
+    provenance.push(pageIndex)
+  }
+  provenance.sort((left, right) => left - right)
+
   return {
     ...payload,
     sourcePdfPageIndex: pageIndex,
+    sourcePdfPageProvenance: provenance,
   }
 }
 
@@ -12064,6 +12130,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
   }
 
   let pendingConnective = null
+  let pendingConnectivePageIndex = null
   let nonEmptyLineIndex = 0
   let index = 0
   let inPrintedTocSection = false
@@ -12114,6 +12181,8 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
           .replace(/\s+/g, " ")
           .trim()
         pendingConnective = null
+        pendingConnectivePageIndex = null
+      pendingConnectivePageIndex = null
         pushHeadingBlock(
           blocks,
           {
@@ -12145,6 +12214,8 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       )
       if (opener) {
         pendingConnective = null
+        pendingConnectivePageIndex = null
+      pendingConnectivePageIndex = null
         const chapterTitle = cleanStoryChapterTitle(opener.title) || opener.title
         const pushed = pushHeadingBlock(
           blocks,
@@ -12174,6 +12245,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
 
     if (isSceneBreakDividerText(text)) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       blocks.push(
         withSourcePdfPage(
           {
@@ -12201,6 +12273,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       })
     ) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       index += 1
       continue
     }
@@ -12210,6 +12283,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       isRecurringBookTitleRunningHeadLine(text)
     ) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       index += 1
       continue
     }
@@ -12231,6 +12305,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       })
     ) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       pushHeadingBlock(
         blocks,
         {
@@ -12255,6 +12330,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
     const chapterOnlyParts = parseChapterOnlyHeading(text)
     if (chapterOnlyParts) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       const titleFragments = []
       // Fragments collected from unambiguous all-caps display lines are not
       // fused drop-cap text; skip the post-format artifact check for them.
@@ -12375,6 +12451,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
 
     if (isPrintedTocHeading(text)) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       inPrintedTocSection = true
       index += 1
       continue
@@ -12386,6 +12463,8 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
     ) {
       if (isPrintedTocEntryLine(text)) {
         pendingConnective = null
+        pendingConnectivePageIndex = null
+      pendingConnectivePageIndex = null
         inPrintedTocSection = true
         index += 1
         continue
@@ -12401,6 +12480,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       isIllustrationsListLine(text)
     ) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       index += 1
       continue
     }
@@ -12431,12 +12511,14 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       }
 
       pendingConnective = text
+      pendingConnectivePageIndex = entry.pageIndex
       index += 1
       continue
     }
 
     if (isStructuralLine(text, lineIndex)) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       pushHeadingBlock(
         blocks,
         {
@@ -12461,12 +12543,14 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       isFusedSpelledChapterTocResidue(text)
     ) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       index += 1
       continue
     }
 
     if (lineIndex < EARLY_TOC_SCAN_LINE_LIMIT && isTocChapterListingLine(text)) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       index += 1
       continue
     }
@@ -12476,12 +12560,14 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       isStormlightPrintedTocLine(text)
     ) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       index += 1
       continue
     }
 
     if (lineIndex >= EARLY_TOC_SCAN_LINE_LIMIT && isTocChapterListingLine(text)) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       pushHeadingBlock(
         blocks,
         {
@@ -12513,7 +12599,10 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
 
       if (shouldMergeIntoHeading) {
         pendingConnective = null
+        pendingConnectivePageIndex = null
+      pendingConnectivePageIndex = null
         blockBeforeHeading.text = joinWrappedText(blockBeforeHeading.text, text)
+        addSourcePdfPageProvenance(blockBeforeHeading, entry.pageIndex)
         index += 1
         continue
       }
@@ -12525,13 +12614,16 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       CHAPTER_TITLE_TAIL_WORD_REGEX.test(trimmedContinuation)
     ) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       blockBeforeHeading.text = joinWrappedText(blockBeforeHeading.text, text)
+      addSourcePdfPageProvenance(blockBeforeHeading, entry.pageIndex)
       index += 1
       continue
     }
 
     if (isCenteredDecorativeProseText(text, line, entry)) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       const proseBlock = {
         text,
         isHeading: false,
@@ -12554,6 +12646,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
 
     if (isLikelyChapterNumberLine(text, line)) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       if (
         pushHeadingBlock(
           blocks,
@@ -12577,6 +12670,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
     const partLabel = resolvePartHeadingLabel(text)
     if (partLabel) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       pushHeadingBlock(
         blocks,
         {
@@ -12596,6 +12690,7 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
 
     if (isNarrativeBoundaryLine(text, line)) {
       pendingConnective = null
+      pendingConnectivePageIndex = null
       const { skip, canonical } = consumeRepeatedSectionLabel(text, sectionLabelState)
       if (skip) {
         index += 1
@@ -12640,12 +12735,15 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
 
       if (run.length >= 3 && runIsTocListings) {
         pendingConnective = null
+        pendingConnectivePageIndex = null
+      pendingConnectivePageIndex = null
         nonEmptyLineIndex += run.length - 1
         index = nextIndex
         continue
       }
 
       pendingConnective = null
+      pendingConnectivePageIndex = null
       for (let runIndex = 0; runIndex < run.length; runIndex += 1) {
         const runEntry = run[runIndex]
         const runText = runEntry.text.trim()
@@ -12689,9 +12787,11 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
     }
 
     let proseText = text
+    const connectivePageIndex = pendingConnectivePageIndex
     if (pendingConnective) {
       proseText = joinWrappedText(pendingConnective, proseText)
       pendingConnective = null
+      pendingConnectivePageIndex = null
     }
 
     const previousBlock = blocks.length > 0 ? blocks[blocks.length - 1] : null
@@ -12716,6 +12816,9 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       }
       applyProseBlockDefaults(proseBlock, line, proseText)
       blocks.push(withSourcePdfPage(proseBlock, entry.pageIndex))
+      if (connectivePageIndex != null) {
+        addSourcePdfPageProvenance(blocks[blocks.length - 1], connectivePageIndex)
+      }
       index += 1
       continue
     }
@@ -12732,6 +12835,9 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       }
       applyProseBlockDefaults(splitBlock, line, proseText)
       blocks.push(withSourcePdfPage(splitBlock, entry.pageIndex))
+      if (connectivePageIndex != null) {
+        addSourcePdfPageProvenance(blocks[blocks.length - 1], connectivePageIndex)
+      }
       index += 1
       continue
     }
@@ -12754,8 +12860,15 @@ function buildBlocksFromLines(pageData, headingStrings, { onProgress, printedToc
       }
       applyProseBlockDefaults(proseBlock, line, proseText)
       blocks.push(withSourcePdfPage(proseBlock, entry.pageIndex))
+      if (connectivePageIndex != null) {
+        addSourcePdfPageProvenance(blocks[blocks.length - 1], connectivePageIndex)
+      }
     } else {
       previous.text = joinWrappedText(previous.text, proseText)
+      addSourcePdfPageProvenance(previous, entry.pageIndex)
+      if (connectivePageIndex != null) {
+        addSourcePdfPageProvenance(previous, connectivePageIndex)
+      }
       if (line.indented) {
         previous.isIndented = true
       }

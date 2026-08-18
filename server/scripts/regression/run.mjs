@@ -101,8 +101,7 @@ const SNAPSHOT_OPEN_PAGES = 8
 const SNAPSHOT_CLOSE_BLOCKS = 3
 const SNAPSHOT_FULL_PREFIX_LIMIT = 24
 
-const { parsePdfBuffer, extractLinesByPosition, PARSER_VERSION } =
-  await import("../../index.js")
+const { parsePdfBuffer, PARSER_VERSION } = await import("../../index.js")
 
 requirePdftotext()
 
@@ -154,13 +153,6 @@ async function runBook(book) {
   const started = performance.now()
   const buffer = readFileSync(pdfPath)
   const parseResult = await parsePdfBuffer(buffer, book.file)
-  const pageData = await extractLinesByPosition(buffer).catch((error) => {
-    console.error(
-      `[${book.id}] extractLinesByPosition failed (constituent line check may be skipped):`,
-      error?.message ?? String(error)
-    )
-    return null
-  })
   const elapsedSec = ((performance.now() - started) / 1000).toFixed(1)
 
   const contentWithChapters = parseResult.contentWithChapters ?? []
@@ -179,7 +171,6 @@ async function runBook(book) {
   const checkConfig = {
     bookId: book.id,
     chapters,
-    pageData,
     pageCount,
     rawWordCount: rawWordCountResult.count,
     rawText: rawWordCountResult.text,

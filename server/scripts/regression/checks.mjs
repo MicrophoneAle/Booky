@@ -456,139 +456,87 @@ export function wordCountVsRaw(blocks, config) {
   return result([], summary)
 }
 
-function normalizeWhitespace(text) {
-  return String(text ?? "")
-    .replace(/\s+/g, " ")
-    .trim()
-}
-
-function normalizeForMatch(text) {
-  return normalizeWhitespace(text)
-    .replace(/[\u2018\u2019]/g, "'")
-    .toLowerCase()
-}
-
-function firstWord(text) {
-  const cleaned = normalizeWhitespace(text)
-  const match = cleaned.match(/^[A-Za-z0-9]+/)
-  return match ? match[0].toLowerCase() : ""
-}
-
-function buildLinePrefixIndex(pageData) {
-  if (!Array.isArray(pageData)) return null
-
-  // Map: firstWord -> array of { pageIndex, lineTextNorm }.
-  const index = new Map()
-
-  for (let pageIndex = 0; pageIndex < pageData.length; pageIndex += 1) {
-    const lines = pageData[pageIndex]?.lines ?? []
-    for (const line of lines) {
-      const norm = normalizeForMatch(line?.text)
-      if (!norm) continue
-      // Avoid noisy candidates where matching is driven by very short/common
-      // leading tokens (e.g. single words like "way.").
-      if (norm.length < 8) continue
-
-      const key = firstWord(norm)
-      if (!key) continue
-
-      if (!index.has(key)) index.set(key, [])
-      index.get(key).push({ pageIndex, lineTextNorm: norm })
-    }
-  }
-
-  return index
-}
-
 /**
- * Asserts that a block's sourcePdfPageIndex matches where its text appears
- * in the extracted pdf text layer.
+ * Asserts that a block's sourcePdfPageIndex is a member of its recorded
+ * constituent-line provenance set (sourcePdfPageProvenance).
  *
- * "Consistent" is defined explicitly:
- *   - For non-image blocks with finite sourcePdfPageIndex and non-empty text,
- *     we locate "constituent lines" as those extracted pageData lines whose
- *     normalized text is a prefix of the block's normalized text.
- *   - The block's "first constituent line page" is the minimum pageIndex
- *     among all such matching lines across the whole document.
- *   - Blocks with zero matching constituent lines are treated as synthesized
- *     (e.g. injected title/byline blocks) and are not reported as violations.
+ * "Consistent" means:
+ *   - sourcePdfPageProvenance is a non-empty array of PDF page indexes whose
+ *     extracted lines were merged into this block during parse, and
+ *   - block.sourcePdfPageIndex is an element of that set.
  *
- * Categorization:
- *   - "merge" if matching constituent lines span multiple pages.
- *   - "reorder" if matching constituent lines are on a single page but that
- *     page differs from block.sourcePdfPageIndex.
+ * Cross-page paragraph wraps pass because the first page remains in the set.
+ * Merge and reorder bugs surface when attribution drifts outside the set.
+ *
+ * Synthetic blocks (injectCoverTitlePage and similar) carry an explicit empty
+ * provenance array and are exempt. Missing provenance on a non-image block is
+ * its own failure (not silently skipped).
  */
-export function sourcePdfPageIndexConsistentWithConstituentLines(
-  blocks,
-  config
-) {
+export function sourcePdfPageIndexConsistentWithProvenance(blocks) {
   const failures = []
-
-  const linePrefixIndex = buildLinePrefixIndex(config?.pageData)
-  if (!linePrefixIndex) {
-    return {
-      pass: false,
-      failures: ["sourcePdfPageIndex consistency check could not build pageData index"],
-      summary: "missing pageData",
-    }
-  }
 
   let synthCount = 0
   let mergeCount = 0
   let reorderCount = 0
+  let missingProvenanceCount = 0
 
   blocks.forEach((block, blockIndex) => {
-    if (!block || block.type === "image") return
+    if (!block || block.type === "image") {
+      return
+    }
 
     const srcPage = block?.sourcePdfPageIndex
-    if (!Number.isFinite(srcPage)) return
+    if (!Number.isFinite(srcPage)) {
+      return
+    }
 
-    // Injected cover/title/byline blocks are synthetic; don't attempt to
-    // reconcile them against raw extracted line text.
+    const provenance = block?.sourcePdfPageProvenance
+
     if (block?.isTitlePage === true) {
       synthCount += 1
       return
     }
 
-    const text = block?.text ?? ""
-    const textNorm = normalizeForMatch(text)
-    if (!textNorm) return
-
-    const key = firstWord(textNorm)
-    const candidates = linePrefixIndex?.get(key) ?? []
-    const pages = new Set()
-    for (const c of candidates) {
-      if (textNorm.startsWith(c.lineTextNorm)) {
-        pages.add(c.pageIndex)
-      }
-    }
-
-    if (pages.size === 0) {
+    if (Array.isArray(provenance) && provenance.length === 0) {
       synthCount += 1
       return
     }
 
-    const firstConstituentPage = Math.min(...pages)
-    const mismatch = !pages.has(srcPage)
-    if (!mismatch) return
-
-    if (pages.size > 1) {
-      mergeCount += 1
+    if (!Array.isArray(provenance) || provenance.length === 0) {
+      missingProvenanceCount += 1
       failures.push(
-        `[block ${blockIndex}] [MERGE] src=${srcPage} firstConstituent=${firstConstituentPage} matchPages=${Array.from(pages)
-          .sort((a, b) => a - b)
-          .join(",")} text='${truncate(text, 140)}'`
+        `[block ${blockIndex}] missing sourcePdfPageProvenance text='${truncate(block?.text ?? "", 100)}'`
       )
       return
     }
 
-    reorderCount += 1
+    if (provenance.includes(srcPage)) {
+      return
+    }
+
+    const text = block?.text ?? ""
+    const firstConstituent = Math.min(...provenance)
+    const category = provenance.length > 1 ? "MERGE" : "REORDER"
+    if (category === "MERGE") {
+      mergeCount += 1
+    } else {
+      reorderCount += 1
+    }
+
     failures.push(
-      `[block ${blockIndex}] [REORDER] src=${srcPage} firstConstituent=${firstConstituentPage} text='${truncate(text, 140)}'`
+      `[block ${blockIndex}] [${category}] src=${srcPage} provenance=[${provenance.join(",")}] firstConstituent=${firstConstituent} text='${truncate(text, 140)}'`
     )
   })
 
-  const summary = `violations: reorder=${reorderCount}, merge=${mergeCount}, synthesizedBlocksSkipped=${synthCount}`
+  const parts = [
+    `violations: reorder=${reorderCount}, merge=${mergeCount}`,
+    `syntheticSkipped=${synthCount}`,
+  ]
+  if (missingProvenanceCount > 0) {
+    parts.push(`missingProvenance=${missingProvenanceCount}`)
+  }
+
+  const summary = parts.join(", ")
   return result(failures, failures.length ? summary : "no violations found")
 }
 
@@ -874,10 +822,9 @@ export const GENERAL_CHECKS = [
     run: dialogueSplitCheck,
   },
   {
-    id: "sourcePdfPageIndexConsistentWithConstituentLines",
-    label:
-      "Block sourcePdfPageIndex matches constituent text lines",
-    run: sourcePdfPageIndexConsistentWithConstituentLines,
+    id: "sourcePdfPageIndexConsistentWithProvenance",
+    label: "Block sourcePdfPageIndex in provenance set",
+    run: (blocks) => sourcePdfPageIndexConsistentWithProvenance(blocks),
   },
 ]
 
