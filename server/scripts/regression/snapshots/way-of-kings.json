@@ -1,6 +1,6 @@
 {
-  "parserVersion": 134,
-  "totalBlocks": 16083,
+  "parserVersion": 135,
+  "totalBlocks": 16070,
   "totalWords": 380633,
   "chapterCount": 90,
   "chapterTitles": [
@@ -99,5 +99,3313 @@
   "lastBlockText": "REVERSE LASHING: GIVING AN OBJECT A GRAVITATIONAL I believe this may actually be",
   "headingCount": 8,
   "avgBlockLength": 135,
-  "proseBlockCount": 16075
+  "proseBlockCount": 16062,
+  "frontMatter": {
+    "blockCount": 26,
+    "types": "ihhpppppppphppppppppppppii",
+    "pageMin": 0,
+    "pageMax": 8,
+    "openPages": [
+      null,
+      0,
+      0,
+      2,
+      2,
+      2,
+      3,
+      4
+    ],
+    "open": [
+      "[image]",
+      "The Way of Kings",
+      "By Sanderson, Brandon",
+      "Warbreaker The Mistborn Trilogy",
+      "Mistborn The Well of Ascension The Hero of Ages",
+      "Elantris"
+    ],
+    "closePages": [
+      8,
+      null,
+      null
+    ],
+    "close": [
+      "To finally have it happen—and on the novel of my heart that ",
+      "[image]",
+      "[image]"
+    ],
+    "textHash": "f23251e225e5",
+    "pageHash": "d26e2d67087b"
+  },
+  "chapterOrder": [
+    {
+      "title": "Prelude to the Stormlight Archive",
+      "blockCount": 56,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppiiip",
+      "pageMin": 20,
+      "pageMax": 26,
+      "openPages": [
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20,
+        20
+      ],
+      "open": [
+        "Prelude to the Stormlight Archive",
+        "Kalak rounded a rocky stone ridge and stumbled to a stop bef",
+        "Even after all these centuries, seeing a thunderclast up clo",
+        "Of course, dying rarely was.",
+        "He rounded the creature, picking his way more carefully acro",
+        "The stone ridges and mounds bore numerous scars. Some were s"
+      ],
+      "closePages": [
+        null,
+        null,
+        26
+      ],
+      "close": [
+        "[image]",
+        "[image]",
+        "“The love of men is a frigid thing, a mountain stream only t"
+      ],
+      "textHash": "f09a9d64aa34",
+      "pageHash": "8c1ef5c038da"
+    },
+    {
+      "title": "Prologue: To Kill",
+      "blockCount": 140,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 26,
+      "pageMax": 41,
+      "openPages": [
+        26,
+        26,
+        26,
+        26,
+        26,
+        27,
+        27,
+        27
+      ],
+      "open": [
+        "Prologue: To Kill",
+        "—Collected on the first day of the week Palah of the month S",
+        "He sat in a large stone room, baked by enormous firepits tha",
+        "Szeth did not sway to the drums, drink the sapphire wine, or",
+        "The drummers began a new rhythm. The beats shook Szeth like ",
+        "They did not call themselves Parshendi; this was the Alethi "
+      ],
+      "closePages": [
+        41,
+        41,
+        null
+      ],
+      "close": [
+        "Tell my brother… To Szeth’s people, a dying request was sacr",
+        "With that, Szeth escaped into the night. He left the king’s ",
+        "[image]"
+      ],
+      "textHash": "a11ed3768ad3",
+      "pageHash": "2445d4755563"
+    },
+    {
+      "title": "PART One",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 188,
+      "pageMax": 188,
+      "openPages": [
+        188
+      ],
+      "open": [
+        "PART One"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "46fa6bd6dfd5",
+      "pageHash": "d6061bbee6cf"
+    },
+    {
+      "title": "Chapter 1: Stormblessed",
+      "blockCount": 170,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 43,
+      "pageMax": 55,
+      "openPages": [
+        null,
+        43,
+        43,
+        43,
+        43,
+        43,
+        43,
+        43
+      ],
+      "open": [
+        "[banner] Stormblessed",
+        "“You’ve killed me. Bastards, you’ve killed me! While the sun",
+        "—Collected on the fifth day of the week Chach of the month B",
+        "FIVE YEARS LATER",
+        "“I’m going to die, aren’t I?” Cenn asked.",
+        "The weathered veteran beside Cenn turned and inspected him. "
+      ],
+      "closePages": [
+        55,
+        55,
+        55
+      ],
+      "close": [
+        "He felt so light-headed. How much blood had he lost? He coul",
+        "Either way, he couldn’t fight. You didn’t fight something li",
+        "Cenn closed his eyes."
+      ],
+      "textHash": "755adc97979b",
+      "pageHash": "8bf8ef9bf253"
+    },
+    {
+      "title": "Chapter 2: Honor Is Dead",
+      "blockCount": 181,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 56,
+      "pageMax": 68,
+      "openPages": [
+        null,
+        56,
+        56,
+        56,
+        56,
+        56,
+        56,
+        56
+      ],
+      "open": [
+        "[banner] Honor Is Dead",
+        "“Ten orders. We were loved, once. Why have you forsaken us, ",
+        "—Collected on the second day of Kakash, year 1171, five seco",
+        "EIGHT MONTHS LATER",
+        "Kaladin’s stomach growled as he reached through the bars and",
+        "Revolting though it was, it was all he would get. He began t"
+      ],
+      "closePages": [
+        68,
+        68,
+        null
+      ],
+      "close": [
+        "Even in this, Kaladin failed.",
+        "He sank down, his back to the bars, and bowed his head. Defe",
+        "[image]"
+      ],
+      "textHash": "238e44e1ee7c",
+      "pageHash": "4084f63d2047"
+    },
+    {
+      "title": "Chapter 3: City Of Bells",
+      "blockCount": 158,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 70,
+      "pageMax": 83,
+      "openPages": [
+        null,
+        70,
+        70,
+        70,
+        70,
+        70,
+        71,
+        71
+      ],
+      "open": [
+        "[banner] City Of Bells",
+        "“A man stood on a cliffside and watched his homeland fall in",
+        "The waters surged beneath, so far beneath. And he heard a ch",
+        "—Collected on the 4th of Tanates, year 1171, thirty seconds ",
+        "She found herself breathless, clutching her leather-bound dr",
+        "She could hear the bells already, tinkling in the wind, ring"
+      ],
+      "closePages": [
+        83,
+        83,
+        83
+      ],
+      "close": [
+        "There was nobody to turn to. Her family, mostly because of h",
+        "They’d be worked to the bone as punishment—in fact, they mig",
+        "Shallan took a deep breath, then strode around the corner."
+      ],
+      "textHash": "cbf2b43fef6a",
+      "pageHash": "bf6debd749ff"
+    },
+    {
+      "title": "Chapter 4: The Shattered Plains",
+      "blockCount": 144,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 84,
+      "pageMax": 94,
+      "openPages": [
+        null,
+        84,
+        84,
+        84,
+        84,
+        84,
+        84,
+        84
+      ],
+      "open": [
+        "[banner] The Shattered Plains",
+        "“I’m dying, aren’t I? Healer, why do you take my blood? Who ",
+        "—Collected on the 3rd of Jesnan, 1172, 11 seconds pre-death.",
+        "“Why don’t you cry?” the windspren asked.",
+        "Kaladin sat with his back to the corner of the cage, looking",
+        "The wagon continued to roll. The same routine each day. Wake"
+      ],
+      "closePages": [
+        94,
+        94,
+        94
+      ],
+      "close": [
+        "A slave could apply his earnings to his slave debt and, afte",
+        "Under previous masters, he’d demanded his wages be given to ",
+        "The other slaves kept talking about the king’s army, and abo"
+      ],
+      "textHash": "0f98f2008b4b",
+      "pageHash": "8b53b8869897"
+    },
+    {
+      "title": "Chapter 5: Heretic",
+      "blockCount": 165,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppip",
+      "pageMin": 95,
+      "pageMax": 107,
+      "openPages": [
+        null,
+        95,
+        95,
+        95,
+        95,
+        95,
+        95,
+        96
+      ],
+      "open": [
+        "[banner] Heretic",
+        "“I have seen the end, and have heard it named. The Night of ",
+        "—Collected on the 1st of Nanes, 1172, 15 seconds pre-death. ",
+        "It was a stately, mature beauty—as one might find in the por",
+        "Jasnah was nothing like that. She was tall and slender, with",
+        "She had a squarish face and discriminating pale violet eyes."
+      ],
+      "closePages": [
+        105,
+        null,
+        107
+      ],
+      "close": [
+        "Her step surprisingly firm, she walked in the direction Jasn",
+        "[image]",
+        "Charcoal rubbing of a map of Sadeas’s warcamp as used by a c"
+      ],
+      "textHash": "24ff5cf8313d",
+      "pageHash": "757a2c7bfa58"
+    },
+    {
+      "title": "Chapter 6: Bridge Four",
+      "blockCount": 261,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 108,
+      "pageMax": 126,
+      "openPages": [
+        null,
+        108,
+        108,
+        108,
+        108,
+        108,
+        109,
+        109
+      ],
+      "open": [
+        "[banner] Bridge Four",
+        "Will it stop?”",
+        "—Collected on Vevishes, 1172, 32 seconds pre-death. Subject ",
+        "Kaladin stepped down from the wagon. They were inside one of",
+        "Around them spread the signs of an army long settled; this w",
+        "Squads of soldiers marched by, following directions indicate"
+      ],
+      "closePages": [
+        126,
+        126,
+        126
+      ],
+      "close": [
+        "Kaladin sighed, getting into place as some unfortunate soldi",
+        "Kaladin walked, feeling numb. He’d thought that there was no",
+        "It appeared that he’d been wrong. There had been something m"
+      ],
+      "textHash": "ecfdb1125c59",
+      "pageHash": "a912b9dc9253"
+    },
+    {
+      "title": "Chapter 7: Anything Reasonable",
+      "blockCount": 214,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 128,
+      "pageMax": 144,
+      "openPages": [
+        null,
+        128,
+        128,
+        128,
+        128,
+        128,
+        129,
+        129
+      ],
+      "open": [
+        "[banner] Anything Reasonable",
+        "“They are aflame. They burn. They bring the darkness when th",
+        "—Collected on Palahishev, 1172, 21 seconds pre-death. Subjec",
+        "Ahead, a small group of parshmen arrived, bearing rags, buck",
+        "She turned her mind to her task. How was she going to convin",
+        "She reentered the broad main cavern, with its lofty stone ce"
+      ],
+      "closePages": [
+        144,
+        144,
+        144
+      ],
+      "close": [
+        "Why didn’t he wait for Jasnah to return himself? Shallan sho",
+        "Shallan hurriedly gathered her things, leaving the letter on",
+        "She did not look pleased."
+      ],
+      "textHash": "53b6a70ab577",
+      "pageHash": "86fa4ed6e669"
+    },
+    {
+      "title": "Chapter 8: Nearer The Flame",
+      "blockCount": 316,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 145,
+      "pageMax": 163,
+      "openPages": [
+        null,
+        145,
+        145,
+        145,
+        145,
+        145,
+        145,
+        145
+      ],
+      "open": [
+        "[banner] Nearer The Flame",
+        "“Victory! We stand at op the mount! We scatter them before u",
+        "—Collected on Ishashan, 1172, 18 seconds pre-death. Subject ",
+        "“So you are here.”",
+        "Shallan cringed.",
+        "“The servants told you, then?”"
+      ],
+      "closePages": [
+        163,
+        163,
+        null
+      ],
+      "close": [
+        "It had been a very, very long day. But she’d won. The first ",
+        "Now her real task began.",
+        "[image]"
+      ],
+      "textHash": "5848a9d53689",
+      "pageHash": "5c2735e0b3c0"
+    },
+    {
+      "title": "Chapter 9: Damnation",
+      "blockCount": 79,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 165,
+      "pageMax": 171,
+      "openPages": [
+        null,
+        165,
+        165,
+        165,
+        165,
+        165,
+        165,
+        165
+      ],
+      "open": [
+        "[banner] Damnation",
+        "“Ten people, with Shardblades alight, standing before a wall",
+        "—Collected: Jesachev, 1173, 12 seconds pre-death. Subject: o",
+        "Kaladin sat outside, back to the barrack wall, a sprinkle of",
+        "Syl sat on Kaladin’s shoulder. Or hovered on it. Whatever. S",
+        "He should have moved inside Bridge Four’s barrack. It was co"
+      ],
+      "closePages": [
+        170,
+        171,
+        171
+      ],
+      "close": [
+        "Another bridgeman had fallen nearby, bristling with arrows. ",
+        "I can’t keep going like this, he thought. I’m dead inside, a",
+        "The storm continued its tirade. And for the first time in a "
+      ],
+      "textHash": "ed3163bccf83",
+      "pageHash": "73855e5e295d"
+    },
+    {
+      "title": "Chapter 10: Stories Of Surgeons",
+      "blockCount": 91,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 172,
+      "pageMax": 178,
+      "openPages": [
+        null,
+        172,
+        172,
+        172,
+        172,
+        172,
+        172,
+        172
+      ],
+      "open": [
+        "[banner] Stories Of Surgeons",
+        "NINE YEARS AGO",
+        "Kal stumbled into the surgery room, the open door letting in",
+        "“I’m sorry, Father,” he said.",
+        "Kal’s father, Lirin, carefully tightened the strap around th",
+        "“We will discuss your tardiness later,” Lirin said, securing"
+      ],
+      "closePages": [
+        177,
+        177,
+        178
+      ],
+      "close": [
+        "“You have a gift from the Heralds themselves,” Lirin said, r",
+        "“You could be ten times the surgeon I am. Don’t dream the sm",
+        "Kal hesitated, but soon found himself nodding."
+      ],
+      "textHash": "803543167e01",
+      "pageHash": "91da69ddd1cd"
+    },
+    {
+      "title": "Chapter 11: Droplets",
+      "blockCount": 137,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 179,
+      "pageMax": 187,
+      "openPages": [
+        null,
+        179,
+        179,
+        179,
+        179,
+        179,
+        179,
+        180
+      ],
+      "open": [
+        "[banner] Droplets",
+        "“Three of sixteen ruled, but now the Broken One reigns.”",
+        "—Collected: Chachanan, 1173, 84 seconds pre-death. Subject: ",
+        "There were no beds, just one thin blanket per bridgeman. One",
+        "The world would find them anyway. It was good at these kinds",
+        "Rain fell in sheets outside, the wind still stiff. Flashes l"
+      ],
+      "closePages": [
+        187,
+        187,
+        null
+      ],
+      "close": [
+        "Syl alighted on his leg as he sat, whispering the names of t",
+        "He would find a way to protect them.",
+        "[image]"
+      ],
+      "textHash": "6e4e600980e4",
+      "pageHash": "747182f451a9"
+    },
+    {
+      "title": "Interlude I-1: Ishikk",
+      "blockCount": 92,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 190,
+      "pageMax": 195,
+      "openPages": [
+        null,
+        190,
+        190,
+        190,
+        190,
+        190,
+        190,
+        191
+      ],
+      "open": [
+        "[banner] Ishikk",
+        "Ishikk splashed toward the meeting with the strange foreigne",
+        "He whistled, but not because he was having a pleasant day. I",
+        "The Purelake extended in all directions, hundreds of miles w",
+        "The Purelake was life itself. Once, this land had been claim",
+        "He walked confidently through the water, though the footing "
+      ],
+      "closePages": [
+        195,
+        195,
+        195
+      ],
+      "close": [
+        "“Where are you, Roamer? What a fool’s quest this is.” Then, ",
+        "He splashed after his companions.",
+        "“Well, you’ve got the ‘fool’ part right,” Ishikk said with a"
+      ],
+      "textHash": "d959b04f4075",
+      "pageHash": "3772b20cfbc7"
+    },
+    {
+      "title": "Interlude I-2: Nan Balat",
+      "blockCount": 36,
+      "types": "bppppppppppppppppppppppppppppppppppp",
+      "pageMin": 196,
+      "pageMax": 199,
+      "openPages": [
+        null,
+        196,
+        196,
+        196,
+        196,
+        196,
+        196,
+        196
+      ],
+      "open": [
+        "[banner] Nan Balat",
+        "Nan Balat liked killing things.",
+        "Not people. Never people. But animals, those he could kill.",
+        "Particularly the little ones. He wasn’t sure why it made him",
+        "He sat on the porch of his mansion, pulling the legs off a s",
+        "He sighed in satisfaction. Ripping a leg free soothed him, m"
+      ],
+      "closePages": [
+        199,
+        199,
+        199
+      ],
+      "close": [
+        "“We have a problem.”",
+        "“How large a problem?”",
+        "“Pretty big, I’d say. Come on.” Szeth-son-son-Vallano, Truth"
+      ],
+      "textHash": "bcf08ebae470",
+      "pageHash": "72a5a5dae00b"
+    },
+    {
+      "title": "Interlude I-3: The Glory Of Ignorance",
+      "blockCount": 87,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppiip",
+      "pageMin": 200,
+      "pageMax": 207,
+      "openPages": [
+        null,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "open": [
+        "[banner] The Glory Of Ignorance",
+        "Grimy, worn, and fraying, his clothing was far different fro",
+        "Head bowed, hands in his lap, he carried no weapons. He hadn",
+        "“So he’ll do whatever you say?” asked one of the mine worker",
+        "Took—Szeth’s current master—set his cup down on the table’s ",
+        "“Yeah, he sure will. Hey, kurp, look at me.”"
+      ],
+      "closePages": [
+        null,
+        null,
+        207
+      ],
+      "close": [
+        "[image]",
+        "[image]",
+        "Glyphpairs and plateau numbers have been removed to preserve"
+      ],
+      "textHash": "aafd747a1cbc",
+      "pageHash": "2229519f9925"
+    },
+    {
+      "title": "PART Two",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 484,
+      "pageMax": 484,
+      "openPages": [
+        484
+      ],
+      "open": [
+        "PART Two"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "c82a6d524039",
+      "pageHash": "a42e815c58f3"
+    },
+    {
+      "title": "Chapter 12: Unity",
+      "blockCount": 296,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 208,
+      "pageMax": 228,
+      "openPages": [
+        null,
+        208,
+        208,
+        208,
+        208,
+        208,
+        208,
+        208
+      ],
+      "open": [
+        "[banner] Unity",
+        "Old friend, I hope this missive finds you well. Though, as y",
+        "“Today,” King Elhokar announced, riding beneath the bright o",
+        "“Undoubtedly, Your Majesty.” Sadeas’s reply was smooth, quic",
+        "“One might say that gods, as a rule, should fear the Alethi ",
+        "Adolin gripped his reins a little more tightly; it put him o"
+      ],
+      "closePages": [
+        228,
+        228,
+        228
+      ],
+      "close": [
+        "The huntmaster froze. The rope the chull was towing was fray",
+        "Something dark—something mind-numbingly enormous—rose out of",
+        "“Aw, Damnation,” Bashin said."
+      ],
+      "textHash": "39300cb7ce3d",
+      "pageHash": "78d2d1dad94a"
+    },
+    {
+      "title": "Chapter 13: Ten Heartbeats",
+      "blockCount": 112,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 229,
+      "pageMax": 238,
+      "openPages": [
+        null,
+        229,
+        229,
+        229,
+        229,
+        230,
+        230,
+        230
+      ],
+      "open": [
+        "[banner] Ten Heartbeats",
+        "I realize that you are probably still angry. That is pleasan",
+        "One. That was how long it took to summon a Shardblade. If Da",
+        "The chasmfiend towered like a mountain of interlocking carap",
+        "Chitin made a grinding noise against stone as the creature f",
+        "Six."
+      ],
+      "closePages": [
+        238,
+        238,
+        238
+      ],
+      "close": [
+        "Adolin walked up to join his father, watching as Elhokar plu",
+        "He ripped free the beast’s gemheart—the enormous gemstone th",
+        "Elhokar held aloft the grisly prize, golden gloryspren appea"
+      ],
+      "textHash": "5e6ac13d6b9a",
+      "pageHash": "31ddbc1b4e6a"
+    },
+    {
+      "title": "Chapter 14: Payday",
+      "blockCount": 184,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 239,
+      "pageMax": 249,
+      "openPages": [
+        null,
+        239,
+        239,
+        239,
+        239,
+        239,
+        239,
+        239
+      ],
+      "open": [
+        "[banner] Payday",
+        "Let me first assure you that the element is quite safe. I ha",
+        "He began that fight by throwing the door open to the sunligh",
+        "“Up and organize!” Kaladin shouted in his best squadleader’s",
+        "The men blinked bleary eyes.",
+        "“That means ,” Kaladin bellowed, “out of the barrack and for"
+      ],
+      "closePages": [
+        249,
+        249,
+        249
+      ],
+      "close": [
+        "“Scared to go onward,” Kaladin said, “but terrified to go ba",
+        "“I know how you feel,” he said.",
+        "“Come on. I need to eat, and there are You do not agree with"
+      ],
+      "textHash": "5fb79053bdb3",
+      "pageHash": "5ea52f98470d"
+    },
+    {
+      "title": "Chapter 15: The Decoy",
+      "blockCount": 397,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppipp",
+      "pageMin": 250,
+      "pageMax": 274,
+      "openPages": [
+        null,
+        250,
+        250,
+        250,
+        250,
+        251,
+        251,
+        251
+      ],
+      "open": [
+        "[banner] The Decoy",
+        "Four hours after the chasmfiend attack, Adolin was still ove",
+        "Adolin walked amid the soldiers, gathering reports as the la",
+        "He continued on his way, still wearing his Shardplate. The t",
+        "Adolin glanced toward the pavilion, which tinkled with laugh",
+        "Once again, the other lighteyes enjoyed their leisure while "
+      ],
+      "closePages": [
+        null,
+        274,
+        274
+      ],
+      "close": [
+        "[image]",
+        "Yes, best to keep this quiet. Dalinar had spoken truly when ",
+        "He turned his mount and clopped up onto the bridge, then nod"
+      ],
+      "textHash": "0ed83708d606",
+      "pageHash": "de4023c37cc8"
+    },
+    {
+      "title": "Chapter 16: Cocoons",
+      "blockCount": 253,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 275,
+      "pageMax": 289,
+      "openPages": [
+        null,
+        275,
+        275,
+        275,
+        275,
+        275,
+        275,
+        275
+      ],
+      "open": [
+        "[banner] Cocoons",
+        "SEVEN AND A HALF YEARS AGO",
+        "“He wants to send me to Kharbranth,” Kal said, perched at op",
+        "“To train to become a surgeon.”",
+        "“What, really ?” Laral asked, as she walked across the edge ",
+        "The hair was distinctive. But, of course, her eyes were more"
+      ],
+      "closePages": [
+        289,
+        289,
+        289
+      ],
+      "close": [
+        "He sat down on the steps. What did he want? He didn’t know. ",
+        "The rocks Tien had given him were still in his pocket. He pu",
+        "It looked like a face, smiling at him, made of white bits in"
+      ],
+      "textHash": "26d1df887cd6",
+      "pageHash": "0cbd2adfaa16"
+    },
+    {
+      "title": "Chapter 17: A Bloody, Red Sunset",
+      "blockCount": 283,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 290,
+      "pageMax": 308,
+      "openPages": [
+        null,
+        290,
+        290,
+        290,
+        290,
+        290,
+        290,
+        290
+      ],
+      "open": [
+        "[banner] A Bloody, Red Sunset",
+        "Might I be quite frank? Before, you asked why I was so conce",
+        "“Really old. I didn’t know men got this old. You sure he’s n",
+        "Kaladin smiled as the apothecary shuffled forward with his c",
+        "Kaladin’s father had told him of apothecaries—men who walked",
+        "Despite all that, the place was clean and tidy. It had the f"
+      ],
+      "closePages": [
+        308,
+        308,
+        null
+      ],
+      "close": [
+        "“Yeah, this was cut,” the portly leatherworker said, holding",
+        "“Wouldn’t you agree, Yis?”",
+        "[image]"
+      ],
+      "textHash": "753634ff223e",
+      "pageHash": "fa726d0b5f8f"
+    },
+    {
+      "title": "Chapter 18: Highprince Of War",
+      "blockCount": 399,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 310,
+      "pageMax": 332,
+      "openPages": [
+        null,
+        310,
+        310,
+        310,
+        310,
+        310,
+        310,
+        310
+      ],
+      "open": [
+        "[banner] Highprince Of War",
+        "The other leatherworker nodded. Yis was a yellow-eyed Iriali",
+        "His companion, Avaran, was an Alethi darkeyes who wore an ap",
+        "“Sliced,” Yis agreed, taking the straps from Avaran.",
+        "“I concur.”",
+        "“Well hie me to Damnation,” Adolin muttered."
+      ],
+      "closePages": [
+        332,
+        332,
+        332
+      ],
+      "close": [
+        "Resigned, Dalinar joined Renarin, dashing to the stone-walle",
+        "The occupants seemed shocked to see their highprince and his",
+        "It began."
+      ],
+      "textHash": "5aafd1632ceb",
+      "pageHash": "25f588184421"
+    },
+    {
+      "title": "Chapter 19: Starfalls",
+      "blockCount": 234,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 333,
+      "pageMax": 348,
+      "openPages": [
+        null,
+        333,
+        333,
+        333,
+        333,
+        333,
+        333,
+        333
+      ],
+      "open": [
+        "[banner] Starfalls",
+        "He holds the most frightening and terrible of all of the Sha",
+        "The cool night was still and crisp; there was no sign of a s",
+        "Stormwinds, where have you sent me this time? Each of the vi",
+        "Something moved in the darkness. He flinched in surprise as ",
+        "“Father.” Her voice trembled."
+      ],
+      "closePages": [
+        348,
+        348,
+        348
+      ],
+      "close": [
+        "Dalinar retreated to the back of the barrack, sitting down o",
+        "Act with honor, and honor will aid you.",
+        "The vision had told him to trust Sadeas. But he’d never be a"
+      ],
+      "textHash": "07c15d304266",
+      "pageHash": "f6741ac5ade1"
+    },
+    {
+      "title": "Chapter 20: Scarlet",
+      "blockCount": 34,
+      "types": "bppppppppppppppppppppppppppppppppp",
+      "pageMin": 349,
+      "pageMax": 351,
+      "openPages": [
+        null,
+        349,
+        349,
+        349,
+        349,
+        349,
+        349,
+        349
+      ],
+      "open": [
+        "[banner] Scarlet",
+        "SEVEN YEARS AGO",
+        "“I can save her,” Kal said, pulling off his shirt.",
+        "The child was only five. She’d fallen far.",
+        "“I can save her.” He was mumbling. A crowd had gathered. It ",
+        "Kal was only thirteen, but he’d been trained well. The first"
+      ],
+      "closePages": [
+        351,
+        351,
+        351
+      ],
+      "close": [
+        "“You have to learn when to care, son,” Lirin said softly.",
+        "“And when to let go. You’ll see. I had similar problems when",
+        "In the distance, Harl continued to wail."
+      ],
+      "textHash": "2da6088dfb95",
+      "pageHash": "43d02a01f249"
+    },
+    {
+      "title": "Chapter 21: Why Men Lie",
+      "blockCount": 218,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 352,
+      "pageMax": 363,
+      "openPages": [
+        null,
+        352,
+        352,
+        352,
+        352,
+        352,
+        352,
+        353
+      ],
+      "open": [
+        "[banner] Why Men Lie",
+        "One need only look at the aftermath of his brief visit to Se",
+        "He stifled a groan, rolling onto his side. It all ached. Eve",
+        "Curse you, Hav, he thought. You can boot me out of my bunk e",
+        "He felt worse standing up, but the life of a bridgeman would",
+        "They were waiting, Kaladin realized. They wanted to see if I"
+      ],
+      "closePages": [
+        363,
+        363,
+        363
+      ],
+      "close": [
+        "Rock laughed, settling down.",
+        "“Our bridgeleader has a plan. Something glorious and daring.",
+        "“We need to gather a certain kind of plant. A reed that grow"
+      ],
+      "textHash": "cdb5521e2b77",
+      "pageHash": "b25fecfb3bbe"
+    },
+    {
+      "title": "Chapter 22: Eyes, Hands, Or Spheres",
+      "blockCount": 263,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 365,
+      "pageMax": 380,
+      "openPages": [
+        null,
+        365,
+        365,
+        365,
+        365,
+        365,
+        365,
+        365
+      ],
+      "open": [
+        "[banner] Eyes, Hands, Or Spheres",
+        "Presumably to prevent anyone from rising up to challenge Ray",
+        "“They have different opinions. It seems that even before the",
+        "Dalinar nodded.",
+        "“That’s the only evidence that even hints there might “So we",
+        "“I’ll talk to Elhokar,” Dalinar decided."
+      ],
+      "closePages": [
+        380,
+        380,
+        380
+      ],
+      "close": [
+        "“Don’t look so morose, Uncle,” Elhokar said.",
+        "“I had no idea you’d want the position, and Sadeas just seem",
+        "“Vindicated?” Dalinar asked softly, still watching Sadeas. S"
+      ],
+      "textHash": "90754fc21772",
+      "pageHash": "20fd80666feb"
+    },
+    {
+      "title": "Chapter 23: Many Uses",
+      "blockCount": 260,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 381,
+      "pageMax": 395,
+      "openPages": [
+        null,
+        381,
+        381,
+        381,
+        381,
+        381,
+        382,
+        382
+      ],
+      "open": [
+        "[banner] Many Uses",
+        "You have accused me of arrogance in my quest. You have accus",
+        "Back home, the air had been drier. If you went about on the ",
+        "Kaladin hopped down from the cart. His job was to hoist up s",
+        "Bridgemen worked across the broad plain, moving among rockbu",
+        "Those tufts were extremely important, for hidden among them "
+      ],
+      "closePages": [
+        394,
+        395,
+        null
+      ],
+      "close": [
+        "“And it turns out that lighteyes don’t react very well when ",
+        "Either the others sensed his mood, or they felt what he’d sa",
+        "[image]"
+      ],
+      "textHash": "777e0ea109dc",
+      "pageHash": "34b80d462fa4"
+    },
+    {
+      "title": "Chapter 24: The Gallery Of Maps",
+      "blockCount": 167,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 397,
+      "pageMax": 406,
+      "openPages": [
+        null,
+        397,
+        397,
+        397,
+        397,
+        397,
+        397,
+        397
+      ],
+      "open": [
+        "[banner] The Gallery Of Maps",
+        "Neither point makes the things I have written to you here un",
+        "Dalinar passed one of these, pinks and vibrant greens and bl",
+        "Men did that too, he thought. Once .",
+        "Highprince Roion stood in front of one of the maps, hands cl",
+        "So sloppy, Dalinar thought, though it was very fashionable. "
+      ],
+      "closePages": [
+        406,
+        406,
+        406
+      ],
+      "close": [
+        "“Leave me, please.”",
+        "“All right. Fine. But I want you to think about this. I want",
+        "“Adolin. Go. ” Adolin gritted his teeth, but turned and stal"
+      ],
+      "textHash": "877bd05a1653",
+      "pageHash": "7189518aa0a9"
+    },
+    {
+      "title": "Chapter 25: The Butcher",
+      "blockCount": 146,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 407,
+      "pageMax": 415,
+      "openPages": [
+        null,
+        407,
+        407,
+        407,
+        407,
+        407,
+        407,
+        407
+      ],
+      "open": [
+        "[banner] The Butcher",
+        "SEVEN YEARS AGO",
+        "“It ain’t right, what they do,” the woman’s voice said.",
+        "“You ain’t supposed to cut into folks, peering in to see wha",
+        "Kal froze, standing in an alleyway between two houses in Hea",
+        "Kal wore a thick, padded coat of breachtree cotton. The mate"
+      ],
+      "closePages": [
+        415,
+        415,
+        415
+      ],
+      "close": [
+        "“A pair and a trio, maybe. Let’s get back home.”",
+        "Tien scratched his head in confusion, but the words weighed ",
+        "And, more importantly, on the throws of everyone else."
+      ],
+      "textHash": "e4429c84d6c1",
+      "pageHash": "cd02312526be"
+    },
+    {
+      "title": "Chapter 26: Stillness",
+      "blockCount": 234,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 416,
+      "pageMax": 433,
+      "openPages": [
+        null,
+        416,
+        416,
+        416,
+        416,
+        416,
+        416,
+        416
+      ],
+      "open": [
+        "[banner] Stillness",
+        "I am being chased. Your friends of the Seventeenth Shard, I ",
+        "“I stood in the darkened monastery chamber,’” Litima read, s",
+        "Litima—one of Dalinar’s scribes—was tall and plump and wore ",
+        "“‘Candle flames,’” Litima continued. The selection was from ",
+        "“‘A dozen candles burned themselves to death on the shelf be"
+      ],
+      "closePages": [
+        433,
+        433,
+        433
+      ],
+      "close": [
+        "This army stood in ranks, grouped in warpairs. A commanding ",
+        "The armored figure and the rest of the Parshendi turned and ",
+        "“Oh."
+      ],
+      "textHash": "affdfdafa041",
+      "pageHash": "015fd957b075"
+    },
+    {
+      "title": "Chapter 27: Chasm Duty",
+      "blockCount": 411,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 434,
+      "pageMax": 457,
+      "openPages": [
+        null,
+        434,
+        434,
+        434,
+        434,
+        435,
+        435,
+        435
+      ],
+      "open": [
+        "[banner] Chasm Duty",
+        "It’s you.”",
+        "It had been two more long days. Daytime spent working and tr",
+        "Bridge Four had been called out on a bridge run today. Thank",
+        "Kaladin was bleary-eyed with fatigue from staying up late wo",
+        "“What do you need?” the apothecary asked."
+      ],
+      "closePages": [
+        457,
+        457,
+        457
+      ],
+      "close": [
+        "Not everyone, but enough.",
+        "He had a feeling that Moash and the others would give in bef",
+        "Now he had to keep them alive long enough for that to mean s"
+      ],
+      "textHash": "b3a03c3a320f",
+      "pageHash": "6c50cd9d7c3a"
+    },
+    {
+      "title": "Chapter 28: Decision",
+      "blockCount": 426,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 458,
+      "pageMax": 483,
+      "openPages": [
+        null,
+        458,
+        458,
+        458,
+        458,
+        458,
+        458,
+        458
+      ],
+      "open": [
+        "[banner] Decision",
+        "For I have never been dedicated to a more important purpose,",
+        "He stood beside his father on the staging ground. Dalinar lo",
+        "In front of them, two chulls followed their handler, steppin",
+        "“That’s much wider than the bridges Sadeas uses,” Dalinar sa",
+        "“It’s necessary to accommodate the siege bridge, Brightlord."
+      ],
+      "closePages": [
+        483,
+        483,
+        null
+      ],
+      "close": [
+        "Too weary to remove his Plate unassisted, he sank down onto ",
+        "It was over.",
+        "[image]"
+      ],
+      "textHash": "6ee4cadf0aba",
+      "pageHash": "93509174881a"
+    },
+    {
+      "title": "Interlude I-4: Rysn",
+      "blockCount": 129,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 486,
+      "pageMax": 493,
+      "openPages": [
+        null,
+        486,
+        486,
+        486,
+        486,
+        486,
+        486,
+        486
+      ],
+      "open": [
+        "[banner] Rysn",
+        "Rysn hesitantly stepped down from the caravan’s lead wagon. ",
+        "“It’s not going to move,” Vstim said.",
+        "“Grass here doesn’t behave the way it does elsewhere. Surely",
+        "“I’ve heard of the grass,” Rysn said to him.",
+        "“But it’s just so odd .” She stepped again, walking in a cir"
+      ],
+      "closePages": [
+        492,
+        493,
+        493
+      ],
+      "close": [
+        "“Because it will make you a better merchant,” he said.",
+        "She frowned. Must he be so strange so much of the time? Perh",
+        "She walked off to do as she was told. No use complaining. Sh"
+      ],
+      "textHash": "f4fde83f7e96",
+      "pageHash": "ac428d4071ad"
+    },
+    {
+      "title": "Interlude I-5: Axies The Collector",
+      "blockCount": 81,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 494,
+      "pageMax": 499,
+      "openPages": [
+        null,
+        494,
+        494,
+        494,
+        494,
+        494,
+        494,
+        494
+      ],
+      "open": [
+        "[banner] Axies The Collector",
+        "Axies the Collector groaned, lying on his back, skull poundi",
+        "Blight it all, he thought.",
+        "Well, best to check and see if he was hurt too badly. His to",
+        "“Well, that’s something,” he said, dropping his head back to",
+        "Yes, that was what it was. He could smell it now, pungent an"
+      ],
+      "closePages": [
+        499,
+        499,
+        499
+      ],
+      "close": [
+        "“It appears I’ll have another chance to search for captivity",
+        "The guards towed him off toward the city dungeons, but he di",
+        "Grand indeed. He resumed whistling to himself."
+      ],
+      "textHash": "22315f7bf1ef",
+      "pageHash": "e2a72468c09c"
+    },
+    {
+      "title": "Interlude I-6: A Work Of Art",
+      "blockCount": 89,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppii",
+      "pageMin": 500,
+      "pageMax": 508,
+      "openPages": [
+        null,
+        500,
+        500,
+        500,
+        500,
+        500,
+        500,
+        501
+      ],
+      "open": [
+        "[banner] A Work Of Art",
+        "Szeth-son-son-Vallano, Truthless of Shinovar, crouched on a ",
+        "There were few lights nearby. Makkek liked Szeth to remain c",
+        "Perhaps there was something useful to the drama. With only h",
+        "Nearby, a group of men in brown cloaks sat chatting and rubb",
+        "The circular den had a bar at the center, serving a wide var"
+      ],
+      "closePages": [
+        508,
+        null,
+        null
+      ],
+      "close": [
+        "For soon the world itself would shake.",
+        "[image]",
+        "[image]"
+      ],
+      "textHash": "14ed8562374f",
+      "pageHash": "f2d19dfbe787"
+    },
+    {
+      "title": "PART Three",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 787,
+      "pageMax": 787,
+      "openPages": [
+        787
+      ],
+      "open": [
+        "PART Three"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "9747f0a40494",
+      "pageHash": "fc091d39524c"
+    },
+    {
+      "title": "Chapter 29: Errorgance",
+      "blockCount": 319,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 511,
+      "pageMax": 529,
+      "openPages": [
+        null,
+        511,
+        511,
+        511,
+        511,
+        511,
+        511,
+        512
+      ],
+      "open": [
+        "[banner] Errorgance",
+        "“The ones of ash and fire, who killed like a swarm, relentle",
+        "—Noted in Masly, page 337. Corroborated by Coldwin and Hasav",
+        "Shallan grimaced, turning the gemstone on the reed. I don’t ",
+        "She turned the gemstone, then waited for a reply. She was in",
+        "I’m guessing she takes it off while bathing, Shallan wrote. "
+      ],
+      "closePages": [
+        529,
+        529,
+        529
+      ],
+      "close": [
+        "“Now hurry and be about the king’s sketch,” Jasnah said, lif",
+        "“You still have a great deal of real work to do once you are",
+        "“Yes, Brightness,” Shallan said. For once, however, she foun"
+      ],
+      "textHash": "54d28eb1d6da",
+      "pageHash": "499b89c986f9"
+    },
+    {
+      "title": "Chapter 30: Darkness Unseen",
+      "blockCount": 147,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 530,
+      "pageMax": 539,
+      "openPages": [
+        null,
+        530,
+        530,
+        530,
+        530,
+        530,
+        531,
+        531
+      ],
+      "open": [
+        "[banner] Darkness Unseen",
+        "—This fragment is the origin of a Thaylen proverb that was e",
+        "A group of twenty-nine men followed him. Slaves. Thieves. De",
+        "They didn’t understand. Nobody survived a hundred bridge run",
+        "Bridge Four followed him. The last of the holdouts—a thin ma",
+        "Kaladin turned a blind eye to those. He’d eventually need th"
+      ],
+      "closePages": [
+        539,
+        539,
+        539
+      ],
+      "close": [
+        "“Yes,” Gaz said.",
+        "“Well then. Perhaps we will.”",
+        "Gaz smiled, watching Kaladin retreat. A disaster was exactly"
+      ],
+      "textHash": "cdf836f165ee",
+      "pageHash": "a9fe423ea19e"
+    },
+    {
+      "title": "Chapter 31: Beneath The Skin",
+      "blockCount": 76,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 540,
+      "pageMax": 545,
+      "openPages": [
+        null,
+        540,
+        540,
+        540,
+        540,
+        540,
+        540,
+        540
+      ],
+      "open": [
+        "[banner] Beneath The Skin",
+        "SIX YEARS AGO",
+        "“Don’t make the same mistake I did, son.”",
+        "Kal looked up from his folio. His father sat on the other si",
+        "Lirin set the cup down, and the deep purple liquid—the color",
+        "“Father?”"
+      ],
+      "closePages": [
+        545,
+        545,
+        545
+      ],
+      "close": [
+        "“Well?” Lirin said.",
+        "“You’ve threatened violence against me. Come. Hit me. Rob me",
+        "The men faded into the night without a word."
+      ],
+      "textHash": "23a381aa393e",
+      "pageHash": "e73f4a69190b"
+    },
+    {
+      "title": "Chapter 32: Side Carry",
+      "blockCount": 183,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 546,
+      "pageMax": 558,
+      "openPages": [
+        null,
+        546,
+        546,
+        546,
+        546,
+        546,
+        546,
+        546
+      ],
+      "open": [
+        "[banner] Side Carry",
+        "“They lived high at op a place no man could reach, but all c",
+        "The tower city itself, crafted by the hands of no man.”",
+        "—Though The Song of the Last Summer is a fanciful tale of ro",
+        "They had to carry it at less steep an angle than he’d wanted",
+        "This will have to be handled very carefully, Kaladin thought"
+      ],
+      "closePages": [
+        558,
+        558,
+        null
+      ],
+      "close": [
+        "The beefy spearmen walked up to Kaladin. They were darkeyed,",
+        "A spear butt to the gut knocked him to the ground, and he ga",
+        "[image]"
+      ],
+      "textHash": "9dd437977513",
+      "pageHash": "62b3fd38cf25"
+    },
+    {
+      "title": "Chapter 33: Cymatics",
+      "blockCount": 259,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 560,
+      "pageMax": 575,
+      "openPages": [
+        null,
+        560,
+        560,
+        560,
+        560,
+        560,
+        561,
+        561
+      ],
+      "open": [
+        "[banner] Cymatics",
+        "“They changed, even as we fought them. Like shadows they wer",
+        "—Purports to be a scrap collected from Talatin, a Radiant of",
+        "The Palanaeum was shaped like an inverted pyramid carved dow",
+        "Standing at the top level’s railing, Shallan could see only ",
+        "The lighting was dim; there was no general illumination, onl"
+      ],
+      "closePages": [
+        575,
+        575,
+        575
+      ],
+      "close": [
+        "“That is somewhat arrogant of you,” Shallan said, “don’t you",
+        "“Only if I’m wrong, child,” Jasnah said, turning back to her",
+        "“And I rarely am.”"
+      ],
+      "textHash": "7bbfb07cd010",
+      "pageHash": "0e5dd3a444d0"
+    },
+    {
+      "title": "Chapter 34: Stormwall",
+      "blockCount": 100,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 576,
+      "pageMax": 581,
+      "openPages": [
+        null,
+        576,
+        576,
+        576,
+        576,
+        576,
+        576,
+        576
+      ],
+      "open": [
+        "[banner] Stormwall",
+        "“I walked from Abamabar to Urithiru.”",
+        "—This quote from the Eighth Parable of The Way of Kings seem",
+        "Kaladin’s mind felt fuzzy. He knew that he hurt , but other ",
+        "“Kaladin!” a concerned voice whispered.",
+        "“Kaladin, please. Please don’t be hurt anymore.”"
+      ],
+      "closePages": [
+        581,
+        581,
+        581
+      ],
+      "close": [
+        "The stormwall approached, the visible curtain of rain and wi",
+        "In battle, he’d beenable to fight his way to safety with the",
+        "He took a deep breath, the pain of his ribs forgotten, as th"
+      ],
+      "textHash": "81a99de04c86",
+      "pageHash": "78d237438957"
+    },
+    {
+      "title": "Chapter 35: A Light By Which To See",
+      "blockCount": 51,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 582,
+      "pageMax": 587,
+      "openPages": [
+        null,
+        582,
+        582,
+        582,
+        582,
+        582,
+        583,
+        583
+      ],
+      "open": [
+        "[banner] A Light By Which To See",
+        "“Though many wished Urithiru to be built in Alethela, it was",
+        "—Perhaps the oldest surviving original source mentioning the",
+        "For a moment, Kaladin couldn’t feel anything but that coldne",
+        "He bore it, dazed, eyes pressed shut and breath held. Then t",
+        "Only that rope kept him from being blown along with the othe"
+      ],
+      "closePages": [
+        586,
+        587,
+        587
+      ],
+      "close": [
+        "“Curse you all, hurry, hurry! We need to get him bandaged. S",
+        "He glanced back at Kaladin, then spoke much more softly.",
+        "“And you’d better survive, son. Because I want some answers."
+      ],
+      "textHash": "2df31a048636",
+      "pageHash": "8f3afda357c0"
+    },
+    {
+      "title": "Chapter 36: The Lesson",
+      "blockCount": 227,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 588,
+      "pageMax": 602,
+      "openPages": [
+        null,
+        588,
+        588,
+        588,
+        588,
+        588,
+        589,
+        589
+      ],
+      "open": [
+        "[banner] The Lesson",
+        "“Taking the Dawnshard, known to bind any creature voidish or",
+        "—From The Poem of Ista . I have found no modern explanation ",
+        "She settled back in her chair, the humid air warm around her",
+        "Kharbranth’s palace offered far more luxury. The stone pool ",
+        "The water didn’t have to be carried in but came out of pipes"
+      ],
+      "closePages": [
+        602,
+        602,
+        null
+      ],
+      "close": [
+        "She didn’t. Not when she put on her robe. Not when she tucke",
+        "Shallan walked from the room stunned, in turmoil. Exhausted,",
+        "[image]"
+      ],
+      "textHash": "4cfbcd50e392",
+      "pageHash": "cf26aef374be"
+    },
+    {
+      "title": "Chapter 37: Sides",
+      "blockCount": 277,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 604,
+      "pageMax": 619,
+      "openPages": [
+        null,
+        604,
+        604,
+        604,
+        604,
+        604,
+        604,
+        604
+      ],
+      "open": [
+        "[banner] Sides",
+        "FIVE AND A HALF YEARS AGO",
+        "“Kaladin, look at this rock,” Tien said.",
+        "“It changes colors when you look at it from different sides.",
+        "Kal looked away from the window, glancing at his brother. No",
+        "Kal sat on a stool peeling longroots with a short knife. The"
+      ],
+      "closePages": [
+        619,
+        619,
+        619
+      ],
+      "close": [
+        "He wasn’t a darkeyed farmer, but he wasn’t a lighteyed lord ",
+        "“Very well,” Lirin said.",
+        "“Kaladin.”"
+      ],
+      "textHash": "0d4af21a5fd2",
+      "pageHash": "b59dd233a27a"
+    },
+    {
+      "title": "Chapter 38: Envisager",
+      "blockCount": 61,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 620,
+      "pageMax": 625,
+      "openPages": [
+        null,
+        620,
+        620,
+        620,
+        620,
+        620,
+        620,
+        620
+      ],
+      "open": [
+        "[banner] Envisager",
+        "“Born from the darkness, they bear its taint still, marked u",
+        "—I consider Gashashson-Navammis a trustworthy source, though",
+        "Persistent fever, accompanied by cold sweats and hallucinati",
+        "He was back in Hearthstone with his family. Only he was a gr",
+        "Broken ribs. Caused by trauma to the side, inflicted by a be"
+      ],
+      "closePages": [
+        624,
+        624,
+        625
+      ],
+      "close": [
+        "He knelt for a hundred heartbeats, counting, thinking, worry",
+        "He’d have to be careful. A few spheres each day, but not too",
+        "Best to keep it quiet, at least until he could figure out wh"
+      ],
+      "textHash": "5e6f869af041",
+      "pageHash": "47785db7be44"
+    },
+    {
+      "title": "Chapter 39: Burned Into Her",
+      "blockCount": 85,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 626,
+      "pageMax": 635,
+      "openPages": [
+        null,
+        626,
+        626,
+        626,
+        626,
+        626,
+        627,
+        627
+      ],
+      "open": [
+        "[banner] Burned Into Her",
+        "—Another folktale, this one recorded in Among the Darkeyed, ",
+        "She sat in her closetlike stone chamber in the Conclave. No ",
+        "A single ruby broam cast a bloody light on her sketch. Usual",
+        "Despite that, she could see each of those scenes in her mind",
+        "She sat back from her drawing board, hand shaking, the pictu"
+      ],
+      "closePages": [
+        635,
+        635,
+        635
+      ],
+      "close": [
+        "She slid the Soulcaster back into her safepouch. It seemed s",
+        "For some reason, that made her feel even worse. Stealing the",
+        "Yet another difficult decision. Well then, she thought, it’s"
+      ],
+      "textHash": "3fe4f709eed5",
+      "pageHash": "54e5c303d049"
+    },
+    {
+      "title": "Chapter 40: Eyes Of Red And Blue",
+      "blockCount": 225,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 636,
+      "pageMax": 649,
+      "openPages": [
+        null,
+        636,
+        636,
+        636,
+        636,
+        636,
+        636,
+        636
+      ],
+      "open": [
+        "[banner] Eyes Of Red And Blue",
+        "“Death upon the lips. Sound upon the air. Char upon the skin",
+        "—From “The Last Desolation” by Ambrian, line 335. Kaladin st",
+        "He rested his hand on the wooden doorframe, his legs quiveri",
+        "He rounded the side of the barrack, feeling stronger with ea",
+        "I should be dead, Kaladin thought. What is going on?"
+      ],
+      "closePages": [
+        649,
+        649,
+        null
+      ],
+      "close": [
+        "He couldn’t carry the hopes of all the bridgemen.",
+        "He just wasn’t strong enough.",
+        "[image]"
+      ],
+      "textHash": "24e9bc9e9ce7",
+      "pageHash": "af26457154e7"
+    },
+    {
+      "title": "Chapter 41: Of Alds And Milp",
+      "blockCount": 95,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 651,
+      "pageMax": 656,
+      "openPages": [
+        null,
+        651,
+        651,
+        651,
+        651,
+        651,
+        651,
+        651
+      ],
+      "open": [
+        "[banner] Of Alds And Milp",
+        "FIVE AND A HALF YEARS AGO",
+        "Kaladin pushed past the shrieking Laral and stumbled into th",
+        "The scent of burned flesh hung in the air. Lirin worked fran",
+        "Kaladin stood in the doorway gaping. Laral continued to scre",
+        "“Do something! Work harder! He can’t! He was where it happen"
+      ],
+      "closePages": [
+        656,
+        656,
+        656
+      ],
+      "close": [
+        "Kaladin thought it through a dozen different ways, pondering",
+        "Kaladin’s father had once laughed at his son’s desire to go ",
+        "At that moment, Kaladin knew he could kill, if he needed to."
+      ],
+      "textHash": "6a91a72f5892",
+      "pageHash": "b6388af9fe40"
+    },
+    {
+      "title": "Chapter 42: Beggars And Barmaids",
+      "blockCount": 246,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 657,
+      "pageMax": 672,
+      "openPages": [
+        null,
+        657,
+        657,
+        657,
+        657,
+        657,
+        657,
+        657
+      ],
+      "open": [
+        "[banner] Beggars And Barmaids",
+        "“Like a highstorm, regular in their coming, yet always unexp",
+        "—The word Desolation is used twice in reference to their app",
+        "“I’ve made my decision,” Shallan declared. Jasnah looked up ",
+        "“But it was not moral, and it certainly wasn’t ethical.”",
+        "“So morality and legality are distinct?”"
+      ],
+      "closePages": [
+        671,
+        671,
+        672
+      ],
+      "close": [
+        "“Well, I’m not going to chide you for that,” Jasnah said, tu",
+        "Shallan sat, offering the bread and jam to Jasnah, who shook",
+        "In one week, she’d have to leave. But in the meantime, she w"
+      ],
+      "textHash": "e0fc678b2344",
+      "pageHash": "8169ace70c29"
+    },
+    {
+      "title": "Chapter 43: The Wretch",
+      "blockCount": 232,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 673,
+      "pageMax": 685,
+      "openPages": [
+        null,
+        673,
+        673,
+        673,
+        673,
+        673,
+        673,
+        673
+      ],
+      "open": [
+        "[banner] The Wretch",
+        "“They lived out in the wilds, always awaiting the Desolation",
+        "sometimes, a foolish child who took no heed of the night’s d",
+        "—A child’s tale, yes, but this quote from Shadows Remembered",
+        "He’d spent much of the night lying awake on the hard floor, ",
+        "He felt like a wanderer seeking desperately for a pathway in"
+      ],
+      "closePages": [
+        685,
+        685,
+        null
+      ],
+      "close": [
+        "“I’m your man, Captain.”",
+        "Others began to chime in, each man standing, several grabbin",
+        "[image]"
+      ],
+      "textHash": "47ddec7c5778",
+      "pageHash": "2546abc073a8"
+    },
+    {
+      "title": "Chapter 44: The Weeping",
+      "blockCount": 221,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 687,
+      "pageMax": 699,
+      "openPages": [
+        null,
+        687,
+        687,
+        687,
+        687,
+        687,
+        687,
+        688
+      ],
+      "open": [
+        "[banner] The Weeping",
+        "FIVE YEARS AGO",
+        "Kaladin hated the Weeping. It marked the end of an old year ",
+        "Kaladin lay on the sloped roof of his house in Hearthstone. ",
+        "He lay on his back, staring up at the sky. Perhaps he should",
+        "Another army was passing through the town. One of many these"
+      ],
+      "closePages": [
+        699,
+        699,
+        699
+      ],
+      "close": [
+        "“In four years, I will bring him home safely,” Kaladin said.",
+        "“I promise it by the storms and the Almighty’s tenth name it",
+        "I promise…."
+      ],
+      "textHash": "fe87f5bd86cf",
+      "pageHash": "65849738e5c4"
+    },
+    {
+      "title": "Chapter 45: Shadesmar",
+      "blockCount": 328,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 700,
+      "pageMax": 721,
+      "openPages": [
+        null,
+        700,
+        700,
+        700,
+        700,
+        701,
+        701,
+        701
+      ],
+      "open": [
+        "[banner] Shadesmar",
+        "“Yelignar, called Blightwind, was one that could speak like ",
+        "—The Unmade were obviously fabrications of folklore. Curious",
+        "The parshmen promise that they will lead me on a hunt for a ",
+        "We are amazed to find religion among these parshmen. The mou",
+        "The Parshendi have seen our servants, and are confused by th"
+      ],
+      "closePages": [
+        721,
+        721,
+        721
+      ],
+      "close": [
+        "The door swung open.",
+        "Jasnah gasped, immediately calling for help. She rushed to S",
+        "This, Shallan thought, will not end well."
+      ],
+      "textHash": "31bc7c9fae88",
+      "pageHash": "b41eb906729f"
+    },
+    {
+      "title": "Chapter 46: Child Of Tanavast",
+      "blockCount": 333,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 722,
+      "pageMax": 740,
+      "openPages": [
+        null,
+        722,
+        722,
+        722,
+        722,
+        722,
+        722,
+        722
+      ],
+      "open": [
+        "[banner] Child Of Tanavast",
+        "“Though I was due for dinner in Veden City that night, I ins",
+        "—Following the firing of the original Palanaeum, only one pa",
+        "He raged forward, the stormwall behind him his trailing cape",
+        "He approached a dark continent and soared upward. Higher. Hi",
+        "He roared past the Shattered Plains. They looked as if somet"
+      ],
+      "closePages": [
+        740,
+        740,
+        740
+      ],
+      "close": [
+        "Syl fell silent for a moment.",
+        "“This darkness about you when you talk of them frightens me,",
+        "He didn’t respond, just continuing on his way. He owed that "
+      ],
+      "textHash": "e971eed67f07",
+      "pageHash": "fdb07464c58b"
+    },
+    {
+      "title": "Chapter 47: Stormblessings",
+      "blockCount": 188,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 742,
+      "pageMax": 755,
+      "openPages": [
+        null,
+        742,
+        742,
+        742,
+        742,
+        742,
+        742,
+        742
+      ],
+      "open": [
+        "[banner] Stormblessings",
+        "ONE YEAR AGO",
+        "Kaladin turned the rock over in his fingers, letting the fac",
+        "The rock caught the light, spinning it in different colors, ",
+        "Around him, Highmarshal Amaram’s army prepared for battle. S",
+        "It had been nearly four years since he’d joined Amaram’s arm"
+      ],
+      "closePages": [
+        755,
+        755,
+        755
+      ],
+      "close": [
+        "“What—Aren’t you going to take the Blade?”",
+        "“I don’t want it,” Kaladin said softly.",
+        "“I’m giving it to my men.” Kaladin walked away, emotionally "
+      ],
+      "textHash": "e093351db176",
+      "pageHash": "e282ae38832d"
+    },
+    {
+      "title": "Chapter 48: Strawberry",
+      "blockCount": 157,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 756,
+      "pageMax": 765,
+      "openPages": [
+        null,
+        756,
+        756,
+        756,
+        756,
+        756,
+        756,
+        756
+      ],
+      "open": [
+        "[banner] Strawberry",
+        "“They take away the light, wherever they lurk. Skin that is ",
+        "—Cormshen, page 104. Shallan sat quietly, propped up in a st",
+        "Her arm ached; she’d sliced herself more deeply than she’d i",
+        "The results were embarrassing, but at least nobody thought s",
+        "She continued her sketch. She was in a large, hallwaylike ro"
+      ],
+      "closePages": [
+        765,
+        765,
+        null
+      ],
+      "close": [
+        "“You can’t Soulcast,” Shallan said weakly, pulling the ties ",
+        "Stormfather! Why was the room spinning so much? Jasnah gaspe",
+        "[image]"
+      ],
+      "textHash": "b8eb52aeda0b",
+      "pageHash": "3262829bc6de"
+    },
+    {
+      "title": "Chapter 49: To Care",
+      "blockCount": 162,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 767,
+      "pageMax": 776,
+      "openPages": [
+        null,
+        767,
+        767,
+        767,
+        767,
+        767,
+        767,
+        767
+      ],
+      "open": [
+        "[banner] To Care",
+        "“Radiant / of birthplace / the announcer comes / to come ann",
+        "—Though I am not overly fond of the ketek poetic form as a m",
+        "—poked from a deep puddle Kaladin passed. He didn’t look to ",
+        "Flash floods, Kaladin thought, listening to the scraping ste",
+        "Kaladin didn’t know if he could trust his dream or not, but "
+      ],
+      "closePages": [
+        776,
+        776,
+        776
+      ],
+      "close": [
+        "Is it their bridgeman training? Kaladin wondered. Or is it t",
+        "Watching them stand resolute and capable in stances they had",
+        "By seeking to beat them down, Sadeas had prepared them to ex"
+      ],
+      "textHash": "10d99641f7f1",
+      "pageHash": "0c43fa13a629"
+    },
+    {
+      "title": "Chapter 50: Backbreaker Powder",
+      "blockCount": 70,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 777,
+      "pageMax": 780,
+      "openPages": [
+        null,
+        777,
+        777,
+        777,
+        777,
+        777,
+        777,
+        777
+      ],
+      "open": [
+        "[banner] Backbreaker Powder",
+        "“Flame and char. Skin so terrible. Eyes like pits of blackne",
+        "—A quote from the Iviad probably needs no reference notation",
+        "She sat up, feeling oddly healthy. Bright sunlight illuminat",
+        "A rustling sound. She turned to see a nurse hurrying away do",
+        "I’m in the hospital, Shallan thought. Moved to a private roo"
+      ],
+      "closePages": [
+        780,
+        780,
+        780
+      ],
+      "close": [
+        "She’d lost it all. No fabrial to protect her family, no ward",
+        "Her tears dampened the sheets as the sunlight outside faded,",
+        "Nobody cared."
+      ],
+      "textHash": "eca3dd2a8833",
+      "pageHash": "5029a111dd36"
+    },
+    {
+      "title": "Chapter 51: Sas Nahn",
+      "blockCount": 73,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 781,
+      "pageMax": 786,
+      "openPages": [
+        null,
+        781,
+        781,
+        781,
+        781,
+        781,
+        781,
+        781
+      ],
+      "open": [
+        "[banner] Sas Nahn",
+        "ONE YEAR AGO",
+        "Kaladin sat quietly in the waiting room of Amaram’s wooden w",
+        "Four of his men remained. Four, out of twenty-six. And men c",
+        "I killed a Shardbearer today , he thought, mind numb. Like L",
+        "He crossed his arms on the wooden windowsill. There was no g"
+      ],
+      "closePages": [
+        786,
+        786,
+        null
+      ],
+      "close": [
+        "Amaram hesitated by the door, resting the blunt edge of the ",
+        "“You are being discharged as a deserter and branded as a He ",
+        "[image]"
+      ],
+      "textHash": "9223ee34aaed",
+      "pageHash": "69e7f462b677"
+    },
+    {
+      "title": "Interlude I-7: Baxil",
+      "blockCount": 63,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 789,
+      "pageMax": 792,
+      "openPages": [
+        null,
+        789,
+        789,
+        789,
+        789,
+        789,
+        789,
+        789
+      ],
+      "open": [
+        "[banner] Baxil",
+        "Baxil hastened down the lavish palace corridor, clutching th",
+        "“Would you stop that?” Av said, walking beside him.",
+        "“Every time you jump I nearly cuff you one out of surprise.”",
+        "“I can’t help it,” Baxil said.",
+        "“Shouldn’t we be doing this at night?”"
+      ],
+      "closePages": [
+        792,
+        792,
+        792
+      ],
+      "close": [
+        "“Well, if you ever want that changed, start asking the mistr",
+        "Baxil said nothing further. The Old Magic, he thought. It co",
+        "Knowing his luck, though, he wouldn’t beable to find it. He "
+      ],
+      "textHash": "82eef05c3f09",
+      "pageHash": "1441642a959a"
+    },
+    {
+      "title": "Interlude I-8: Geranid",
+      "blockCount": 78,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 793,
+      "pageMax": 797,
+      "openPages": [
+        null,
+        793,
+        793,
+        793,
+        793,
+        793,
+        793,
+        793
+      ],
+      "open": [
+        "[banner] Geranid",
+        "Geranid nodded absently as she worked on her equations. The ",
+        "“I’m tired of cooking,” Ashir continued. He had a soft, kind",
+        "“I don’t have passion for it as I once did,” he continued.",
+        "“Besides, what good will a cook be in the Spiritual Realm?”",
+        "“Heralds need food,” she said absently, scratching out a lin"
+      ],
+      "closePages": [
+        796,
+        796,
+        797
+      ],
+      "close": [
+        "“You just found something wonderful,” he said more softly.",
+        "“I don’t know what it means yet, but it might very well chan",
+        "She smiled, turning back to her equations. And for once, she"
+      ],
+      "textHash": "3094b256cb3d",
+      "pageHash": "87d20ee6daeb"
+    },
+    {
+      "title": "Interlude I-9: Death Wears White",
+      "blockCount": 80,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 798,
+      "pageMax": 805,
+      "openPages": [
+        null,
+        798,
+        798,
+        798,
+        798,
+        798,
+        798,
+        798
+      ],
+      "open": [
+        "[banner] Death Wears White",
+        "Szeth-son-son-Vallano, Truthless of Shinovar, spun between t",
+        "With three quick strokes, he slashed his Shardblade through ",
+        "It flew backward into the room, hinges no longer holding it ",
+        "I am sorry, he thought. Then he dashed in to start the slaug",
+        "Chaos ensued. Screams, yells, panic. Szeth leaped at op the "
+      ],
+      "closePages": [
+        805,
+        805,
+        null
+      ],
+      "close": [
+        "“Death,” Szeth said, then drove his Blade point-first throug",
+        "face and into the rock below.",
+        "[image]"
+      ],
+      "textHash": "104f86f96d84",
+      "pageHash": "85c2efbd83d2"
+    },
+    {
+      "title": "Chapter 52: A Highway To The Sun",
+      "blockCount": 322,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 807,
+      "pageMax": 825,
+      "openPages": [
+        null,
+        807,
+        807,
+        807,
+        807,
+        807,
+        807,
+        807
+      ],
+      "open": [
+        "[banner] A Highway To The Sun",
+        "“I’m standing over the body of a brother. I’m weeping. Is th",
+        "—Dated Vevanev, 1173, 107 seconds pre-death. Subject: an out",
+        "“Father,” Adolin said, pacing in Dalinar’s sitting room.",
+        "“This is insane .”",
+        "“That is appropriate,” Dalinar replied dryly."
+      ],
+      "closePages": [
+        825,
+        825,
+        825
+      ],
+      "close": [
+        "“Just go. Do not taunt me today.” She hesitated, then walked",
+        "She would never know how much he wished her to have made one",
+        "Almighty above, he thought. Please. Just let me know what I "
+      ],
+      "textHash": "f769b81cedab",
+      "pageHash": "806349d93c1a"
+    },
+    {
+      "title": "Chapter 53: Dunny",
+      "blockCount": 108,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 826,
+      "pageMax": 833,
+      "openPages": [
+        null,
+        826,
+        826,
+        826,
+        826,
+        826,
+        826,
+        826
+      ],
+      "open": [
+        "[banner] Dunny",
+        "“He must pick it up, the fallen title! The tower, the crown,",
+        "—Dated Vevahach, 1173, 8 seconds pre-death. Subject: a prost",
+        "Back ground unknown. A razor-edged arrow snapped into the wo",
+        "“Stay firm!” he bellowed, charging over the uneven ground, t",
+        "The Parshendi archers knelt on the other side of the chasm, "
+      ],
+      "closePages": [
+        833,
+        833,
+        833
+      ],
+      "close": [
+        "“Thank you.”",
+        "“You’re a fool and an instigator. But you’re an honest one.”",
+        "“If you get us killed, it won’t be on purpose. Can’t say tha"
+      ],
+      "textHash": "4c6768c243e4",
+      "pageHash": "f1056b4045df"
+    },
+    {
+      "title": "Chapter 54: Gibletish",
+      "blockCount": 281,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 834,
+      "pageMax": 848,
+      "openPages": [
+        null,
+        834,
+        834,
+        834,
+        834,
+        834,
+        834,
+        835
+      ],
+      "open": [
+        "[banner] Gibletish",
+        "“The burdens of nine become mine. Why must I carry the madne",
+        "—Dated Palaheses, 1173, unknown seconds pre-death. Subject: ",
+        "The purpose of the uniform was not fashion or tradition, but",
+        "He stepped onto the king’s feasting island. Stands had been ",
+        "Attendance at the feast tonight was small, though that was m"
+      ],
+      "closePages": [
+        848,
+        848,
+        null
+      ],
+      "close": [
+        "Sadeas mulled it over. Then he shrugged.",
+        "“Very well. Send me details via messenger. But do it later. ",
+        "[image]"
+      ],
+      "textHash": "9c01f19317e0",
+      "pageHash": "8054e9355839"
+    },
+    {
+      "title": "Chapter 55: An Emerald Broam",
+      "blockCount": 294,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 850,
+      "pageMax": 865,
+      "openPages": [
+        null,
+        850,
+        850,
+        850,
+        850,
+        850,
+        850,
+        850
+      ],
+      "open": [
+        "[banner] An Emerald Broam",
+        "“A woman sits and scratches out her own eyes. Daughter of ki",
+        "—Dated Palahevan, 1173, 73 seconds pre-death. Subject: a beg",
+        "The Parshendi kept leaping over the line and attacking the m",
+        "“Kaladin!” a voice said. Kaladin spun to see Rock trotting u",
+        "“Have you seen this thing?” The Horneater pointed."
+      ],
+      "closePages": [
+        865,
+        865,
+        865
+      ],
+      "close": [
+        "“A man can never have enough cousins,” Lopen said.",
+        "“Well, we need that rope,” Kaladin said, the plan beginning ",
+        "“Do it, Lopen. I’ll make change from those spheres above to "
+      ],
+      "textHash": "163e19542d69",
+      "pageHash": "4313213b2f59"
+    },
+    {
+      "title": "Chapter 56: That Storming Book",
+      "blockCount": 133,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 866,
+      "pageMax": 878,
+      "openPages": [
+        null,
+        866,
+        866,
+        866,
+        866,
+        866,
+        867,
+        867
+      ],
+      "open": [
+        "[banner] That Storming Book",
+        "—Dated Palahakev, 1173, 16 seconds pre-death. Subject: a Tha",
+        "They came at him in pairs, each team trying to hit him from ",
+        "Dalinar kept Gallant moving, dancing from side to side, swin",
+        "The Thrill excited him, strengthened him. He hadn’t experien",
+        "He turned Gallant just in time to confront two pairs of Pars"
+      ],
+      "closePages": [
+        878,
+        878,
+        null
+      ],
+      "close": [
+        "He stumbled away, one hand to his head, the other carrying h",
+        "You will need luck trying to understand me, Sadeas, he thoug",
+        "[image]"
+      ],
+      "textHash": "bba3df43f693",
+      "pageHash": "61a7492191f3"
+    },
+    {
+      "title": "Chapter 57: Wandersail",
+      "blockCount": 379,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 880,
+      "pageMax": 903,
+      "openPages": [
+        null,
+        880,
+        880,
+        880,
+        880,
+        880,
+        880,
+        880
+      ],
+      "open": [
+        "[banner] Wandersail",
+        "“I hold the suckling child in my hands, a knife at his throa",
+        "—Dated Shashanan, 1173, 23 seconds pre-death. Subject: a dar",
+        "“And all the world was shattered!” Maps yelled, back arching",
+        "“The rocks trembled with their steps, and the stones reached",
+        "He spasmed one last time, and the light faded from his eyes."
+      ],
+      "closePages": [
+        903,
+        903,
+        903
+      ],
+      "close": [
+        "“Just legends and stories. Nobody really knows what the Radi",
+        "Kaladin met his eyes, then smiled.",
+        "“Well, we’re going to find out.”"
+      ],
+      "textHash": "96591a4aff12",
+      "pageHash": "7b32efdab680"
+    },
+    {
+      "title": "Chapter 58: The Journey",
+      "blockCount": 318,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 904,
+      "pageMax": 923,
+      "openPages": [
+        null,
+        904,
+        904,
+        904,
+        904,
+        904,
+        904,
+        904
+      ],
+      "open": [
+        "[banner] The Journey",
+        "“ReShephir, the Midnight Mother, giving birth to abomination",
+        "—Dated Shashabev, 1173, 8 seconds pre-death. Subject: a dark",
+        "“I have a serious loathing of being wrong.” Adolin reclined ",
+        "Wind ruffled his hair; he was sitting with a group of other ",
+        "“I should think that everyone shares your dislike, Adolin,” "
+      ],
+      "closePages": [
+        923,
+        923,
+        923
+      ],
+      "close": [
+        "“Send me one of your clerks as well. With a copy of that boo",
+        "Dalinar smiled.",
+        "“I will do so, Sadeas.”"
+      ],
+      "textHash": "fdf4a9919d8e",
+      "pageHash": "baf935691f5a"
+    },
+    {
+      "title": "Chapter 59: An Honor",
+      "blockCount": 289,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 924,
+      "pageMax": 941,
+      "openPages": [
+        null,
+        924,
+        924,
+        924,
+        924,
+        924,
+        924,
+        925
+      ],
+      "open": [
+        "[banner] An Honor",
+        "“Above the final void I hang, friends behind, friends before",
+        "—Dated Betabanan, 1173, 45 seconds pre-death. Subject: a lig",
+        "He tried harder, staring into their depths. Nothing happened",
+        "“Maybe you don’t want it badly enough,” Teft said.",
+        "“I want it as badly as I know how. It won’t budge, Teft.”"
+      ],
+      "closePages": [
+        941,
+        941,
+        941
+      ],
+      "close": [
+        "“I don’t think this will be any different from what you trie",
+        "“We’ll see,” Kaladin said.",
+        "“Just do it.”"
+      ],
+      "textHash": "e748d2eae842",
+      "pageHash": "2ba3afed4fe7"
+    },
+    {
+      "title": "Chapter 60: That Which We Cannot Have",
+      "blockCount": 209,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppipp",
+      "pageMin": 942,
+      "pageMax": 953,
+      "openPages": [
+        null,
+        942,
+        942,
+        942,
+        942,
+        942,
+        942,
+        942
+      ],
+      "open": [
+        "[banner] That Which We Cannot Have",
+        "“The death is my life, the strength becomes my weakness, the",
+        "—Dated Betabanes, 1173, 95 seconds pre-death. Subject: a sch",
+        "“That is why, Father,” Adolin said, “you absolutely cannot a",
+        "“Very well, you’ve convinced me.” Adolin stopped dead in the",
+        "“Really?” Adolin asked."
+      ],
+      "closePages": [
+        null,
+        953,
+        953
+      ],
+      "close": [
+        "[image]",
+        "The room fell silent. Navani herself looked stunned by what ",
+        "“Now, Dalinar,” she said, “I want you to describe this visio"
+      ],
+      "textHash": "fd0e98f6b259",
+      "pageHash": "53991cd5f8f7"
+    },
+    {
+      "title": "Chapter 61: Right For Wrong",
+      "blockCount": 156,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 954,
+      "pageMax": 962,
+      "openPages": [
+        null,
+        954,
+        954,
+        954,
+        954,
+        954,
+        954,
+        954
+      ],
+      "open": [
+        "[banner] Right For Wrong",
+        "“In the storm I awaken, falling, spinning, grieving.”",
+        "—Dated Kakanev, 1173, 13 seconds pre-death. Subject was a ci",
+        "“How can you be so sure it was him, Dalinar?” Navani asked s",
+        "“I just am. That was Nohadon.” It had been several hours sin",
+        "“It was him, Navani.” Dalinar stared toward the wall over Re"
+      ],
+      "closePages": [
+        962,
+        962,
+        962
+      ],
+      "close": [
+        "“What? Seduced?” She glanced back at him.",
+        "“Dalinar, I’ve never been “I know,” Dalinar said, smiling.",
+        "“That was the seductive part.” He Blood of my fathers, he th"
+      ],
+      "textHash": "87daed388816",
+      "pageHash": "9bfb678a7022"
+    },
+    {
+      "title": "Chapter 62: Three Glyphs",
+      "blockCount": 225,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 963,
+      "pageMax": 976,
+      "openPages": [
+        null,
+        963,
+        963,
+        963,
+        963,
+        963,
+        963,
+        963
+      ],
+      "open": [
+        "[banner] Three Glyphs",
+        "“The darkness becomes a palace. Let it rule! Let it rule!”",
+        "—Kakevah 1173, 22 seconds pre-death. A darkeyed Selay man of",
+        "“You think one of those will save us?” Moash asked, scowling",
+        "Kaladin glanced to the side. He stood at parade rest as Sade",
+        "The prayer tied on his arms was simple. Three glyphs: wind, "
+      ],
+      "closePages": [
+        976,
+        976,
+        976
+      ],
+      "close": [
+        "Kaladin glanced down at the prayer. It was stained with bloo",
+        "“Wait to see if we escape.” Kaladin finished his stitching.",
+        "“That’s the real test.”"
+      ],
+      "textHash": "9f82231ca3a4",
+      "pageHash": "5201dd584aaf"
+    },
+    {
+      "title": "Chapter 63: Fear",
+      "blockCount": 104,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 977,
+      "pageMax": 982,
+      "openPages": [
+        null,
+        977,
+        977,
+        977,
+        977,
+        977,
+        977,
+        977
+      ],
+      "open": [
+        "[banner] Fear",
+        "“I wish to sleep. I know now why you do what you do, and I h",
+        "—Kakashah 1173, 142 seconds pre-death. A Shin sailor, left b",
+        "“You see?” Leyten turned the piece of carapace over in his h",
+        "“If we carve it up at the edge, it encourages a blade—or in ",
+        "Kaladin smiled, taking back the piece of armor. Leyten had c"
+      ],
+      "closePages": [
+        982,
+        982,
+        null
+      ],
+      "close": [
+        "“When the time comes, I hope you’re",
+        "Kaladin nodded and Teft hurried back to the others, giving s",
+        "[image]"
+      ],
+      "textHash": "89fb30d16fa1",
+      "pageHash": "f213e9afb8e2"
+    },
+    {
+      "title": "Chapter 64: A Man Of Extremes",
+      "blockCount": 149,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 984,
+      "pageMax": 992,
+      "openPages": [
+        null,
+        984,
+        984,
+        984,
+        984,
+        984,
+        984,
+        984
+      ],
+      "open": [
+        "[banner] A Man Of Extremes",
+        "“They come from the pit, two dead men, a heart in their hand",
+        "—Kakashah 1173, 13 seconds pre-death. A rickshaw puller.",
+        "“I couldn’t decide if you were interested or not,” Navani sa",
+        "“Half the time, you seemed like a flirt—offering hints at co",
+        "Dalinar nodded thoughtfully. He wore his blue uniform, while"
+      ],
+      "closePages": [
+        992,
+        992,
+        992
+      ],
+      "close": [
+        "Come on, Father, Adolin thought. You’ve been waiting for a c",
+        "“Very well,” Dalinar said.",
+        "“Adolin, send messengers to mobilize the Fourth through Eigh"
+      ],
+      "textHash": "3ca539bbd2e7",
+      "pageHash": "06ffca51a24d"
+    },
+    {
+      "title": "Chapter 65: The Tower",
+      "blockCount": 121,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 993,
+      "pageMax": 1003,
+      "openPages": [
+        null,
+        993,
+        993,
+        993,
+        993,
+        993,
+        993,
+        993
+      ],
+      "open": [
+        "[banner] The Tower",
+        "“I see them. They are the rocks. They are the vengeful spiri",
+        "—Kakakes 1173, 8 seconds pre-death. A darkeyed young woman o",
+        "Dalinar searched.",
+        "“I see it,” he said, pointing.",
+        "“They don’t have the gemheart out yet!” A ring of Parshendi "
+      ],
+      "closePages": [
+        1003,
+        1003,
+        1003
+      ],
+      "close": [
+        "“Oh no…” he whispered.",
+        "Sadeas’s army was retreating across the chasm to the norther",
+        "Sadeas was abandoning Dalinar and his troops, leaving them s"
+      ],
+      "textHash": "fb42065e0673",
+      "pageHash": "aa9ebd81864a"
+    },
+    {
+      "title": "Chapter 66: Codes",
+      "blockCount": 87,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1004,
+      "pageMax": 1010,
+      "openPages": [
+        null,
+        1004,
+        1004,
+        1004,
+        1004,
+        1004,
+        1004,
+        1004
+      ],
+      "open": [
+        "[banner] Codes",
+        "“That chanting, that singing, those rasping voices.”",
+        "—Kaktach 1173, 16 seconds pre-death. A middle-aged potter.",
+        "Reported seeing strange dreams during highstorms during the ",
+        "“You were very lucky, Skar,” Kaladin said, putting on the ne",
+        "“You’ll walk on this again, assuming you do not put weight o"
+      ],
+      "closePages": [
+        1010,
+        1010,
+        1010
+      ],
+      "close": [
+        "I never did deliver that Shardplate I promised him, Dalinar ",
+        "Stay strong—and learn wisdom more quickly than your father d",
+        "Farewell."
+      ],
+      "textHash": "4a49f92a8226",
+      "pageHash": "c0968c65c6e9"
+    },
+    {
+      "title": "Chapter 67: Words",
+      "blockCount": 301,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1011,
+      "pageMax": 1031,
+      "openPages": [
+        null,
+        1011,
+        1011,
+        1011,
+        1011,
+        1011,
+        1012,
+        1012
+      ],
+      "open": [
+        "[banner] Words",
+        "“Let me no longer hurt! Let me no longer weep! Daigonarthis!",
+        "—Tanatesach 1173, 28 seconds pre-death. A darkeyed female st",
+        "Exhaustion saturated Kaladin, and the bridge on his shoulder",
+        "Ahead, the last of Sadeas’s army was bunched along the chasm",
+        "Was there no hope for men? They killed those they should hav"
+      ],
+      "closePages": [
+        1030,
+        1031,
+        1031
+      ],
+      "close": [
+        "“Something important.”",
+        "Kaladin raised his spear. The powerful light began to subsid",
+        "Nearby, some of the Parshendi fled, though others stepped up"
+      ],
+      "textHash": "0be17c6c7cf7",
+      "pageHash": "a4030655afdd"
+    },
+    {
+      "title": "Chapter 68: Eshonai",
+      "blockCount": 236,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 1032,
+      "pageMax": 1049,
+      "openPages": [
+        null,
+        1032,
+        1032,
+        1032,
+        1032,
+        1032,
+        1032,
+        1033
+      ],
+      "open": [
+        "[banner] Eshonai",
+        "“They named it the Final Desolation, but they lied. Our gods",
+        "—Tanatanes 1173, 8 seconds pre-death. An Azish itinerant wor",
+        "Sample of particular note. Soldiers in blue yelled, screamin",
+        "His father’s horse and his own were still safe, carrying som",
+        "This was the type of battlefield maneuver that would have be"
+      ],
+      "closePages": [
+        1049,
+        1049,
+        null
+      ],
+      "close": [
+        "The young man turned back to his work, and Dalinar rode Gall",
+        "Sadeas had upset the balance, and it could never be regained",
+        "[image]"
+      ],
+      "textHash": "74f45d80c2d7",
+      "pageHash": "878244220fe3"
+    },
+    {
+      "title": "Chapter 69: Justice",
+      "blockCount": 349,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 1051,
+      "pageMax": 1071,
+      "openPages": [
+        null,
+        1051,
+        1051,
+        1051,
+        1051,
+        1051,
+        1051,
+        1052
+      ],
+      "open": [
+        "[banner] Justice",
+        "“All is withdrawn for me. I stand against the one who saved ",
+        "—Tanatanev 1173, 18 seconds pre-death. A darkeyed mother of ",
+        "Unfortunately, the older she grew, the worse she became at m",
+        "The camp was messy and poorly laid out. Pockets of merchants",
+        "He will be fine, she told herself. He’d better be fine!"
+      ],
+      "closePages": [
+        1071,
+        1071,
+        null
+      ],
+      "close": [
+        "Despite everything else that had happened in the last few mi",
+        "Most everything was still wrong. He was still furious at Sad",
+        "[image]"
+      ],
+      "textHash": "0e7d509322c8",
+      "pageHash": "6f3e5ddc3227"
+    },
+    {
+      "title": "Chapter 70: Sea Of Glass",
+      "blockCount": 104,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1073,
+      "pageMax": 1079,
+      "openPages": [
+        null,
+        1073,
+        1073,
+        1073,
+        1073,
+        1073,
+        1073,
+        1073
+      ],
+      "open": [
+        "[banner] Sea Of Glass",
+        "Shallan lay quietly in the bed of her little hospital room. ",
+        "She’d betrayed Jasnah. And Jasnah knew. Somehow, disappointi",
+        "Beyond that, Kabsal was dead. Why did she feel so sick about",
+        "He had to be somewhat sincere, she told herself, curled up o",
+        "He had handed Shallan the antidote first, rather than taking"
+      ],
+      "closePages": [
+        1079,
+        1079,
+        1079
+      ],
+      "close": [
+        "“What is this?” Shallan asked.",
+        "“You wanted to be part of what I’m doing? Well, you’ll need ",
+        "“It’s about the Voidbringers.” Szeth-son-son-Vallano, Truthl"
+      ],
+      "textHash": "751188009f9e",
+      "pageHash": "8d54469b2fb2"
+    },
+    {
+      "title": "Chapter 71: Recorded In Blood",
+      "blockCount": 117,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1080,
+      "pageMax": 1086,
+      "openPages": [
+        null,
+        1080,
+        1080,
+        1080,
+        1080,
+        1080,
+        1080,
+        1080
+      ],
+      "open": [
+        "[banner] Recorded In Blood",
+        "Szeth joined the other porters, carrying his sack through th",
+        "Szeth kept his eyes down. Partially to imitate the look of a",
+        "He felt his every step should leave a bloody footprint. The ",
+        "So many dead. So very many dead.",
+        "Was he losing his mind? Each time he went on an assassinatio"
+      ],
+      "closePages": [
+        1086,
+        1086,
+        1086
+      ],
+      "close": [
+        "“It must be done brutally, I’m afraid.”",
+        "“I have rarely had the luxury of working otherwise,” Szeth s",
+        "The screams greeted him."
+      ],
+      "textHash": "6bec7eb87e1f",
+      "pageHash": "848581048061"
+    },
+    {
+      "title": "Chapter 72: Veristitalian",
+      "blockCount": 58,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1087,
+      "pageMax": 1089,
+      "openPages": [
+        null,
+        1087,
+        1087,
+        1087,
+        1087,
+        1087,
+        1087,
+        1087
+      ],
+      "open": [
+        "[banner] Veristitalian",
+        "“Before I read,” Shallan said, “I need to understand somethi",
+        "“To remove the poison,” Jasnah said.",
+        "“Yes. It acted extremely quickly; as I said, it must have be",
+        "“But you said you aren’t good with organics,” Shallan said.",
+        "“You turned the strawberry jam into something inedible.”"
+      ],
+      "closePages": [
+        1089,
+        1089,
+        1089
+      ],
+      "close": [
+        "Ash and fire.",
+        "“Stormfather…” Shallan whispered, horrified.",
+        "“We didn’t destroy the Voidbringers,” Jasnah said from behin"
+      ],
+      "textHash": "41d2205d1b68",
+      "pageHash": "e9a881de794b"
+    },
+    {
+      "title": "Chapter 73: Trust",
+      "blockCount": 197,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1090,
+      "pageMax": 1099,
+      "openPages": [
+        null,
+        1090,
+        1090,
+        1090,
+        1090,
+        1090,
+        1090,
+        1090
+      ],
+      "open": [
+        "[banner] Trust",
+        "Ever since the failed betrayal and subsequent rescue earlier",
+        "He clasped his hands behind him; Syl sat on his shoulder.",
+        "“Dare I trust him?” he asked softly.",
+        "“He’s a good man,” Syl said.",
+        "“I’ve watched him. Despite that thing he carried.”"
+      ],
+      "closePages": [
+        1099,
+        1099,
+        1099
+      ],
+      "close": [
+        "Three more men were dead. Malop, Earless Jaks, and Narm. Kal",
+        "Twenty-seven men lived. He’d finally managed to save someone",
+        "For now, that was enough."
+      ],
+      "textHash": "cd3e01ffed08",
+      "pageHash": "6817097150c3"
+    },
+    {
+      "title": "Chapter 74: Ghostblood",
+      "blockCount": 48,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1100,
+      "pageMax": 1102,
+      "openPages": [
+        null,
+        1100,
+        1100,
+        1100,
+        1100,
+        1100,
+        1100,
+        1100
+      ],
+      "open": [
+        "[banner] Ghostblood",
+        "Shallan rubbed her eyes. She’d read through Jasnah’s notes—a",
+        "Her eyes burned from the night spent crying, then reading. S",
+        "“It’s true,” she said.",
+        "“You’re right. The Voidbringers are the parshmen. I can see ",
+        "Jasnah smiled, looking oddly pleased with herself, consideri"
+      ],
+      "closePages": [
+        1102,
+        1102,
+        1102
+      ],
+      "close": [
+        "It was the same symbol that Nan Balat had shown her weeks ag",
+        "“Almighty above,” Shallan whispered. She looked up.",
+        "“Jasnah, I think… I think my father might have been a member"
+      ],
+      "textHash": "eebeb2256a01",
+      "pageHash": "0dc0d23535c3"
+    },
+    {
+      "title": "Chapter 75: In The Top Room",
+      "blockCount": 89,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1103,
+      "pageMax": 1107,
+      "openPages": [
+        null,
+        1103,
+        1103,
+        1103,
+        1103,
+        1103,
+        1103,
+        1104
+      ],
+      "open": [
+        "[banner] In The Top Room",
+        "The highstorm winds began to blow against Dalinar’s complex,",
+        "Her joy at having him back was enough to dampen, for now, he",
+        "He took a deep breath, opened his eyes, and found himself in",
+        "He turned about, wary. The sky was dark and he stood on a fi",
+        "It wasn’t like any vision he’d seen before. It was…"
+      ],
+      "closePages": [
+        1107,
+        1107,
+        1107
+      ],
+      "close": [
+        "“Who are you?” Dalinar asked again. And yet, he thought he k",
+        "“I am… I was … God. The one you call the Almighty, the creat",
+        "“And now I am dead. Odium has killed me. I am sorry.”"
+      ],
+      "textHash": "ecde2159949b",
+      "pageHash": "47b41f154f5c"
+    },
+    {
+      "title": "Epilogue: Of Most Worth",
+      "blockCount": 88,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppippppppppppppppppppp",
+      "pageMin": 1109,
+      "pageMax": 1118,
+      "openPages": [
+        null,
+        1109,
+        1109,
+        1109,
+        1109,
+        1109,
+        1109,
+        1109
+      ],
+      "open": [
+        "[banner] Of Most Worth",
+        "“Can you feel it?” Wit asked of the open night.",
+        "“Something just changed. I believe that’s the sound the worl",
+        "Three guards stood just inside the thick wooden city gates o",
+        "The gates were closed, and these men were of the night watch",
+        "And, of course, there was a reason the people did what they "
+      ],
+      "closePages": [
+        1118,
+        1118,
+        1118
+      ],
+      "close": [
+        "A Full Lashing might seem very similar to a Basic Lashing, b",
+        "To create a Full Lashing, a Windrunner would infuse an objec",
+        "REVERSE LASHING: GIVING AN OBJECT A GRAVITATIONAL I believe "
+      ],
+      "textHash": "e1dd05204ad8",
+      "pageHash": "7230fbbb48ca"
+    }
+  ]
 }

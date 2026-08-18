@@ -1,5 +1,5 @@
 {
-  "parserVersion": 134,
+  "parserVersion": 135,
   "totalBlocks": 9117,
   "totalWords": 322731,
   "chapterCount": 110,
@@ -119,5 +119,4097 @@
   "lastBlockText": "One of the Great Story which no one on earth has read: which goes on forever: in",
   "headingCount": 111,
   "avgBlockLength": 186,
-  "proseBlockCount": 9006
+  "proseBlockCount": 9006,
+  "frontMatter": {
+    "blockCount": 3,
+    "types": "hpp",
+    "pageMin": 0,
+    "pageMax": 1,
+    "openPages": [
+      0,
+      0,
+      1
+    ],
+    "open": [
+      "Narnia",
+      "C.S. Lewis",
+      "BY"
+    ],
+    "closePages": [],
+    "close": [],
+    "textHash": "24ba58c52e3f",
+    "pageHash": "d7d89f8004ea"
+  },
+  "chapterOrder": [
+    {
+      "title": "Chapter ONE - Lucy Looks Into a Wardrobe",
+      "blockCount": 39,
+      "types": "hpppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1,
+      "pageMax": 4,
+      "openPages": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "open": [
+        "Chapter ONE - Lucy Looks Into a Wardrobe",
+        "ONCE there were four children whose names were Peter, Susan,",
+        "\"We've fallen on our feet and no mistake,\" said Peter.",
+        "\"This is going to be perfectly splendid. That old chap will ",
+        "\"I think he's an old dear,\" said Susan.",
+        "\"Oh, come off it!\" said Edmund, who was tired and pretending"
+      ],
+      "closePages": [
+        3,
+        3,
+        4
+      ],
+      "close": [
+        "\"I can always get back if anything goes wrong,\" thought Lucy",
+        "He was only a little taller than Lucy herself and he carried",
+        "\"Goodness gracious me!\" exclaimed the Faun."
+      ],
+      "textHash": "f0eec0479317",
+      "pageHash": "3b810ee3214b"
+    },
+    {
+      "title": "Chapter TWO - What Lucy Found There",
+      "blockCount": 89,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 4,
+      "pageMax": 9,
+      "openPages": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "open": [
+        "Chapter TWO - What Lucy Found There",
+        "\"GOOD EVENING,\" said Lucy. But the Faun was so busy picking ",
+        "\"Good evening, good evening,\" said the Faun.",
+        "\"Excuse me - I don't want to be inquisitive",
+        "- but should I be right in thinking that you are a Daughter ",
+        "\"My name's Lucy,\" said she, not quite understanding him."
+      ],
+      "closePages": [
+        8,
+        9,
+        9
+      ],
+      "close": [
+        "\"Rather!\" said Lucy, and then ran towards the far off patch ",
+        "\"I'm here,\" she shouted.",
+        "\"I'm here. I've come back I'm all right.\""
+      ],
+      "textHash": "b52c796d1b4f",
+      "pageHash": "e6a837f950ce"
+    },
+    {
+      "title": "Chapter THREE - Edmund and the Wardrobe",
+      "blockCount": 48,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 9,
+      "pageMax": 12,
+      "openPages": [
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "open": [
+        "Chapter THREE - Edmund and the Wardrobe",
+        "Lucy ran out of the empty room into the passage and found th",
+        "\"It's all right,\" she repeated, \"I've comeback.\"",
+        "\"What on earth are you talking about, Lucy?\" asked Susan.",
+        "\"Why? said Lucy in amazement, \"haven't you all been wonderin",
+        "\"So you've been hiding, have you?\" said Peter."
+      ],
+      "closePages": [
+        12,
+        12,
+        12
+      ],
+      "close": [
+        "\"Ha! You shall know us better hereafter. But I repeat-what a",
+        "\"Please, your Majesty,\" said Edmund, \"I don't know what you ",
+        "least I was it's the holidays now.\""
+      ],
+      "textHash": "509ae0c68806",
+      "pageHash": "1229d96493bc"
+    },
+    {
+      "title": "Chapter FOUR - Turkish Delight",
+      "blockCount": 73,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 13,
+      "pageMax": 17,
+      "openPages": [
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13,
+        13
+      ],
+      "open": [
+        "Chapter FOUR - Turkish Delight",
+        "\"BUT what are you?\" said the Queen again.",
+        "\"Are you a great overgrown dwarf that has cut off its beard?",
+        "\"No, your Majesty,\" said Edmund, \"I never had a beard, I'm a",
+        "\"A boy!\" said she.",
+        "\"Do you mean you are a Son of Adam?\""
+      ],
+      "closePages": [
+        17,
+        17,
+        17
+      ],
+      "close": [
+        "\"I say,\" said Lucy, \"you do look awful, Edmund. Don't you fe",
+        "\"I'm all right,\" said Edmund, but this was not true. He was ",
+        "\"Come on then,\" said Lucy, \"let's find the others. What a lo"
+      ],
+      "textHash": "b774a70b3aec",
+      "pageHash": "fa13c8c632ae"
+    },
+    {
+      "title": "Chapter FIVE - Back on This Side of the Door",
+      "blockCount": 57,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 17,
+      "pageMax": 22,
+      "openPages": [
+        17,
+        17,
+        17,
+        18,
+        18,
+        18,
+        18,
+        18
+      ],
+      "open": [
+        "Chapter FIVE - Back on This Side of the Door",
+        "BECAUSE the game of hide-and-seek was still going on, it too",
+        "\"Peter! Susan! It's all true. Edmund has seen it too. There ",
+        "\"What's all this about, Ed?\" said Peter. And now we come to ",
+        "\"Tell us, Ed,\" said Susan. And Edmund gave a very superior l",
+        "Poor Lucy gave Edmund one look and rushed out of the room."
+      ],
+      "closePages": [
+        21,
+        21,
+        22
+      ],
+      "close": [
+        "\"Sharp's the word,\" said Peter, and all four made off throug",
+        "Macready was trying to catch them, or that some magic in the",
+        "\"Quick!\" said Peter, \"there's nowhere else,\" and flung open "
+      ],
+      "textHash": "2c09a8e30572",
+      "pageHash": "0e0fadbc5f40"
+    },
+    {
+      "title": "Chapter SIX - Into the Forest",
+      "blockCount": 73,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 22,
+      "pageMax": 26,
+      "openPages": [
+        22,
+        22,
+        22,
+        22,
+        22,
+        22,
+        22,
+        22
+      ],
+      "open": [
+        "Chapter SIX - Into the Forest",
+        "\"I wish the Macready would hurry up and take all these peopl",
+        "\"And what a filthy smell of camphor!\" said Edmund.",
+        "\"I expect the pockets of these coats are full of it,\" said S",
+        "\"There's something sticking into my back,\" said Peter.",
+        "\"And isn't it cold?\" said Susan."
+      ],
+      "closePages": [
+        26,
+        26,
+        26
+      ],
+      "close": [
+        "\"He said he did. But how do we know? And there's another thi",
+        "\"Great Scott!\" said Peter, \"I hadn't thought of that.\"",
+        "\"And no chance of dinner either,\" said Edmund."
+      ],
+      "textHash": "692bc27db5de",
+      "pageHash": "7c580ca876d7"
+    },
+    {
+      "title": "Chapter SEVEN - A Day With the Beavers",
+      "blockCount": 66,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 26,
+      "pageMax": 31,
+      "openPages": [
+        26,
+        27,
+        27,
+        27,
+        27,
+        27,
+        27,
+        27
+      ],
+      "open": [
+        "Chapter SEVEN - A Day With the Beavers",
+        "WHILE the two boys were whispering behind, both the girls su",
+        "\"The robin!\" cried Lucy, \"the robin. It's flown away.\" And s",
+        "\"And now what are we to do?\" said Edmund, giving Peter a loo",
+        "\"Sh! Look!\" said Susan.",
+        "\"What?\" said Peter."
+      ],
+      "closePages": [
+        31,
+        31,
+        31
+      ],
+      "close": [
+        "- and I agree with them - that there's nothing to beat good ",
+        "\"And now,\" said Mr Beaver, pushing away his empty beer mug a",
+        "\"That's all the better, because it means we shan't have any "
+      ],
+      "textHash": "8d3d46d19169",
+      "pageHash": "fa43d27ef35c"
+    },
+    {
+      "title": "Chapter EIGHT - What Happened After Dinner",
+      "blockCount": 101,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 31,
+      "pageMax": 37,
+      "openPages": [
+        31,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32
+      ],
+      "open": [
+        "Chapter EIGHT - What Happened After Dinner",
+        "\"AND now,\" said Lucy, \"do please tell us what's happened to ",
+        "\"Ah, that's bad,\" said Mr Beaver, shaking his head.",
+        "\"That's a very, very bad business. There's no doubt he was t",
+        "\"But where's he been taken to?\" asked Lucy.",
+        "\"Well, they were heading northwards when they were last seen"
+      ],
+      "closePages": [
+        37,
+        37,
+        37
+      ],
+      "close": [
+        "\"",
+        "\"But that isn't what she'll do first,\" said Mrs Beaver, \"not",
+        "\"You're right, Mrs Beaver,\" said her husband, \"we must all g"
+      ],
+      "textHash": "e5c2d9724492",
+      "pageHash": "682e5b842db0"
+    },
+    {
+      "title": "Chapter NINE - In the Witch's House",
+      "blockCount": 32,
+      "types": "hppppppppppppppppppppppppppppppp",
+      "pageMin": 37,
+      "pageMax": 41,
+      "openPages": [
+        37,
+        37,
+        38,
+        38,
+        38,
+        38,
+        38,
+        38
+      ],
+      "open": [
+        "Chapter NINE - In the Witch's House",
+        "AND now of course you want to know what had happened to Edmu",
+        "Just as Mr Beaver had been repeating the rhyme about Adam's ",
+        "You mustn't think that even now Edmund was quite so bad that",
+        "\"all these people who say nasty things about her are her ene",
+        "The first thing he realized when he got outside and found th"
+      ],
+      "closePages": [
+        41,
+        41,
+        41
+      ],
+      "close": [
+        "\"No, your Majesty,\" said Edmund, and proceeded to tell her a",
+        "\"What! Aslan?\" cried the Queen, \"Aslan! Is this true? If I f",
+        "\"Make ready our sledge,\" ordered the Witch, \"and use the har"
+      ],
+      "textHash": "c59c741e6e7b",
+      "pageHash": "b422d593ad5e"
+    },
+    {
+      "title": "Chapter TEN - The Spell Begins to Break",
+      "blockCount": 74,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 41,
+      "pageMax": 46,
+      "openPages": [
+        41,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42,
+        42
+      ],
+      "open": [
+        "Chapter TEN - The Spell Begins to Break",
+        "Now we must go back to Mr and Mrs Beaver and the three other",
+        "\"What are you doing, Mrs Beaver?\" exclaimed Susan.",
+        "\"Packing a load for each of us, dearie,\" said Mrs Beaver ver",
+        "\"You didn't think we'd set out on a journey with nothing to ",
+        "\"But we haven't time!\" said Susan, buttoning the collar of h"
+      ],
+      "closePages": [
+        46,
+        46,
+        46
+      ],
+      "close": [
+        "Peter had just drawn his sword out of its sheath and was sho",
+        "\"Now then, now then! Don't stand talking there till the tea'",
+        "So down the steep bank they went and back to the cave, and M"
+      ],
+      "textHash": "dc8ab9769ebc",
+      "pageHash": "36ac3429b5c0"
+    },
+    {
+      "title": "Chapter ELEVEN - Aslan Is Nearer",
+      "blockCount": 45,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 46,
+      "pageMax": 51,
+      "openPages": [
+        46,
+        47,
+        47,
+        47,
+        47,
+        47,
+        47,
+        47
+      ],
+      "open": [
+        "Chapter ELEVEN - Aslan Is Nearer",
+        "EDMUND meanwhile had been having a most disappointing time. ",
+        "You - you - said -\" she answered, \"Silence, fool!\" Then she ",
+        "\"Bring the human creature food and drink,\" she said.",
+        "The dwarf went away and presently returned bringing an iron ",
+        "\"Take it away,\" said Edmund sulkily."
+      ],
+      "closePages": [
+        51,
+        51,
+        51
+      ],
+      "close": [
+        "\"This is no thaw,\" said the dwarf, suddenly stopping.",
+        "\"This is Spring. What are we to do? Your winter has been des",
+        "\"If either of you mention that name again,\" said the Witch, "
+      ],
+      "textHash": "778c0aa5c3d9",
+      "pageHash": "bef5eaa3507f"
+    },
+    {
+      "title": "Chapter TWELVE - Peter's First Battle",
+      "blockCount": 48,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 51,
+      "pageMax": 56,
+      "openPages": [
+        51,
+        51,
+        51,
+        52,
+        52,
+        52,
+        52,
+        52
+      ],
+      "open": [
+        "Chapter TWELVE - Peter's First Battle",
+        "WHILE the dwarf and the White Witch were saying this, miles ",
+        "They had been just as surprised as Edmund when they saw the ",
+        "They had left the course of the big river some time ago; for",
+        "\"Not long now,\" said Mr Beaver, and began leading them uphil",
+        "They were on a green open space from which you could look do"
+      ],
+      "closePages": [
+        56,
+        56,
+        56
+      ],
+      "close": [
+        "\"What difference would that make now that He is here?\" said ",
+        "\"He may not stay long. And then - we would fall upon the thr",
+        "\"Yet it might be better,\" said the dwarf, \"to keep this one\""
+      ],
+      "textHash": "d218d060865f",
+      "pageHash": "fe72bb127b84"
+    },
+    {
+      "title": "Chapter THIRTEEN - Deep Magic From the Dawn of Time",
+      "blockCount": 64,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 56,
+      "pageMax": 60,
+      "openPages": [
+        56,
+        56,
+        56,
+        56,
+        56,
+        56,
+        56,
+        56
+      ],
+      "open": [
+        "Chapter THIRTEEN - Deep Magic From the Dawn of Time",
+        "\"Yes! and have him rescued,\" said the Witch scornfully.",
+        "\"Then,\" said the dwarf, \"we had better do what we have to do",
+        "\"I would like to have it done on the Stone Table itself,\" sa",
+        "\"That is the proper place. That is where it has always been ",
+        "\"It will be a long time now before the Stone Table can again"
+      ],
+      "closePages": [
+        60,
+        60,
+        60
+      ],
+      "close": [
+        "The Witch was just turning away with a look of fierce joy on",
+        "\"Haa-a-arrh!\" roared Aslan, half rising from his throne; and",
+        "and wider and the roar grew louder and louder, and the Witch"
+      ],
+      "textHash": "82851a2ab790",
+      "pageHash": "7b958b29e0aa"
+    },
+    {
+      "title": "Chapter FOURTEEN - The Triumph of the Witch",
+      "blockCount": 63,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 60,
+      "pageMax": 65,
+      "openPages": [
+        60,
+        60,
+        60,
+        60,
+        61,
+        61,
+        61,
+        61
+      ],
+      "open": [
+        "Chapter FOURTEEN - The Triumph of the Witch",
+        "As soon as the Witch had gone Aslan said, \"We must move from",
+        "Of course everyone was dying to ask him how he had arranged ",
+        "After a meal, which was taken in the open air on the hill-to",
+        "During the first part of the journey Aslan explained to Pete",
+        "\"As soon as she has finished her business in these parts,\" h"
+      ],
+      "closePages": [
+        65,
+        65,
+        65
+      ],
+      "close": [
+        "When once Aslan had been tied (and tied so that he was reall",
+        "\"And now, who has won? Fool, did you think that by all this ",
+        "The children did not see the actual moment of the killing. T"
+      ],
+      "textHash": "2cb1e0bdac63",
+      "pageHash": "cb92ea5ce3fa"
+    },
+    {
+      "title": "Chapter FIFTEEN - Deeper Magic From Before the Dawn of Time",
+      "blockCount": 57,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 65,
+      "pageMax": 69,
+      "openPages": [
+        65,
+        65,
+        65,
+        65,
+        66,
+        66,
+        66,
+        66
+      ],
+      "open": [
+        "Chapter FIFTEEN - Deeper Magic From Before the Dawn of Time",
+        "WHILE the two girls still crouched in the bushes with their ",
+        "\"Now! Follow me all and we will set about what remains of th",
+        "At this moment the children were for a few seconds in very g",
+        "The moon was getting low and thin clouds were passing across",
+        "\"I can't bear to look at that horrible muzzle. I wonder coul"
+      ],
+      "closePages": [
+        69,
+        69,
+        69
+      ],
+      "close": [
+        "\"The Witch's home!\" he cried.",
+        "\"Now, children, hold tight.\"",
+        "Next moment the whole world seemed to turn upside down, and "
+      ],
+      "textHash": "2e8b5585993e",
+      "pageHash": "a534686382a3"
+    },
+    {
+      "title": "Chapter SIXTEEN - What Happened About the Statues",
+      "blockCount": 50,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 70,
+      "pageMax": 74,
+      "openPages": [
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70
+      ],
+      "open": [
+        "Chapter SIXTEEN - What Happened About the Statues",
+        "\"WHAT an extraordinary place!\" cried Lucy.",
+        "\"All those stone animals -and people too!",
+        "It's -it's like a museum.\"",
+        "\"Hush,\" said Susan, \"Aslan's doing something.\"",
+        "He was indeed. He had bounded up to the stone lion and breat"
+      ],
+      "closePages": [
+        73,
+        74,
+        74
+      ],
+      "close": [
+        "Peter and Edmund and all the rest of Aslan's army fighting d",
+        "On each side the line stretched out. Horrible things were ha",
+        "\"Off my back, children,\" shouted Aslan. And they both tumble"
+      ],
+      "textHash": "53b1212213c1",
+      "pageHash": "98c37f723563"
+    },
+    {
+      "title": "Chapter SEVENTEEN - The Hunting of the White Stag",
+      "blockCount": 50,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 74,
+      "pageMax": 80,
+      "openPages": [
+        74,
+        74,
+        74,
+        74,
+        74,
+        74,
+        74,
+        75
+      ],
+      "open": [
+        "Chapter SEVENTEEN - The Hunting of the White Stag",
+        "THE battle was all over a few minutes after their arrival. M",
+        "\"It was all Edmund's doing, Aslan,\" Peter was saying.",
+        "\"We'd have been beaten if it hadn't been for him. The Witch ",
+        "He was terribly wounded. We must go and see him.\"",
+        "They found Edmund in charge of Mrs Beaver a little way back "
+      ],
+      "closePages": [
+        78,
+        80,
+        80
+      ],
+      "close": [
+        "Eh? What's that? Yes, of course you'll get back to Narnia ag",
+        "PRINCE CASPIAN",
+        "BY"
+      ],
+      "textHash": "31f34a49d3ff",
+      "pageHash": "d15dc72dd5d7"
+    },
+    {
+      "title": "Chapter ONE - The Island",
+      "blockCount": 84,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 80,
+      "pageMax": 84,
+      "openPages": [
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        81
+      ],
+      "open": [
+        "Chapter ONE - The Island",
+        "ONCE there were four children whose names were Peter, Susan,",
+        "It was an empty, sleepy, country station and there was hardl",
+        "\"What's up, Lu?\" said Edmund - and then suddenly broke off a",
+        "\"Ow!\"",
+        "\"What on earth-\",began Peter, and then he too suddenly chang"
+      ],
+      "closePages": [
+        84,
+        84,
+        84
+      ],
+      "close": [
+        "\"By Jove, it's a wall,\" said Peter.",
+        "\"An old stone wall.\"",
+        "Pressing their way between the laden branches they reached t"
+      ],
+      "textHash": "aef51962ef30",
+      "pageHash": "26a179aaee36"
+    },
+    {
+      "title": "Chapter TWO - The Ancient Treasure House",
+      "blockCount": 110,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 85,
+      "pageMax": 91,
+      "openPages": [
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85
+      ],
+      "open": [
+        "Chapter TWO - The Ancient Treasure House",
+        "\"THIS wasn't a garden,\" said Susan presently.",
+        "\"It was a castle and this must have been the courtyard.\"",
+        "\"I see what you mean,\" said Peter.",
+        "\"Yes. That is the remains of a tower. And there is what used",
+        "\"Ages ago, by the look of it,\" said Edmund."
+      ],
+      "closePages": [
+        91,
+        91,
+        91
+      ],
+      "close": [
+        "Next, Peter took down his gift - the shield with the great r",
+        "\"It is my sword Rhindon,\" he said; \"with it I killed the Wol",
+        "They climbed the stair again and made up a good fire and lay"
+      ],
+      "textHash": "147a3d0643b3",
+      "pageHash": "26d97ff2fed4"
+    },
+    {
+      "title": "Chapter THREE - The Dwarf",
+      "blockCount": 75,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 91,
+      "pageMax": 96,
+      "openPages": [
+        91,
+        92,
+        92,
+        92,
+        92,
+        92,
+        92,
+        92
+      ],
+      "open": [
+        "Chapter THREE - The Dwarf",
+        "THE worst of sleeping out of doors is that you wake up so dr",
+        "When they had drunk from the well and splashed their faces t",
+        "\"We'll have to swim,\" said Edmund.",
+        "\"It would be all right for Su,\" said Peter (Susan had won pr",
+        "\"But I don't know about the rest of us.\" By \"the rest of us\""
+      ],
+      "closePages": [
+        96,
+        96,
+        96
+      ],
+      "close": [
+        "\"All the better,\" said Lucy.",
+        "\"We love stories.\"",
+        "So the Dwarf settled down and told his tale. I shall not giv"
+      ],
+      "textHash": "7e7a2ac44ba9",
+      "pageHash": "3c31734d1822"
+    },
+    {
+      "title": "Chapter FOUR - The Dwarf Tells of Prince Caspian",
+      "blockCount": 108,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 96,
+      "pageMax": 103,
+      "openPages": [
+        96,
+        96,
+        97,
+        97,
+        97,
+        97,
+        97,
+        97
+      ],
+      "open": [
+        "Chapter FOUR - The Dwarf Tells of Prince Caspian",
+        "PRINCE CASPIAN lived in a great castle in the centre of Narn",
+        "He did not care much for his uncle and aunt, but about twice",
+        "\"Well, boy, we must soon teach you to ride and use a sword. ",
+        "\"I don't know, Uncle,\" said Caspian.",
+        "\"Don't know, eh?\" said Miraz."
+      ],
+      "closePages": [
+        103,
+        103,
+        103
+      ],
+      "close": [
+        "\"Must we?\" said Caspian.",
+        "\"I'd like to go on talking about these things for hours and ",
+        "\"Someone might begin looking for us, if we did that,\" said D"
+      ],
+      "textHash": "a60ebde99b2a",
+      "pageHash": "d9a8817da772"
+    },
+    {
+      "title": "Chapter FIVE - Caspian's Adventure in the Mountains",
+      "blockCount": 114,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 103,
+      "pageMax": 110,
+      "openPages": [
+        103,
+        103,
+        104,
+        104,
+        104,
+        104,
+        104,
+        104
+      ],
+      "open": [
+        "Chapter FIVE - Caspian's Adventure in the Mountains",
+        "AFTER this, Caspian and his Tutor had many more secret conve",
+        "Of Magic he learned only the theory, for Doctor Cornelius sa",
+        "\"And I myself,\" he added, \"am only a very imperfect magician",
+        "He also learned a great deal by using his own eyes and ears.",
+        "After some years there came a time when the Queen seemed to "
+      ],
+      "closePages": [
+        110,
+        110,
+        110
+      ],
+      "close": [
+        "\"It's all the same thing,\" said Nikabrik.",
+        "\"No, no, no,\" said Trufflehunter.",
+        "\"You know it isn't. You know very well that the beasts in Na"
+      ],
+      "textHash": "dc818e0c3c5f",
+      "pageHash": "c6f64ef3eb6b"
+    },
+    {
+      "title": "Chapter SIX - The People That Lived in Hiding",
+      "blockCount": 47,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 111,
+      "pageMax": 115,
+      "openPages": [
+        111,
+        111,
+        111,
+        111,
+        111,
+        111,
+        111,
+        111
+      ],
+      "open": [
+        "Chapter SIX - The People That Lived in Hiding",
+        "Now began the happiest times that Caspian had ever known. On",
+        "\"We will go first to the Three Bulgy Bears,\" said Trumpkin.",
+        "They came in a glade to an old hollow oak tree covered with ",
+        "After that they went on till they came among tall beech tree",
+        "\"Don't look. Look the other way. It's very bad manners among"
+      ],
+      "closePages": [
+        115,
+        115,
+        115
+      ],
+      "close": [
+        "\"Fauns!\" cried Caspian, jumping up, and in a moment they wer",
+        "Pattertwig had sent them all.",
+        "When Caspian awoke next morning he could hardly believe that"
+      ],
+      "textHash": "5c1d48663823",
+      "pageHash": "60d2772bdaca"
+    },
+    {
+      "title": "Chapter SEVEN - Old Narnia in Danger",
+      "blockCount": 92,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 115,
+      "pageMax": 121,
+      "openPages": [
+        115,
+        115,
+        115,
+        115,
+        116,
+        116,
+        116,
+        116
+      ],
+      "open": [
+        "Chapter SEVEN - Old Narnia in Danger",
+        "THE place where they had met the Fauns was, of course, Danci",
+        "When the great night came, and his various strange subjects ",
+        "Hares and Hedgehogs, and others whom he had not yet seen - f",
+        "The Bulgy Bears were very anxious to have the feast first an",
+        "When all the other creatures had been persuaded to sit down "
+      ],
+      "closePages": [
+        121,
+        121,
+        121
+      ],
+      "close": [
+        "\"I would wait for sunrise, your Majesty,\" said Doctor Cornel",
+        "\"That sometimes has an effect in operations of White Magic.\"",
+        "A few minutes later Pattertwig arrived and had his task expl"
+      ],
+      "textHash": "c23f4096e013",
+      "pageHash": "f30197e00c24"
+    },
+    {
+      "title": "Chapter EIGHT - How They Left the Island",
+      "blockCount": 114,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 121,
+      "pageMax": 128,
+      "openPages": [
+        121,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122
+      ],
+      "open": [
+        "Chapter EIGHT - How They Left the Island",
+        "\"AND so,\" said Trumpkin (for, as you have realized, it was h",
+        "\"Between nine and ten of the clock,\" said Trumpkin.",
+        "\"Just when we were at the railway station!\" said all the chi",
+        "\"Please go on,\" said Lucy to the Dwarf.",
+        "\"Well, as I was saying, I wondered, but I went on as hard as"
+      ],
+      "closePages": [
+        128,
+        128,
+        128
+      ],
+      "close": [
+        "\"Phew! This is pretty gruelling work,\" said Peter.",
+        "\"Can't I row for a bit?\" said Lucy.",
+        "\"The oars are too big for you,\" said Peter shortly, not beca"
+      ],
+      "textHash": "bf40df09c97f",
+      "pageHash": "a88fc15b3bdf"
+    },
+    {
+      "title": "Chapter 9 - What Lucy Saw",
+      "blockCount": 125,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 128,
+      "pageMax": 136,
+      "openPages": [
+        128,
+        128,
+        129,
+        129,
+        129,
+        129,
+        129,
+        129
+      ],
+      "open": [
+        "Chapter 9 - What Lucy Saw",
+        "SUSAN and the two boys were bitterly tired with rowing befor",
+        "Twilight was coming on as they rowed slowly up the windings ",
+        "They went ashore at last, far too tired to attempt lighting ",
+        "Everyone except Lucy went to sleep at once. Lucy, being far ",
+        "Through a gap in the bracken and branches she could just see"
+      ],
+      "closePages": [
+        136,
+        136,
+        136
+      ],
+      "close": [
+        "\"Down,\" said Peter after a long pause.",
+        "\"I know Lucy may be right after all, but I can't help it. We",
+        "So they set off to their right along the edge, downstream. A"
+      ],
+      "textHash": "300bfcd2723b",
+      "pageHash": "fb059c2abe46"
+    },
+    {
+      "title": "Chapter TEN - The Return of the Lion",
+      "blockCount": 111,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 136,
+      "pageMax": 143,
+      "openPages": [
+        136,
+        136,
+        136,
+        136,
+        137,
+        137,
+        137,
+        137
+      ],
+      "open": [
+        "Chapter TEN - The Return of the Lion",
+        "To keep along the edge of the gorge was not so easy as it ha",
+        "When they wereable at last to go back to the edge of the gor",
+        "They may have been wise to stick to the Rush instead of goin",
+        "You may be sure they watched the cliffs on their left eagerl",
+        "The boys and the Dwarf were now in favour of lighting a fire"
+      ],
+      "closePages": [
+        143,
+        143,
+        143
+      ],
+      "close": [
+        "\"I don't know. That's what he said.\"",
+        "\"Oh, bother it all,\" said Edmund.",
+        "\"I do wish you wouldn't keep on seeing things. But I suppose"
+      ],
+      "textHash": "4454dc9570eb",
+      "pageHash": "d3acc96fbbc9"
+    },
+    {
+      "title": "Chapter ELEVEN - The Lion Roars",
+      "blockCount": 87,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 144,
+      "pageMax": 150,
+      "openPages": [
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144
+      ],
+      "open": [
+        "Chapter ELEVEN - The Lion Roars",
+        "WHEN the whole party was finally awake Lucy had to tell her ",
+        "\"I can't see anything,\" said Peter after he had stared his e",
+        "\"Can you, Susan?\"",
+        "\"No, of course I can't,\" snapped Susan.",
+        "\"Because there isn't anything to see. She's been dreaming. D"
+      ],
+      "closePages": [
+        150,
+        150,
+        150
+      ],
+      "close": [
+        "\"Yes, of course. But I say, Lu \"",
+        "\"I wouldn't have felt safe with Bacchus and all his wild gir",
+        "\"I should think not,\" said Lucy."
+      ],
+      "textHash": "1f01c34aee07",
+      "pageHash": "bb9f649b74d2"
+    },
+    {
+      "title": "Chapter TWELVE - Sorcery and Sudden Vengeance",
+      "blockCount": 128,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 150,
+      "pageMax": 157,
+      "openPages": [
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150
+      ],
+      "open": [
+        "Chapter TWELVE - Sorcery and Sudden Vengeance",
+        "MEANWHILE Trumpkin and the two boys arrived at the dark litt",
+        "\"Trumpkin,\" said the Dwarf.",
+        "\"Bringing the High King of Narnia out of the far past.\"",
+        "The badgers nosed at the boys' hands.",
+        "\"At last,\" they said."
+      ],
+      "closePages": [
+        157,
+        157,
+        157
+      ],
+      "close": [
+        "\"Let the vermin be flung into a pit,\" said Peter.",
+        "\"But the Dwarf we will give to his people to be buried in th",
+        "They breakfasted at last in another of the dark cellars of A"
+      ],
+      "textHash": "858988366ae7",
+      "pageHash": "3e225333634c"
+    },
+    {
+      "title": "Chapter THIRTEEN - The High King in Command",
+      "blockCount": 119,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 157,
+      "pageMax": 163,
+      "openPages": [
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157,
+        157
+      ],
+      "open": [
+        "Chapter THIRTEEN - The High King in Command",
+        "\"Now,\" said Peter, as they finished their meal, \"Aslan and t",
+        "\"I'm afraid not, High King,\" said Caspian. He was liking Pet",
+        "\"Very well, then,\" said Peter, \"I'll send him a challenge to",
+        "\"Please,\" said Caspian, \"could it not be me? I want to aveng",
+        "\"You're wounded,\" said Peter."
+      ],
+      "closePages": [
+        163,
+        163,
+        163
+      ],
+      "close": [
+        "An awful silence followed this remark, which was broken by P",
+        "\"I say,\" said Edmund as they walked away, \"I suppose it is a",
+        "\"That's what I'm fighting him to find out,\" said Peter."
+      ],
+      "textHash": "affffde61e1f",
+      "pageHash": "70d89ecae49b"
+    },
+    {
+      "title": "Chapter FOURTEEN - How All Were Very Busy",
+      "blockCount": 115,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 163,
+      "pageMax": 170,
+      "openPages": [
+        163,
+        163,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164
+      ],
+      "open": [
+        "Chapter FOURTEEN - How All Were Very Busy",
+        "A LITTLE before two o'clock Trumpkin and the Badger sat with",
+        "\"I wish Aslan had turned up before it came to this,\" said Tr",
+        "\"So do I,\" said Trufflehunter.",
+        "\"But look behind you.\"",
+        "\"Crows and crockery!\" muttered the Dwarf as soon as he had d"
+      ],
+      "closePages": [
+        170,
+        170,
+        170
+      ],
+      "close": [
+        "\"That makes a nice change, that does.\" And she jumped out of",
+        "\"Ride on me,\" said Aslan, and added to Susan and Lucy, \"You ",
+        "\"But we'd like that just as well,\" said Susan. And off they "
+      ],
+      "textHash": "e4918a173e58",
+      "pageHash": "d7d4cee0f5a7"
+    },
+    {
+      "title": "Chapter FIFTEEN - Aslan Makes a Door in the Air",
+      "blockCount": 96,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 170,
+      "pageMax": 179,
+      "openPages": [
+        170,
+        170,
+        171,
+        171,
+        171,
+        171,
+        171,
+        171
+      ],
+      "open": [
+        "Chapter FIFTEEN - Aslan Makes a Door in the Air",
+        "AT the sight of Aslan the cheeks of the Telmarine soldiers b",
+        "\"This is Caspian, Sir,\" he said. And Caspian knelt and kisse",
+        "\"Welcome, Prince,\" said Aslan.",
+        "\"Do you feel yourself sufficient to take up the Kingship of ",
+        "\"I - I don't think I do, Sir,\" said Caspian."
+      ],
+      "closePages": [
+        178,
+        178,
+        179
+      ],
+      "close": [
+        "\"Bother!\" said Edmund.",
+        "\"I've left my new torch in Narnia.\"",
+        "BY"
+      ],
+      "textHash": "da3edc8f6dac",
+      "pageHash": "be369b476844"
+    },
+    {
+      "title": "Chapter ONE - The Picture in the Bedroom",
+      "blockCount": 65,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 179,
+      "pageMax": 184,
+      "openPages": [
+        179,
+        179,
+        179,
+        179,
+        179,
+        179,
+        179,
+        180
+      ],
+      "open": [
+        "Chapter ONE - The Picture in the Bedroom",
+        "THERE was a boy called Eustace Clarence Scrubb, and he almos",
+        "Eustace Clarence liked animals, especially beetles, if they ",
+        "Eustace Clarence disliked his cousins the four Pevensies, Pe",
+        "Edmund and Lucy did not at all want to come and stay with Un",
+        "Grown-ups thought her the pretty one of the family and she w"
+      ],
+      "closePages": [
+        184,
+        184,
+        184
+      ],
+      "close": [
+        "All this she took in in a flash, for Caspian immediately ope",
+        "Lucy found herself as much at home as if she had been in Cas",
+        "Caspian's clothes were too big for her, but she could manage"
+      ],
+      "textHash": "9c57ff54ae19",
+      "pageHash": "9043cde2c909"
+    },
+    {
+      "title": "Chapter TWO - On Board the Dawn Treader",
+      "blockCount": 93,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 185,
+      "pageMax": 192,
+      "openPages": [
+        185,
+        185,
+        185,
+        185,
+        185,
+        185,
+        185,
+        185
+      ],
+      "open": [
+        "Chapter TWO - On Board the Dawn Treader",
+        "\"AH, there you are, Lucy,\" said Caspian.",
+        "\"We were just waiting for you. This is my captain, the Lord ",
+        "A dark-haired man went down on one knee and kissed her hand.",
+        "\"Where is Eustace?\" asked Lucy.",
+        "\"In bed,\" said Edmund, \"and I don't think we can do anything"
+      ],
+      "closePages": [
+        191,
+        191,
+        192
+      ],
+      "close": [
+        "\"If you don't know how to take a joke I shan't bother my hea",
+        "\"Then take that,\" said Reepicheep, \"and that - to teach you ",
+        "There was not much difficulty in settling the matter once Eu"
+      ],
+      "textHash": "142e0b8f3ba7",
+      "pageHash": "47f87c740379"
+    },
+    {
+      "title": "Chapter THREE - The Lone Islands",
+      "blockCount": 112,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 192,
+      "pageMax": 199,
+      "openPages": [
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192,
+        192
+      ],
+      "open": [
+        "Chapter THREE - The Lone Islands",
+        "\"LAND in sight,\" shouted the man in the bows.",
+        "Lucy, who had been talking to Rhince on the poop, came patte",
+        "\"Same old Felimath! Same old Doorn,\" said Lucy, clapping her",
+        "\"Oh - Edmund,",
+        "how long it is since you and I saw them last!\""
+      ],
+      "closePages": [
+        198,
+        198,
+        199
+      ],
+      "close": [
+        "were any ships What Caspian did there would be out of sight ",
+        "Caspian was sorry for the others languishing in the hold of ",
+        "Bern's pleasant lands sloped down to the water's edge. Bern'"
+      ],
+      "textHash": "fa57e4e3f9b0",
+      "pageHash": "db129a50c989"
+    },
+    {
+      "title": "Chapter FOUR - What Caspian DID There",
+      "blockCount": 70,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 199,
+      "pageMax": 205,
+      "openPages": [
+        199,
+        199,
+        199,
+        199,
+        199,
+        199,
+        199,
+        199
+      ],
+      "open": [
+        "Chapter FOUR - What Caspian DID There",
+        "Nert morning the Lord Bern called his guests early, and afte",
+        "\"And above all,\" he added, \"let everything be as trim and sc",
+        "Caspian and his people, and Bern with a few of his, put out ",
+        "When they reached the jetty at Narrowhaven, Caspian found a ",
+        "\"This is what I sent word about last night,\" said Bern."
+      ],
+      "closePages": [
+        205,
+        205,
+        205
+      ],
+      "close": [
+        "We may need your help here. This closing the slave market mi",
+        "\"I have an oath, my lord Duke,\" said Caspian.",
+        "\"And anyway, what could I say to Reepicheep?\""
+      ],
+      "textHash": "8f7036c4de55",
+      "pageHash": "695472c305ab"
+    },
+    {
+      "title": "Chapter FIVE - The Storm and What Came of It",
+      "blockCount": 37,
+      "types": "hpppppppppppppppppppppppppppppppppppp",
+      "pageMin": 205,
+      "pageMax": 210,
+      "openPages": [
+        205,
+        205,
+        205,
+        205,
+        206,
+        206,
+        206,
+        206
+      ],
+      "open": [
+        "Chapter FIVE - The Storm and What Came of It",
+        "IT was nearly three weeks after their landing that the Dawn ",
+        "The next few days were delightful. Lucy thought she was the ",
+        "She spent a good deal of time sitting on the little bench in",
+        "\"Get below, Ma'am,\" bawled Drinian. And Lucy knowing that la",
+        "landswomen - are a nuisance to the crew, began to obey. It w"
+      ],
+      "closePages": [
+        210,
+        210,
+        210
+      ],
+      "close": [
+        "\"At last!\" said Eustace as he came slithering down a slide o",
+        "\"And now, where are those trees? There is something dark ahe",
+        "It was. The light increased every moment and made him blink."
+      ],
+      "textHash": "3ab00b29296b",
+      "pageHash": "0ac2c59a5234"
+    },
+    {
+      "title": "Chapter SIX - The Adventures of Eustace",
+      "blockCount": 77,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 210,
+      "pageMax": 217,
+      "openPages": [
+        210,
+        210,
+        211,
+        211,
+        211,
+        211,
+        211,
+        211
+      ],
+      "open": [
+        "Chapter SIX - The Adventures of Eustace",
+        "AT that very moment the others were washing hands and faces ",
+        "Meanwhile Eustace stared round the unknown valley. It was so",
+        "About fifteen yards away from him was a pool of clear, smoot",
+        "Eustace realized of course that in the fog he had come down ",
+        "He turned round again, thinking that at any rate he'd better"
+      ],
+      "closePages": [
+        217,
+        217,
+        217
+      ],
+      "close": [
+        "\"Show me your poor paw,\" said Lucy, \"I might be able to cure",
+        "The dragon-that-had-been-Eustace held out its sore leg gladl",
+        "Everyone had now crowded round to watch the treatment, and C"
+      ],
+      "textHash": "495cdf526ce9",
+      "pageHash": "1df0a90610ad"
+    },
+    {
+      "title": "Chapter SEVEN - How the Adventure Ended",
+      "blockCount": 83,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 217,
+      "pageMax": 224,
+      "openPages": [
+        217,
+        218,
+        218,
+        218,
+        218,
+        218,
+        218,
+        218
+      ],
+      "open": [
+        "Chapter SEVEN - How the Adventure Ended",
+        "\"LOOK at what?\" said Edmund.",
+        "\"Look at the device on the gold,\" said Caspian.",
+        "\"A little hammer with a diamond above it like a star,\" said ",
+        "\"Why, I've seen that before.\"",
+        "\"Seen it!\" said Caspian."
+      ],
+      "closePages": [
+        224,
+        224,
+        224
+      ],
+      "close": [
+        "It would be nice, and fairly true, to say that \"from that ti",
+        "The Lord Octesian's arm ring had a curious fate. Eustace did",
+        "\"Very well, then, catch as catch can,\" said Caspian and flun"
+      ],
+      "textHash": "df7afa4a5ca9",
+      "pageHash": "ef266e864797"
+    },
+    {
+      "title": "Chapter EIGHT - Two Narrow Escapes",
+      "blockCount": 113,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 224,
+      "pageMax": 232,
+      "openPages": [
+        224,
+        224,
+        224,
+        224,
+        224,
+        224,
+        224,
+        225
+      ],
+      "open": [
+        "Chapter EIGHT - Two Narrow Escapes",
+        "EVERYONE was cheerful as the Dawn Treader sailed from Dragon",
+        "\"Pirates' work,\" said Caspian.",
+        "\"Or the dragon's,\" said Edmund.",
+        "The only other thing they found there was a little skin boat",
+        "Reepicheep decided to keep it, as it was just the right size"
+      ],
+      "closePages": [
+        232,
+        232,
+        232
+      ],
+      "close": [
+        "\"Something happened to them in that place. The only thing I ",
+        "\"You don't say so, Captain,\" answered Rhince.",
+        "\"Well, that's three. Only four more. At this rate we might b"
+      ],
+      "textHash": "d4f8cfd03ba8",
+      "pageHash": "dd82caaa9575"
+    },
+    {
+      "title": "Chapter NINE - The Island of the Voices",
+      "blockCount": 105,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 232,
+      "pageMax": 239,
+      "openPages": [
+        232,
+        232,
+        232,
+        233,
+        233,
+        233,
+        233,
+        233
+      ],
+      "open": [
+        "Chapter NINE - The Island of the Voices",
+        "AND now the winds which had so long been from the north-west",
+        "They made harbour in a wide bay about the middle of the afte",
+        "Presently they came to a long, straight, sanded path with no",
+        "Almost as soon as they entered this path Lucy noticed that s",
+        "Before she had undone the knot the others were a fair distan"
+      ],
+      "closePages": [
+        239,
+        239,
+        239
+      ],
+      "close": [
+        "\"Her Majesty is in the right,\" said Reepicheep.",
+        "\"If we had any assurance of saving her by battle, our duty w",
+        "None the less, it was such obvious sense that they had to gi"
+      ],
+      "textHash": "7346c82e0e89",
+      "pageHash": "ce4634d2184b"
+    },
+    {
+      "title": "Chapter TEN - The Magician's Book",
+      "blockCount": 73,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 239,
+      "pageMax": 245,
+      "openPages": [
+        239,
+        239,
+        239,
+        239,
+        239,
+        239,
+        239,
+        239
+      ],
+      "open": [
+        "Chapter TEN - The Magician's Book",
+        "THE invisible people feasted their guests royally. It was ve",
+        "\"I'm beginning to feel very inquisitive about these people,\"",
+        "\"Do you think they're human at all? More like huge grasshopp",
+        "\"It does look like it,\" said Edmund.",
+        "\"But don't put the idea of the grasshoppers into Lucy's head"
+      ],
+      "closePages": [
+        245,
+        245,
+        245
+      ],
+      "close": [
+        "\"Speak on, dear heart.\"",
+        "\"Shall I ever be able to, read that story again; the one I c",
+        "\"Indeed, yes, I will tell it to you for years and years. But"
+      ],
+      "textHash": "3907da504677",
+      "pageHash": "4d5c88ceefa6"
+    },
+    {
+      "title": "Chapter ELEVEN - The Dufflepuds Made Happy",
+      "blockCount": 109,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 245,
+      "pageMax": 252,
+      "openPages": [
+        245,
+        245,
+        246,
+        246,
+        246,
+        246,
+        246,
+        246
+      ],
+      "open": [
+        "Chapter ELEVEN - The Dufflepuds Made Happy",
+        "Lucy followed the great Lion out into the passage and at onc",
+        "\"Do you grow weary, Coriakin, of ruling such foolish subject",
+        "\"No,\" said the Magician, \"they are very stupid but there is ",
+        "\"All in good time, Coriakin,\" said Aslan.",
+        "\"Yes, all in very good time, Sir,\" was the answer."
+      ],
+      "closePages": [
+        252,
+        252,
+        252
+      ],
+      "close": [
+        "Ocean, showing Galma, Terebinthia, the Seven Isles, the Lone",
+        "Magician kept one himself and presented the other to Caspian",
+        "Next day, the Magician magically mended the stern of the Daw"
+      ],
+      "textHash": "c79db6ba021a",
+      "pageHash": "94a38c010297"
+    },
+    {
+      "title": "Chapter TWELVE - The Dark Island",
+      "blockCount": 96,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 252,
+      "pageMax": 258,
+      "openPages": [
+        252,
+        252,
+        252,
+        252,
+        253,
+        253,
+        253,
+        253
+      ],
+      "open": [
+        "Chapter TWELVE - The Dark Island",
+        "AFTER this adventure they sailed on south and a little east ",
+        "They altered course and made for this land, mostly by oar, f",
+        "About nine that morning, very suddenly, it was so close that",
+        "Beyond that, they could see the water looking pale and grey ",
+        "Caspian shouted to the boatswain to keep her back, and all e"
+      ],
+      "closePages": [
+        258,
+        258,
+        258
+      ],
+      "close": [
+        "\"Sire,\" said Drinian, \"this wind is fair for the southeast. ",
+        "\"Yes,\" said Caspian, \"and let there be grog all round. Heigh",
+        "So all afternoon with great joy they sailed south-east with "
+      ],
+      "textHash": "cd1e5694ef1a",
+      "pageHash": "93aa8ed041f0"
+    },
+    {
+      "title": "Chapter THIRTEEN - The Three Sleepers",
+      "blockCount": 92,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 258,
+      "pageMax": 265,
+      "openPages": [
+        258,
+        259,
+        259,
+        259,
+        259,
+        259,
+        259,
+        259
+      ],
+      "open": [
+        "Chapter THIRTEEN - The Three Sleepers",
+        "THE wind never failed but it grew gentler every day till at ",
+        "On an evening of startling beauty, when the sunset behind th",
+        "They sailed on a good way, past point after point, hoping to",
+        "Two men were left to guard the boat and Caspian led the othe",
+        "When they had gone less than a bowshot from the shore, Drini"
+      ],
+      "closePages": [
+        265,
+        265,
+        265
+      ],
+      "close": [
+        "\"Your father!\" said everyone.",
+        "\"Who is he? And where?\"",
+        "\"Look,\" said the girl, turning round and pointing at the doo"
+      ],
+      "textHash": "6f252c228120",
+      "pageHash": "f6eb9564c1d6"
+    },
+    {
+      "title": "Chapter FOURTEEN - The Beginning of the End of the World",
+      "blockCount": 71,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 265,
+      "pageMax": 271,
+      "openPages": [
+        265,
+        265,
+        266,
+        266,
+        266,
+        266,
+        266,
+        266
+      ],
+      "open": [
+        "Chapter FOURTEEN - The Beginning of the End of the World",
+        "Slowly the door opened again and out there came a figure as ",
+        "Once or twice before, the Narnians had wondered whether the ",
+        "Now at last the Old Man turned to the travellers and bade th",
+        "\"Sir,\" said Caspian, \"will you tell us how to undo the encha",
+        "\"I will gladly tell you that, my son,\" said the Old Man."
+      ],
+      "closePages": [
+        270,
+        271,
+        271
+      ],
+      "close": [
+        "Meanwhile Caspian's speech, helped perhaps by some magic of ",
+        "At the end of the half-hour they all came trooping back to A",
+        "\"Lady,\" said Caspian, \"I hope to speak with you again when I"
+      ],
+      "textHash": "c38f4efc0c2b",
+      "pageHash": "a4ec1c293b53"
+    },
+    {
+      "title": "Chapter FIFTEEN - The Wonders of the Last Sea",
+      "blockCount": 79,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 271,
+      "pageMax": 277,
+      "openPages": [
+        271,
+        271,
+        271,
+        272,
+        272,
+        272,
+        272,
+        272
+      ],
+      "open": [
+        "Chapter FIFTEEN - The Wonders of the Last Sea",
+        "VERY soon after they had left Ramandu's country they began t",
+        "\"How beautifully clear the water is!\" said Lucy to herself, ",
+        "Now Lucy knew she had seen something just like that happen s",
+        "\"It's our shadow! - the shadow of the Dawn Treader,\" said Lu",
+        "\"Our shadow running"
+      ],
+      "closePages": [
+        277,
+        277,
+        277
+      ],
+      "close": [
+        "Edmund shook his head.",
+        "\"And it isn't like that,\" he added.",
+        "\"There's nothing particularly exciting about a round world w"
+      ],
+      "textHash": "590cdf16e4da",
+      "pageHash": "873e0c7c01f7"
+    },
+    {
+      "title": "Chapter SIXTEEN - The Very End of the World",
+      "blockCount": 98,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 277,
+      "pageMax": 285,
+      "openPages": [
+        277,
+        278,
+        278,
+        278,
+        278,
+        278,
+        278,
+        278
+      ],
+      "open": [
+        "Chapter SIXTEEN - The Very End of the World",
+        "REEPICHEEP was the only person on board besides Drinian and ",
+        "\"Just like a flock of sheep,\" thought Lucy.",
+        "Suddenly she saw a little Sea Girl of about her own age in t",
+        "There does not seem to be much chance of their meeting again",
+        "After that for many days, without wind in her shrouds or foa"
+      ],
+      "closePages": [
+        285,
+        285,
+        285
+      ],
+      "close": [
+        "\"And is Eustace never to come back here either?\" said Lucy.",
+        "\"Child,\" said Aslan, \"do you really need to know that? Come,",
+        "Only two more things need to be told. One is that Caspian an"
+      ],
+      "textHash": "6d8b04dc85dd",
+      "pageHash": "db3e26304208"
+    },
+    {
+      "title": "Chapter ONE - Behind the Gym",
+      "blockCount": 103,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 286,
+      "pageMax": 293,
+      "openPages": [
+        286,
+        286,
+        286,
+        286,
+        286,
+        286,
+        286,
+        286
+      ],
+      "open": [
+        "Chapter ONE - Behind the Gym",
+        "IT was a dull autumn day and Jill Pole was crying behind the",
+        "She was crying because they had been bullying her. This is n",
+        "\"Co-educational,\" a school for both boys and girls, what use",
+        "school; some said it was not nearly so mixed as the minds of",
+        "\"Can't you look where you're going?\" said Jill Pole."
+      ],
+      "closePages": [
+        292,
+        292,
+        293
+      ],
+      "close": [
+        "voice seemed to he coming from a long way off. She felt him ",
+        "Fortunately, she was given no time to think over what she ha",
+        "So she turned and looked at the creature. It was a lion."
+      ],
+      "textHash": "e307bf6d6301",
+      "pageHash": "30787f935ece"
+    },
+    {
+      "title": "Chapter TWO - Jill Is Given a Task",
+      "blockCount": 76,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 293,
+      "pageMax": 299,
+      "openPages": [
+        293,
+        293,
+        293,
+        293,
+        293,
+        293,
+        293,
+        293
+      ],
+      "open": [
+        "Chapter TWO - Jill Is Given a Task",
+        "WITHOUT a glance at Jill the lion rose to its feet and gave ",
+        "\"It must be a dream, it must, it must,\" said Jill to herself",
+        "\"I'll wake up in a moment.\" But it wasn't, and she didn't.",
+        "\"I do wish we'd never come to this dreadful place,\" said Jil",
+        "\"I don't believe Scrubb knew any more about it than I do. Or"
+      ],
+      "closePages": [
+        298,
+        299,
+        299
+      ],
+      "close": [
+        "Suddenly from her left (for the wind was in the south) a gre",
+        "Suddenly the land opened right ahead of her. She was coming ",
+        "The first thing she thought was how very grubby and untidy a"
+      ],
+      "textHash": "7a3c81624181",
+      "pageHash": "18f3c637dc74"
+    },
+    {
+      "title": "Chapter THREE - The Sailing of the King",
+      "blockCount": 120,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 299,
+      "pageMax": 306,
+      "openPages": [
+        299,
+        299,
+        299,
+        299,
+        300,
+        300,
+        300,
+        300
+      ],
+      "open": [
+        "Chapter THREE - The Sailing of the King",
+        "WHAT made Scrubb look so dingy (and Jill too, if she could o",
+        "Through a cleft in those mountains which Jill had seen far i",
+        "and at the foot of it, just ready to go on board, stood an o",
+        "Immediately in front of the King - who had turned round to s",
+        "Farther back, in a half-circle, stood what Jill at once knew"
+      ],
+      "closePages": [
+        306,
+        306,
+        306
+      ],
+      "close": [
+        "It was the castle bell ringing for supper, and thus what loo",
+        "Supper in the great hall of the castle was the most splendid",
+        "When they were dragging themselves upstairs to bed, yawning "
+      ],
+      "textHash": "648602888b01",
+      "pageHash": "23e0fe48a83b"
+    },
+    {
+      "title": "Chapter FOUR - A Parliament of Owls",
+      "blockCount": 102,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 306,
+      "pageMax": 313,
+      "openPages": [
+        306,
+        307,
+        307,
+        307,
+        307,
+        307,
+        307,
+        307
+      ],
+      "open": [
+        "Chapter FOUR - A Parliament of Owls",
+        "IT is a very funny thing that the sleepier you are, the long",
+        "She got up, pulled the curtain, and at first saw nothing but",
+        "\"It's some huge bird,\" thought Jill.",
+        "\"Could it be an eagle?\" She didn't very much want a visit ev",
+        "\"Hush, hush! Tu-whoo, tu-whoo,\" said the Owl."
+      ],
+      "closePages": [
+        313,
+        313,
+        313
+      ],
+      "close": [
+        "\"I will: as far as the Marsh-wiggles,\" said another owl.",
+        "\"Are you ready?\" said Glimfeather to Jill.",
+        "\"I think Pole's asleep,\" said Scrubb."
+      ],
+      "textHash": "3f7499d253b7",
+      "pageHash": "2640858f56c2"
+    },
+    {
+      "title": "Chapter FIVE - Puddleglum",
+      "blockCount": 105,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 313,
+      "pageMax": 319,
+      "openPages": [
+        313,
+        313,
+        313,
+        313,
+        313,
+        314,
+        314,
+        314
+      ],
+      "open": [
+        "Chapter FIVE - Puddleglum",
+        "JILL. was asleep. Ever since the owls' parliament began she ",
+        "\"Oh, come on, Pole, buck up,\" said Scrubb's voice.",
+        "\"After all, it is an adventure.\"",
+        "\"I'm sick of adventures,\" said Jill crossly.",
+        "She did, however, consent to climb on to Glimfeather's back,"
+      ],
+      "closePages": [
+        319,
+        319,
+        319
+      ],
+      "close": [
+        "Caspian) had Puddleglum's secondbest bow, and Puddleglum had",
+        "I thought as much. That's what usually happens on adventures",
+        "All three went to bed early in the wigwam. This time the chi"
+      ],
+      "textHash": "4da64f6a4bf7",
+      "pageHash": "d98ea1e39e29"
+    },
+    {
+      "title": "Chapter SIX - The Wild Waste Lands of the North",
+      "blockCount": 95,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 320,
+      "pageMax": 327,
+      "openPages": [
+        320,
+        320,
+        320,
+        320,
+        320,
+        320,
+        320,
+        320
+      ],
+      "open": [
+        "Chapter SIX - The Wild Waste Lands of the North",
+        "AT about nine o'clock next morning three lonely figures migh",
+        "\"I suppose that's our way!\" said Scrubb, pointing left and w",
+        "\"The giants mainly live along the side of that gorge,\" he sa",
+        "\"You might say the gorge was like a street to them. We'll do",
+        "They found a place where they could scramble up, and in abou"
+      ],
+      "closePages": [
+        326,
+        327,
+        327
+      ],
+      "close": [
+        "\"Harfang!\" cried Scrubb and Jill in glad, excited voices; an",
+        "\"Never mind!\" said Jill, stamping her feet.",
+        "\"Hot baths tonight!\""
+      ],
+      "textHash": "41344ac3301c",
+      "pageHash": "cbd8a594acb9"
+    },
+    {
+      "title": "Chapter SEVEN - The Hill of the Strange Trenches",
+      "blockCount": 87,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 327,
+      "pageMax": 333,
+      "openPages": [
+        327,
+        327,
+        327,
+        327,
+        327,
+        327,
+        327,
+        328
+      ],
+      "open": [
+        "Chapter SEVEN - The Hill of the Strange Trenches",
+        "THERE Is no denying it was a beast of a day. Overhead was a ",
+        "At about ten o'clock the first tiny snow flakes came loiteri",
+        "In order to understand what followed, you must keep on remem",
+        "When they reached the foot of the hill they caught a glimpse",
+        "Jill fell once - up very rough ground for about a hundred ya"
+      ],
+      "closePages": [
+        333,
+        333,
+        333
+      ],
+      "close": [
+        "\"Nothing wrong with me,\" said Puddleglum.",
+        "\"Not a frog. Nothing frog with me. I'm a respectabiggle.\" Bu",
+        "About twenty feet from the thrones, they stopped. Scrubb and"
+      ],
+      "textHash": "8f67ff62e075",
+      "pageHash": "ab97cfec44c6"
+    },
+    {
+      "title": "Chapter EIGHT - The House of Harfang",
+      "blockCount": 93,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 333,
+      "pageMax": 339,
+      "openPages": [
+        333,
+        333,
+        333,
+        333,
+        333,
+        333,
+        334,
+        334
+      ],
+      "open": [
+        "Chapter EIGHT - The House of Harfang",
+        "\"Go on, Pole, do your stuff,\" whispered Scrubb.",
+        "Jill found that her mouth was so dry that she couldn't speak",
+        "Thinking to himself that he would never forgive her (or Pudd",
+        "\"If you please, Sire, the Lady of the Green Kirtle salutes y",
+        "The giant King and Queen looked at each other, nodded to eac"
+      ],
+      "closePages": [
+        339,
+        339,
+        339
+      ],
+      "close": [
+        "\"Oh, good. How lovely!\" said Jill.",
+        "\"And we may come to the feast tomorrow night, mayn't we? We'",
+        "The Queen did say yes, but the laughter of all the courtiers"
+      ],
+      "textHash": "f0393dfb0847",
+      "pageHash": "890b87001a3c"
+    },
+    {
+      "title": "Chapter NINE - How They Discovered Something Worth Knowing",
+      "blockCount": 66,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 340,
+      "pageMax": 346,
+      "openPages": [
+        340,
+        340,
+        340,
+        340,
+        340,
+        340,
+        340,
+        341
+      ],
+      "open": [
+        "Chapter NINE - How They Discovered Something Worth Knowing",
+        "THE others admitted afterwards that Jill had been wonderful ",
+        "\"They're dear little things at that age,\" said one giantess ",
+        "\"It seems almost a pity . . .\"",
+        "Scrubb and Puddleglum both did their best, but girls do that",
+        "At lunchtime something happened which made all three of them"
+      ],
+      "closePages": [
+        345,
+        345,
+        346
+      ],
+      "close": [
+        "After another long pause Jill said, \"I'm terribly thirsty.\"",
+        "No one suggested doing anything. There was so obviously noth",
+        "Long, long afterwards, without the slightest warning, an utt"
+      ],
+      "textHash": "b6d0d85bd69e",
+      "pageHash": "2d04f01933b1"
+    },
+    {
+      "title": "Chapter TEN - Travels Without the Sun",
+      "blockCount": 86,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 346,
+      "pageMax": 352,
+      "openPages": [
+        346,
+        346,
+        346,
+        346,
+        346,
+        346,
+        346,
+        346
+      ],
+      "open": [
+        "Chapter TEN - Travels Without the Sun",
+        "\"WHO's there?\" shouted the three travellers.",
+        "\"I am the Warden of the Marches of Underland, and with me st",
+        "\"Tell me quickly who you are and what is your errand in the ",
+        "\"We fell down by accident,\" said Puddleglum, truthfully enou",
+        "\"Many fall down, and few return to the sunlit lands,\" said t"
+      ],
+      "closePages": [
+        352,
+        352,
+        352
+      ],
+      "close": [
+        "\"Very shrewd, Frog-face,\" said the Knight, clapping Puddlegl",
+        "laughing again.",
+        "\"And you have hit the truth. She is of divine race, and know"
+      ],
+      "textHash": "542e504522da",
+      "pageHash": "945d3128ab0a"
+    },
+    {
+      "title": "Chapter ELEVEN - In the Dark Castle",
+      "blockCount": 105,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 352,
+      "pageMax": 358,
+      "openPages": [
+        352,
+        352,
+        352,
+        353,
+        353,
+        353,
+        353,
+        353
+      ],
+      "open": [
+        "Chapter ELEVEN - In the Dark Castle",
+        "WHEN the meal (which was pigeon pie, cold ham, salad, and ca",
+        "\"You must understand, friends, that I know nothing of who I ",
+        "Now the Queen's majesty knows by her art that I shall be fre",
+        "\"It's a bit rough luck on them, isn't it?\" said Scrubb.",
+        "\"Thou art a lad of a wondrous, quick-working wit!\" exclaimed"
+      ],
+      "closePages": [
+        358,
+        358,
+        358
+      ],
+      "close": [
+        "\"Ten years!\" said the Prince, drawing his hand across his fa",
+        "\"Yes, I believe you. For now that I am myself I can remember",
+        "He walked resolutely to the door and flung it wide open."
+      ],
+      "textHash": "d064618793c2",
+      "pageHash": "7daa6aba65d2"
+    },
+    {
+      "title": "Chapter TWELVE - The Queen of Underland",
+      "blockCount": 96,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 359,
+      "pageMax": 365,
+      "openPages": [
+        359,
+        359,
+        359,
+        359,
+        359,
+        359,
+        359,
+        359
+      ],
+      "open": [
+        "Chapter TWELVE - The Queen of Underland",
+        "TWO Earthmen entered, but instead of advancing into the room",
+        "She turned very white; but Jill thought it was the sort of w",
+        "\"Leave us,\" she said to the two Earthmen.",
+        "\"And let none disturb us till I call, on pain of death.\" The",
+        "\"How now, my lord Prince,\" she said."
+      ],
+      "closePages": [
+        365,
+        365,
+        365
+      ],
+      "close": [
+        "\"Damsel,\" said the Prince, bowing to her.",
+        "\"You are of a high courage, and therefore, I doubt not, you ",
+        "\"A jolly good idea, Sir,\" said Scrubb."
+      ],
+      "textHash": "e8c6e58eac6e",
+      "pageHash": "fb6ad8b5584b"
+    },
+    {
+      "title": "Chapter THIRTEEN - Underland Without the Queen",
+      "blockCount": 76,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 365,
+      "pageMax": 371,
+      "openPages": [
+        365,
+        365,
+        366,
+        366,
+        366,
+        366,
+        366,
+        366
+      ],
+      "open": [
+        "Chapter THIRTEEN - Underland Without the Queen",
+        "ALL felt that they had earned what Scrubb called a \"breather",
+        "Rilian explained that there were quite a lot of outlets by w",
+        "\"If you ask me -\" began Puddleglum, when Scrubb interrupted.",
+        "\"I say,\" he asked, \"what's that noise?\"",
+        "\"I've been wondering that for some time!\" said Jill."
+      ],
+      "closePages": [
+        371,
+        371,
+        371
+      ],
+      "close": [
+        "\"What!\" cried the gnome, opening its ridiculous mouth wider ",
+        "\"Dead? The Witch dead? And by your Honour's hand?\" It gave a",
+        "The Prince withdrew his sword an inch or so. Puddleglum let "
+      ],
+      "textHash": "16200977eb28",
+      "pageHash": "8576aa31937f"
+    },
+    {
+      "title": "Chapter FOURTEEN - The Bottom of the World",
+      "blockCount": 95,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 371,
+      "pageMax": 378,
+      "openPages": [
+        371,
+        371,
+        371,
+        372,
+        372,
+        372,
+        372,
+        372
+      ],
+      "open": [
+        "Chapter FOURTEEN - The Bottom of the World",
+        "\"MY name is Golg,\" said the gnome.",
+        "\"And I'll tell your Honours all I know. About an hour ago we",
+        "\"Great Scott,\" exclaimed Eustace, \"are there other lands sti",
+        "\"Oh yes, your Honour,\" said Golg.",
+        "\"Lovely places; what we call the Land of Bism. This country "
+      ],
+      "closePages": [
+        377,
+        378,
+        378
+      ],
+      "close": [
+        "\"Can we get up to it?\"",
+        "\"It's not right overhead,\" said Puddleglum.",
+        "\"It's above us, but it's in this wall that I've run into. Ho"
+      ],
+      "textHash": "554812f1ed73",
+      "pageHash": "c0e3191f89f9"
+    },
+    {
+      "title": "Chapter FIFTEEN - The Disappearance of Jill",
+      "blockCount": 63,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 378,
+      "pageMax": 383,
+      "openPages": [
+        378,
+        378,
+        378,
+        378,
+        378,
+        378,
+        378,
+        378
+      ],
+      "open": [
+        "Chapter FIFTEEN - The Disappearance of Jill",
+        "THE patch of light did not show up anything down in the dark",
+        "\"Well?\" they all shouted up anxiously.",
+        "\"It's a hole,\" called Jill's voice.",
+        "\"I could get through it if I was a little bit higher.\"",
+        "\"What do you see through it?\" asked Eustace."
+      ],
+      "closePages": [
+        383,
+        383,
+        383
+      ],
+      "close": [
+        "The two children were nearly dropping with tiredness and hun",
+        "Winter on Narnia long ago) had contrived the whole thing, fi",
+        "\"And the lesson of it all is, your Highness,\" said the oldes"
+      ],
+      "textHash": "f79606b7ff01",
+      "pageHash": "d06b1268c9ba"
+    },
+    {
+      "title": "Chapter SIXTEEN - The Healing of Harms",
+      "blockCount": 94,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 383,
+      "pageMax": 392,
+      "openPages": [
+        383,
+        383,
+        384,
+        384,
+        384,
+        384,
+        384,
+        384
+      ],
+      "open": [
+        "Chapter SIXTEEN - The Healing of Harms",
+        "WHEN Jill woke next morning and found herself in a cave, she",
+        "Jill sat up and looked around. Puddleglum and Eustace were l",
+        "\"Hi, you two!\" shouted Jill in a loud voice.",
+        "\"Aren't you ever going to get up?\"",
+        "\"Shoo, shoo!\" said a sleepy voice somewhere above her."
+      ],
+      "closePages": [
+        390,
+        390,
+        392
+      ],
+      "close": [
+        "Experiment House came out, and about ten people got expelled",
+        "Eustace buried his fine clothes secretly one night in the sc",
+        "BY"
+      ],
+      "textHash": "bdff3968669b",
+      "pageHash": "ea01c6caad9a"
+    },
+    {
+      "title": "Chapter ONE - How Shasta Set Out on His Travels",
+      "blockCount": 108,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 392,
+      "pageMax": 399,
+      "openPages": [
+        392,
+        392,
+        392,
+        392,
+        392,
+        392,
+        392,
+        393
+      ],
+      "open": [
+        "Chapter ONE - How Shasta Set Out on His Travels",
+        "THIS is the story of an adventure that happened in Narnia an",
+        "In those days, far south in Calormen on a little creek of th",
+        "fish and went a mile or so southward to the village to sell ",
+        "Shasta was not at all interested in anything that lay south ",
+        "Sometimes if Arsheesh was there Shasta would say, \"O my Fath"
+      ],
+      "closePages": [
+        399,
+        399,
+        399
+      ],
+      "close": [
+        "\"I'm called Shasta.\"",
+        "\"H'm,\" said Bree.",
+        "\"Well, now, there's a name that's really hard to pronounce. "
+      ],
+      "textHash": "56ac2d3aa8fd",
+      "pageHash": "85773707174c"
+    },
+    {
+      "title": "Chapter TWO - A Wayside Adventure",
+      "blockCount": 132,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 399,
+      "pageMax": 407,
+      "openPages": [
+        399,
+        399,
+        399,
+        399,
+        399,
+        399,
+        399,
+        399
+      ],
+      "open": [
+        "Chapter TWO - A Wayside Adventure",
+        "IT was nearly noon on the following day when Shasta was wake",
+        "\"Ow, Bree,\" he gasped.",
+        "\"I'm so sore. All over. I can hardly move.\"",
+        "\"Good morning, small one,\" said Bree.",
+        "\"I was afraid you might feel a bit stiff. It can't be the fa"
+      ],
+      "closePages": [
+        406,
+        407,
+        407
+      ],
+      "close": [
+        "Both the children unsaddled their horses and the horses had ",
+        "Beaversdam\" and found that they were some sort of second cou",
+        "Aravis immediately began, sitting quite still and using a ra"
+      ],
+      "textHash": "2fa56913c7be",
+      "pageHash": "7a6eda5b3ac4"
+    },
+    {
+      "title": "Chapter THREE - At the Gates of Tashbaan",
+      "blockCount": 56,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 407,
+      "pageMax": 413,
+      "openPages": [
+        407,
+        407,
+        407,
+        407,
+        407,
+        408,
+        408,
+        408
+      ],
+      "open": [
+        "Chapter THREE - At the Gates of Tashbaan",
+        "\"Mr name,\" said the girl at once, \"is Aravis Tarkheena and I",
+        "My mother (on whom be the peace of the gods) is dead and my ",
+        "Moreover he is at least sixty years old and has a hump on hi",
+        "\"When this news was brought to me the sun appeared dark in m",
+        "\"I didn't say it half so well as that,\" muttered the mare."
+      ],
+      "closePages": [
+        413,
+        413,
+        413
+      ],
+      "close": [
+        "\"Keep together if we possibly can. If not, meet at the Tombs",
+        "\"And remember,\" said Shasta.",
+        "\"Don't you two horses forget yourselves and start talking, w"
+      ],
+      "textHash": "5016ee42b4cb",
+      "pageHash": "07bc7ecc2137"
+    },
+    {
+      "title": "Chapter FOUR - Shasta Falls in With the Narnians",
+      "blockCount": 70,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 413,
+      "pageMax": 419,
+      "openPages": [
+        413,
+        413,
+        413,
+        413,
+        413,
+        413,
+        413,
+        413
+      ],
+      "open": [
+        "Chapter FOUR - Shasta Falls in With the Narnians",
+        "AT first Shasta could see nothing in the valley below him bu",
+        "\"Get on, Shasta,\" Bree kept saying.",
+        "The river banks on each side of the valley were such a mass ",
+        "\"I say,\" said Shasta in an awed voice.",
+        "\"This is a wonderful place!\""
+      ],
+      "closePages": [
+        419,
+        419,
+        419
+      ],
+      "close": [
+        "Everyone had begun to look very serious. Queen Susan jumped ",
+        "\"Oh, Edmund,\" she cried.",
+        "\"What is it? There is something dreadful in your face.\""
+      ],
+      "textHash": "f8592592c302",
+      "pageHash": "d5ef5d085719"
+    },
+    {
+      "title": "Chapter FIVE - Prince Corin",
+      "blockCount": 115,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 419,
+      "pageMax": 426,
+      "openPages": [
+        419,
+        419,
+        419,
+        420,
+        420,
+        420,
+        420,
+        420
+      ],
+      "open": [
+        "Chapter FIVE - Prince Corin",
+        "\"MY dear sister and very good Lady,\" said King Edmund, \"you ",
+        "\"What is it, Edmund asked the Queen.",
+        "\"It is this,\" said Edmund.",
+        "\"I do not think we shall find it easy to leave Tashbaan. Whi",
+        "One of the Dwarfs gave a low whistle."
+      ],
+      "closePages": [
+        426,
+        426,
+        426
+      ],
+      "close": [
+        "\"Nothing to yours,\" said the Prince.",
+        "\"Now drop; lightlyI say,\" he added as Shasta dropped.",
+        "\"I hope we meet in Archenland. Go to my father King Lune and"
+      ],
+      "textHash": "f5e9d9e7dbab",
+      "pageHash": "7f70290caaba"
+    },
+    {
+      "title": "Chapter SIX - Shasta Among the Tombs",
+      "blockCount": 47,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 426,
+      "pageMax": 431,
+      "openPages": [
+        426,
+        426,
+        426,
+        426,
+        427,
+        427,
+        427,
+        427
+      ],
+      "open": [
+        "Chapter SIX - Shasta Among the Tombs",
+        "SHASTA ran lightly along the roof on tiptoes. It felt hot to",
+        "\"The desert! the mountains!\" thought Shasta.",
+        "He jumped down on to the rubbish and began trotting along do",
+        "Here he was pressed and jostled a bit, for a good many other",
+        "When once Shasta had reached the far end of the bridge he fo"
+      ],
+      "closePages": [
+        431,
+        431,
+        431
+      ],
+      "close": [
+        "\"It's a trap,\" thought Shasta.",
+        "\"Somebody has caught Aravis and perhaps they've tortured her",
+        "jump out and run up and speak to Bree and then I'll be caugh"
+      ],
+      "textHash": "8c5b39580a29",
+      "pageHash": "e9a6b5054613"
+    },
+    {
+      "title": "Chapter SEVEN - Aravis in Tashbaan",
+      "blockCount": 89,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 431,
+      "pageMax": 437,
+      "openPages": [
+        431,
+        431,
+        431,
+        431,
+        431,
+        432,
+        432,
+        432
+      ],
+      "open": [
+        "Chapter SEVEN - Aravis in Tashbaan",
+        "WHAT had really happened was this. When Aravis saw Shasta hu",
+        "She knew Lasaraleen quite well - almost as if they had been ",
+        "It was fatal. The eyes of the two girls met. And immediately",
+        "\"Aravis! What on earth are you doing here? Your father-\"",
+        "There was not a moment to lose. Without a second's delay Ara"
+      ],
+      "closePages": [
+        437,
+        437,
+        437
+      ],
+      "close": [
+        "\"I - I - think so,\" began Lasaraleen.",
+        "\"But my poor nerves -\" and then came the most terrible noise",
+        "First came the two slaves (deaf and dumb, as Aravis rightly "
+      ],
+      "textHash": "4971f9ac4c62",
+      "pageHash": "b6604986b31e"
+    },
+    {
+      "title": "Chapter EIGHT - In the House of the Tisroc",
+      "blockCount": 76,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 437,
+      "pageMax": 443,
+      "openPages": [
+        437,
+        437,
+        437,
+        437,
+        438,
+        438,
+        438,
+        438
+      ],
+      "open": [
+        "Chapter EIGHT - In the House of the Tisroc",
+        "\"OH-my-father-and-oh-the-delight-of-my-eyes,\" began the youn",
+        "words very quickly and sulkily and not at all as if the Tisr",
+        "\"May you live for ever, but you have utterly destroyed me. I",
+        "The false jade, the-\" and here he added a great many descrip",
+        "\"Compose yourself, O my son,\" said the Tisroc."
+      ],
+      "closePages": [
+        443,
+        443,
+        443
+      ],
+      "close": [
+        "\"In comparison with you I love neither the Prince nor my own",
+        "\"Your sentiments,\" said the Tisroc, \"are elevated and correc",
+        "\"To hear is to obey,\" said the Grand Vizier. He crawled back"
+      ],
+      "textHash": "8f5ba7a5ad3b",
+      "pageHash": "6d6892faddf8"
+    },
+    {
+      "title": "Chapter NINE - Across the Desert",
+      "blockCount": 105,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 443,
+      "pageMax": 450,
+      "openPages": [
+        443,
+        443,
+        443,
+        443,
+        443,
+        443,
+        443,
+        443
+      ],
+      "open": [
+        "Chapter NINE - Across the Desert",
+        "\"Hove dreadful! How perfectly dreadful!\" whimpered Lasaralee",
+        "\"Oh darling, I am so frightened. I'm shaking all over. Feel ",
+        "\"Come on,\" said Aravis, who was trembling herself.",
+        "\"They've gone back to the new palace. Once we're out of this",
+        "\"Darling, how can you?\" squeaked Lasaraleen."
+      ],
+      "closePages": [
+        449,
+        449,
+        450
+      ],
+      "close": [
+        "To this Hwin made no answer, being, like most highly bred ma",
+        "So they had to wait while Bree had a snack and a drink, and ",
+        "The valley itself, with its brown, cool river, and grass and"
+      ],
+      "textHash": "674622428aba",
+      "pageHash": "a492761a56a1"
+    },
+    {
+      "title": "Chapter TEN - The Hermit of the Southern March",
+      "blockCount": 109,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 450,
+      "pageMax": 456,
+      "openPages": [
+        450,
+        450,
+        450,
+        450,
+        450,
+        450,
+        450,
+        450
+      ],
+      "open": [
+        "Chapter TEN - The Hermit of the Southern March",
+        "AFTER they had ridden for several hours down the valley, it ",
+        "\"Broo-hoo-hoo, the North, the green North!\" neighed Bree: an",
+        "looked greener and fresher than anything that Aravis and Sha",
+        "The eastern-flowing river, which was pouring from the higher",
+        "\"Friends, we are in Archenland!\" said Bree proudly as he spl"
+      ],
+      "closePages": [
+        456,
+        456,
+        456
+      ],
+      "close": [
+        "\"You haven't disgraced yourself. But I've lost everything.\"",
+        "\"My good Horse,\" said the Hermit, who had approached them un",
+        "\"My good Horse, you've lost nothing but your self-conceit. N"
+      ],
+      "textHash": "6f5b359a12d1",
+      "pageHash": "179a1e757161"
+    },
+    {
+      "title": "Chapter ELEVEN - The Unwelcome Fellow Traveller",
+      "blockCount": 80,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 456,
+      "pageMax": 463,
+      "openPages": [
+        456,
+        457,
+        457,
+        457,
+        457,
+        457,
+        457,
+        457
+      ],
+      "open": [
+        "Chapter ELEVEN - The Unwelcome Fellow Traveller",
+        "WHEN Shasta went through the gate he found a slope of grass ",
+        "The trees were thicker now than they had yet been and in the",
+        "Suddenly he heard a horn - not a great throbbing horn like t",
+        "At least, it looked a crowd to him. In reality there were ab",
+        "\"Corin! My son! And on foot, and in rags! What-\""
+      ],
+      "closePages": [
+        463,
+        463,
+        463
+      ],
+      "close": [
+        "He turned and saw, pacing beside him, taller than the horse,",
+        "Luckily Shasta had lived all his life too far south in Calor",
+        "The High King above all kings stooped towards him. Its mane,"
+      ],
+      "textHash": "a06f8fbe8387",
+      "pageHash": "6b504089163d"
+    },
+    {
+      "title": "Chapter TWELVE - Shasta in Narnia",
+      "blockCount": 93,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 463,
+      "pageMax": 470,
+      "openPages": [
+        463,
+        463,
+        463,
+        463,
+        463,
+        464,
+        464,
+        464
+      ],
+      "open": [
+        "Chapter TWELVE - Shasta in Narnia",
+        "\"WAS it all a dream?\" wondered Shasta. But it couldn't have ",
+        "Shasta stooped and drank - a very long drink - and then dipp",
+        "Apparently it was still very early morning. The sun had only",
+        "West. On the far side of the valley there were high and even",
+        "\"I see,\" said Shasta to himself."
+      ],
+      "closePages": [
+        470,
+        470,
+        470
+      ],
+      "close": [
+        "\"That's right,\" said Corin.",
+        "\"Over your head. Now the sword-belt. But we must ride near",
+        "the tail of the column and keep as quiet as mice. Once the b"
+      ],
+      "textHash": "dc23c83991a6",
+      "pageHash": "2c1fe60f19f2"
+    },
+    {
+      "title": "Chapter THIRTEEN - The Fight at Anvard",
+      "blockCount": 60,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 470,
+      "pageMax": 475,
+      "openPages": [
+        470,
+        470,
+        470,
+        470,
+        470,
+        470,
+        470,
+        470
+      ],
+      "open": [
+        "Chapter THIRTEEN - The Fight at Anvard",
+        "By about eleven o'clock the whole company was once more on t",
+        "Shasta told Corin most of his adventures and explained that ",
+        "\"And where is the Queen Susan?\"",
+        "\"At Cair Paravel,\" said Corin.",
+        "\"She's not like Lucy, you know, who's as good as a man, or a"
+      ],
+      "closePages": [
+        475,
+        475,
+        475
+      ],
+      "close": [
+        "\"Well, well,\" grumbled the King.",
+        "\"We'll pass it over for this time. And now -\" '",
+        "What came next surprised Shasta as much as anything that had"
+      ],
+      "textHash": "d84a061aa5dc",
+      "pageHash": "b0c0d60bb80e"
+    },
+    {
+      "title": "Chapter FOURTEEN - How Bree Became a Wiser Horse",
+      "blockCount": 111,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 475,
+      "pageMax": 482,
+      "openPages": [
+        475,
+        476,
+        476,
+        476,
+        476,
+        476,
+        476,
+        476
+      ],
+      "open": [
+        "Chapter FOURTEEN - How Bree Became a Wiser Horse",
+        "WE must now return to Aravis and the Horses. The Hermit, wat",
+        "Next morning, while the Hermit was indoors, the three of the",
+        "\"I've had enough of this,\" said Hwin.",
+        "\"The Hermit has been very good to us and I'm very much oblig",
+        "\"Oh not today, Ma'am,\" said Bree."
+      ],
+      "closePages": [
+        482,
+        482,
+        482
+      ],
+      "close": [
+        "\"Well,\" said Bree, \"I'm going to have a good one now: it may",
+        "\"Now I'm ready,\" he said in a voice of profound gloom.",
+        "\"Lead on, Prince Cor, Narnia and the North.\" But he looked m"
+      ],
+      "textHash": "fd7476e71d4e",
+      "pageHash": "88ddef60c7b7"
+    },
+    {
+      "title": "Chapter FIFTEEN - Rabadash the Ridiculous",
+      "blockCount": 85,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 482,
+      "pageMax": 490,
+      "openPages": [
+        482,
+        483,
+        483,
+        483,
+        483,
+        483,
+        483,
+        483
+      ],
+      "open": [
+        "Chapter FIFTEEN - Rabadash the Ridiculous",
+        "THE next turn of the roadbrought them out from among the tre",
+        "Before they had reached the gate King Lune came out to meet ",
+        "\"Little lady,\" he said, \"we bid you very heartily welcome. I",
+        "\"It was he who did all that, Sir,\" said Aravis.",
+        "\"Why, he rushed at a lion to save me.\""
+      ],
+      "closePages": [
+        489,
+        490,
+        490
+      ],
+      "close": [
+        "Aravis also had many quarrels (and, I'm afraid, even fights)",
+        "BY",
+        "C. S. LEWIS"
+      ],
+      "textHash": "78699f843889",
+      "pageHash": "377aa3e9de4b"
+    },
+    {
+      "title": "Chapter ONE - The Wrong Door",
+      "blockCount": 99,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 490,
+      "pageMax": 496,
+      "openPages": [
+        490,
+        490,
+        490,
+        490,
+        490,
+        490,
+        490,
+        490
+      ],
+      "open": [
+        "Chapter ONE - The Wrong Door",
+        "This is a story about something that happened long ago when ",
+        "In those days Mr Sherlock Holmes was still living in Baker S",
+        "She lived in one of a long row of houses which were all join",
+        "\"Hullo,\" said Polly.",
+        "\"Hullo,\" said the boy."
+      ],
+      "closePages": [
+        496,
+        496,
+        496
+      ],
+      "close": [
+        "\"Polly! Don't be a fool!\" he shouted.",
+        "\"Don't touch them.\"",
+        "It was too late. Exactly as he spoke, Polly's hand went out "
+      ],
+      "textHash": "4649ceea5a38",
+      "pageHash": "9f49e6808de1"
+    },
+    {
+      "title": "Chapter TWO - Digory and His Uncle",
+      "blockCount": 93,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 496,
+      "pageMax": 502,
+      "openPages": [
+        496,
+        497,
+        497,
+        497,
+        497,
+        497,
+        497,
+        497
+      ],
+      "open": [
+        "Chapter TWO - Digory and His Uncle",
+        "IT was so sudden, and so horribly unlike anything that had e",
+        "\"None of that!\" he hissed in Digory's ear.",
+        "\"If you start making a noise your Mother'll hear it. And you",
+        "\"That's better,\" said Uncle Andrew.",
+        "\"Perhaps you couldn't help it. It is a shock when you first "
+      ],
+      "closePages": [
+        502,
+        502,
+        502
+      ],
+      "close": [
+        "Uncle Andrew shrugged his shoulders, walked across to the do",
+        "\"Oh very' well then. Just as you please. Go down and have yo",
+        "\"By gum,\" said Digory, \"don't I just wish I was big enough t"
+      ],
+      "textHash": "b705cb1bf3a2",
+      "pageHash": "3d8ba05ceacf"
+    },
+    {
+      "title": "Chapter THREE - The Wood Between the Worlds",
+      "blockCount": 96,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 502,
+      "pageMax": 508,
+      "openPages": [
+        502,
+        502,
+        502,
+        502,
+        503,
+        503,
+        503,
+        503
+      ],
+      "open": [
+        "Chapter THREE - The Wood Between the Worlds",
+        "UNCLE ANDREW and his study vanished instantly. Then, for a m",
+        "\"I believe I'm in water,\" said Digory.",
+        "\"Or under water.\" This frightened him for a second, but almo",
+        "standing by the edge of a small pool - not more than ten fee",
+        "The strangest thing was that, almost before he had looked ab"
+      ],
+      "closePages": [
+        508,
+        508,
+        508
+      ],
+      "close": [
+        "get out of its own place: so that a green ring would take yo",
+        "\"I'm game if you are,\" said Polly. But she really said this ",
+        "\"One - Two - Three - Go!\" said Digory. And they jumped."
+      ],
+      "textHash": "1f30b24dc455",
+      "pageHash": "98d82f66435a"
+    },
+    {
+      "title": "Chapter FOUR - The Bell and the Hammer",
+      "blockCount": 77,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 508,
+      "pageMax": 514,
+      "openPages": [
+        508,
+        508,
+        509,
+        509,
+        509,
+        509,
+        509,
+        509
+      ],
+      "open": [
+        "Chapter FOUR - The Bell and the Hammer",
+        "THERE was no doubt about the Magic this time. Down and down ",
+        "\"What a queer place!\" said Digory.",
+        "\"I don't like it,\" said Polly with something like a shudder.",
+        "What they noticed first was the light. It wasn't like sunlig",
+        "When you had seen that sky you wondered that there should be"
+      ],
+      "closePages": [
+        514,
+        514,
+        514
+      ],
+      "close": [
+        "It was never found out whether the fall of the roof was due ",
+        "\"There! I hope you're satisfied now,\" panted Polly.",
+        "\"Well, it's all over, anyway,\" said Digory. And both thought"
+      ],
+      "textHash": "7297fd35fc71",
+      "pageHash": "4c8328372ab5"
+    },
+    {
+      "title": "Chapter FIVE - The Deplorable Word",
+      "blockCount": 88,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 514,
+      "pageMax": 520,
+      "openPages": [
+        514,
+        514,
+        515,
+        515,
+        515,
+        515,
+        515,
+        515
+      ],
+      "open": [
+        "Chapter FIVE - The Deplorable Word",
+        "THE children were facing one another across the pillar where",
+        "\"Who has awaked me? Who has broken the spell?\" she asked.",
+        "\"I think it must have been me,\" said Digory.",
+        "\"You!\" said the Queen, laying her hand on his shoulder - a w",
+        "Digory could feel that it was strong as steel pincers."
+      ],
+      "closePages": [
+        520,
+        520,
+        520
+      ],
+      "close": [
+        "\"Why, it's absolute bosh from beginning to end.\"",
+        "\"Minions!\" cried the Queen, turning in rage upon Polly and s",
+        "\"Now,\" shouted Digory; and \"Quick! shouted Polly. They plung"
+      ],
+      "textHash": "6965d9be366a",
+      "pageHash": "c902fcc648bc"
+    },
+    {
+      "title": "Chapter SIX - The Beginning of Uncle Andrew's Troubles",
+      "blockCount": 84,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 520,
+      "pageMax": 526,
+      "openPages": [
+        520,
+        520,
+        520,
+        521,
+        521,
+        521,
+        521,
+        521
+      ],
+      "open": [
+        "Chapter SIX - The Beginning of Uncle Andrew's Troubles",
+        "\"LET go! Let go!\" screamed Polly.",
+        "\"I'm not touching you!\" said Digory. Then their heads came o",
+        "This proved, by the way, another thing about the rings which",
+        "Now that you saw her in the wood, Queen Jadis looked differe",
+        "\"Let go! Let go of my hair,\" said Polly."
+      ],
+      "closePages": [
+        526,
+        526,
+        526
+      ],
+      "close": [
+        "\"Distinguished fiddlestick!\" said Aunt Letty.",
+        "\"There hasn't been a ring at the hell for the last hour.\"",
+        "At that moment the door was suddenly flung open. Aunt Letty "
+      ],
+      "textHash": "610dda92b5f5",
+      "pageHash": "185b48e19f25"
+    },
+    {
+      "title": "Chapter SEVEN - What Happened at the Front Door",
+      "blockCount": 69,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 526,
+      "pageMax": 532,
+      "openPages": [
+        526,
+        526,
+        526,
+        526,
+        526,
+        526,
+        526,
+        526
+      ],
+      "open": [
+        "Chapter SEVEN - What Happened at the Front Door",
+        "\"Now; slave, how long am I to wait for my chariot?\" thundere",
+        "\"And who is this young person, Andrew, may I ask?\" said Aunt",
+        "\"Distinguished foreigner - v-very important p-person,\" he st",
+        "\"Rubbish!\" said Aunt Letty, and then, turning to the Witch, ",
+        "\"What woman is this?\" said Jadis."
+      ],
+      "closePages": [
+        531,
+        532,
+        532
+      ],
+      "close": [
+        "\"Now, Missie, let me get at 'is 'ead, and just you get off. ",
+        "\"Dog!\" came her cold, clear voice, ringing loud above all th",
+        "\"Dog, unhand our royal charger. We are the Empress Jadis.\""
+      ],
+      "textHash": "e2b6464c35ea",
+      "pageHash": "a296be71388e"
+    },
+    {
+      "title": "Chapter EIGHT - The Fight at the Lamp-Post",
+      "blockCount": 70,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 532,
+      "pageMax": 537,
+      "openPages": [
+        532,
+        532,
+        532,
+        532,
+        532,
+        532,
+        532,
+        532
+      ],
+      "open": [
+        "Chapter EIGHT - The Fight at the Lamp-Post",
+        "\"Ho! Her-ipress, are you? We'll see about that,\" said a voic",
+        "\"Three cheers for the Hempress of Colney 'Atch\" and quite a ",
+        "She tossed her new weapon up in the air, caught it again, br",
+        "\"Now's my chance,\" thought Digory. He darted between the hor",
+        "\"Quick, Digory. This must be stopped,\" said a voice beside h"
+      ],
+      "closePages": [
+        537,
+        537,
+        537
+      ],
+      "close": [
+        "\"'Old your noise, everyone,\" said the Cabby.",
+        "\"I want to listen to the moosic.\"",
+        "For the song had now changed."
+      ],
+      "textHash": "0be7b96185fa",
+      "pageHash": "d2c1b4cee7f5"
+    },
+    {
+      "title": "Chapter NINE - The Founding of Narnia",
+      "blockCount": 70,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 537,
+      "pageMax": 542,
+      "openPages": [
+        537,
+        537,
+        537,
+        537,
+        537,
+        538,
+        538,
+        538
+      ],
+      "open": [
+        "Chapter NINE - The Founding of Narnia",
+        "THE Lion was pacing to and fro about that empty land and sin",
+        "Soon there were other things besides grass. The higher slope",
+        "\"Trees!\" he exclaimed.",
+        "The nuisance of it, as Polly said afterwards, was that you w",
+        "\"Stop!\" cried the Witch."
+      ],
+      "closePages": [
+        542,
+        542,
+        542
+      ],
+      "close": [
+        "The Lion, whose eyes never blinked, stared at the animals as",
+        "The Lion opened his mouth, but no sound came from it; he was",
+        "Be divine waters.\""
+      ],
+      "textHash": "20b808c503ea",
+      "pageHash": "c252804b0b9c"
+    },
+    {
+      "title": "Chapter TEN - The First Joke and Other Matters",
+      "blockCount": 89,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 543,
+      "pageMax": 548,
+      "openPages": [
+        543,
+        543,
+        543,
+        543,
+        543,
+        543,
+        543,
+        543
+      ],
+      "open": [
+        "Chapter TEN - The First Joke and Other Matters",
+        "IT was of course the Lion's voice. The children had long fel",
+        "Out of the trees wild people stepped forth, gods and goddess",
+        "\"Hail, Aslan. We hear and obey. We are awake. We love. We th",
+        "\"But please, we don't know very much yet,\" said a nosey and ",
+        "\"Good old Strawberry,\" said Polly."
+      ],
+      "closePages": [
+        548,
+        548,
+        548
+      ],
+      "close": [
+        "Uncle Andrew stood trembling and swaying this way and that. ",
+        "\"Now, sir,\" said the Bulldog in his business-like way, \"are ",
+        "mineral?\" That was what it really said; but all Uncle Andrew"
+      ],
+      "textHash": "7d4660836482",
+      "pageHash": "0425a32cfb59"
+    },
+    {
+      "title": "Chapter ELEVEN - Digory and His Uncle Are Both in Trouble",
+      "blockCount": 99,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 548,
+      "pageMax": 554,
+      "openPages": [
+        548,
+        548,
+        548,
+        549,
+        549,
+        549,
+        549,
+        549
+      ],
+      "open": [
+        "Chapter ELEVEN - Digory and His Uncle Are Both in Trouble",
+        "You may think the animals were very stupid not to see at onc",
+        "Andrew was a great deal taller than the children and a good ",
+        "He had tried to. When the Bulldog spoke to him (or, as he th",
+        "\"There!\" said a Warthog, \"it's only a tree. I always thought",
+        "\"I don't see that,\" said one of the Bears."
+      ],
+      "closePages": [
+        554,
+        554,
+        554
+      ],
+      "close": [
+        "\"Yes, Aslan, we've made it up,\" said Polly.",
+        "\"That is well,\" said Aslan.",
+        "\"And now for the Boy himself.\""
+      ],
+      "textHash": "7ec25625c417",
+      "pageHash": "cb1c9624af3d"
+    },
+    {
+      "title": "Chapter TWELVE - Strawberry's Adventure",
+      "blockCount": 92,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 554,
+      "pageMax": 560,
+      "openPages": [
+        554,
+        554,
+        554,
+        554,
+        554,
+        554,
+        555,
+        555
+      ],
+      "open": [
+        "Chapter TWELVE - Strawberry's Adventure",
+        "DIGORY kept his mouth very tight shut. He had been growing m",
+        "\"Son of Adam,\" said Aslan.",
+        "\"Are you ready to undo the wrong that you have done to my sw",
+        "\"Well, I don't see what I can do,\" said Digory.",
+        "\"You see, the Queen ran away and -\" \"I asked, are you ready?"
+      ],
+      "closePages": [
+        560,
+        560,
+        560
+      ],
+      "close": [
+        "\"I'm not so sure,\" said Fledge.",
+        "\"Anyway - wait! There it goes again. By Aslan, it is somethi",
+        "The horse scrambled to its feet with a great noise and a gre"
+      ],
+      "textHash": "d267a8ea0d56",
+      "pageHash": "f619eb5335fe"
+    },
+    {
+      "title": "Chapter THIRTEEN - An Unexpected Meeting",
+      "blockCount": 63,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 560,
+      "pageMax": 565,
+      "openPages": [
+        560,
+        560,
+        560,
+        561,
+        561,
+        561,
+        561,
+        561
+      ],
+      "open": [
+        "Chapter THIRTEEN - An Unexpected Meeting",
+        "\"WAKE up, Digory, wake up, Fledge,\" came the voice of Polly.",
+        "\"It has turned into a toffee tree. And it's the loveliest mo",
+        "\"Hurrah!\" said Digory.",
+        "\"But I'm going to have a dip first.\" He rushed through a flo",
+        "Polly and Digory got to work on the toffee-tree. The fruit w"
+      ],
+      "closePages": [
+        565,
+        565,
+        565
+      ],
+      "close": [
+        "They had started early that morning and what happened in the",
+        "All day Fledge flew steadily with untiring wings; eastward w",
+        "Digory saw all the animals, dwarfs, satyrs, nymphs, and othe"
+      ],
+      "textHash": "7bb93c6f84f5",
+      "pageHash": "7059b1729753"
+    },
+    {
+      "title": "Chapter FOURTEEN - The Planting of the Tree",
+      "blockCount": 58,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 566,
+      "pageMax": 570,
+      "openPages": [
+        566,
+        566,
+        566,
+        566,
+        566,
+        566,
+        566,
+        566
+      ],
+      "open": [
+        "Chapter FOURTEEN - The Planting of the Tree",
+        "\"WELL done,\" said Aslan in a voice that made the earth shake",
+        "\"Well done, son of Adam,\" said the Lion again.",
+        "\"For this fruit you have hungered and thirsted and wept. No ",
+        "Digory did as he was told. Everyone had grown so quiet that ",
+        "\"It is well thrown,\" said Aslan."
+      ],
+      "closePages": [
+        570,
+        570,
+        570
+      ],
+      "close": [
+        "\"That is what would have happened, child, with a stolen appl",
+        "For a second Digory could hardly understand. It was as if th",
+        "\"Please,\" he said, \"may we go home now?\" He had forgotten to"
+      ],
+      "textHash": "088376dc3e2b",
+      "pageHash": "5aa4f12dd556"
+    },
+    {
+      "title": "Chapter FIFTEEN - The End of This Story and the Beginning of All the Others",
+      "blockCount": 40,
+      "types": "hppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 570,
+      "pageMax": 575,
+      "openPages": [
+        570,
+        570,
+        570,
+        571,
+        571,
+        571,
+        571,
+        571
+      ],
+      "open": [
+        "Chapter FIFTEEN - The End of This Story and the Beginning of",
+        "\"You need no rings when I am with you,\" said the voice of As",
+        "\"Come,\" said Aslan; \"it is time that you went back. But ther",
+        "\"When you were last here,\" said Aslan, \"that hollow was a po",
+        "\"Yes, Aslan,\" said both the children. But Polly added, \"But ",
+        "\"Not yet, Daughter of Eve,\" he said."
+      ],
+      "closePages": [
+        574,
+        575,
+        575
+      ],
+      "close": [
+        "\"But she was a dem fine woman, sir, a dem fine woman.\"",
+        "The Last Battle",
+        "C.S. Lewis"
+      ],
+      "textHash": "632a5dd6a983",
+      "pageHash": "8a46b612bb1b"
+    },
+    {
+      "title": "Chapter ONE - By Caldron Pool",
+      "blockCount": 86,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 575,
+      "pageMax": 580,
+      "openPages": [
+        575,
+        575,
+        575,
+        575,
+        575,
+        575,
+        576,
+        576
+      ],
+      "open": [
+        "Chapter ONE - By Caldron Pool",
+        "IN the last days of Narnia, far up to the west beyond Lanter",
+        "Shift. It's quite true. I'm not clever.\" Then he would sigh ",
+        "One morning early in the year the pair of them were out walk",
+        "Narnia in the Western Wild from which the river comes. And a",
+        "\"What's what?\" said Puzzle."
+      ],
+      "closePages": [
+        580,
+        580,
+        580
+      ],
+      "close": [
+        "\"No, no,\" said the Ape (whose mind worked very quickly).",
+        "\"It's a sign the other way. I was just going to say that if ",
+        "Puzzle. And please don't let us have any more arguing. You k"
+      ],
+      "textHash": "cc839fd2d4c7",
+      "pageHash": "d9fc18586dae"
+    },
+    {
+      "title": "Chapter TWO - The Rashness of the King",
+      "blockCount": 82,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 580,
+      "pageMax": 586,
+      "openPages": [
+        580,
+        580,
+        580,
+        580,
+        581,
+        581,
+        581,
+        581
+      ],
+      "open": [
+        "Chapter TWO - The Rashness of the King",
+        "About three weeks later the last of the Kings of Narnia sat ",
+        "His name was King Tirian, and he was between twenty and twen",
+        "There was no one with him that spring morning except his dea",
+        "\"I cannot set myself to any work or sport today, Jewel,\" sai",
+        "\"I can think of nothing but this wonderful news. Think you w"
+      ],
+      "closePages": [
+        585,
+        585,
+        586
+      ],
+      "close": [
+        "\"Work, lazy brute,\" shouted one of the Calormenes: and as he",
+        "Up till now Tirian had taken it for granted that the horses ",
+        "When Tirian knew that the Horse was one of his own Narnians,"
+      ],
+      "textHash": "47b7c8db6c3d",
+      "pageHash": "2ad7cc833eae"
+    },
+    {
+      "title": "Chapter THREE - The Ape in Its Glory",
+      "blockCount": 88,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 586,
+      "pageMax": 591,
+      "openPages": [
+        586,
+        586,
+        586,
+        586,
+        586,
+        586,
+        586,
+        586
+      ],
+      "open": [
+        "Chapter THREE - The Ape in Its Glory",
+        "\"MASTER Horse, Master Horse,\" said Tirian as he hastily cut ",
+        "\"No, Sire,\" panted the horse, \"Aslan is here. It is all by h",
+        "\"'Ware danger, King,\" said Jewel. Tirian looked up and saw t",
+        "\"Quick. On my back,\" said Jewel.",
+        "The King flung himself astride of his old friend who turned "
+      ],
+      "closePages": [
+        591,
+        591,
+        591
+      ],
+      "close": [
+        "\"Ape,\" he cried with a great voice, \"you lie damnably. You l",
+        "He meant to go on and ask how the terrible god Tash who fed ",
+        "\"Take him away. Take him away. Take him where he cannot hear"
+      ],
+      "textHash": "8316debe27c7",
+      "pageHash": "e10e7fa235b6"
+    },
+    {
+      "title": "Chapter FOUR - What Happened That Night",
+      "blockCount": 63,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 591,
+      "pageMax": 596,
+      "openPages": [
+        591,
+        592,
+        592,
+        592,
+        592,
+        592,
+        592,
+        592
+      ],
+      "open": [
+        "Chapter FOUR - What Happened That Night",
+        "THE King was so dizzy from being knocked down that he hardly",
+        "worst at the moment - for it is often little things that are",
+        "From where he was he could still see the little stable on th",
+        "\"I wonder what they've done to Jewel,\" thought the King.",
+        "Presently the crowd of beasts broke up and began going away "
+      ],
+      "closePages": [
+        596,
+        596,
+        596
+      ],
+      "close": [
+        "The room began to swim before Tirian's eyes. He heard the vo",
+        "\"It's melting away.\"",
+        "\"It's vanishing.\" Next moment he was wide awake, still tied "
+      ],
+      "textHash": "8eb319e0b7c7",
+      "pageHash": "b0aab05db368"
+    },
+    {
+      "title": "Chapter FIVE - How Help Came to the King",
+      "blockCount": 74,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 596,
+      "pageMax": 601,
+      "openPages": [
+        596,
+        596,
+        597,
+        597,
+        597,
+        597,
+        597,
+        597
+      ],
+      "open": [
+        "Chapter FIVE - How Help Came to the King",
+        "Bur his misery did not last long. Almost at once there came ",
+        "\"Gosh!\" said the boy, \"that took one's breath away! I though",
+        "\"Hurry up and get him untied,\" said the girl.",
+        "\"We can talk, afterwards.\" Then she added, turning to Tirian",
+        "While she was speaking the Boy produced a knife from his poc"
+      ],
+      "closePages": [
+        601,
+        601,
+        601
+      ],
+      "close": [
+        "\"I wish we'd brought a packet of tea,\" said Jill.",
+        "\"Or a tin of cocoa,\" said Eustace.",
+        "\"A firkin or so of good wine in each of these towers would n"
+      ],
+      "textHash": "af08616212bb",
+      "pageHash": "4a731259666c"
+    },
+    {
+      "title": "Chapter SIX - A Good Night's Work",
+      "blockCount": 87,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 602,
+      "pageMax": 607,
+      "openPages": [
+        602,
+        602,
+        602,
+        602,
+        602,
+        602,
+        602,
+        602
+      ],
+      "open": [
+        "Chapter SIX - A Good Night's Work",
+        "ABOUT four hours later Tirian flung himself into one of the ",
+        "Land in the days of Prince Rilian. Then he had tried to teac",
+        "He was surprised at the strength of both children: in fact t",
+        "All three of them agreed that the very first thing they must",
+        "An experienced warrior and huntsman like Tirian can always w"
+      ],
+      "closePages": [
+        607,
+        607,
+        607
+      ],
+      "close": [
+        "Waste. And there, marching sturdily along, were about thirty",
+        "\"Stay!\" thundered Tirian as he stepped out on the road.",
+        "\"Stay, soldiers. Whither do you lead these Narnian Dwarfs an"
+      ],
+      "textHash": "58a9b769110c",
+      "pageHash": "3bb226973e14"
+    },
+    {
+      "title": "Chapter SEVEN - Mainly About Dwarfs",
+      "blockCount": 88,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 607,
+      "pageMax": 613,
+      "openPages": [
+        607,
+        607,
+        607,
+        607,
+        608,
+        608,
+        608,
+        608
+      ],
+      "open": [
+        "Chapter SEVEN - Mainly About Dwarfs",
+        "THE two Calormene soldiers at the head of the column, seeing",
+        "\"O My Master,\" said one of them, \"we lead these manikins to ",
+        "\"",
+        "\"By the great god Tash, they are very obedient,\" said Tirian",
+        "\"Has The Tisroc fought a great battle, Dwarfs, and conquered"
+      ],
+      "closePages": [
+        613,
+        613,
+        613
+      ],
+      "close": [
+        "With a great upheaval Jewel scrambled to his feet and pointe",
+        "\"Look!\" he cried.",
+        "\"Look at it! Look, look!\" Then all six of them saw; and over"
+      ],
+      "textHash": "2057d89eae27",
+      "pageHash": "72045028094a"
+    },
+    {
+      "title": "Chapter EIGHT - What News the Eagle Brought",
+      "blockCount": 68,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 613,
+      "pageMax": 619,
+      "openPages": [
+        613,
+        613,
+        614,
+        614,
+        614,
+        614,
+        614,
+        614
+      ],
+      "open": [
+        "Chapter EIGHT - What News the Eagle Brought",
+        "IN the shadow of the trees on the far side of the clearing s",
+        "After one look at it Puzzle gave a screaming bray and darted",
+        "Everyone started breathing properly again and moved. They ha",
+        "\"What was it?\" said Eustace in a whisper.",
+        "\"I have seen it once before,\" said Tirian."
+      ],
+      "closePages": [
+        618,
+        618,
+        619
+      ],
+      "close": [
+        "No one could speak.",
+        "\"And the other sight, five leagues nearer than Cair Paravel,",
+        "\"So,\" said the King, after a long silence, \"Narnia is no mor"
+      ],
+      "textHash": "5672eb20a03e",
+      "pageHash": "545cfc9273c6"
+    },
+    {
+      "title": "Chapter NINE - The Great Meeting on Stable Hill",
+      "blockCount": 69,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 619,
+      "pageMax": 624,
+      "openPages": [
+        619,
+        619,
+        619,
+        619,
+        619,
+        619,
+        619,
+        619
+      ],
+      "open": [
+        "Chapter NINE - The Great Meeting on Stable Hill",
+        "Fop, a long time they could not speak nor even shed a tear. ",
+        "\"Sire,\" he said, \"there is now no need of counsel. We see th",
+        "Tirian nodded. But he turned to the children and said: \"Now,",
+        "\"B - but we've done nothing,\" said Jill who was shivering, n",
+        "because everything was so horrible."
+      ],
+      "closePages": [
+        624,
+        624,
+        624
+      ],
+      "close": [
+        "\"The ground is taken from under our feet,\" said Tirian.",
+        "\"Cursed, cursed cleverness!\" said Poggin.",
+        "\"I'll be sworn that this new lie is of Ginger's making.\""
+      ],
+      "textHash": "d2b544bf05da",
+      "pageHash": "2bc0b9734253"
+    },
+    {
+      "title": "Chapter TEN - Who Will Go Into the Stable?",
+      "blockCount": 93,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 624,
+      "pageMax": 630,
+      "openPages": [
+        624,
+        624,
+        624,
+        624,
+        624,
+        625,
+        625,
+        625
+      ],
+      "open": [
+        "Chapter TEN - Who Will Go Into the Stable?",
+        "JILL felt something tickling her ear. It was Jewel the Unico",
+        "The Ape was speaking again.",
+        "\"And after a horrid thing like that, Aslan - Tashlan - is an",
+        "Howls and mewings and squeals and grunts were the Animals' a",
+        "\"Hark what the monkey says,\" it shouted."
+      ],
+      "closePages": [
+        629,
+        629,
+        630
+      ],
+      "close": [
+        "\"Swords out,\" he whispered to the others.",
+        "\"Arrow on string. Follow.\" Next moment the astonished Narnia",
+        "\"Here stand I, Tirian of Narnia, in Aslan's name, to prove w"
+      ],
+      "textHash": "94540145c344",
+      "pageHash": "db6a2e58131b"
+    },
+    {
+      "title": "Chapter ELEVEN - The Pace Quickens",
+      "blockCount": 63,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 630,
+      "pageMax": 635,
+      "openPages": [
+        630,
+        630,
+        630,
+        630,
+        630,
+        630,
+        630,
+        630
+      ],
+      "open": [
+        "Chapter ELEVEN - The Pace Quickens",
+        "QUICK as lightning, Rishda Tarkaan leaped back out of reach ",
+        "you and then you have its hoofs and its horn and its teeth t",
+        "\"To me, to me, warriors of The Tisroc, may-he-liveforever. T",
+        "lest the wrath of Tashlan fall upon you!\"",
+        "While this was happening two other things happened as well. "
+      ],
+      "closePages": [
+        634,
+        634,
+        635
+      ],
+      "close": [
+        "\"Oh well done. Well done!\" shouted Jill. The King's party we",
+        "Calormenes were falling at each Narnian sword-stroke, they n",
+        "The enemy had been reinforced. The drum had done its work."
+      ],
+      "textHash": "82de772a0979",
+      "pageHash": "dee2303acca0"
+    },
+    {
+      "title": "Chapter TWELVE - Through the Stable Door",
+      "blockCount": 66,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 635,
+      "pageMax": 640,
+      "openPages": [
+        635,
+        635,
+        635,
+        635,
+        635,
+        635,
+        635,
+        635
+      ],
+      "open": [
+        "Chapter TWELVE - Through the Stable Door",
+        "JILL ought to have been back at the white rock already but s",
+        "A Calormene was running towards the stable door carrying som",
+        "Tirian and the Unicorn rushed out to rescue him. But the Cal",
+        "Even then Jill remembered to keep her face turned aside, wel",
+        "\"Even if I can't stop blubbing, I won't get my string wet,\" "
+      ],
+      "closePages": [
+        640,
+        640,
+        640
+      ],
+      "close": [
+        "\"Well, don't let's talk about that now,\" said Peter.",
+        "\"Look! Here are lovely fruit-trees. Let",
+        "us taste them.\" And then, for the first time, Tirian looked "
+      ],
+      "textHash": "933f31b0b48a",
+      "pageHash": "2668299f3f0b"
+    },
+    {
+      "title": "Chapter THIRTEEN - How the Dwarfs Refused to Be Taken In",
+      "blockCount": 103,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 640,
+      "pageMax": 647,
+      "openPages": [
+        640,
+        640,
+        640,
+        640,
+        641,
+        641,
+        641,
+        641
+      ],
+      "open": [
+        "Chapter THIRTEEN - How the Dwarfs Refused to Be Taken In",
+        "TIRIAN had thought - or he would have thought if he had time",
+        "Tirian feel that it must be autumn but there was something i",
+        "Everyone raised his hand to pick the fruit he best liked the",
+        "\"It's all right,\" said Peter.",
+        "\"I know what we're all thinking. But I'm sure, quite sure, w"
+      ],
+      "closePages": [
+        647,
+        647,
+        647
+      ],
+      "close": [
+        "\"You see, \" said Aslan.",
+        "\"They will not let us help them. They have chosen cunning in",
+        "He went to the Door and they all followed him. He raised his"
+      ],
+      "textHash": "dd9971506001",
+      "pageHash": "512accc03b12"
+    },
+    {
+      "title": "Chapter FOURTEEN - Night Falls on Narnia",
+      "blockCount": 50,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 647,
+      "pageMax": 652,
+      "openPages": [
+        647,
+        647,
+        647,
+        647,
+        647,
+        647,
+        647,
+        648
+      ],
+      "open": [
+        "Chapter FOURTEEN - Night Falls on Narnia",
+        "THEY all stood beside Aslan, on his right side, and looked t",
+        "The bonfire had gone out. On the earth all was blackness: in",
+        "\"Yes,\" said Aslan, though they had not spoken.",
+        "\"While he lay dreaming his name was Time. Now that he is awa",
+        "Immediately the sky became full of shooting stars. Even one "
+      ],
+      "closePages": [
+        652,
+        652,
+        652
+      ],
+      "close": [
+        "\"We're quite blown.\"",
+        "\"Well of course you will be if you keep tearing about the wa",
+        "So the humans sat down on the grass. And when the Dogs had a"
+      ],
+      "textHash": "acf591fc44ab",
+      "pageHash": "1c48db55ae94"
+    },
+    {
+      "title": "Chapter FIFTEEN - Further up and Further In",
+      "blockCount": 63,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 652,
+      "pageMax": 657,
+      "openPages": [
+        652,
+        652,
+        653,
+        653,
+        653,
+        653,
+        653,
+        653
+      ],
+      "open": [
+        "Chapter FIFTEEN - Further up and Further In",
+        "\"KNOW, O Warlike Kings,\" said Emeth, \"and you, O ladies whos",
+        "\"And, as you have seen, we were called together outside the ",
+        "after night, and the fire was kindled, and the Ape brought f",
+        "\"When I understood this, a great rage fell upon me and I won",
+        "\"As soon as I had gone in at the door, the first wonder was "
+      ],
+      "closePages": [
+        657,
+        657,
+        657
+      ],
+      "close": [
+        "It was the Unicorn who summed up what everyone was feeling. ",
+        "\"I have come home at last! This is my real country! I belong",
+        "He shook his mane and sprang forward into a great gallop - a"
+      ],
+      "textHash": "321e8a727699",
+      "pageHash": "bc8cd7df5f07"
+    },
+    {
+      "title": "Chapter SIXTEEN - Farewell to Shadowlands",
+      "blockCount": 59,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 657,
+      "pageMax": 663,
+      "openPages": [
+        657,
+        657,
+        658,
+        658,
+        658,
+        658,
+        658,
+        658
+      ],
+      "open": [
+        "Chapter SIXTEEN - Farewell to Shadowlands",
+        "IF one could run without getting tired, I don't think one wo",
+        "\"Don't stop! Further up and further in,\" called Farsight, ti",
+        "\"It's all very well for him,\" said Eustace, but Jewel also c",
+        "His voice could only just be heard above the roar of the wat",
+        "\"This is absolutely crazy,\" said Eustace to Edmund."
+      ],
+      "closePages": [
+        663,
+        663,
+        663
+      ],
+      "close": [
+        "\"Your father and mother and all of you are - as you used to",
+        "call it in the Shadowlands - dead. The term is over: the hol",
+        "One of the Great Story which no one on earth has read: which"
+      ],
+      "textHash": "8cf67501c055",
+      "pageHash": "9d14910e7cbf"
+    }
+  ]
 }

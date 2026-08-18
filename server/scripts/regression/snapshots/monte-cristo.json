@@ -1,7 +1,7 @@
 {
-  "parserVersion": 134,
-  "totalBlocks": 13320,
-  "totalWords": 454773,
+  "parserVersion": 135,
+  "totalBlocks": 13287,
+  "totalWords": 454772,
   "chapterCount": 122,
   "chapterTitles": [
     "VOLUME ONE",
@@ -131,5 +131,4461 @@
   "lastBlockText": "“Darling,” replied Valentine, “has not the count just told us that all human wis",
   "headingCount": 124,
   "avgBlockLength": 192,
-  "proseBlockCount": 13196
+  "proseBlockCount": 13163,
+  "frontMatter": {
+    "blockCount": 3,
+    "types": "hhp",
+    "pageMin": 0,
+    "pageMax": 0,
+    "openPages": [
+      0,
+      0,
+      0
+    ],
+    "open": [
+      "The Count of Monte Cristo",
+      "By Alexandre Dumas",
+      "Alexandre Dumas"
+    ],
+    "closePages": [],
+    "close": [],
+    "textHash": "175a17f54574",
+    "pageHash": "7c01691d53eb"
+  },
+  "chapterOrder": [
+    {
+      "title": "VOLUME ONE",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 1,
+      "pageMax": 1,
+      "openPages": [
+        1
+      ],
+      "open": [
+        "VOLUME ONE"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "7497fe716140",
+      "pageHash": "6b86b273ff34"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 1 - Marseilles—The Arrival",
+      "blockCount": 118,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1,
+      "pageMax": 8,
+      "openPages": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "open": [
+        "Chapter 1 - Marseilles—The Arrival",
+        "On the 24th of February, 1815, the look-out at Notre-Dame de",
+        "Immediately, and according to custom, the ramparts of Fort S",
+        "The ship drew on and had safely passed the strait, which som",
+        "The vague disquietude which prevailed among the spectators h",
+        "When the young man on board saw this person approach, he lef"
+      ],
+      "closePages": [
+        8,
+        8,
+        8
+      ],
+      "close": [
+        "“I hope soon to see you again, my dear Edmond. Good luck to ",
+        "The young sailor jumped into the skiff, and sat down in the ",
+        "The shipowner, smiling, followed him with his eyes until he "
+      ],
+      "textHash": "7ee2148876d6",
+      "pageHash": "2e7f533d011b"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 2 - Father and Son",
+      "blockCount": 109,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 9,
+      "pageMax": 15,
+      "openPages": [
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9
+      ],
+      "open": [
+        "Chapter 2 - Father and Son",
+        "We will leave Danglars struggling with the demon of hatred, ",
+        "This room was occupied by Dantès’ father. The news of the ar",
+        "“Father—dear father!”",
+        "The old man uttered a cry, and turned round; then, seeing hi",
+        "“What ails you, my dearest father? Are you ill?” inquired th"
+      ],
+      "closePages": [
+        15,
+        15,
+        15
+      ],
+      "close": [
+        "“Let us go the same way; we will stop at La Réserve, and we ",
+        "“Of course,” replied Danglars; and going quickly to the desi",
+        "Père Pamphile had seen Dantès pass not ten minutes before; a"
+      ],
+      "textHash": "1ba7200435f0",
+      "pageHash": "336b830219e7"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 3 - The Catalans",
+      "blockCount": 119,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 16,
+      "pageMax": 24,
+      "openPages": [
+        16,
+        16,
+        16,
+        16,
+        16,
+        17,
+        17,
+        17
+      ],
+      "open": [
+        "Chapter 3 - The Catalans",
+        "Beyond a bare, weather-worn wall, about a hundred paces from",
+        "Provençal, begged the commune of Marseilles to give them thi",
+        "Our readers will follow us along the only street of this lit",
+        "“You see, Mercédès,” said the young man, “here is Easter com",
+        "“I have answered you a hundred times, Fernand, and really yo"
+      ],
+      "closePages": [
+        24,
+        24,
+        24
+      ],
+      "close": [
+        "“Not of my own; the last commission of poor Captain Leclere;",
+        "“Yes, yes, I understand,” said Danglars, and then in a low t",
+        "“Thank you,” said Edmond with a friendly nod, and the two lo"
+      ],
+      "textHash": "ac43438e041f",
+      "pageHash": "c27778660fe9"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 4 - Conspiracy",
+      "blockCount": 88,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 25,
+      "pageMax": 30,
+      "openPages": [
+        25,
+        25,
+        25,
+        25,
+        25,
+        25,
+        25,
+        25
+      ],
+      "open": [
+        "Chapter 4 - Conspiracy",
+        "Danglars followed Edmond and Mercédès with his eyes until th",
+        "“Well, my dear sir,” said Danglars to Fernand, “here is a ma",
+        "“Do you, then, love Mercédès?”",
+        "“I adore her!”",
+        "“For long?”"
+      ],
+      "closePages": [
+        30,
+        30,
+        30
+      ],
+      "close": [
+        "“Oh, you don’t see straight,” said Danglars; “he’s gone righ",
+        "“Well,” said Caderousse, “I should have said not—how treache",
+        "“Come, come,” said Danglars to himself, “now the thing is at"
+      ],
+      "textHash": "adeb930e231a",
+      "pageHash": "817fa862f26a"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 5 - The Marriage Feast",
+      "blockCount": 160,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 30,
+      "pageMax": 43,
+      "openPages": [
+        30,
+        30,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31
+      ],
+      "open": [
+        "Chapter 5 - The Marriage Feast",
+        "The morning’s sun rose clear and resplendent, touching the f",
+        "Various rumors were afloat to the effect that the owners of ",
+        "Danglars, however, who now made his appearance, accompanied ",
+        "In fact, a moment later M. Morrel appeared and was saluted w",
+        "With the entrance of M. Morrel, Danglars and Caderousse were"
+      ],
+      "closePages": [
+        42,
+        42,
+        43
+      ],
+      "close": [
+        "“Amen!” responded Caderousse, waving his hand in token of ad",
+        "“So far, then,” said Danglars, mentally, “all has gone as I ",
+        "So saying, he leaped into a boat, desiring to be rowed on bo"
+      ],
+      "textHash": "a81ac06cddc7",
+      "pageHash": "66f88802760a"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 6 - The Deputy Procureur du Roi",
+      "blockCount": 101,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 43,
+      "pageMax": 52,
+      "openPages": [
+        43,
+        43,
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
+      ],
+      "open": [
+        "Chapter 6 - The Deputy Procureur du Roi",
+        "In one of the aristocratic mansions built by Puget in the Ru",
+        "The guests were still at table, and the heated and energetic",
+        "The emperor, now king of the petty Island of Elba, after hav",
+        "The magistrates freely discussed their political views; the ",
+        "An old man, decorated with the cross of Saint Louis, now ros"
+      ],
+      "closePages": [
+        52,
+        52,
+        52
+      ],
+      "close": [
+        "“Upon my word, child!” exclaimed the angry marquise, “your f",
+        "“O mother!” murmured Renée.",
+        "“Nay, madame, I pray you pardon this little traitor. I promi"
+      ],
+      "textHash": "1b018aaea6fd",
+      "pageHash": "9081266083e7"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 7 - The Examination",
+      "blockCount": 94,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 53,
+      "pageMax": 61,
+      "openPages": [
+        53,
+        53,
+        53,
+        53,
+        54,
+        54,
+        54,
+        54
+      ],
+      "open": [
+        "Chapter 7 - The Examination",
+        "No sooner had Villefort left the salon, than he assumed the ",
+        "Mademoiselle de Saint-Méran’s family possessed considerable ",
+        "At the door he met the commissary of police, who was waiting",
+        "“We know nothing as yet of the conspiracy, monsieur; all the",
+        "“Before he entered the merchant service, had he ever served "
+      ],
+      "closePages": [
+        61,
+        61,
+        61
+      ],
+      "close": [
+        "“Follow him,” said Villefort to Dantès. Dantès saluted Ville",
+        "“This will do,” said he, “and from this letter, which might ",
+        "I will make my fortune. Now to the work I have in hand.” And"
+      ],
+      "textHash": "848cca69aea2",
+      "pageHash": "806e9b19e832"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 8 - The Château d’If",
+      "blockCount": 104,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 61,
+      "pageMax": 69,
+      "openPages": [
+        61,
+        61,
+        62,
+        62,
+        62,
+        62,
+        62,
+        62
+      ],
+      "open": [
+        "Chapter 8 - The Château d’If",
+        "The commissary of police, as he traversed the antechamber, m",
+        "He was conducted to a tolerably neat chamber, but grated and",
+        "By the torchlight Dantès saw the glittering sabres and carbi",
+        "“Are you come to fetch me?” asked he.",
+        "“Yes,” replied a gendarme."
+      ],
+      "closePages": [
+        69,
+        69,
+        69
+      ],
+      "close": [
+        "“To the dungeon, then,” said the corporal.",
+        "“Yes; we must put the madman with the madmen.” The soldiers ",
+        "He descended fifteen steps, and the door of a dungeon was op"
+      ],
+      "textHash": "328cd8200a3c",
+      "pageHash": "7efb4b83d9da"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 9 - The Evening of the Betrothal",
+      "blockCount": 43,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 69,
+      "pageMax": 74,
+      "openPages": [
+        69,
+        69,
+        69,
+        70,
+        70,
+        70,
+        70,
+        70
+      ],
+      "open": [
+        "Chapter 9 - The Evening of the Betrothal",
+        "Villefort had, as we have said, hastened back to Madame de S",
+        "“Has the Corsican ogre broken loose?” cried a third.",
+        "“Marquise,” said Villefort, approaching his future mother-in",
+        "request your pardon for thus leaving you. Will the marquis h",
+        "“You are going to leave us?” cried Renée, unable to hide her"
+      ],
+      "closePages": [
+        74,
+        74,
+        74
+      ],
+      "close": [
+        "Danglars alone was content and joyous—he had got rid of an e",
+        "Villefort, after having received M. de Salvieux’s letter, em",
+        "Old Dantès was dying with anxiety to know what had become of"
+      ],
+      "textHash": "78aa0348ceea",
+      "pageHash": "508b1f586d40"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 10 - The King’s Closet at the Tuileries",
+      "blockCount": 107,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 74,
+      "pageMax": 80,
+      "openPages": [
+        74,
+        74,
+        74,
+        74,
+        74,
+        74,
+        74,
+        74
+      ],
+      "open": [
+        "Chapter 10 - The King’s Closet at the Tuileries",
+        "We will leave Villefort on the road to Paris, travelling—tha",
+        "There, seated before a walnut table he had brought with him ",
+        "“You say, sir”—said the king.",
+        "“That I am exceedingly disquieted, sire.”",
+        "“Really, have you had a vision of the seven fat kine and the"
+      ],
+      "closePages": [
+        80,
+        80,
+        80
+      ],
+      "close": [
+        "“Sire, I fear it is more than a plot; I fear it is a conspir",
+        "“A conspiracy in these times,” said Louis XVIII., smiling, “",
+        "“Ah, here is M. Dandré!” cried de Blacas. At this instant th"
+      ],
+      "textHash": "bf661459bce4",
+      "pageHash": "f0615f3c6c3f"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 11 - The Corsican Ogre",
+      "blockCount": 112,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 81,
+      "pageMax": 89,
+      "openPages": [
+        81,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82,
+        82
+      ],
+      "open": [
+        "Chapter 11 - The Corsican Ogre",
+        "At the sight of this agitation Louis XVIII. pushed from him ",
+        "“What ails you, baron?” he exclaimed.",
+        "“You appear quite aghast. Has your uneasiness anything to do",
+        "“Sire”—stammered the baron.",
+        "“Well, what is it?” asked Louis XVIII. The minister of polic"
+      ],
+      "closePages": [
+        89,
+        89,
+        89
+      ],
+      "close": [
+        "“Well, then, if you felt so sure,” replied the new-comer, pu",
+        "a corner and his hat on a chair, “allow me to say, my dear G",
+        "“Leave us, Germain,” said Villefort. The servant quitted the"
+      ],
+      "textHash": "e3667e2acdd4",
+      "pageHash": "980aeb1d10fc"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 12 - Father and Son",
+      "blockCount": 83,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 89,
+      "pageMax": 95,
+      "openPages": [
+        89,
+        89,
+        89,
+        89,
+        89,
+        89,
+        89,
+        89
+      ],
+      "open": [
+        "Chapter 12 - Father and Son",
+        "M. Noirtier—for it was, indeed, he who entered—looked after ",
+        "“Well, now, my dear Gérard,” said he to the young man, with ",
+        "“But, my dear fellow,” replied M. Noirtier, seating himself,",
+        "“And if I have come, my dear father,” said Gérard, drawing c",
+        "Noirtier, “do not complain, for it is for you that I came, a"
+      ],
+      "closePages": [
+        94,
+        95,
+        95
+      ],
+      "close": [
+        "Keep your journey a secret; do not boast of what you have co",
+        "Villefort stood watching, breathless, until his father had d",
+        "Marseilles, a prey to all the hopes and fears which enter in"
+      ],
+      "textHash": "79d435be10b4",
+      "pageHash": "7830ed86d692"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 13 - The Hundred Days",
+      "blockCount": 72,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 95,
+      "pageMax": 101,
+      "openPages": [
+        95,
+        95,
+        95,
+        95,
+        96,
+        96,
+        96,
+        96
+      ],
+      "open": [
+        "Chapter 13 - The Hundred Days",
+        "M. Noirtier was a true prophet, and things progressed rapidl",
+        "Louis XVIII. made but a faint attempt to parry this unexpect",
+        "Napoleon would, doubtless, have deprived Villefort of his of",
+        "All Villefort’s influence barely enabled him to stifle the s",
+        "However, scarcely was the imperial power established—that is"
+      ],
+      "closePages": [
+        101,
+        101,
+        101
+      ],
+      "close": [
+        "Mercédès was left alone face to face with the vast plain tha",
+        "Caderousse was, like Fernand, enrolled in the army, but, bei",
+        "There was more than benevolence in this action; there was co"
+      ],
+      "textHash": "fe08fe53a464",
+      "pageHash": "6c50906a01d3"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 14 - The Two Prisoners",
+      "blockCount": 126,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 101,
+      "pageMax": 109,
+      "openPages": [
+        101,
+        101,
+        102,
+        102,
+        102,
+        102,
+        102,
+        102
+      ],
+      "open": [
+        "Chapter 14 - The Two Prisoners",
+        "A year after Louis XVIII.‘s restoration, a visit was made by",
+        "The inspector visited, one after another, the cells and dung",
+        "“Let us visit them,” said the inspector with an air of fatig",
+        "“We must play the farce to the end. Let us see the dungeons.",
+        "“Let us first send for two soldiers,” said the governor."
+      ],
+      "closePages": [
+        109,
+        109,
+        109
+      ],
+      "close": [
+        "This note was in a different hand from the rest, which showe",
+        "This visit had infused new vigor into Dantès; he had, till t",
+        "At the expiration of a year the governor was transferred; he"
+      ],
+      "textHash": "308aa4e8c65c",
+      "pageHash": "efe769c96e5a"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 15 - Number 34 and Number 27",
+      "blockCount": 125,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 109,
+      "pageMax": 121,
+      "openPages": [
+        109,
+        109,
+        110,
+        110,
+        110,
+        111,
+        111,
+        111
+      ],
+      "open": [
+        "Chapter 15 - Number 34 and Number 27",
+        "Dantes passed through all the stages of torture natural to p",
+        "Dantès asked to be removed from his present dungeon into ano",
+        "The jailer, though rough and hardened by the constant sight ",
+        "All the pious ideas that had been so long forgotten, returne",
+        "No distraction could come to his aid; his energetic spirit, "
+      ],
+      "closePages": [
+        121,
+        121,
+        121
+      ],
+      "close": [
+        "“I can work, then?” said the voice.",
+        "“Oh, yes, yes; this instant, I entreat you.”",
+        "In a moment that part of the floor on which Dantès was resti"
+      ],
+      "textHash": "948ccd7f033d",
+      "pageHash": "ea36d844ca7e"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 16 - A Learned Italian",
+      "blockCount": 106,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 121,
+      "pageMax": 131,
+      "openPages": [
+        121,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122,
+        122
+      ],
+      "open": [
+        "Chapter 16 - A Learned Italian",
+        "Seizing in his arms the friend so long and ardently desired,",
+        "He was a man of small stature, with hair blanched rather by ",
+        "The stranger might have numbered sixty or sixty-five years; ",
+        "“Let us first see,” said he, “whether it is possible to remo",
+        "“Why,” exclaimed Dantès, with astonishment, “do you possess "
+      ],
+      "closePages": [
+        130,
+        131,
+        131
+      ],
+      "close": [
+        "“Oh, then let it be directly!” exclaimed the young man.",
+        "“Follow me, then,” said the abbé, as he re-entered the subte",
+        "passage, in which he soon disappeared, followed by Dantès."
+      ],
+      "textHash": "09f6604abcde",
+      "pageHash": "d1b90faf4fc9"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 17 - The Abbé’s Chamber",
+      "blockCount": 255,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 131,
+      "pageMax": 150,
+      "openPages": [
+        131,
+        131,
+        131,
+        131,
+        132,
+        132,
+        132,
+        132
+      ],
+      "open": [
+        "Chapter 17 - The Abbé’s Chamber",
+        "After having passed with tolerable ease through the subterra",
+        "“It is well,” said the abbé; “we have some hours before us—i",
+        "quarter past twelve o’clock.” Instinctively Dantès turned ro",
+        "“Look at this ray of light which enters by my window,” said ",
+        "This last explanation was wholly lost upon Dantès, who had a"
+      ],
+      "closePages": [
+        150,
+        150,
+        150
+      ],
+      "close": [
+        "“Thanks,” murmured the invalid, extending one hand.",
+        "“I accept. You may one of these days reap the reward of your",
+        "Dantès took the hand of the abbé in his, and affectionately "
+      ],
+      "textHash": "bd5d154547c9",
+      "pageHash": "072dc3d1a686"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 18 - The Treasure",
+      "blockCount": 96,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 150,
+      "pageMax": 160,
+      "openPages": [
+        150,
+        150,
+        150,
+        151,
+        151,
+        151,
+        151,
+        151
+      ],
+      "open": [
+        "Chapter 18 - The Treasure",
+        "When Dantès returned next morning to the chamber of his comp",
+        "“What is that?” he inquired.",
+        "“Look at it,” said the abbé with a smile.",
+        "“I have looked at it with all possible attention,” said Dant",
+        "“This paper, my friend,” said Faria, “I may now avow to you,"
+      ],
+      "closePages": [
+        160,
+        160,
+        160
+      ],
+      "close": [
+        "“This treasure belongs to you, my dear friend,” replied Dant",
+        "“You are my son, Dantès,” exclaimed the old man.",
+        "“You are the child of my captivity. My profession condemns m"
+      ],
+      "textHash": "78284bc4b88b",
+      "pageHash": "afa8bdd6aa85"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 19 - The Third Attack",
+      "blockCount": 82,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 161,
+      "pageMax": 169,
+      "openPages": [
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        162,
+        162
+      ],
+      "open": [
+        "Chapter 19 - The Third Attack",
+        "Now that this treasure, which had so long been the object of",
+        "Dantès’ countenance became gloomy, for the oath of vengeance",
+        "The abbé did not know the Island of Monte Cristo; but Dantès",
+        "Dantès could not believe that the deposit, supposing it had ",
+        "However, as if fate resolved on depriving the prisoners of t"
+      ],
+      "closePages": [
+        169,
+        169,
+        169
+      ],
+      "close": [
+        "“Shall we watch by the corpse?”",
+        "“Of what use would it be? Shut the dungeon as if he were ali",
+        "all.” Then the steps retreated, and the voices died away in "
+      ],
+      "textHash": "ae8b87311620",
+      "pageHash": "1106d54a6b8f"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 20 - The Cemetery of the Château d’If",
+      "blockCount": 43,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 169,
+      "pageMax": 173,
+      "openPages": [
+        169,
+        169,
+        169,
+        169,
+        170,
+        170,
+        170,
+        170
+      ],
+      "open": [
+        "Chapter 20 - The Cemetery of the Château d’If",
+        "On the bed, at full length, and faintly illuminated by the p",
+        "Alone! he was alone again! again condemned to silence—again ",
+        "“If I could die,” he said, “I should go where he goes, and s",
+        "“Die? oh, no,” he exclaimed—“not die now, after having lived",
+        "so long and so much! Die? yes, had I died years ago; but now"
+      ],
+      "closePages": [
+        173,
+        173,
+        173
+      ],
+      "close": [
+        "felt himself flung into the air like a wounded bird, falling",
+        "At last, with a horrible splash, he darted like an arrow int",
+        "Dantès had been flung into the sea, and was dragged into its"
+      ],
+      "textHash": "d2fdb53f3433",
+      "pageHash": "60e8a00c34d2"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 21 - The Island of Tiboulen",
+      "blockCount": 81,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 173,
+      "pageMax": 181,
+      "openPages": [
+        173,
+        173,
+        173,
+        174,
+        174,
+        174,
+        174,
+        174
+      ],
+      "open": [
+        "Chapter 21 - The Island of Tiboulen",
+        "Dantes, although stunned and almost suffocated, had sufficie",
+        "Dantès waited only to get breath, and then dived, in order t",
+        "He must now get his bearings. Ratonneau and Pomègue are the ",
+        "At this moment he saw the light of Planier, gleaming in fron",
+        "These words rang in Dantès’ ears, even beneath the waves; he"
+      ],
+      "closePages": [
+        181,
+        181,
+        181
+      ],
+      "close": [
+        "“I got such a fright last night,” replied Dantès, smiling, “",
+        "“The year 1829,” returned Jacopo. It was fourteen years, day",
+        "This oath was no longer a vain menace; for the fastest sailo"
+      ],
+      "textHash": "42044bcedb0c",
+      "pageHash": "79894241b573"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 22 - The Smugglers",
+      "blockCount": 21,
+      "types": "hpppppppppppppppppppp",
+      "pageMin": 181,
+      "pageMax": 186,
+      "openPages": [
+        181,
+        181,
+        181,
+        182,
+        182,
+        182,
+        183,
+        183,
+        183,
+        184,
+        184,
+        184,
+        184,
+        184,
+        185,
+        185,
+        185,
+        185,
+        186,
+        186,
+        186
+      ],
+      "open": [
+        "Chapter 22 - The Smugglers",
+        "Dantes had not been a day on board before he had a very clea",
+        "At first the captain had received Dantès on board with a cer",
+        "Edmond thus had the advantage of knowing what the owner was,",
+        "In this state of mutual understanding, they reached Leghorn.",
+        "When the operation was concluded, and Edmond felt that his c",
+        "To the elegance of a nervous and slight form had succeeded t",
+        "The master of La Jeune Amélie, who was very desirous of reta",
+        "La Jeune Amélie had a very active crew, very obedient to the",
+        "Amélie left it three-quarters of a league to the larboard an",
+        "Dantès thought, as they passed so closely to the island whos",
+        "Fortunately, Dantès had learned how to wait; he had waited f",
+        "Evening came, and Edmond saw the island tinged with the shad",
+        "The second operation was as successful as the first, La Jeun",
+        "There they had a bit of a skirmish in getting rid of the dut",
+        "Dantès was on the way he desired to follow, and was moving t",
+        "This world was not then so good as Doctor Pangloss believed ",
+        "Bonaparte, became emperor.” We had forgotten to say that Jac",
+        "Two months and a half elapsed in these trips, and Edmond had",
+        "Dantès was tossed about on these doubts and wishes, when the",
+        "The patron of La Jeune Amélie proposed as a place of landing"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "526aa48a295c",
+      "pageHash": "463a3896ef87"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 23 - The Island of Monte Cristo",
+      "blockCount": 51,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 187,
+      "pageMax": 192,
+      "openPages": [
+        187,
+        187,
+        187,
+        187,
+        187,
+        187,
+        188,
+        188
+      ],
+      "open": [
+        "Chapter 23 - The Island of Monte Cristo",
+        "Thus, at length, by one of the unexpected strokes of fortune",
+        "The night was one of feverish distraction, and in its progre",
+        "Edmond, amazed, wonderstruck, filled his pockets with the ra",
+        "The day came at length, and was almost as feverish as the ni",
+        "The old patron did not interfere, for he too had recognized "
+      ],
+      "closePages": [
+        192,
+        192,
+        192
+      ],
+      "close": [
+        "“and heaven will recompense you for your generous intentions",
+        "A peculiar smile passed over Dantès’ lips; he squeezed Jacop",
+        "“And now,” he exclaimed, remembering the tale of the Arabian"
+      ],
+      "textHash": "9c82a9e18376",
+      "pageHash": "f5a118b877fd"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 24 - The Secret Cave",
+      "blockCount": 30,
+      "types": "hppppppppppppppppppppppppppppp",
+      "pageMin": 193,
+      "pageMax": 199,
+      "openPages": [
+        193,
+        193,
+        194,
+        194,
+        194,
+        195,
+        195,
+        195
+      ],
+      "open": [
+        "Chapter 24 - The Secret Cave",
+        "The sun had nearly reached the meridian, and his scorching r",
+        "He then looked at the objects near him. He saw that he was o",
+        "Dantès, as we have said, had traced the marks along the rock",
+        "Dantès dug away the earth carefully, and detected, or fancie",
+        "Dantès approached the upper rock, which now, without any sup"
+      ],
+      "closePages": [
+        198,
+        199,
+        199
+      ],
+      "close": [
+        "He would fain have gazed upon his gold, and yet he had not s",
+        "A piece of biscuit and a small quantity of rum formed his su",
+        "It was a night of joy and terror, such as this man of stupen"
+      ],
+      "textHash": "268c83941aee",
+      "pageHash": "8deb578f8557"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 25 - The Unknown",
+      "blockCount": 30,
+      "types": "hppppppppppppppppppppppppppppp",
+      "pageMin": 199,
+      "pageMax": 205,
+      "openPages": [
+        199,
+        199,
+        199,
+        200,
+        200,
+        200,
+        200,
+        201
+      ],
+      "open": [
+        "Chapter 25 - The Unknown",
+        "Day, for which Dantès had so eagerly and impatiently waited ",
+        "This done, he impatiently awaited the return of his companio",
+        "On the sixth day, the smugglers returned. From a distance Da",
+        "Edmond preserved the most admirable self-command, not suffer",
+        "The following day Dantès presented Jacopo with an entirely n"
+      ],
+      "closePages": [
+        204,
+        204,
+        205
+      ],
+      "close": [
+        "When he withdrew from the scene of his painful recollections",
+        "Having obtained the address of the person to whom the house ",
+        "This strange event aroused great wonder and curiosity in the"
+      ],
+      "textHash": "fa83cd12d192",
+      "pageHash": "518f36476dc5"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 26 - The Pont du Gard Inn",
+      "blockCount": 163,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 205,
+      "pageMax": 218,
+      "openPages": [
+        205,
+        205,
+        206,
+        206,
+        206,
+        206,
+        207,
+        207
+      ],
+      "open": [
+        "Chapter 26 - The Pont du Gard Inn",
+        "Such of my readers as have made a pedestrian excursion to th",
+        "In the surrounding plain, which more resembled a dusty lake ",
+        "For about seven or eight years the little tavern had been ke",
+        "The innkeeper himself was a man of from forty to fifty-five ",
+        "His wife, on the contrary, whose maiden name had been Madele"
+      ],
+      "closePages": [
+        217,
+        218,
+        218
+      ],
+      "close": [
+        "“Stop a minute,” answered Caderousse; “we might be interrupt",
+        "“Remember, this is no affair of mine,” said the trembling vo",
+        "“Enough, enough!” replied Caderousse; “say no more about it;"
+      ],
+      "textHash": "21c5cf44d2f9",
+      "pageHash": "70e4cdba66bf"
+    },
+    {
+      "title": "VOLUME ONE — Chapter 27 - The Story",
+      "blockCount": 152,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 218,
+      "pageMax": 229,
+      "openPages": [
+        218,
+        218,
+        218,
+        218,
+        218,
+        218,
+        218,
+        218
+      ],
+      "open": [
+        "Chapter 27 - The Story",
+        "First, sir,” said Caderousse, “you must make me a promise.”",
+        "“What is that?” inquired the abbé.",
+        "“Why, if you ever make use of the details I am about to give",
+        "“Make yourself easy, my friend,” replied the abbé.",
+        "“I am a priest, and confessions die in my breast. Recollect,"
+      ],
+      "closePages": [
+        229,
+        229,
+        229
+      ],
+      "close": [
+        "“Why, the fair is on at Beaucaire, there are always jeweller",
+        "“Fifty thousand francs!” muttered La Carconte when left alon",
+        "****"
+      ],
+      "textHash": "e444fbaa384c",
+      "pageHash": "e13d225111c3"
+    },
+    {
+      "title": "VOLUME TWO",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 229,
+      "pageMax": 229,
+      "openPages": [
+        229
+      ],
+      "open": [
+        "VOLUME TWO"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "982ea7ead802",
+      "pageHash": "08490295488a"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 28 - The Prison Register",
+      "blockCount": 75,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 229,
+      "pageMax": 235,
+      "openPages": [
+        229,
+        229,
+        229,
+        229,
+        229,
+        230,
+        230,
+        230
+      ],
+      "open": [
+        "Chapter 28 - The Prison Register",
+        "The day after that in which the scene we have just described",
+        "“Sir,” said he, “I am chief clerk of the house of Thomson & ",
+        "“Sir,” replied the mayor.",
+        "“I know very well that during the last four or five years mi",
+        "Nouailles; he has, I believe, two hundred thousand francs in"
+      ],
+      "closePages": [
+        235,
+        235,
+        235
+      ],
+      "close": [
+        "He compared the writing in the bracket with the writing of t",
+        "Réserve, and which had the postmark, “Marseilles, 27th Febru",
+        "“Thanks,” said the latter, closing the register with a slam,"
+      ],
+      "textHash": "8446dd4b4e3a",
+      "pageHash": "a2fa18650904"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 29",
+      "blockCount": 136,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 235,
+      "pageMax": 245,
+      "openPages": [
+        235,
+        235,
+        236,
+        236,
+        236,
+        237,
+        237,
+        237
+      ],
+      "open": [
+        "Chapter 29",
+        "Anyone who had quitted Marseilles a few years previously, we",
+        "Cocles remained in M. Morrel’s service, and a most singular ",
+        "Nothing had as yet occurred to shake Cocles’ belief; the las",
+        "Cocles went away perfectly happy, for this eulogium of M. Mo",
+        "Such was the state of affairs when, the day after his interv"
+      ],
+      "closePages": [
+        245,
+        245,
+        245
+      ],
+      "close": [
+        "“It is well. Adieu, mademoiselle. Continue to be the good, s",
+        "Julie uttered a faint cry, blushed like a rose, and leaned a",
+        "“Come with me, my friend,” said the Englishman; “I wish to s"
+      ],
+      "textHash": "aa56e3159d8c",
+      "pageHash": "0b14cf330e1b"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 30 - The Fifth of September",
+      "blockCount": 125,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 245,
+      "pageMax": 257,
+      "openPages": [
+        245,
+        245,
+        246,
+        246,
+        246,
+        246,
+        246,
+        246
+      ],
+      "open": [
+        "Chapter 30 - The Fifth of September",
+        "The extension provided for by the agent of Thomson & French,",
+        "—“We had better help a man who owes us nearly 300,000 francs",
+        "Cocles thus remained in his accustomed tranquillity. It was ",
+        "The opinion of all the commercial men was that, under the re",
+        "The month passed, and Morrel made extraordinary efforts to g"
+      ],
+      "closePages": [
+        256,
+        256,
+        257
+      ],
+      "close": [
+        "And, wonderful to see, in front of the tower of Saint-Jean, ",
+        "“And now,” said the unknown, “farewell kindness, humanity, a",
+        "At these words he gave a signal, and, as if only awaiting th"
+      ],
+      "textHash": "a1292744cbdf",
+      "pageHash": "ca70174a5c9f"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 31 - Italy: Sinbad the Sailor",
+      "blockCount": 210,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 257,
+      "pageMax": 276,
+      "openPages": [
+        257,
+        257,
+        258,
+        258,
+        258,
+        258,
+        258,
+        258
+      ],
+      "open": [
+        "Chapter 31 - Italy: Sinbad the Sailor",
+        "Towards the beginning of the year 1838, two young men belong",
+        "One evening he cast off the painter of a sailboat from the i",
+        "“Ah, if your excellency chose,” said the captain, “you might",
+        "“Do you see that island?” continued the captain, pointing to",
+        "“Well, what is this island?”"
+      ],
+      "closePages": [
+        276,
+        276,
+        276
+      ],
+      "close": [
+        "At length the boat touched the shore, but without effort, wi",
+        "They were the same statues, rich in form, in attraction, and",
+        "It seemed to Franz that he closed his eyes, and in a last lo"
+      ],
+      "textHash": "908453bc3883",
+      "pageHash": "a7e055b6aa9d"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 32 - The Waking",
+      "blockCount": 52,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 277,
+      "pageMax": 281,
+      "openPages": [
+        277,
+        277,
+        277,
+        277,
+        277,
+        278,
+        278,
+        278
+      ],
+      "open": [
+        "Chapter 32 - The Waking",
+        "When Franz returned to himself, he seemed still to be in a d",
+        "He advanced several paces towards the point whence the light",
+        "There for some time he enjoyed the fresh breeze which played",
+        "It seemed, however, even in the very face of open day, that ",
+        "He went gayly up to the sailors, who rose as soon as they pe"
+      ],
+      "closePages": [
+        281,
+        281,
+        281
+      ],
+      "close": [
+        "“Well, then, let us sup.”",
+        "“But the carriage and horses?” said Franz.",
+        "“Be easy, my dear boy; they will come in due season; it is o"
+      ],
+      "textHash": "ea25e7e2f555",
+      "pageHash": "7257f7ce45fa"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 33 - Roman Bandits",
+      "blockCount": 218,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 282,
+      "pageMax": 306,
+      "openPages": [
+        282,
+        282,
+        282,
+        282,
+        282,
+        282,
+        282,
+        282
+      ],
+      "open": [
+        "Chapter 33 - Roman Bandits",
+        "The next morning Franz woke first, and instantly rang the be",
+        "“Well, excellency,” said the landlord triumphantly, and with",
+        "“What is the matter?” said Albert, entering; “no carriage to",
+        "“Just so,” returned Franz, “you have guessed it.”",
+        "“Well, your Eternal City is a nice sort of place.”"
+      ],
+      "closePages": [
+        306,
+        306,
+        306
+      ],
+      "close": [
+        "“By the Porta del Popolo or by the streets, your excellencie",
+        "“By the streets, morbleu! by the streets!” cried Franz.",
+        "“Ah, my dear fellow,” said Albert, rising, and lighting his "
+      ],
+      "textHash": "5b1abca2ef8c",
+      "pageHash": "12ccde065623"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 34 - The Colosseum",
+      "blockCount": 255,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 306,
+      "pageMax": 330,
+      "openPages": [
+        306,
+        306,
+        306,
+        306,
+        307,
+        307,
+        308,
+        308
+      ],
+      "open": [
+        "Chapter 34 - The Colosseum",
+        "Franz had so managed his route, that during the ride to the ",
+        "This itinerary possessed another great advantage,—that of le",
+        "One fact more than the rest brought his friend “Sinbad the S",
+        "The usual guide from the hotel having followed them, they ha",
+        "Franz had already made seven or eight similar excursions to "
+      ],
+      "closePages": [
+        330,
+        330,
+        330
+      ],
+      "close": [
+        "“Why, upon my soul, my dear fellow, it strikes me that our e",
+        "“Hush, hush!” replied Franz; “we shall ascertain who and wha",
+        "comes!” As Franz spoke, he heard the sound of a door turning"
+      ],
+      "textHash": "f8649ff21d02",
+      "pageHash": "d6e6ac88308f"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 35 - La Mazzolata",
+      "blockCount": 118,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 331,
+      "pageMax": 342,
+      "openPages": [
+        331,
+        331,
+        331,
+        331,
+        331,
+        331,
+        331,
+        331
+      ],
+      "open": [
+        "Chapter 35 - La Mazzolata",
+        "Gentlemen,” said the Count of Monte Cristo as he entered, “I",
+        "“Franz and I have to thank you a thousand times, count,” ret",
+        "“Indeed,” returned the count, motioning the two young men to",
+        "“It was the fault of that blockhead Pastrini, that I did not",
+        "Moreover, he had this advantage, he was master of the count’"
+      ],
+      "closePages": [
+        341,
+        341,
+        342
+      ],
+      "close": [
+        "“Do you pity him? If you heard the cry of ‘Mad dog!’ you wou",
+        "The recommendation was needless. Franz was fascinated by the",
+        "This time Franz could contain himself no longer, but sank, h"
+      ],
+      "textHash": "fb13df76d70a",
+      "pageHash": "4db1fb97cba7"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 36 - The Carnival at Rome",
+      "blockCount": 153,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 342,
+      "pageMax": 356,
+      "openPages": [
+        342,
+        342,
+        342,
+        342,
+        342,
+        342,
+        342,
+        342
+      ],
+      "open": [
+        "Chapter 36 - The Carnival at Rome",
+        "When Franz recovered his senses, he saw Albert drinking a gl",
+        "“Well,” asked he of the count, “what has, then, happened?”",
+        "“Nothing,” replied the count; “only, as you see, the Carniva",
+        "“In fact,” said Franz, “this horrible scene has passed away ",
+        "“It is but a dream, a nightmare, that has disturbed you.”"
+      ],
+      "closePages": [
+        356,
+        356,
+        356
+      ],
+      "close": [
+        "Every five minutes Albert took out his watch; at length it p",
+        "The steps were crowded with masks, who strove to snatch each",
+        "Franz found himself in utter darkness. No sound was audible "
+      ],
+      "textHash": "f84f978287c6",
+      "pageHash": "5fa2870727a7"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 37 - The Catacombs of Saint Sebastian",
+      "blockCount": 221,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 356,
+      "pageMax": 371,
+      "openPages": [
+        356,
+        357,
+        357,
+        357,
+        357,
+        357,
+        357,
+        357
+      ],
+      "open": [
+        "Chapter 37 - The Catacombs of Saint Sebastian",
+        "In his whole life, perhaps, Franz had never before experienc",
+        "The distance was short, and at the end of ten minutes his ca",
+        "Dinner was waiting, but as Albert had told him that he shoul",
+        "The sudden extinction of the moccoletti, the darkness which ",
+        "Franz resolved to wait for Albert as late as possible. He or"
+      ],
+      "closePages": [
+        371,
+        371,
+        371
+      ],
+      "close": [
+        "“Ah, your pardon,” said Albert, turning round; “will you all",
+        "“Now, my dear count,” he said, “let us on with all the speed",
+        "“Madame,” said the Viscount of Morcerf, advancing towards th"
+      ],
+      "textHash": "be38b14568d1",
+      "pageHash": "1f6552f6db39"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 38 - The Compact",
+      "blockCount": 74,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 372,
+      "pageMax": 379,
+      "openPages": [
+        372,
+        372,
+        372,
+        372,
+        372,
+        372,
+        372,
+        373
+      ],
+      "open": [
+        "Chapter 38 - The Compact",
+        "The first words that Albert uttered to his friend, on the fo",
+        "“My dear count,” said Albert, advancing to meet him, “permit",
+        "“My very good friend and excellent neighbor,” replied the co",
+        "“Upon my word,” said Albert, “I deserve no credit for what I",
+        "“Monsieur de Morcerf,” replied the count, “your offer, far f"
+      ],
+      "closePages": [
+        378,
+        378,
+        379
+      ],
+      "close": [
+        "“Well,” said Franz with a sigh, “do as you please my dear vi",
+        "“He is a philanthropist,” answered the other; “and no doubt ",
+        "“27, Rue du Helder, on the 21st May, half-past ten A.M.”"
+      ],
+      "textHash": "ed51327e92be",
+      "pageHash": "da2cd753133e"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 39 - The Guests",
+      "blockCount": 74,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 379,
+      "pageMax": 385,
+      "openPages": [
+        379,
+        379,
+        379,
+        379,
+        379,
+        380,
+        380,
+        380
+      ],
+      "open": [
+        "Chapter 39 - The Guests",
+        "In the house in the Rue du Helder, where Albert had invited ",
+        "Between the court and the garden, built in the heavy style o",
+        "A high wall surrounded the whole of the property, surmounted",
+        "It was easy to discover that the delicate care of a mother, ",
+        "Morcerf could follow up his researches by means of a small g"
+      ],
+      "closePages": [
+        385,
+        385,
+        385
+      ],
+      "close": [
+        "“In the entire political world, of which you are one of the ",
+        "“They say that it is quite fair, and that sowing so much red",
+        "“Why do you not join our party, my dear Beauchamp? With your"
+      ],
+      "textHash": "16fffa0f88bf",
+      "pageHash": "03242a9dae5c"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 40 - The Breakfast",
+      "blockCount": 335,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 386,
+      "pageMax": 406,
+      "openPages": [
+        386,
+        386,
+        386,
+        386,
+        386,
+        386,
+        386,
+        386
+      ],
+      "open": [
+        "Chapter 40 - The Breakfast",
+        "And what sort of persons do you expect to breakfast?” said B",
+        "“A gentleman, and a diplomatist.”",
+        "“Then we shall have to wait two hours for the gentleman, and",
+        "“Do not do anything of the sort; for were the gentleman a Mo",
+        "“Be it so; I will stay; I must do something to distract my t"
+      ],
+      "closePages": [
+        406,
+        406,
+        406
+      ],
+      "close": [
+        "extraordinary men I ever saw in my life. Are you coming, Mor",
+        "“Directly I have given my card to the count, who has promise",
+        "“Be sure I shall not fail to do so,” returned the count, bow"
+      ],
+      "textHash": "db81654f4efb",
+      "pageHash": "6fb65898fc70"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 41 - The Presentation",
+      "blockCount": 103,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 406,
+      "pageMax": 415,
+      "openPages": [
+        406,
+        406,
+        406,
+        406,
+        407,
+        407,
+        407,
+        407
+      ],
+      "open": [
+        "Chapter 41 - The Presentation",
+        "When Albert found himself alone with Monte Cristo, “My dear ",
+        "Monte Cristo quickly appreciated all that Albert had collect",
+        "They descended to the first floor; Albert led his guest into",
+        "Albert expected to have something new this time to show to t",
+        "She wore the picturesque costume of the Catalan fisherwomen,"
+      ],
+      "closePages": [
+        415,
+        415,
+        415
+      ],
+      "close": [
+        "“And thus they parted the best possible friends, and M. de M",
+        "“This devil of a fellow,” he muttered, shaking his head; “I ",
+        "“Most decidedly,” said he, “men are not equal, and I must be"
+      ],
+      "textHash": "e5469e06e85f",
+      "pageHash": "6f03cfad0476"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 42 - Monsieur Bertuccio",
+      "blockCount": 66,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 416,
+      "pageMax": 420,
+      "openPages": [
+        416,
+        416,
+        416,
+        417,
+        417,
+        417,
+        417,
+        417
+      ],
+      "open": [
+        "Chapter 42 - Monsieur Bertuccio",
+        "Meanwhile the count had arrived at his house; it had taken h",
+        "The house Ali had chosen, and which was to serve as a town r",
+        "This house, isolated from the rest, had, besides the main en",
+        "The carriage stopped at the left side of the portico, two me",
+        "“Thanks, M. Bertuccio,” said the count, springing lightly up"
+      ],
+      "closePages": [
+        420,
+        420,
+        420
+      ],
+      "close": [
+        "“Well, take your hat and gloves,” returned Monte Cristo.",
+        "“Am I to accompany you, your excellency?” cried Bertuccio.",
+        "“Certainly, you must give the orders, for I intend residing "
+      ],
+      "textHash": "233812f731af",
+      "pageHash": "583b6692f2eb"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 43 - The House at Auteuil",
+      "blockCount": 98,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 420,
+      "pageMax": 426,
+      "openPages": [
+        420,
+        420,
+        420,
+        420,
+        420,
+        420,
+        420,
+        420
+      ],
+      "open": [
+        "Chapter 43 - The House at Auteuil",
+        "Monte Cristo noticed, as they descended the staircase, that ",
+        "Bertuccio off from this little journey. In twenty minutes th",
+        "“Tell them to stop at Rue de la Fontaine, No. 28,” said the ",
+        "“Well,” said the count, “you do not get out, M. Bertuccio—yo",
+        "“Knock,” said the count, “and announce me.” Bertuccio knocke"
+      ],
+      "closePages": [
+        426,
+        426,
+        426
+      ],
+      "close": [
+        "“And you have lost it; how stupid!”",
+        "“Yes; but by careful search it might be recovered.”",
+        "“Really,” returned the count, “relate it to me, for it begin"
+      ],
+      "textHash": "281ccdc0e254",
+      "pageHash": "007d2bba5192"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 44 - The Vendetta",
+      "blockCount": 118,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 426,
+      "pageMax": 442,
+      "openPages": [
+        426,
+        426,
+        426,
+        426,
+        426,
+        426,
+        426,
+        426
+      ],
+      "open": [
+        "Chapter 44 - The Vendetta",
+        "At what point shall I begin my story, your excellency?” aske",
+        "“Where you please,” returned Monte Cristo, “since I know not",
+        "“Some particulars, doubtless, but that is seven or eight yea",
+        "“Go on, M. Bertuccio; you will supply the want of the evenin",
+        "“The story begins in 1815.”"
+      ],
+      "closePages": [
+        442,
+        442,
+        442
+      ],
+      "close": [
+        "‘you are not a man.’—‘What do you mean?’ added Caderousse.—‘",
+        "“At the same moment, and in the midst of the terrifying sile",
+        "Caderousse and his wife started and looked aghast at each ot"
+      ],
+      "textHash": "a07207826e58",
+      "pageHash": "9cf2e0f666ad"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 45 - The Rain of Blood",
+      "blockCount": 51,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 443,
+      "pageMax": 452,
+      "openPages": [
+        443,
+        443,
+        443,
+        444,
+        444,
+        444,
+        444,
+        444
+      ],
+      "open": [
+        "Chapter 45 - The Rain of Blood",
+        "As the jeweller returned to the apartment, he cast around hi",
+        "“The jeweller, meanwhile, was humming a song as he stood war",
+        "“‘There,’ said La Carconte, as she placed a bottle of wine o",
+        "“From time to time Caderousse darted on his wife keen, searc",
+        "La Carconte; ‘do you hear that? upon my word, you did well t"
+      ],
+      "closePages": [
+        452,
+        452,
+        452
+      ],
+      "close": [
+        "Bertuccio bowed respectfully, and turned away, sighing heavi",
+        "“I understand,” said Monte Cristo, well acquainted with Ali’",
+        "“Madame will be tired tonight,” continued Monte Cristo, “and"
+      ],
+      "textHash": "13321cbd97be",
+      "pageHash": "d7229cfca5e5"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 46 - Unlimited Credit",
+      "blockCount": 157,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 453,
+      "pageMax": 464,
+      "openPages": [
+        453,
+        453,
+        454,
+        454,
+        454,
+        454,
+        454,
+        454
+      ],
+      "open": [
+        "Chapter 46 - Unlimited Credit",
+        "About two o’clock the following day a calash, drawn by a pai",
+        "The groom, in obedience to his orders, tapped at the window ",
+        "“His excellency does reside here,” replied the concierge; “b",
+        "he, glancing an inquiring look at Ali. Ali returned a sign i",
+        "“But what?” asked the groom."
+      ],
+      "closePages": [
+        464,
+        464,
+        464
+      ],
+      "close": [
+        "“Her ladyship is waiting to receive you, gentlemen,” said th",
+        "“With your permission,” said Danglars, bowing, “I will prece",
+        "“By all means,” replied Monte Cristo; “I follow you.”"
+      ],
+      "textHash": "bcbbeb0db86f",
+      "pageHash": "14483e698366"
+    },
+    {
+      "title": "VOLUME TWO — Chapter 47 - The Dappled Grays",
+      "blockCount": 98,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 464,
+      "pageMax": 475,
+      "openPages": [
+        464,
+        465,
+        465,
+        465,
+        465,
+        465,
+        465,
+        465
+      ],
+      "open": [
+        "Chapter 47 - The Dappled Grays",
+        "The baron, followed by the count, traversed a long series of",
+        "Madame Danglars (who, although past the first bloom of youth",
+        "Danglars eagerly listened to, and fully credited, all the ad",
+        "“Baroness,” said Danglars, “give me leave to present to you ",
+        "“And when did you arrive here?” inquired she."
+      ],
+      "closePages": [
+        475,
+        475,
+        475
+      ],
+      "close": [
+        "P.S.—Do pray contrive some means for me to meet the Count of",
+        "—donned his dress suit, drew on a pair of white gloves, orde",
+        "****"
+      ],
+      "textHash": "f9cf132d9520",
+      "pageHash": "3fd9988a4438"
+    },
+    {
+      "title": "VOLUME THREE",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 475,
+      "pageMax": 475,
+      "openPages": [
+        475
+      ],
+      "open": [
+        "VOLUME THREE"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "fd48fe8b35f5",
+      "pageHash": "b1585fdb272b"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 48 - Ideology",
+      "blockCount": 76,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 475,
+      "pageMax": 484,
+      "openPages": [
+        475,
+        475,
+        476,
+        476,
+        476,
+        477,
+        477,
+        477
+      ],
+      "open": [
+        "Chapter 48 - Ideology",
+        "If the Count of Monte Cristo had been for a long time famili",
+        "M. de Villefort was not only a magistrate, he was almost a d",
+        "Villefort; but, like the feudal barons who rebelled against ",
+        "To his friends M. de Villefort was a powerful protector; to ",
+        "The procureur entered with the same grave and measured step "
+      ],
+      "closePages": [
+        484,
+        484,
+        484
+      ],
+      "close": [
+        "“And what is your deduction from this compensation, sir?” in",
+        "“My deduction is,” replied Villefort, “that my father, led a",
+        "“Adieu, sir,” said the magistrate, who had risen from his se"
+      ],
+      "textHash": "ee1c49816bcb",
+      "pageHash": "af59b15fed17"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 49 - Haydée",
+      "blockCount": 39,
+      "types": "hpppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 484,
+      "pageMax": 488,
+      "openPages": [
+        484,
+        485,
+        485,
+        485,
+        486,
+        486,
+        486,
+        486
+      ],
+      "open": [
+        "Chapter 49 - Haydée",
+        "It will be recollected that the new, or rather old, acquaint",
+        "It was noon, and Monte Cristo had set apart one hour to be p",
+        "The young girl herself generally passed her time in the cham",
+        "Monte Cristo summoned the Greek attendant, and bade her inqu",
+        "“Haydée,” said he, “you well know.”"
+      ],
+      "closePages": [
+        488,
+        488,
+        488
+      ],
+      "close": [
+        "“No, my lord. In the morning, I shall rejoice in the prospec",
+        "“You are a worthy daughter of Epirus, Haydée, and your charm",
+        "“You are wrong, my lord. The love I have for you is very dif"
+      ],
+      "textHash": "d4f16a359b5e",
+      "pageHash": "1f2328065c8f"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 50 - The Morrel Family",
+      "blockCount": 88,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 489,
+      "pageMax": 496,
+      "openPages": [
+        489,
+        489,
+        489,
+        489,
+        489,
+        489,
+        489,
+        490
+      ],
+      "open": [
+        "Chapter 50 - The Morrel Family",
+        "In a very few minutes the count reached No. 7 in the Rue Mes",
+        "The carriages that drove up to the door were compelled to tu",
+        "He was superintending the grooming of his horse, and smoking",
+        "Cocles opened the gate, and Baptistin, springing from the bo",
+        "“The Count of Monte Cristo?” cried Morrel, throwing away his"
+      ],
+      "closePages": [
+        496,
+        496,
+        496
+      ],
+      "close": [
+        "“This Count of Monte Cristo is a strange man,” said Emmanuel",
+        "“Yes,” answered Maximilian, “but I feel sure he has an excel",
+        "“His voice went to my heart,” observed Julie; “and two or th"
+      ],
+      "textHash": "e226b1de7023",
+      "pageHash": "5fcb6bba6404"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 51 - Pyramus and Thisbe",
+      "blockCount": 70,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 496,
+      "pageMax": 506,
+      "openPages": [
+        496,
+        496,
+        497,
+        497,
+        497,
+        497,
+        498,
+        498
+      ],
+      "open": [
+        "Chapter 51 - Pyramus and Thisbe",
+        "About two-thirds of the way along the Faubourg Saint-Honoré,",
+        "This noble entrance, however, in spite of its striking appea",
+        "Honoré, and to the garden shut in by this gate, which former",
+        "In matters of speculation, however, though “man proposes,” “",
+        "Horticulture seemed, however, to have been abandoned in the "
+      ],
+      "closePages": [
+        506,
+        506,
+        506
+      ],
+      "close": [
+        "Cristo.”",
+        "“I will come directly,” cried Valentine aloud. The name of M",
+        "“Now, then,” said Maximilian, leaning on the handle of his s"
+      ],
+      "textHash": "fc4a5b272288",
+      "pageHash": "8b40d9a74ff0"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 52 - Toxicology",
+      "blockCount": 146,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 506,
+      "pageMax": 519,
+      "openPages": [
+        506,
+        506,
+        506,
+        506,
+        506,
+        506,
+        506,
+        506
+      ],
+      "open": [
+        "Chapter 52 - Toxicology",
+        "It was really the Count of Monte Cristo who had just arrived",
+        "After the usual civilities, the count inquired after M. de V",
+        "“My husband dines with the chancellor,” replied the young la",
+        "“What is your sister Valentine doing?” inquired Madame de Vi",
+        "“You have a daughter, then, madame?” inquired the count; “ve"
+      ],
+      "closePages": [
+        519,
+        519,
+        519
+      ],
+      "close": [
+        "“Ah, in truth, madame, to do that I must forget the hour’s c",
+        "“He is a very strange man,” she said, “and in my opinion is ",
+        "“Good,” said he, as he went away; “this is a fruitful soil, "
+      ],
+      "textHash": "ca41b8a39b58",
+      "pageHash": "cd93818386b2"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 53 - Robert le Diable",
+      "blockCount": 214,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 520,
+      "pageMax": 535,
+      "openPages": [
+        520,
+        520,
+        520,
+        521,
+        521,
+        521,
+        521,
+        521
+      ],
+      "open": [
+        "Chapter 53 - Robert le Diable",
+        "The pretext of an opera engagement was so much the more feas",
+        "Beauchamp, as a journalist, had unlimited range all over the",
+        "Danglars had, however, protested against showing himself in ",
+        "One must take the world as one finds it.",
+        "The curtain rose, as usual, to an almost empty house, it bei"
+      ],
+      "closePages": [
+        535,
+        535,
+        535
+      ],
+      "close": [
+        "“Yes, yes; but let us go. I feel as though it would kill me ",
+        "“Do you observe,” said the Countess G—— to Albert, who had r",
+        "her side, “that man does nothing like other people; he liste"
+      ],
+      "textHash": "eba77d629b8a",
+      "pageHash": "8caaf0b2e3eb"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 54 - A Flurry in Stocks",
+      "blockCount": 145,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 535,
+      "pageMax": 545,
+      "openPages": [
+        535,
+        536,
+        536,
+        536,
+        536,
+        536,
+        536,
+        536
+      ],
+      "open": [
+        "Chapter 54 - A Flurry in Stocks",
+        "Some days after this meeting, Albert de Morcerf visited the ",
+        "Albert was accompanied by Lucien Debray, who, joining in his",
+        "“You are in constant communication with the Baron Danglars?”",
+        "“Yes, count, you know what I told you?”",
+        "“All remains the same, then, in that quarter?”"
+      ],
+      "closePages": [
+        545,
+        545,
+        545
+      ],
+      "close": [
+        "“But surely your excellency will be so good as to inform me ",
+        "“I do not yet know myself, neither is it necessary that you ",
+        "‘Lucullus dines with Lucullus,’ that is quite sufficient.” B"
+      ],
+      "textHash": "0b5edb4dbb22",
+      "pageHash": "032590b41913"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 55 - Major Cavalcanti",
+      "blockCount": 176,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 546,
+      "pageMax": 557,
+      "openPages": [
+        546,
+        546,
+        546,
+        546,
+        546,
+        546,
+        546,
+        546
+      ],
+      "open": [
+        "Chapter 55 - Major Cavalcanti",
+        "Both the count and Baptistin had told the truth when they an",
+        "Champs-Élysées that the Count of Monte Cristo lived, and who",
+        "The small and angular head of this man, his white hair and t",
+        "“Ah, my dear sir, you are most welcome; I was expecting you.",
+        "“Indeed,” said the Italian, “was your excellency then aware "
+      ],
+      "closePages": [
+        556,
+        556,
+        557
+      ],
+      "close": [
+        "“Then, in these trunks——”",
+        "“I presume you have given orders to your valet de chambre to",
+        "Andrea.” Saying which Monte Cristo bowed, and disappeared be"
+      ],
+      "textHash": "0dae7834b117",
+      "pageHash": "1b42e5b043a4"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 56 - Andrea Cavalcanti",
+      "blockCount": 160,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 557,
+      "pageMax": 568,
+      "openPages": [
+        557,
+        557,
+        557,
+        557,
+        557,
+        557,
+        557,
+        557
+      ],
+      "open": [
+        "Chapter 56 - Andrea Cavalcanti",
+        "The Count of Monte Cristo entered the adjoining room, which ",
+        "“The Count of Monte Cristo, I believe?” said he.",
+        "“Yes, sir, and I think I have the honor of addressing Count ",
+        "“Count Andrea Cavalcanti,” repeated the young man, accompany",
+        "“You are charged with a letter of introduction addressed to "
+      ],
+      "closePages": [
+        568,
+        568,
+        568
+      ],
+      "close": [
+        "“There go two miscreants;” said he,",
+        "“it is a pity they are not really related!”—then, after an i",
+        "reflection, “Come, I will go to see the Morrels,” said he; “"
+      ],
+      "textHash": "583d409e0bc9",
+      "pageHash": "7ccb7e2f569b"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 57 - In the Lucern Patch",
+      "blockCount": 122,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 568,
+      "pageMax": 577,
+      "openPages": [
+        568,
+        568,
+        568,
+        569,
+        569,
+        569,
+        569,
+        569
+      ],
+      "open": [
+        "Chapter 57 - In the Lucern Patch",
+        "Our readers must now allow us to transport them again to the",
+        "The delay had been occasioned by a visit from Madame Danglar",
+        "Besides, although she avoided coming within speaking distanc",
+        "Valentine re-entered the garden alone. For fear that anyone ",
+        "“Good-evening, Valentine,” said a well-known voice."
+      ],
+      "closePages": [
+        577,
+        577,
+        577
+      ],
+      "close": [
+        "“As you will, Valentine.”",
+        "“Shall you be happy if I do what you wish?”",
+        "“Oh, yes!” Valentine mounted on a bench, and passed not only"
+      ],
+      "textHash": "7d36b39fee49",
+      "pageHash": "594d0a70c612"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 58 - M. Noirtier de Villefort",
+      "blockCount": 88,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 578,
+      "pageMax": 585,
+      "openPages": [
+        578,
+        578,
+        579,
+        579,
+        580,
+        580,
+        580,
+        580
+      ],
+      "open": [
+        "Chapter 58 - M. Noirtier de Villefort",
+        "We will now relate what was passing in the house of the king",
+        "M. Noirtier was sitting in an armchair, which moved upon cas",
+        "Valentine, and the old servant of whom we have already spoke",
+        "Barrois, and after having seated himself at his father’s rig",
+        "Noirtier’s face remained perfectly passive during this long "
+      ],
+      "closePages": [
+        585,
+        585,
+        585
+      ],
+      "close": [
+        "“You shall have a notary, as you absolutely wish for one, si",
+        "Villefort; “but I shall explain to him your state of health,",
+        "“Never mind that,” said Barrois; “I shall go and fetch a not"
+      ],
+      "textHash": "65fee49ee6ea",
+      "pageHash": "f5e3e60ddbe5"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 59 - The Will",
+      "blockCount": 102,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 586,
+      "pageMax": 592,
+      "openPages": [
+        586,
+        586,
+        586,
+        586,
+        586,
+        586,
+        586,
+        586
+      ],
+      "open": [
+        "Chapter 59 - The Will",
+        "As soon as Barrois had left the room, Noirtier looked at Val",
+        "“Sir,” said Villefort, after the first salutations were over",
+        "Noirtier, whom you see here. All his limbs have become compl",
+        "“Sir,” said she, “I perfectly understand my grandfather’s me",
+        "“That is quite true,” said Barrois; “and that is what I told"
+      ],
+      "closePages": [
+        592,
+        592,
+        592
+      ],
+      "close": [
+        "“My father knows me,” replied Villefort; “he is quite sure t",
+        "“What do you decide on, sir?” asked the notary of Villefort.",
+        "“Nothing, sir; it is a resolution which my father has taken "
+      ],
+      "textHash": "81d3ce159431",
+      "pageHash": "b2e0122648de"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 60 - The Telegraph",
+      "blockCount": 121,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 593,
+      "pageMax": 602,
+      "openPages": [
+        593,
+        593,
+        593,
+        593,
+        594,
+        594,
+        594,
+        594
+      ],
+      "open": [
+        "Chapter 60 - The Telegraph",
+        "M. and Madame de Villefort found on their return that the Co",
+        "“Ma foi!” said Monte Cristo, after the first compliments wer",
+        "“No, count,” he replied, “I am the only victim in this case.",
+        "“To what do you refer?” said Monte Cristo with well-feigned ",
+        "“Have you really met with some great misfortune?”"
+      ],
+      "closePages": [
+        601,
+        602,
+        602
+      ],
+      "close": [
+        "“Yes.”",
+        "“Thank you. Good-bye. On Saturday I will tell you my impress",
+        "concerning the telegraph.” At the door the count was met by "
+      ],
+      "textHash": "0729582a084d",
+      "pageHash": "b94036427e97"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 61 - How a Gardener May Get Rid of the Dormice that Eat His Peaches",
+      "blockCount": 150,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 602,
+      "pageMax": 611,
+      "openPages": [
+        602,
+        602,
+        602,
+        603,
+        603,
+        603,
+        603,
+        603
+      ],
+      "open": [
+        "Chapter 61 - How a Gardener May Get Rid of the Dormice that ",
+        "Not on the same night as he had stated, but the next morning",
+        "Monte Cristo looked for the entrance to the enclosure, and w",
+        "Never had Flora, the fresh and smiling goddess of gardeners,",
+        "“The man at the telegraph,” said he, “must either engage a g",
+        "“You are gathering your crop, sir?” said Monte Cristo, smili"
+      ],
+      "closePages": [
+        611,
+        611,
+        611
+      ],
+      "close": [
+        "“Good,” said Monte Cristo to Morrel, who was at his house wh",
+        "“What have you discovered?” asked Morrel.",
+        "“I have just discovered how a gardener may get rid of the do"
+      ],
+      "textHash": "711b9615e4b1",
+      "pageHash": "d879f8b1208e"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 62 - Ghosts",
+      "blockCount": 93,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 611,
+      "pageMax": 618,
+      "openPages": [
+        611,
+        611,
+        611,
+        612,
+        612,
+        612,
+        613,
+        613
+      ],
+      "open": [
+        "Chapter 62 - Ghosts",
+        "At first sight, the exterior of the house at Auteuil gave no",
+        "Louis XIV.; in three days M. Bertuccio planted an entirely b",
+        "What, above all, manifested the shrewdness of the steward, a",
+        "The library was divided into two parts on either side of the",
+        "“That can only be to hold gloves,” he said."
+      ],
+      "closePages": [
+        618,
+        618,
+        618
+      ],
+      "close": [
+        "The Count of Monte Cristo offered his arm to Madame de Ville",
+        "“M. de Villefort,” he said, “will you conduct the Baroness D",
+        "Villefort complied, and they passed on to the dining-room."
+      ],
+      "textHash": "81458637d3de",
+      "pageHash": "3bf33226e5ca"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 63 - The Dinner",
+      "blockCount": 124,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 618,
+      "pageMax": 626,
+      "openPages": [
+        618,
+        618,
+        619,
+        619,
+        619,
+        619,
+        620,
+        620
+      ],
+      "open": [
+        "Chapter 63 - The Dinner",
+        "It was evident that one sentiment affected all the guests on",
+        "Madame Danglars had started when Villefort, on the count’s i",
+        "The repast was magnificent; Monte Cristo had endeavored comp",
+        "Monte Cristo noticed the general astonishment, and began lau",
+        "“Gentlemen,” he said, “you will admit that, when arrived at "
+      ],
+      "closePages": [
+        626,
+        626,
+        626
+      ],
+      "close": [
+        "“I will be there.”",
+        "At this moment Madame de Villefort approached.",
+        "“Thanks, my dear friend,” said Madame Danglars, trying to sm"
+      ],
+      "textHash": "0fcd1e2071d1",
+      "pageHash": "de516d92ad00"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 64 - The Beggar",
+      "blockCount": 100,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 626,
+      "pageMax": 634,
+      "openPages": [
+        626,
+        626,
+        627,
+        627,
+        627,
+        628,
+        628,
+        628
+      ],
+      "open": [
+        "Chapter 64 - The Beggar",
+        "The evening passed on; Madame de Villefort expressed a desir",
+        "Andrea had spoken very little during dinner; he was an intel",
+        "Danglars the one was to receive his 48,000 francs and the ot",
+        "Thus it was with much politeness of manner that he heard Cav",
+        "“And I, sir,” said Danglars, “shall be most happy to receive"
+      ],
+      "closePages": [
+        634,
+        634,
+        634
+      ],
+      "close": [
+        "“But what am I to do?”",
+        "“You? Oh, you are young while I am beginning to get old. Au ",
+        "“Alas,” said Andrea, sighing, “one cannot be completely happ"
+      ],
+      "textHash": "bd0260ad0fac",
+      "pageHash": "5505f385cbd3"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 65 - A Conjugal Scene",
+      "blockCount": 103,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 634,
+      "pageMax": 642,
+      "openPages": [
+        634,
+        634,
+        635,
+        635,
+        635,
+        635,
+        635,
+        635
+      ],
+      "open": [
+        "Chapter 65 - A Conjugal Scene",
+        "At the Place Louis XV. the three young people separated—that",
+        "Danglars’ door just at the same time that Villefort’s landau",
+        "Hermine? and why were you so affected at that story, or rath",
+        "“Because I have been in such shocking spirits all the evenin",
+        "“No, Hermine,” replied Debray; “you cannot make me believe t"
+      ],
+      "closePages": [
+        642,
+        642,
+        642
+      ],
+      "close": [
+        "“I mean that M. de Nargonne, your first husband, being neith",
+        "700,000 francs; let him bear his share of the loss, and we w",
+        "Madame Danglars was rooted to the spot; she made a violent e"
+      ],
+      "textHash": "e847c8e80175",
+      "pageHash": "619694dcda80"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 66 - Matrimonial Projects",
+      "blockCount": 130,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 642,
+      "pageMax": 651,
+      "openPages": [
+        642,
+        642,
+        643,
+        643,
+        643,
+        643,
+        643,
+        643
+      ],
+      "open": [
+        "Chapter 66 - Matrimonial Projects",
+        "The day following this scene, at the hour the banker usually",
+        "Monte Cristo was at home; only he was engaged with someone a",
+        "Cristo appeared.",
+        "“Pardon me,” said he, “my dear baron, but one of my friends,",
+        "“Nay,” said Danglars, “it is my fault; I have chosen my visi"
+      ],
+      "closePages": [
+        651,
+        651,
+        651
+      ],
+      "close": [
+        "“And if you should hear of anything very scandalous——”",
+        "“I will communicate it to you.”",
+        "“You will oblige me.” Danglars rushed out of the room, and m"
+      ],
+      "textHash": "0eff2b53f622",
+      "pageHash": "006aa45036e2"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 67 - The Office of the King’s Attorney",
+      "blockCount": 99,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 651,
+      "pageMax": 660,
+      "openPages": [
+        651,
+        652,
+        652,
+        652,
+        652,
+        652,
+        652,
+        652
+      ],
+      "open": [
+        "Chapter 67 - The Office of the King’s Attorney",
+        "Let us leave the banker driving his horses at their fullest ",
+        "Guénégaud she called a cab, and directed the driver to go to",
+        "Neuf and entered the Rue de Harlay by the Place Dauphiné; th",
+        "There was a great deal going on that morning, and many busin",
+        "The magistrate was seated in an armchair, writing, with his "
+      ],
+      "closePages": [
+        660,
+        660,
+        660
+      ],
+      "close": [
+        "“Well?” said the baroness.",
+        "“Well, I understand what I now have to do,” replied Villefor",
+        "“In less than one week from this time I will ascertain who t"
+      ],
+      "textHash": "ccea6b0c7faf",
+      "pageHash": "62fa0bacca16"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 68 - A Summer Ball",
+      "blockCount": 115,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 661,
+      "pageMax": 668,
+      "openPages": [
+        661,
+        661,
+        661,
+        661,
+        661,
+        661,
+        661,
+        661
+      ],
+      "open": [
+        "Chapter 68 - A Summer Ball",
+        "The same day during the interview between Madame Danglars an",
+        "“Here I am, dear count.”",
+        "“Welcome home again.”",
+        "“I arrived an hour since.”",
+        "“From Dieppe?”"
+      ],
+      "closePages": [
+        668,
+        668,
+        668
+      ],
+      "close": [
+        "“Did she return home?”",
+        "“Directly.”",
+        "“Well, my dear Bertuccio,” said the count, “I now advise you"
+      ],
+      "textHash": "a2201c39f27c",
+      "pageHash": "3e377a8c4d3e"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 69 - The Inquiry",
+      "blockCount": 126,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 668,
+      "pageMax": 676,
+      "openPages": [
+        668,
+        668,
+        668,
+        668,
+        668,
+        668,
+        669,
+        669
+      ],
+      "open": [
+        "Chapter 69 - The Inquiry",
+        "M. de Villefort kept the promise he had made to Madame Dangl",
+        "At the end of the second day M. de Villefort received the fo",
+        "M. de Villefort replied by ordering the strictest inquiries ",
+        "“The abbé, who was in Paris only for a month, inhabited a sm",
+        "storied house behind Saint-Sulpice; there were two rooms on "
+      ],
+      "closePages": [
+        676,
+        676,
+        676
+      ],
+      "close": [
+        "“But,” said the envoy, “you do not go about it in the right ",
+        "“Aw?” said the Englishman, “I practice shooting every day, a",
+        "This was all the visitor wished to ascertain, or, rather, al"
+      ],
+      "textHash": "7961ff285f31",
+      "pageHash": "9ca180307685"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 70 - The Ball",
+      "blockCount": 123,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 676,
+      "pageMax": 684,
+      "openPages": [
+        676,
+        676,
+        677,
+        677,
+        677,
+        677,
+        677,
+        677
+      ],
+      "open": [
+        "Chapter 70 - The Ball",
+        "It was in the warmest days of July, when in due course of ti",
+        "At the time the Countess of Morcerf returned to the rooms, a",
+        "“No,” replied Madame Danglars, “I am too ill.”",
+        "“You are wrong,” replied Villefort, significantly; “it is im",
+        "“Do you think so?” asked the baroness."
+      ],
+      "closePages": [
+        684,
+        684,
+        684
+      ],
+      "close": [
+        "“Ah,” said a gallant old general, who, in 1809, had sung Par",
+        "“Then,” said Mercédès, “I will lead the way.” Turning toward",
+        "Cristo, she added, “count, will you oblige me with your arm?"
+      ],
+      "textHash": "e4697791299c",
+      "pageHash": "d3b479e4d8f8"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 71 - Bread and Salt",
+      "blockCount": 66,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 685,
+      "pageMax": 688,
+      "openPages": [
+        685,
+        685,
+        685,
+        685,
+        685,
+        685,
+        685,
+        685
+      ],
+      "open": [
+        "Chapter 71 - Bread and Salt",
+        "Madame de Morcerf entered an archway of trees with her compa",
+        "“It was too warm in the room, was it not, count?” she asked.",
+        "“Yes, madame; and it was an excellent idea of yours to open ",
+        "“But you,” he said, “with that light dress, and without anyt",
+        "“Do you know where I am leading you?” said the countess, wit"
+      ],
+      "closePages": [
+        688,
+        688,
+        688
+      ],
+      "close": [
+        "I am your most respectful servant.” The countess left with a",
+        "“Do not my mother and you agree?” asked Albert, astonished.",
+        "“On the contrary,” replied the count, “did you not hear her "
+      ],
+      "textHash": "9716eafe9bd4",
+      "pageHash": "7d017c3c79d9"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 72 - Madame de Saint-Méran",
+      "blockCount": 137,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 688,
+      "pageMax": 698,
+      "openPages": [
+        688,
+        688,
+        689,
+        689,
+        689,
+        689,
+        689,
+        689
+      ],
+      "open": [
+        "Chapter 72 - Madame de Saint-Méran",
+        "A gloomy scene had indeed just passed at the house of M. de ",
+        "Villefort had secluded himself, not to study, but to reflect",
+        "Their number was formidable, now that he had begun to fear, ",
+        "“No,” he murmured, “none of my enemies would have waited so ",
+        "‘Foul deeds will rise,"
+      ],
+      "closePages": [
+        698,
+        698,
+        698
+      ],
+      "close": [
+        "“Oh, I dare not—she forbade my sending for you; and, as you ",
+        "myself agitated, feverish and out of sorts. I will go and ta",
+        "She stopped astonished, then the voice reached her ear more "
+      ],
+      "textHash": "2e5861dc93df",
+      "pageHash": "c7d6ba9d1cec"
+    },
+    {
+      "title": "VOLUME THREE — Chapter 73 - The Promise",
+      "blockCount": 290,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 698,
+      "pageMax": 720,
+      "openPages": [
+        698,
+        698,
+        698,
+        698,
+        698,
+        698,
+        698,
+        698
+      ],
+      "open": [
+        "Chapter 73 - The Promise",
+        "It was, indeed, Maximilian Morrel, who had passed a wretched",
+        "“You here at this hour?” said she.",
+        "“Yes, my poor girl,” replied Morrel; “I come to bring and to",
+        "“This is, indeed, a house of mourning,” said Valentine; “spe",
+        "“Dear Valentine,” said Morrel, endeavoring to conceal his ow"
+      ],
+      "closePages": [
+        719,
+        719,
+        720
+      ],
+      "close": [
+        "“But,” said he, “first allow me to embrace you as your daugh",
+        "He found outside the door the old servant, to whom Valentine",
+        "****"
+      ],
+      "textHash": "a665f8816b96",
+      "pageHash": "c477b1f1a8ba"
+    },
+    {
+      "title": "VOLUME FOUR",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 720,
+      "pageMax": 720,
+      "openPages": [
+        720
+      ],
+      "open": [
+        "VOLUME FOUR"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "0b2f5f1356fa",
+      "pageHash": "d829857eb136"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 74 - The Villefort Family Vault",
+      "blockCount": 78,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 720,
+      "pageMax": 726,
+      "openPages": [
+        720,
+        720,
+        720,
+        720,
+        720,
+        720,
+        720,
+        720
+      ],
+      "open": [
+        "Chapter 74 - The Villefort Family Vault",
+        "Two days after, a considerable crowd was assembled, towards ",
+        "XVIII. and King Charles X., had preserved a great number of ",
+        "Due information was given to the authorities, and permission",
+        "Renée were already deposited there, and now, after ten years",
+        "The Parisians, always curious, always affected by funereal d"
+      ],
+      "closePages": [
+        726,
+        726,
+        726
+      ],
+      "close": [
+        "“Pray, sir,” said Villefort with marked uneasiness, “do not ",
+        "“Forgive me, sir,” said Franz in a resolute tone.",
+        "“I would not lose this opportunity of proving to M. Noirtier"
+      ],
+      "textHash": "6fff018c7dc1",
+      "pageHash": "465374e6dd04"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 75 - A Signed Statement",
+      "blockCount": 102,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 727,
+      "pageMax": 736,
+      "openPages": [
+        727,
+        727,
+        727,
+        727,
+        727,
+        727,
+        727,
+        727
+      ],
+      "open": [
+        "Chapter 75 - A Signed Statement",
+        "Noirtier was prepared to receive them, dressed in black, and",
+        "“Listen,” whispered Villefort to Valentine, who could not co",
+        "Noirtier answered only by a look which made Villefort’s bloo",
+        "“Shall I open the secretary desk?” asked Valentine.",
+        "“Yes,” said the old man."
+      ],
+      "closePages": [
+        736,
+        736,
+        736
+      ],
+      "close": [
+        "“You?” cried Franz, whose hair stood on end; “you, M. Noirti",
+        "killed my father?”",
+        "“Yes!” replied Noirtier, fixing a majestic look on the young"
+      ],
+      "textHash": "7a83e01b1cc5",
+      "pageHash": "47f1459d7476"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 76 - Progress of Cavalcanti the Younger",
+      "blockCount": 123,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 736,
+      "pageMax": 744,
+      "openPages": [
+        736,
+        736,
+        736,
+        736,
+        737,
+        737,
+        737,
+        737
+      ],
+      "open": [
+        "Chapter 76 - Progress of Cavalcanti the Younger",
+        "Meanwhile M. Cavalcanti the elder had returned to his servic",
+        "M. Andrea at his departure inherited all the papers which pr",
+        "Such was the state of society in Paris at the period we brin",
+        "Madame Danglars, soon dispelled every impression of fear. It",
+        "The baroness was partially reclining on a sofa, Eugénie sat "
+      ],
+      "closePages": [
+        743,
+        743,
+        744
+      ],
+      "close": [
+        "“Immediately.”",
+        "“Very well.” The count made a sign to Albert and they bowed ",
+        "Cavalcanti remained master of the field."
+      ],
+      "textHash": "509227b6f818",
+      "pageHash": "9cb61c55a21a"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 77 - Haydée",
+      "blockCount": 204,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 744,
+      "pageMax": 762,
+      "openPages": [
+        744,
+        745,
+        745,
+        745,
+        745,
+        745,
+        745,
+        745
+      ],
+      "open": [
+        "Chapter 77 - Haydée",
+        "Scarcely had the count’s horses cleared the angle of the bou",
+        "“Well,” said he, “I will ask you the same question which Cha",
+        "“To the installation of my rival at M. Danglars’.”",
+        "“What rival?”",
+        "“Ma foi! what rival? Why, your protégé, M. Andrea Cavalcanti"
+      ],
+      "closePages": [
+        762,
+        762,
+        762
+      ],
+      "close": [
+        "“Of whom I bought her,” said Monte Cristo, “as I told you, A",
+        "“Oh, you are good, you are great, my lord!” said Haydée, kis",
+        "“Come, finish your cup of coffee,” said Monte Cristo; “the h"
+      ],
+      "textHash": "0869e6e1b4fd",
+      "pageHash": "5f26a95d13d6"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 78",
+      "blockCount": 252,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 763,
+      "pageMax": 780,
+      "openPages": [
+        763,
+        763,
+        763,
+        763,
+        763,
+        764,
+        764,
+        764
+      ],
+      "open": [
+        "Chapter 78",
+        "If Valentine could have seen the trembling step and agitated",
+        "Villefort must see the utter impossibility of any alliance b",
+        "No one who had seen the magistrate at this moment, so thorou",
+        "M. de Villefort’s communications on the subject were very li",
+        "In the midst of all the strange events which had crowded one"
+      ],
+      "closePages": [
+        780,
+        780,
+        780
+      ],
+      "close": [
+        "When he had concluded his speech, Beauchamp bowed coldly to ",
+        "Albert vented his anger on a pile of newspapers, which he se",
+        "“Ah,” said Morcerf, “there goes a happy man!” And it so happ"
+      ],
+      "textHash": "c76372b5d4b3",
+      "pageHash": "8061339f6931"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 79",
+      "blockCount": 164,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 780,
+      "pageMax": 790,
+      "openPages": [
+        780,
+        781,
+        781,
+        781,
+        781,
+        781,
+        782,
+        782
+      ],
+      "open": [
+        "Chapter 79",
+        "Morrel was, in fact, very happy. M. Noirtier had just sent f",
+        "Morrel advanced with a firm, manly tread, and poor Barrois f",
+        "The old servant introduced Morrel by a private entrance, clo",
+        "“Am I to say what you told me?” asked Valentine. Noirtier ma",
+        "“Monsieur Morrel,” said Valentine to the young man, who was "
+      ],
+      "closePages": [
+        790,
+        790,
+        790
+      ],
+      "close": [
+        "“Look,” said he to the procureur, whose heart beat so loudly",
+        "The doctor then slowly poured some drops of the lemonade fro",
+        "“The unfortunate Barrois has been poisoned,” said d’Avrigny,"
+      ],
+      "textHash": "a2e0c8d4451b",
+      "pageHash": "f4d93eefe689"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 80 - The Accusation",
+      "blockCount": 61,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 791,
+      "pageMax": 795,
+      "openPages": [
+        791,
+        791,
+        791,
+        791,
+        791,
+        791,
+        791,
+        791
+      ],
+      "open": [
+        "Chapter 80 - The Accusation",
+        "M. D’Avrigny soon restored the magistrate to consciousness, ",
+        "“Oh, death is in my house!” cried Villefort.",
+        "“Say, rather, crime!” replied the doctor.",
+        "“M. d’Avrigny,” cried Villefort, “I cannot tell you all I fe",
+        "“Yes,” said M. d’Avrigny, with an imposing calmness, “but I "
+      ],
+      "closePages": [
+        795,
+        795,
+        795
+      ],
+      "close": [
+        "—his blood has thickened. He was stout, had a short, thick n",
+        "The doctor, without shaking hands with Villefort, without ad",
+        "Mademoiselle Valentine, so good, so kind, and so gentle. Vil"
+      ],
+      "textHash": "b2ac65145316",
+      "pageHash": "0a5a5adadc7f"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 81 - The Room of the Retired Baker",
+      "blockCount": 277,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 795,
+      "pageMax": 811,
+      "openPages": [
+        795,
+        795,
+        795,
+        795,
+        795,
+        795,
+        795,
+        795
+      ],
+      "open": [
+        "Chapter 81 - The Room of the Retired Baker",
+        "The evening of the day on which the Count of Morcerf had lef",
+        "“Are you not rather young, M. Andrea, to think of marrying?”",
+        "“I think not, sir,” replied M. Cavalcanti; “in Italy the nob",
+        "“Well, sir,” said Danglars, “in case your proposals, which d",
+        "“Sir, my father is a man of great foresight and prudence. Th"
+      ],
+      "closePages": [
+        811,
+        811,
+        811
+      ],
+      "close": [
+        "“Because there is a little secret, a precaution I thought it",
+        "“Thank you,” said Andrea; “I will let you know a week before",
+        "“Dear Benedetto,” said he, “I think he will not be sorry to "
+      ],
+      "textHash": "e520002e5b19",
+      "pageHash": "300829a3eff8"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 82 - The Burglary",
+      "blockCount": 167,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 812,
+      "pageMax": 823,
+      "openPages": [
+        812,
+        812,
+        812,
+        812,
+        812,
+        812,
+        812,
+        812
+      ],
+      "open": [
+        "Chapter 82 - The Burglary",
+        "The day following that on which the conversation we have rel",
+        "The count praised Bertuccio’s zeal, and ordered him to prepa",
+        "“Now,” said he, “I may require to go in one night from Paris",
+        "“Your highness had already expressed that wish,” said Bertuc",
+        "“That’s well,” said Monte Cristo; “I remain here a day or tw"
+      ],
+      "closePages": [
+        823,
+        823,
+        823
+      ],
+      "close": [
+        "Monte Cristo returned to his bedroom, and, glancing rapidly ",
+        "Caderousse sat astride the coping, and drawing up his ladder",
+        "This mournful appeal pierced the darkness. The door of the b"
+      ],
+      "textHash": "f61d3171448c",
+      "pageHash": "576789888617"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 83 - The Hand of God",
+      "blockCount": 86,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 823,
+      "pageMax": 828,
+      "openPages": [
+        823,
+        824,
+        824,
+        824,
+        824,
+        824,
+        824,
+        824
+      ],
+      "open": [
+        "Chapter 83 - The Hand of God",
+        "Caderousse continued to call piteously, “Help, reverend sir,",
+        "“What is the matter?” asked Monte Cristo.",
+        "“Help,” cried Caderousse; “I am murdered!”",
+        "“We are here;—take courage.”",
+        "“Ah, it’s all over! You are come too late—you are come to se"
+      ],
+      "closePages": [
+        828,
+        828,
+        828
+      ],
+      "close": [
+        "“By your father’s tomb!” said Caderousse, supported by a sup",
+        "Pardon me, my God; receive me, O my Lord!” Caderousse sighed",
+        "“One!” said the count mysteriously, his eyes fixed on the co"
+      ],
+      "textHash": "ee5b6a82c3f8",
+      "pageHash": "95b2f786c1c4"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 84 - Beauchamp",
+      "blockCount": 67,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 829,
+      "pageMax": 834,
+      "openPages": [
+        829,
+        829,
+        829,
+        829,
+        830,
+        830,
+        830,
+        830
+      ],
+      "open": [
+        "Chapter 84 - Beauchamp",
+        "The daring attempt to rob the count was the topic of convers",
+        "Count Andrea Cavalcanti: not so Mademoiselle Eugénie Danglar",
+        "The delay demanded by Beauchamp had nearly expired. Morcerf ",
+        "Albert, and those of whom the latter inquired always told hi",
+        "One morning Albert was awakened by his valet de chambre, who"
+      ],
+      "closePages": [
+        833,
+        834,
+        834
+      ],
+      "close": [
+        "“Well,” said Beauchamp. Then, seeing the young man was about",
+        "“Willingly,” said Albert; “but let us walk. I think a little",
+        "“Gladly,” said Albert; “I love him—let us call.”"
+      ],
+      "textHash": "daa78edc0e7f",
+      "pageHash": "782129bcc0cd"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 85 - The Journey",
+      "blockCount": 128,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 834,
+      "pageMax": 843,
+      "openPages": [
+        834,
+        834,
+        834,
+        834,
+        834,
+        834,
+        834,
+        834
+      ],
+      "open": [
+        "Chapter 85 - The Journey",
+        "Monte Cristo uttered a joyful exclamation on seeing the youn",
+        "“Ah, ha!” said he, “I hope all is over, explained and settle",
+        "“Yes,” said Beauchamp; “the absurd reports have died away, a",
+        "“I am finishing the most execrable morning’s work.”",
+        "“What is it?” said Albert; “arranging your papers, apparentl"
+      ],
+      "closePages": [
+        842,
+        842,
+        843
+      ],
+      "close": [
+        "Read that,” said he, “when I am gone, that you may not be wi",
+        "While the count picked up the paper he put spurs to his hors",
+        "Thus the terrible secret, which Beauchamp had so generously "
+      ],
+      "textHash": "61406b07e1f7",
+      "pageHash": "a4640f0330a6"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 86 - The Trial",
+      "blockCount": 69,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 843,
+      "pageMax": 852,
+      "openPages": [
+        843,
+        843,
+        843,
+        843,
+        843,
+        843,
+        843,
+        843
+      ],
+      "open": [
+        "Chapter 86 - The Trial",
+        "At eight o’clock in the morning Albert had arrived at Beauch",
+        "“Here I am,” said Albert.",
+        "“Well, my poor friend,” replied Beauchamp, “I expected you.”",
+        "“I need not say I think you are too faithful and too kind to",
+        "“I think I have some clew.”"
+      ],
+      "closePages": [
+        852,
+        852,
+        852
+      ],
+      "close": [
+        "‘what is your decision?’ “‘I have no reply to make,’ said th",
+        "“‘Has the daughter of Ali Tepelini spoken the truth?’ said t",
+        "“Haydée had remained until the close of the meeting. She hea"
+      ],
+      "textHash": "878fafad59ac",
+      "pageHash": "49e4bbcfdf99"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 87 - The Challenge",
+      "blockCount": 58,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 852,
+      "pageMax": 857,
+      "openPages": [
+        852,
+        852,
+        852,
+        852,
+        852,
+        852,
+        852,
+        852
+      ],
+      "open": [
+        "Chapter 87 - The Challenge",
+        "Then,” continued Beauchamp, “I took advantage of the silence",
+        "“Contempt, my friend? How does this misfortune affect you? N",
+        "“Thank you, my dear Beauchamp, thank you for the excellent f",
+        "“Be it so,” said Beauchamp; “if you must have me descend to ",
+        "“Well, then, you understand, Beauchamp, that we begin our se"
+      ],
+      "closePages": [
+        857,
+        857,
+        857
+      ],
+      "close": [
+        "“You are right,” said the latter; “M. Danglars has only been",
+        "“Sir,” said he to Danglars, “understand that I do not take a",
+        "Danglars accompanied him to the door, where he again assured"
+      ],
+      "textHash": "bd311d9eb50b",
+      "pageHash": "02ade4120ffe"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 88 - The Insult",
+      "blockCount": 105,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 858,
+      "pageMax": 865,
+      "openPages": [
+        858,
+        858,
+        858,
+        858,
+        858,
+        858,
+        858,
+        858
+      ],
+      "open": [
+        "Chapter 88 - The Insult",
+        "At the banker’s door Beauchamp stopped Morcerf.",
+        "“Listen,” said he; “just now I told you it was of M. de Mont",
+        "“Reflect, Morcerf, one moment before you go.”",
+        "“On what shall I reflect?”",
+        "“On the importance of the step you are taking.”"
+      ],
+      "closePages": [
+        865,
+        865,
+        865
+      ],
+      "close": [
+        "“Well? that is all I require. Tomorrow morning, at seven o’c",
+        "“We will.”",
+        "“Hush, the curtain is rising. Listen! I never lose a note of"
+      ],
+      "textHash": "e4d2b3e61c02",
+      "pageHash": "2bf2b2a6719b"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 89 - The Night",
+      "blockCount": 67,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 866,
+      "pageMax": 872,
+      "openPages": [
+        866,
+        866,
+        866,
+        866,
+        866,
+        866,
+        866,
+        866
+      ],
+      "open": [
+        "Chapter 89 - The Night",
+        "Monte Cristo waited, according to his usual custom, until Du",
+        "Ali brought the box to his master, who examined the weapons ",
+        "“Who are you, madame?” said the count to the veiled woman.",
+        "The stranger cast one look around her, to be certain that th",
+        "“What name did you pronounce then, Madame de Morcerf?” said "
+      ],
+      "closePages": [
+        872,
+        872,
+        872
+      ],
+      "close": [
+        "“Edmond,” said Mercédès, “I have but one word more to say to",
+        "“Edmond,” continued she, “you will see that if my face is pa",
+        "“What a fool I was,” said he, “not to tear my heart out on t"
+      ],
+      "textHash": "c8b0c483e8c1",
+      "pageHash": "929296142eee"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 90 - The Meeting",
+      "blockCount": 150,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 872,
+      "pageMax": 881,
+      "openPages": [
+        872,
+        872,
+        872,
+        872,
+        872,
+        872,
+        873,
+        873
+      ],
+      "open": [
+        "Chapter 90 - The Meeting",
+        "After Mercédès had left Monte Cristo, he fell into profound ",
+        "“What?” said he to himself, while the lamp and the wax light",
+        "I regret; for is not the destruction of the vital principle,",
+        "“No, it is not existence, then, that I regret, but the ruin ",
+        "“Ridiculous?” repeated he; “and the ridicule will fall on me"
+      ],
+      "closePages": [
+        881,
+        881,
+        881
+      ],
+      "close": [
+        "“What can it mean?” said Debray to Franz.",
+        "“The Count of Monte Cristo acts dishonorably to M. de Morcer",
+        "“Providence still,” murmured he; “now only am I fully convin"
+      ],
+      "textHash": "74a3d8eaff78",
+      "pageHash": "488729f232ae"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 91 - Mother and Son",
+      "blockCount": 53,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 882,
+      "pageMax": 886,
+      "openPages": [
+        882,
+        882,
+        882,
+        882,
+        882,
+        882,
+        882,
+        882
+      ],
+      "open": [
+        "Chapter 91 - Mother and Son",
+        "The Count of Monte Cristo bowed to the five young men with a",
+        "“Indeed, my dear friend,” said Beauchamp first, who had eith",
+        "Albert remained silent and wrapped in thought. Château-Renau",
+        "“Are we not going?” said he, after this embarrassing silence",
+        "“When you please,” replied Beauchamp; “allow me only to comp"
+      ],
+      "closePages": [
+        886,
+        886,
+        886
+      ],
+      "close": [
+        "my country. I had a betrothed, Albert, a lovely girl whom I ",
+        "Albert stood pale and motionless to hear what his mother wou",
+        "“I accept it,” said she; “he has a right to pay the dowry, w"
+      ],
+      "textHash": "016314e98d63",
+      "pageHash": "d6830fd43782"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 92 - The Suicide",
+      "blockCount": 93,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 887,
+      "pageMax": 894,
+      "openPages": [
+        887,
+        887,
+        887,
+        887,
+        887,
+        887,
+        887,
+        887
+      ],
+      "open": [
+        "Chapter 92 - The Suicide",
+        "Meanwhile Monte Cristo had also returned to town with Emmanu",
+        "Bertuccio, who was waiting there, motionless as a sentinel a",
+        "“Count,” said Emmanuel, when they were at the end of the Pla",
+        "“If it were not ridiculous to make a display of our triumph,",
+        "“Stop a moment,” said Monte Cristo; “do not let me lose both"
+      ],
+      "closePages": [
+        893,
+        893,
+        894
+      ],
+      "close": [
+        "The general, with his head thrown back, hands extended, gaze",
+        "Then, with sighs which were unlike any human sound, he dragg",
+        "The door was wide open, a hackney-coach was standing in the "
+      ],
+      "textHash": "5f54c906ab06",
+      "pageHash": "a10fd28c313c"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 93 - Valentine",
+      "blockCount": 78,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 894,
+      "pageMax": 900,
+      "openPages": [
+        894,
+        894,
+        894,
+        894,
+        894,
+        894,
+        894,
+        894
+      ],
+      "open": [
+        "Chapter 93 - Valentine",
+        "We may easily conceive where Morrel’s appointment was. On le",
+        "“Now,” said Valentine, motioning to Morrel to sit down near ",
+        "“Yes,” said Maximilian, “I recollect the project, of which I",
+        "“Well,” said Valentine, “you may approve again, for grandpap",
+        "“Bravo,” said Maximilian."
+      ],
+      "closePages": [
+        900,
+        900,
+        900
+      ],
+      "close": [
+        "Morrel understood it; he knew he must call assistance. The y",
+        "“I told you so!” exclaimed Madame de Villefort.",
+        "“Poor child!”"
+      ],
+      "textHash": "b1050656e7c3",
+      "pageHash": "be70894a156f"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 94 - Maximilian’s Avowal",
+      "blockCount": 137,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 900,
+      "pageMax": 909,
+      "openPages": [
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900,
+        900
+      ],
+      "open": [
+        "Chapter 94 - Maximilian’s Avowal",
+        "At the same moment M. de Villefort’s voice was heard calling",
+        "“A physician, a physician,—M. d’Avrigny!” cried Villefort; “",
+        "Méran’s death, recurred to him; these symptoms, to a less al",
+        "Meanwhile M. de Villefort arrived in a hired cabriolet at M.",
+        "“Ah,” said the doctor, “is it you?”"
+      ],
+      "closePages": [
+        909,
+        909,
+        909
+      ],
+      "close": [
+        "“Well,” said he, “let us go to Valentine; I will give instru",
+        "At the moment when d’Avrigny was returning to Valentine’s ro",
+        "This new tenant, who, as we have said, was an Italian, was c"
+      ],
+      "textHash": "ce61241e1f10",
+      "pageHash": "c66b07cf1ffd"
+    },
+    {
+      "title": "VOLUME FOUR — Chapter 95 - Father and Daughter",
+      "blockCount": 71,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 909,
+      "pageMax": 916,
+      "openPages": [
+        909,
+        909,
+        909,
+        909,
+        910,
+        910,
+        910,
+        910
+      ],
+      "open": [
+        "Chapter 95 - Father and Daughter",
+        "We saw in a preceding chapter how Madame Danglars went forma",
+        "Danglars. In this room, at about ten o’clock in the morning,",
+        "“Étienne,” said he, “see why Mademoiselle Eugénie has asked ",
+        "Having given this vent to his ill-humor, the baron became mo",
+        "“Mademoiselle’s lady’s maid says, sir, that mademoiselle is "
+      ],
+      "closePages": [
+        916,
+        916,
+        916
+      ],
+      "close": [
+        "“Is the conference ended?” asked Eugénie, rising.",
+        "Danglars motioned that he had nothing more to say. Five minu",
+        "****"
+      ],
+      "textHash": "09a4dfd81d6b",
+      "pageHash": "9effa562919b"
+    },
+    {
+      "title": "VOLUME FIVE",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 916,
+      "pageMax": 916,
+      "openPages": [
+        916
+      ],
+      "open": [
+        "VOLUME FIVE"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "2e5a25256326",
+      "pageHash": "953815689985"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 96 - The Contract",
+      "blockCount": 120,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 916,
+      "pageMax": 925,
+      "openPages": [
+        916,
+        916,
+        917,
+        917,
+        917,
+        917,
+        917,
+        917
+      ],
+      "open": [
+        "Chapter 96 - The Contract",
+        "Three days after the scene we have just described, namely to",
+        "—held in by the coachman, who had been seated a quarter of a",
+        "“Ah, M. Andrea,” said the latter, with his half-jesting tone",
+        "do?”",
+        "“Charmingly, as you see. I am come to talk to you about a th"
+      ],
+      "closePages": [
+        925,
+        925,
+        925
+      ],
+      "close": [
+        "“A galley-slave, escaped from confinement at Toulon.”",
+        "“And what crime has he committed?”",
+        "“He is accused,” said the commissary with his inflexible voi"
+      ],
+      "textHash": "9f1f9dd06653",
+      "pageHash": "4a74506d112e"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 97 - The Departure for Belgium",
+      "blockCount": 78,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 926,
+      "pageMax": 931,
+      "openPages": [
+        926,
+        926,
+        926,
+        926,
+        926,
+        926,
+        926,
+        926
+      ],
+      "open": [
+        "Chapter 97 - The Departure for Belgium",
+        "A few minutes after the scene of confusion produced in the s",
+        "Mademoiselle Louise d’Armilly. As for the numerous servants ",
+        "The betrothed had retired, as we said, with haughty air, dis",
+        "“Ah, what a dreadful thing,” said the young musician; “who w",
+        "An ironical smile curled the lip of Eugénie."
+      ],
+      "closePages": [
+        931,
+        931,
+        931
+      ],
+      "close": [
+        "“Yes, and without violence,” said Louise.",
+        "“I shall bring that forward as an extenuating circumstance,”",
+        "Eugénie. These words were lost in the noise which the carria"
+      ],
+      "textHash": "bf8988330e23",
+      "pageHash": "8b9ce564b5ba"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 98 - The Bell and Bottle Tavern",
+      "blockCount": 96,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 931,
+      "pageMax": 940,
+      "openPages": [
+        931,
+        931,
+        932,
+        932,
+        932,
+        932,
+        932,
+        932
+      ],
+      "open": [
+        "Chapter 98 - The Bell and Bottle Tavern",
+        "And now let us leave Mademoiselle Danglars and her friend pu",
+        "Furnished with this plunder, Andrea leaped with a lighter he",
+        "Lazare, on the other, Paris enshrouded in darkness.",
+        "“Am I to be captured?” he cried; “no, not if I can use more ",
+        "“Ho, friend!” said Benedetto."
+      ],
+      "closePages": [
+        940,
+        940,
+        940
+      ],
+      "close": [
+        "Eugénie covered her face with her hands.",
+        "“Oh, ho!” said Andrea, “you need not be ashamed, even though",
+        "“Oh, why is not the world a wilderness?” she exclaimed, thro"
+      ],
+      "textHash": "18ca65b0cfa5",
+      "pageHash": "8ce36c984285"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 99 - The Law",
+      "blockCount": 94,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 940,
+      "pageMax": 948,
+      "openPages": [
+        940,
+        940,
+        941,
+        941,
+        941,
+        941,
+        941,
+        942
+      ],
+      "open": [
+        "Chapter 99 - The Law",
+        "We have seen how quietly Mademoiselle Danglars and Mademoise",
+        "Now, Madame Danglars feared Eugénie’s sagacity and the influ",
+        "Unfortunately, in this world of ours, each person views thin",
+        "She ran therefore to Debray, who, after having like the rest",
+        "At the precise time when Madame Danglars, dressed in black a"
+      ],
+      "closePages": [
+        948,
+        948,
+        948
+      ],
+      "close": [
+        "Madame Danglars rose from her seat, pale and cold.",
+        "“Adieu, sir,” she said.",
+        "“Adieu, madame,” replied the king’s attorney, as in an almos"
+      ],
+      "textHash": "712f33b4c574",
+      "pageHash": "1743063d4494"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 100 - The Apparition",
+      "blockCount": 56,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 949,
+      "pageMax": 954,
+      "openPages": [
+        949,
+        949,
+        949,
+        949,
+        949,
+        949,
+        950,
+        950
+      ],
+      "open": [
+        "Chapter 100 - The Apparition",
+        "As the procureur had told Madame Danglars, Valentine was not",
+        "During the daytime Valentine’s perceptions remained tolerabl",
+        "Every morning Morrel called on Noirtier to receive news of V",
+        "The nervous excitement of which we speak pursued Valentine e",
+        "Cristo came to visit her; even the very furniture, in these "
+      ],
+      "closePages": [
+        953,
+        954,
+        954
+      ],
+      "close": [
+        "“I think I hear a noise,” she said; “leave me.”",
+        "“Good-bye, for the present,” replied the count, walking upon",
+        "towards the library door, and smiling with an expression so "
+      ],
+      "textHash": "264225c04f87",
+      "pageHash": "46fe3fe2c375"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 101 - Locusta",
+      "blockCount": 52,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 954,
+      "pageMax": 958,
+      "openPages": [
+        954,
+        954,
+        954,
+        954,
+        954,
+        955,
+        955,
+        955
+      ],
+      "open": [
+        "Chapter 101 - Locusta",
+        "Valentine was alone; two other clocks, slower than that of S",
+        "There was no fear of her falling asleep. One terrible idea p",
+        "When this terrible chain of ideas presented itself, Valentin",
+        "Twenty minutes, twenty tedious minutes, passed thus, then te",
+        "Someone approached the bed and drew back the curtains. Valen"
+      ],
+      "closePages": [
+        958,
+        958,
+        958
+      ],
+      "close": [
+        "“And now, my dear child, adieu for the present. I will try a",
+        "“Go,” said Valentine, “whatever happens, I promise you not t",
+        "Monte Cristo for some time kept his eyes fixed on the young "
+      ],
+      "textHash": "b5baed48730c",
+      "pageHash": "b51de71553c0"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 102 - Valentine",
+      "blockCount": 36,
+      "types": "hppppppppppppppppppppppppppppppppppp",
+      "pageMin": 959,
+      "pageMax": 963,
+      "openPages": [
+        959,
+        959,
+        959,
+        959,
+        960,
+        960,
+        960,
+        960
+      ],
+      "open": [
+        "Chapter 102 - Valentine",
+        "The night-light continued to burn on the chimney-piece, exha",
+        "Villefort emptied the contents into the ashes, which she dis",
+        "Madame de Villefort had no longer any doubt; all was over—sh",
+        "The darkness lasted two hours longer; then by degrees a cold",
+        "“Good,” she exclaimed, approaching the table, “she has taken"
+      ],
+      "closePages": [
+        962,
+        962,
+        963
+      ],
+      "close": [
+        "“Yes, yes,” signed Noirtier. Maximilian tried to speak, but ",
+        "“Yes, yes, yes!” continued the old man. Maximilian rushed up",
+        "In a minute the young man darted through several rooms, till"
+      ],
+      "textHash": "0c40eac38a56",
+      "pageHash": "cb503f20970c"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 103 - Maximilian",
+      "blockCount": 85,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 963,
+      "pageMax": 969,
+      "openPages": [
+        963,
+        963,
+        963,
+        963,
+        963,
+        963,
+        963,
+        963
+      ],
+      "open": [
+        "Chapter 103 - Maximilian",
+        "Villefort rose, half-ashamed of being surprised in such a pa",
+        "“Who are you, sir,” he asked, “that forget that this is not ",
+        "“Go!—do you hear?” said",
+        "Villefort, while d’Avrigny advanced to lead Morrel out. Maxi",
+        "This could only have been accomplished by means of unnatural"
+      ],
+      "closePages": [
+        969,
+        969,
+        969
+      ],
+      "close": [
+        "“Thank you, sir,” said d’Avrigny; “since you have commenced ",
+        "“I am going, sir; and I do not hesitate to say that no praye",
+        "Villefort, who was engaged in his study, they reached Valent"
+      ],
+      "textHash": "ce768aff5e83",
+      "pageHash": "5d5b68edecd3"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 104 - Danglars’ Signature",
+      "blockCount": 151,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 969,
+      "pageMax": 979,
+      "openPages": [
+        969,
+        970,
+        970,
+        970,
+        970,
+        970,
+        970,
+        970
+      ],
+      "open": [
+        "Chapter 104 - Danglars’ Signature",
+        "The next morning dawned dull and cloudy. During the night th",
+        "The Abbé Busoni had watched till daylight, and then left wit",
+        "“See,” said d’Avrigny to Villefort, “nature knows how to all",
+        "“Yes, you are right,” replied Villefort, surprised; “he slee",
+        "“Grief has stunned him,” replied d’Avrigny; and they both re"
+      ],
+      "closePages": [
+        979,
+        979,
+        979
+      ],
+      "close": [
+        "“Oh, it is terrible!” and M. de Boville retired with this ex",
+        "Danglars, with an energy of action those can alone understan",
+        "“I will place it on her table myself tonight,” he murmured. "
+      ],
+      "textHash": "61dd8bc7b157",
+      "pageHash": "1d2ee7825d9a"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 105 - The Cemetery of Père-Lachaise",
+      "blockCount": 134,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 979,
+      "pageMax": 989,
+      "openPages": [
+        979,
+        979,
+        979,
+        980,
+        980,
+        980,
+        980,
+        980
+      ],
+      "open": [
+        "Chapter 105 - The Cemetery of Père-Lachaise",
+        "M. de Boville had indeed met the funeral procession which wa",
+        "Valentine’s mother. The pompous procession therefore wended ",
+        "These last consisted of all the young people whom Valentine’",
+        "The count looked attentively through every opening in the cr",
+        "“Where is Morrel?” he asked; “do either of these gentlemen k"
+      ],
+      "closePages": [
+        989,
+        989,
+        989
+      ],
+      "close": [
+        "“To leave you?”",
+        "“To wait for me. Hold yourself ready then to join me at the ",
+        "Élysées, and lead me out of this house without anyone seeing"
+      ],
+      "textHash": "7596f9896718",
+      "pageHash": "39dc7410f006"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 106 - Dividing the Proceeds",
+      "blockCount": 136,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 989,
+      "pageMax": 1001,
+      "openPages": [
+        989,
+        990,
+        990,
+        990,
+        990,
+        990,
+        990,
+        990
+      ],
+      "open": [
+        "Chapter 106 - Dividing the Proceeds",
+        "The apartment on the second floor of the house in the Rue Sa",
+        "His visits were tolerably regular, though occasionally he ap",
+        "The day after Monte Cristo had called upon Danglars, the mys",
+        "“Well, what is the matter, my dear?” asked the gentleman who",
+        "“Oh, Lucien, can I confide in you?”"
+      ],
+      "closePages": [
+        1001,
+        1001,
+        1001
+      ],
+      "close": [
+        "“In the midst of our misfortunes, we are still rich enough n",
+        "Paris, and when our journey is paid, we shall have 5,000 fra",
+        "“Alas,” he exclaimed, “how can I restore the happiness I hav"
+      ],
+      "textHash": "b4ffdbb161a7",
+      "pageHash": "0403475b9dfb"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 107 - The Lions’ Den",
+      "blockCount": 74,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1001,
+      "pageMax": 1007,
+      "openPages": [
+        1001,
+        1001,
+        1002,
+        1002,
+        1002,
+        1002,
+        1002,
+        1002
+      ],
+      "open": [
+        "Chapter 107 - The Lions’ Den",
+        "One division of La Force, in which the most dangerous and de",
+        "The courtyard of this quarter is enclosed by enormous walls,",
+        "The court of Saint-Bernard has its own particular apartment ",
+        "In the court which we have attempted to describe, and from w",
+        "“See, the prince is pluming himself,” said one of the thieve"
+      ],
+      "closePages": [
+        1007,
+        1007,
+        1007
+      ],
+      "close": [
+        "“Can I be deceived?” he murmured, as he stepped into the obl",
+        "“Never mind, we shall see! Tomorrow, then!” he added, turnin",
+        "“Tomorrow!” replied the steward."
+      ],
+      "textHash": "f1b5e9c0ae7e",
+      "pageHash": "ba0605608266"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 108 - The Judge",
+      "blockCount": 92,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1007,
+      "pageMax": 1015,
+      "openPages": [
+        1007,
+        1007,
+        1008,
+        1008,
+        1008,
+        1009,
+        1009,
+        1009
+      ],
+      "open": [
+        "Chapter 108 - The Judge",
+        "We remember that the Abbé Busoni remained alone with Noirtie",
+        "The assizes, also, were about to begin, and Villefort, shut ",
+        "The case was therefore prepared owing to the incessant labor",
+        "Once only had Villefort seen his father; it was the day afte",
+        "M. Noirtier at one of the open windows, where the old man ha"
+      ],
+      "closePages": [
+        1015,
+        1015,
+        1015
+      ],
+      "close": [
+        "“Think of it, madame,” he said; “if, on my return, justice h",
+        "“Do you understand me?” he said.",
+        "“I am going down there to pronounce the sentence of death ag"
+      ],
+      "textHash": "31a41d97f230",
+      "pageHash": "58e62c068289"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 109 - The Assizes",
+      "blockCount": 81,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1015,
+      "pageMax": 1021,
+      "openPages": [
+        1015,
+        1015,
+        1015,
+        1015,
+        1016,
+        1016,
+        1016,
+        1016
+      ],
+      "open": [
+        "Chapter 109 - The Assizes",
+        "The Benedetto affair, as it was called at the Palais, and by",
+        "Andrea Cavalcanti experienced a lively curiosity in his fate",
+        "In the eyes of many, Benedetto appeared, if not a victim to,",
+        "Everyone, therefore, ran to the court; some to witness the s",
+        "It was one of the magnificent autumn days which make amends "
+      ],
+      "closePages": [
+        1020,
+        1021,
+        1021
+      ],
+      "close": [
+        "“Hush, gentlemen, here is the court; let us go back to our p",
+        "“hem!” and the door-keeper appearing, called out with that s",
+        "peculiar to his order, ever since the days of Beaumarchais, "
+      ],
+      "textHash": "c10272a48db9",
+      "pageHash": "686b7d08eb04"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 110 - The Indictment",
+      "blockCount": 68,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1021,
+      "pageMax": 1026,
+      "openPages": [
+        1021,
+        1021,
+        1021,
+        1021,
+        1021,
+        1021,
+        1022,
+        1022
+      ],
+      "open": [
+        "Chapter 110 - The Indictment",
+        "The judges took their places in the midst of the most profou",
+        "“Gendarmes,” said the president, “lead in the accused.”",
+        "At these words the public attention became more intense, and",
+        "By the side of Andrea was stationed the lawyer who was to co",
+        "The president called for the indictment, revised as we know,"
+      ],
+      "closePages": [
+        1026,
+        1026,
+        1026
+      ],
+      "close": [
+        "“The sitting is adjourned, gentlemen,” said the president; “",
+        "“Well, what do you think of this, my fine fellow?” asked Deb",
+        "“There will be extenuating circumstances,” he replied."
+      ],
+      "textHash": "ab20d6248ef3",
+      "pageHash": "53cc6e201655"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 111 - Expiation",
+      "blockCount": 81,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1027,
+      "pageMax": 1033,
+      "openPages": [
+        1027,
+        1027,
+        1027,
+        1027,
+        1027,
+        1027,
+        1028,
+        1028
+      ],
+      "open": [
+        "Chapter 111 - Expiation",
+        "Notwithstanding the density of the crowd, M. de Villefort sa",
+        "It would be difficult to describe the state of stupor in whi",
+        "The weight of his fallen fortunes seemed suddenly to crush h",
+        "God was still in his heart.",
+        "“God,” he murmured, not knowing what he said, —“God—God!” Be"
+      ],
+      "closePages": [
+        1033,
+        1033,
+        1033
+      ],
+      "close": [
+        "“Have you nothing more to do there?” asked Morrel.",
+        "“No,” replied Monte Cristo; “God grant I may not have done t",
+        "The next day they indeed left, accompanied only by Baptistin"
+      ],
+      "textHash": "27ec649760a6",
+      "pageHash": "bcc98b7e4fb4"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 112 - The Departure",
+      "blockCount": 124,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1033,
+      "pageMax": 1045,
+      "openPages": [
+        1033,
+        1033,
+        1033,
+        1033,
+        1033,
+        1033,
+        1033,
+        1033
+      ],
+      "open": [
+        "Chapter 112 - The Departure",
+        "The recent events formed the theme of conversation throughou",
+        "“Indeed,” said Julie, “might we not almost fancy, Emmanuel, ",
+        "“What a dire misfortune!” said Emmanuel, thinking of Morcerf",
+        "“What dreadful sufferings!” said Julie, remembering Valentin",
+        "“If the Supreme Being has directed the fatal blow,” said Emm"
+      ],
+      "closePages": [
+        1045,
+        1045,
+        1045
+      ],
+      "close": [
+        "“Will you not even say you will see me again?” he asked.",
+        "“On the contrary, we shall meet again,” said Mercédès, point",
+        "“I tell you so to prove to you that I still hope.” And after"
+      ],
+      "textHash": "328f341c81d6",
+      "pageHash": "d9a0a919e5dd"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 113 - The Past",
+      "blockCount": 119,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1045,
+      "pageMax": 1055,
+      "openPages": [
+        1045,
+        1045,
+        1045,
+        1046,
+        1046,
+        1046,
+        1046,
+        1046
+      ],
+      "open": [
+        "Chapter 113 - The Past",
+        "The count departed with a sad heart from the house in which ",
+        "“I cannot have deceived myself,” he said; “I must look upon ",
+        "“Come, then, thou regenerate man, thou extravagant prodigal,",
+        "“And yet they were the same,” murmured",
+        "Monte Cristo, “only now it is broad daylight instead of nigh"
+      ],
+      "closePages": [
+        1055,
+        1055,
+        1055
+      ],
+      "close": [
+        "“Immediately; the steamer waits, and in an hour I shall be f",
+        "Will you accompany me to the harbor, Maximilian?”",
+        "“I am entirely yours, count.” Morrel accompanied the count t"
+      ],
+      "textHash": "01b294dbcd9d",
+      "pageHash": "2ab207cb0806"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 114 - Peppino",
+      "blockCount": 92,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1055,
+      "pageMax": 1063,
+      "openPages": [
+        1055,
+        1055,
+        1055,
+        1055,
+        1055,
+        1056,
+        1056,
+        1056
+      ],
+      "open": [
+        "Chapter 114 - Peppino",
+        "At the same time that the steamer disappeared behind Cape Mo",
+        "“Allegro!” he called out to the postilions at every ascent.",
+        "“Moderato!” he cried as they descended. And heaven knows the",
+        "Storta, the point from whence Rome is first visible, the tra",
+        "The carriage entered by the Porto del Popolo, turned to the "
+      ],
+      "closePages": [
+        1063,
+        1063,
+        1063
+      ],
+      "close": [
+        "“Oh, God be praised,” he said; “it is a real bed!”",
+        "“Ecco!” said the guide, and pushing Danglars into the cell, ",
+        "Danglars, too, had recognized the bandit, whose existence he"
+      ],
+      "textHash": "14e026ff763a",
+      "pageHash": "1904c11d0bce"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 115 - Luigi Vampa’s Bill of Fare",
+      "blockCount": 76,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1063,
+      "pageMax": 1068,
+      "openPages": [
+        1063,
+        1063,
+        1063,
+        1063,
+        1063,
+        1064,
+        1064,
+        1064
+      ],
+      "open": [
+        "Chapter 115 - Luigi Vampa’s Bill of Fare",
+        "We awake from every sleep except the one dreaded by Danglars",
+        "“Yes, yes,” he murmured, “I am in the hands of the brigands ",
+        "“No,” he cried, “they have not wounded, but perhaps they hav",
+        "“Singular bandits!” he exclaimed; “they have left me my purs",
+        "Danglars would have been quite ignorant of the time, for day"
+      ],
+      "closePages": [
+        1068,
+        1068,
+        1068
+      ],
+      "close": [
+        "French, Via dei Banchi, Rome; give me a draft for 4,998 loui",
+        "“Here,” he said, “here is a draft at sight.”",
+        "“And here is your fowl.” Danglars sighed while he carved the"
+      ],
+      "textHash": "54bcdded5704",
+      "pageHash": "58c84503897d"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 116 - The Pardon",
+      "blockCount": 79,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1068,
+      "pageMax": 1073,
+      "openPages": [
+        1068,
+        1068,
+        1068,
+        1068,
+        1068,
+        1068,
+        1068,
+        1068
+      ],
+      "open": [
+        "Chapter 116 - The Pardon",
+        "The next day Danglars was again hungry; certainly the air of",
+        "“Here I am, your excellency,” said Peppino, with an eagernes",
+        "“What do you want?”",
+        "“Something to drink.”",
+        "“Your excellency knows that wine is beyond all price near Ro"
+      ],
+      "closePages": [
+        1072,
+        1072,
+        1073
+      ],
+      "close": [
+        "“Rise,” said the count, “your life is safe; the same good fo",
+        "Danglars remained prostrate while the count withdrew; when h",
+        "According to the count’s directions, Danglars was waited on "
+      ],
+      "textHash": "9537b46f39e7",
+      "pageHash": "122d56517f58"
+    },
+    {
+      "title": "VOLUME FIVE — Chapter 117 - The Fifth of October",
+      "blockCount": 154,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 1073,
+      "pageMax": 1084,
+      "openPages": [
+        1073,
+        1073,
+        1073,
+        1073,
+        1073,
+        1073,
+        1074,
+        1074
+      ],
+      "open": [
+        "Chapter 117 - The Fifth of October",
+        "It was about six o’clock in the evening; an opal-colored lig",
+        "A light yacht, chaste and elegant in its form, was gliding a",
+        "The yacht moved rapidly on, though there did not appear to b",
+        "“Is that Monte Cristo?” asked the traveller, to whose orders",
+        "“Yes, your excellency,” said the captain, “we have reached i"
+      ],
+      "closePages": [
+        1084,
+        1084,
+        1084
+      ],
+      "close": [
+        "sister!”",
+        "“Who can say whether we shall ever see them again?” said Mor",
+        "“Darling,” replied Valentine, “has not the count just told u"
+      ],
+      "textHash": "d4eac867516f",
+      "pageHash": "1a850e10ddb8"
+    }
+  ]
 }

@@ -5,9 +5,14 @@
  *   node scripts/regression/run.mjs --book=oldman
  *   node scripts/regression/run.mjs --full
  *   node scripts/regression/run.mjs --update-snapshots
+ *   node scripts/regression/run.mjs --update-snapshots --full
+ *
+ * --update-snapshots without --book refreshes all 14 books (includes Way of
+ * Kings). Pairing it with --book= still updates a single title.
  */
 
 import { execSync } from "node:child_process"
+import { createHash } from "node:crypto"
 import {
   existsSync,
   mkdirSync,
@@ -80,10 +85,20 @@ const bookFilter = parseArgValue("--book")
 const updateSnapshots = args.includes("--update-snapshots")
 const includeFull = args.includes("--full")
 
-const BOOKS = includeFull
-  ? [...CORE_BOOKS, ...EXTENDED_BOOKS, ...SLOW_BOOKS]
-  : [...CORE_BOOKS, ...EXTENDED_BOOKS]
+// Snapshot refresh must include Way of Kings. The default parse suite still
+// omits it unless --full / --book= is passed, so a plain --update-snapshots
+// used to leave the WoK baseline stale.
+const BOOKS =
+  includeFull || (updateSnapshots && !bookFilter)
+    ? [...CORE_BOOKS, ...EXTENDED_BOOKS, ...SLOW_BOOKS]
+    : [...CORE_BOOKS, ...EXTENDED_BOOKS]
 const ALL_KNOWN_BOOKS = [...CORE_BOOKS, ...EXTENDED_BOOKS, ...SLOW_BOOKS]
+
+const SNAPSHOT_OPEN_BLOCKS = 6
+const SNAPSHOT_OPEN_CHARS = 60
+const SNAPSHOT_OPEN_PAGES = 8
+const SNAPSHOT_CLOSE_BLOCKS = 3
+const SNAPSHOT_FULL_PREFIX_LIMIT = 24
 
 const { parsePdfBuffer, PARSER_VERSION } = await import("../../index.js")
 
@@ -251,7 +266,7 @@ async function runBook(book) {
 
   console.log("")
   console.log("Snapshot diff:")
-  const snapshot = buildSnapshot(blocks, chapters, wordCount)
+  const snapshot = buildSnapshot(contentWithChapters, chapters, wordCount)
   const snapshotPath = path.join(SNAPSHOTS_DIR, `${book.id}.json`)
 
   if (updateSnapshots) {
@@ -290,7 +305,132 @@ async function runBook(book) {
   return { pass: bookPass }
 }
 
-function buildSnapshot(blocks, chapters, wordCount) {
+function flattenContentBlocks(contentWithChapters) {
+  const items = []
+  for (const page of contentWithChapters ?? []) {
+    const blocks = page.blocks ?? []
+    for (let blockIndex = 0; blockIndex < blocks.length; blockIndex += 1) {
+      items.push({
+        pageIndex: page.pageIndex,
+        blockIndex,
+        block: blocks[blockIndex],
+      })
+    }
+  }
+  return items
+}
+
+function chapterBlockSlices(contentWithChapters, chapters) {
+  const flat = flattenContentBlocks(contentWithChapters)
+  const starts = (chapters ?? []).map((chapter) => {
+    const index = flat.findIndex(
+      (item) =>
+        item.pageIndex === chapter.pageIndex &&
+        item.blockIndex === chapter.blockIndex
+    )
+    return { chapter, index }
+  })
+
+  let frontEnd = flat.length
+  for (const start of starts) {
+    if (start.index >= 0 && start.index < frontEnd) {
+      frontEnd = start.index
+    }
+  }
+
+  const slices = starts.map((start) => {
+    if (start.index < 0) {
+      return { chapter: start.chapter, blocks: [] }
+    }
+    let end = flat.length
+    for (const other of starts) {
+      if (other.index > start.index && other.index < end) {
+        end = other.index
+      }
+    }
+    return {
+      chapter: start.chapter,
+      blocks: flat.slice(start.index, end).map((item) => item.block),
+    }
+  })
+
+  return {
+    frontBlocks: flat.slice(0, frontEnd).map((item) => item.block),
+    slices,
+  }
+}
+
+function blockTypeCode(block) {
+  if (block?.type === "image") {
+    return block.isChapterBoundary ? "b" : "i"
+  }
+  if (block?.isHeading) {
+    return "h"
+  }
+  return "p"
+}
+
+function blockPreview(block) {
+  if (block?.type === "image") {
+    const kind = block.isChapterBoundary ? "banner" : "image"
+    const title = (block.chapterMetadata?.title ?? "").trim()
+    const text = title ? `[${kind}] ${title}` : `[${kind}]`
+    return text.slice(0, SNAPSHOT_OPEN_CHARS)
+  }
+  return (block?.text ?? "").replace(/\s+/g, " ").trim().slice(0, SNAPSHOT_OPEN_CHARS)
+}
+
+function blockFingerprint(block) {
+  if (block?.type === "image") {
+    const kind = block.isChapterBoundary ? "b" : "i"
+    const title = (block.chapterMetadata?.title ?? "").trim()
+    return `[${kind}]${title}`
+  }
+  return block?.text ?? ""
+}
+
+function snapshotHash(value) {
+  return createHash("sha256").update(value, "utf8").digest("hex").slice(0, 12)
+}
+
+function summarizeBlockRun(blocks, title) {
+  const list = blocks ?? []
+  const pages = list
+    .map((block) => block.sourcePdfPageIndex)
+    .filter((page) => Number.isFinite(page))
+  const fullPrefix = list.length > 0 && list.length <= SNAPSHOT_FULL_PREFIX_LIMIT
+  const openCount = fullPrefix ? list.length : SNAPSHOT_OPEN_BLOCKS
+  const pageCount = fullPrefix ? list.length : SNAPSHOT_OPEN_PAGES
+  const closeList = fullPrefix ? [] : list.slice(-SNAPSHOT_CLOSE_BLOCKS)
+  return {
+    ...(title !== undefined ? { title } : {}),
+    blockCount: list.length,
+    types: list.map(blockTypeCode).join(""),
+    pageMin: pages.length > 0 ? Math.min(...pages) : null,
+    pageMax: pages.length > 0 ? Math.max(...pages) : null,
+    openPages: list.slice(0, pageCount).map((block) =>
+      Number.isFinite(block.sourcePdfPageIndex) ? block.sourcePdfPageIndex : null
+    ),
+    open: list.slice(0, openCount).map((block) => blockPreview(block)),
+    closePages: closeList.map((block) =>
+      Number.isFinite(block.sourcePdfPageIndex) ? block.sourcePdfPageIndex : null
+    ),
+    close: closeList.map((block) => blockPreview(block)),
+    textHash: snapshotHash(list.map(blockFingerprint).join("\n")),
+    pageHash: snapshotHash(
+      list
+        .map((block) =>
+          Number.isFinite(block.sourcePdfPageIndex)
+            ? String(block.sourcePdfPageIndex)
+            : "x"
+        )
+        .join(",")
+    ),
+  }
+}
+
+function buildSnapshot(contentWithChapters, chapters, wordCount) {
+  const blocks = (contentWithChapters ?? []).flatMap((page) => page.blocks ?? [])
   const proseBlocks = blocks.filter((block) => !block.isHeading)
   const headingBlocks = blocks.filter((block) => block.isHeading)
   const totalTextLength = blocks.reduce(
@@ -300,6 +440,7 @@ function buildSnapshot(blocks, chapters, wordCount) {
 
   const first = blocks[0]?.text ?? ""
   const last = blocks[blocks.length - 1]?.text ?? ""
+  const { frontBlocks, slices } = chapterBlockSlices(contentWithChapters, chapters)
 
   return {
     parserVersion: PARSER_VERSION,
@@ -313,7 +454,77 @@ function buildSnapshot(blocks, chapters, wordCount) {
     avgBlockLength:
       blocks.length > 0 ? Math.round(totalTextLength / blocks.length) : 0,
     proseBlockCount: proseBlocks.length,
+    frontMatter:
+      frontBlocks.length > 0 ? summarizeBlockRun(frontBlocks) : null,
+    chapterOrder: slices.map((slice) =>
+      summarizeBlockRun(slice.blocks, slice.chapter.title ?? "")
+    ),
   }
+}
+
+function compareBlockRun(label, baseline, current, failures) {
+  if (!baseline && !current) {
+    return
+  }
+  if (!baseline || !current) {
+    failures.push(`${label} ${baseline ? "removed" : "added"}`)
+    return
+  }
+
+  if (baseline.blockCount !== current.blockCount) {
+    failures.push(
+      `${label} blockCount ${baseline.blockCount} → ${current.blockCount}`
+    )
+  }
+  if (baseline.types !== current.types) {
+    const index = firstStringDiff(baseline.types ?? "", current.types ?? "")
+    failures.push(
+      `${label} types changed at ${index} (${(baseline.types ?? "").length} → ${(current.types ?? "").length})`
+    )
+  }
+  if (baseline.pageMin !== current.pageMin || baseline.pageMax !== current.pageMax) {
+    failures.push(
+      `${label} page range ${baseline.pageMin}-${baseline.pageMax} -> ${current.pageMin}-${current.pageMax}`
+    )
+  }
+  if (JSON.stringify(baseline.openPages) !== JSON.stringify(current.openPages)) {
+    failures.push(`${label} openPages changed`)
+  }
+  const baselineOpen = baseline.open ?? []
+  const currentOpen = current.open ?? []
+  const openLen = Math.max(baselineOpen.length, currentOpen.length)
+  for (let index = 0; index < openLen; index += 1) {
+    if (baselineOpen[index] !== currentOpen[index]) {
+      failures.push(`${label} open[${index}] changed`)
+    }
+  }
+  if (JSON.stringify(baseline.closePages ?? []) !== JSON.stringify(current.closePages ?? [])) {
+    failures.push(`${label} closePages changed`)
+  }
+  const baselineClose = baseline.close ?? []
+  const currentClose = current.close ?? []
+  const closeLen = Math.max(baselineClose.length, currentClose.length)
+  for (let index = 0; index < closeLen; index += 1) {
+    if (baselineClose[index] !== currentClose[index]) {
+      failures.push(`${label} close[${index}] changed`)
+    }
+  }
+  if (baseline.textHash !== current.textHash) {
+    failures.push(`${label} textHash changed`)
+  }
+  if (baseline.pageHash !== current.pageHash) {
+    failures.push(`${label} pageHash changed`)
+  }
+}
+
+function firstStringDiff(left, right) {
+  const limit = Math.min(left.length, right.length)
+  for (let index = 0; index < limit; index += 1) {
+    if (left[index] !== right[index]) {
+      return index
+    }
+  }
+  return left.length === right.length ? -1 : limit
 }
 
 function compareSnapshot(baseline, current) {
@@ -372,6 +583,29 @@ function compareSnapshot(baseline, current) {
 
   if (baseline.lastBlockText !== current.lastBlockText) {
     failures.push("Last block text changed")
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(baseline, "chapterOrder")) {
+    failures.push("Baseline missing chapterOrder (refresh snapshots)")
+  } else {
+    compareBlockRun("frontMatter", baseline.frontMatter, current.frontMatter, failures)
+    const baselineOrder = baseline.chapterOrder ?? []
+    const currentOrder = current.chapterOrder ?? []
+    if (baselineOrder.length !== currentOrder.length) {
+      failures.push(
+        `chapterOrder length ${baselineOrder.length} → ${currentOrder.length}`
+      )
+    }
+    const orderLen = Math.min(baselineOrder.length, currentOrder.length)
+    for (let index = 0; index < orderLen; index += 1) {
+      const title = currentOrder[index]?.title || baselineOrder[index]?.title || index
+      compareBlockRun(
+        `chapterOrder[${index}] ${title}`,
+        baselineOrder[index],
+        currentOrder[index],
+        failures
+      )
+    }
   }
 
   return {

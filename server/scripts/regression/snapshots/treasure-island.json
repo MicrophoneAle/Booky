@@ -1,6 +1,6 @@
 {
-  "parserVersion": 134,
-  "totalBlocks": 1376,
+  "parserVersion": 135,
+  "totalBlocks": 1373,
   "totalWords": 38975,
   "chapterCount": 41,
   "chapterTitles": [
@@ -49,6 +49,1575 @@
   "firstBlockText": "",
   "lastBlockText": "",
   "headingCount": 44,
-  "avgBlockLength": 148,
-  "proseBlockCount": 1332
+  "avgBlockLength": 149,
+  "proseBlockCount": 1329,
+  "frontMatter": {
+    "blockCount": 20,
+    "types": "ihhppppppppppppppppi",
+    "pageMin": 0,
+    "pageMax": 3,
+    "openPages": [
+      null,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      null
+    ],
+    "open": [
+      "[image]",
+      "Treasure Island",
+      "by Robert Louis Stevenson",
+      "This work is licensed under a Creative Commons Attribution-N",
+      "You are free: to Share —to copy, distribute, and transmit th",
+      "Under the following conditions: Attribution —You must attrib",
+      "This work is based on an original work of the Core Knowledge",
+      "Noncommercial —You may not use this work for commercial purp",
+      "Share Alike —If you alter, transform, or build upon this wor",
+      "With the understanding that: For any reuse or distribution, ",
+      "Copyright © 20 00 Core Knowledge Foundation All Rights Reser",
+      "Trademarks and trade names are shown in this book strictly f",
+      "Island",
+      "Robert Louis Stevenson",
+      "CORE CLASSICS®",
+      "abridgedby REBECCABEALLBARNS all rights reserved cover illus",
+      "CORE KNOWLEDGE FOUNDATION",
+      "801 east high street",
+      "charlottesville, virginia 22902 core knowledge is a register",
+      "[image]"
+    ],
+    "closePages": [],
+    "close": [],
+    "textHash": "ffeaad43090b",
+    "pageHash": "ec039d137b15"
+  },
+  "chapterOrder": [
+    {
+      "title": "Introduction",
+      "blockCount": 9,
+      "types": "hippppppi",
+      "pageMin": 5,
+      "pageMax": 11,
+      "openPages": [
+        5,
+        null,
+        10,
+        10,
+        11,
+        11,
+        11,
+        11,
+        null
+      ],
+      "open": [
+        "Introduction",
+        "[image]",
+        "Once when his stepson was sick, Robert Louis Stevenson kept ",
+        "Treasure Island is like a popular old type of adventure stor",
+        "Several characters in the story act like a father to Jim. On",
+        "Treasure Island is also different from older adventure tales",
+        "E.D.HirschJr.",
+        "Charlottesville,Virginia Treasure Island",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "9fb80121399f",
+      "pageHash": "1a82cde9db10"
+    },
+    {
+      "title": "Part I",
+      "blockCount": 4,
+      "types": "hpii",
+      "pageMin": 14,
+      "pageMax": 14,
+      "openPages": [
+        14,
+        14,
+        null,
+        null
+      ],
+      "open": [
+        "Part I",
+        "The Old Buccaneer xiv",
+        "[image]",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "f3f917a3811a",
+      "pageHash": "6572a0c9bd3a"
+    },
+    {
+      "title": "Part I — Chapter 1 - The Old Sea Dog at the “Admiral Benbow”",
+      "blockCount": 30,
+      "types": "hpppppppppppppppppppppippppppi",
+      "pageMin": 16,
+      "pageMax": 22,
+      "openPages": [
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+        17,
+        17
+      ],
+      "open": [
+        "Chapter 1 - The Old Sea Dog at the “Admiral Benbow”",
+        "Squire Trelawney, Dr. Livesey, and the other gentlemen havin",
+        "I remember him plodding to the inn door, bringing 2 TREASURE",
+        "“This is a handy cove,” says he.",
+        "“Much company, mate?” Father told him no, very little.",
+        "“Well, then,” said he, “this is the berth for me. I’ll stay "
+      ],
+      "closePages": [
+        22,
+        22,
+        null
+      ],
+      "close": [
+        "“I’m a magistrate – if I catch a breath of complaint against",
+        "Soon after, Dr. Livesey rode away, but the captain held his ",
+        "[image]"
+      ],
+      "textHash": "563cd465bb46",
+      "pageHash": "a4e4f47465d1"
+    },
+    {
+      "title": "Part I — Chapter 2 - Black Dog Appears and Disappears",
+      "blockCount": 47,
+      "types": "hppppppppppppppppppppppppippppppppppppppppppppi",
+      "pageMin": 23,
+      "pageMax": 30,
+      "openPages": [
+        23,
+        23,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24
+      ],
+      "open": [
+        "Chapter 2 - Black Dog Appears and Disappears",
+        "Not long after this came the first of the mysterious events ",
+        "Mother was upstairs with father, and I was setting the break",
+        "“Is this here table for my mate Bill?” he asked, with a kind",
+        "I told him that this was for someone called the captain who ",
+        "“Well,” said he, “my mate Bill would likely be called the ca"
+      ],
+      "closePages": [
+        30,
+        30,
+        null
+      ],
+      "close": [
+        "“I have drawn blood enough to keep him quiet awhile,” he sai",
+        "“He should lie for a week where he is. Another stroke would ",
+        "[image]"
+      ],
+      "textHash": "a0e23c24d2be",
+      "pageHash": "5e950e305733"
+    },
+    {
+      "title": "Part I — Chapter 3 - The Black Spot",
+      "blockCount": 45,
+      "types": "hpppppppppppppppppppppppppipppppppppppppppppi",
+      "pageMin": 31,
+      "pageMax": 37,
+      "openPages": [
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        32
+      ],
+      "open": [
+        "Chapter 3 - The Black Spot",
+        "About noon I brought the captain some cooling drinks and med",
+        "I’m pretty low, and deserted by all. You’ll bring me one",
+        "“The doctor – ” I began. SWABS",
+        "Useless But he broke in, cursing the doctor. persons.",
+        "“Doctors is all swabs ,” he said."
+      ],
+      "closePages": [
+        36,
+        37,
+        null
+      ],
+      "close": [
+        "“Six hours. We’ll do them 22 TREASUREISLAND yet.” And he spr",
+        "I ran to him at once, but haste was in vain. The captain was",
+        "[image]"
+      ],
+      "textHash": "f79752735560",
+      "pageHash": "103fde59e0df"
+    },
+    {
+      "title": "Part I — Chapter 4 - The Sea Chest",
+      "blockCount": 34,
+      "types": "hpppppppppppppppppppppippppppppppi",
+      "pageMin": 38,
+      "pageMax": 44,
+      "openPages": [
+        38,
+        38,
+        39,
+        39,
+        39,
+        39,
+        39,
+        40
+      ],
+      "open": [
+        "Chapter 4 - The Sea Chest",
+        "Ilost no time telling my mother all that I knew, and we saw ",
+        "The hamlet lay not far away and in an opposite direction fro",
+        "It was dark when we reached the hamlet, and no soul would re",
+        "They say cowardice is infectious, but argument can make you ",
+        "“Back we will go, and small thanks to you chicken-hearted me"
+      ],
+      "closePages": [
+        43,
+        44,
+        null
+      ],
+      "close": [
+        "“My dear,” said my mother suddenly, “run on with the money. ",
+        "This was the end for us, I thought. How I cursed the neighbo",
+        "[image]"
+      ],
+      "textHash": "28c1809b1808",
+      "pageHash": "8406a584ae2e"
+    },
+    {
+      "title": "Part I — Chapter 5 - The Last of the Blind Man",
+      "blockCount": 48,
+      "types": "hppppppppppppppppppppppppppppppppipppppppppppppi",
+      "pageMin": 45,
+      "pageMax": 51,
+      "openPages": [
+        45,
+        45,
+        45,
+        46,
+        46,
+        46,
+        46,
+        46
+      ],
+      "open": [
+        "Chapter 5 - The Last of the Blind Man",
+        "My curiosity was stronger than my fear. I crept back to the ",
+        "“In, in, in!” the blind man shouted, and he cursed them for ",
+        "Four or five men obeyed at once, and two remained on the roa",
+        "“Search him, you shirking lubbers, and the rest of you get t",
+        "I could hear their feet rattling up our stairs. The window o"
+      ],
+      "closePages": [
+        50,
+        51,
+        null
+      ],
+      "close": [
+        "We walked back to the hamlet, where the horses 36 TREASUREIS",
+        "Soon we struck out at a bouncing trot on the road to Dr. Liv",
+        "[image]"
+      ],
+      "textHash": "7a3062ecccce",
+      "pageHash": "02b2a8d7888f"
+    },
+    {
+      "title": "Part I — Chapter 6 - The Captain’s Papers",
+      "blockCount": 34,
+      "types": "hpppppppppppppppppppppppippppppppi",
+      "pageMin": 52,
+      "pageMax": 58,
+      "openPages": [
+        52,
+        52,
+        52,
+        52,
+        52,
+        53,
+        53,
+        53
+      ],
+      "open": [
+        "Chapter 6 - The Captain’s Papers",
+        "We rode hard till we drew up before Dr.",
+        "Livesey’s door. His maid told us that he had gone to the Hal",
+        "“Good evening, Dance,” says the doctor, with a nod.",
+        "“And good evening to you, Jim. What wind brings you here?”",
+        "The supervisor stood straight and stiff and told his story. "
+      ],
+      "closePages": [
+        58,
+        58,
+        null
+      ],
+      "close": [
+        "Joyce and Hunter to Bristol, and not one of us must breathe ",
+        "“I’ll be as silent as the grave,” said the squire.",
+        "[image]"
+      ],
+      "textHash": "38c69f350ef0",
+      "pageHash": "e246fc098de5"
+    },
+    {
+      "title": "Part II — The Sea Cook",
+      "blockCount": 2,
+      "types": "hi",
+      "pageMin": 60,
+      "pageMax": 60,
+      "openPages": [
+        60,
+        null
+      ],
+      "open": [
+        "Part II",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "aa1e9674e8c5",
+      "pageHash": "5230b919e657"
+    },
+    {
+      "title": "Part II — Chapter 7 - I Go to Bristol",
+      "blockCount": 21,
+      "types": "hpppppppppppppppipppi",
+      "pageMin": 61,
+      "pageMax": 66,
+      "openPages": [
+        61,
+        61,
+        61,
+        62,
+        62,
+        62,
+        62,
+        63,
+        63,
+        63,
+        63,
+        64,
+        64,
+        64,
+        64,
+        64,
+        null,
+        66,
+        66,
+        66,
+        null
+      ],
+      "open": [
+        "Chapter 7 - I Go to Bristol",
+        "It was longer than the squire imagined before we were ready ",
+        "I brooded over the map, all the details of which I well reme",
+        "Old Anchor Inn, Bristol, March 1, 17__",
+        "Dear Livesey, The ship lies at anchor, ready for sea. You ne",
+        "At first, finding a crew troubled me. I wanted twenty men, a",
+        "I fell into talk with him on the dock. He keeps a public hou",
+        "Between Silver and myself we got together a company of the t",
+        "I am in magnificent health and spirits, eating like a bull, ",
+        "So now, Livesey, come quickly.",
+        "P.S. Blandly is to send another ship after us if we don’t tu",
+        "You can fancy the excitement the letter brought me. I was be",
+        "The next morning Redruth and I set out on foot for the “Admi",
+        "On seeing that boy I understood, for the first time, my situ",
+        "The next day, after dinner, I said goodbye to mother and the",
+        "Mr. Trelawney had stayed at an inn along the docks to superi",
+        "[image]",
+        "Though I had lived by the shore all my life, I seemed never ",
+        "While I was still in this delightful dream, we met Squire Tr",
+        "“Here you are,” he cried, “and the doctor came last night fr",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "e267e597915d",
+      "pageHash": "84adf77b9727"
+    },
+    {
+      "title": "Part II — Chapter 8 - At the Sign of the “Spyglass”",
+      "blockCount": 40,
+      "types": "hppppppppppppppppppppppppppipppppppppppi",
+      "pageMin": 67,
+      "pageMax": 72,
+      "openPages": [
+        67,
+        67,
+        68,
+        68,
+        68,
+        68,
+        68,
+        68
+      ],
+      "open": [
+        "Chapter 8 - At the Sign of the “Spyglass”",
+        "When I had finished breakfast, the squire gave me a note add",
+        "It was a bright little place. The sign was newly painted, th",
+        "From the first mention of Long John in Squire Trelawney’s le",
+        "I plucked up courage and walked up to him.",
+        "“Mr. 54 TREASUREISLAND Silver, sir?” I asked, holding out th"
+      ],
+      "closePages": [
+        72,
+        72,
+        null
+      ],
+      "close": [
+        "“Ay, ay, sir,” cried the cook, in the passage.",
+        "“Well, squire,” said Dr. Livesey, “I don’t put much faith in",
+        "[image]"
+      ],
+      "textHash": "6036b3a18814",
+      "pageHash": "21f7fd28c70f"
+    },
+    {
+      "title": "Part II — Chapter 9 - Powder and Arms",
+      "blockCount": 50,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppippppppi",
+      "pageMin": 73,
+      "pageMax": 79,
+      "openPages": [
+        73,
+        73,
+        74,
+        74,
+        74,
+        74,
+        74,
+        74
+      ],
+      "open": [
+        "Chapter 9 - Powder and Arms",
+        "As we stepped aboard the Hispaniola , we were saluted by the",
+        "“Show him in,” said the squire. The captain en-",
+        "tered, and shut the door.",
+        "“Well, Captain, what have you to say? All’s well, I hope?”",
+        "“Well, sir,” said the captain, “I don’t like this cruise. I "
+      ],
+      "closePages": [
+        79,
+        79,
+        null
+      ],
+      "close": [
+        "lock and disappearing in the direction of his galley. Then t",
+        "I agreed with the squire, and hated the captain deeply.",
+        "[image]"
+      ],
+      "textHash": "419f5c96650c",
+      "pageHash": "262c1cdc7c02"
+    },
+    {
+      "title": "Part II — Chapter 10 - The Voyage",
+      "blockCount": 32,
+      "types": "hpppppppppppppppppppppppppppppii",
+      "pageMin": 80,
+      "pageMax": 85,
+      "openPages": [
+        80,
+        80,
+        80,
+        81,
+        81,
+        81,
+        81,
+        81
+      ],
+      "open": [
+        "Chapter 10 - The Voyage",
+        "That night we stowed things in their place, and the squire’s",
+        "BOATSWAIN’S A whistle used to whistle, the men bustling to t",
+        "“Fifteen men on the dead man’s",
+        "ship’s anchor chest.”",
+        "“Yo-ho-ho, and a bottle of rum!”"
+      ],
+      "closePages": [
+        85,
+        null,
+        null
+      ],
+      "close": [
+        "I got inside the apple barrel, and found scarce an apple lef",
+        "[image]",
+        "[image]"
+      ],
+      "textHash": "aacbd9b18568",
+      "pageHash": "860ab95e7836"
+    },
+    {
+      "title": "Part II — Chapter 11 - What I Heard in the Apple Barrel",
+      "blockCount": 47,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppipppi",
+      "pageMin": 87,
+      "pageMax": 93,
+      "openPages": [
+        87,
+        87,
+        87,
+        87,
+        87,
+        88,
+        88,
+        88
+      ],
+      "open": [
+        "Chapter 11 - What I Heard in the Apple Barrel",
+        "No, not I,” said Silver.",
+        "“Flint was cap’n, I was quartermaster. The same broadside I ",
+        "“Well, it ain’t much use, after all,” said the young seaman.",
+        "“It ain’t much use for fools, nothing is,” cried",
+        "Silver."
+      ],
+      "closePages": [
+        93,
+        93,
+        null
+      ],
+      "close": [
+        "When Dick returned, each took the cup and drank – one “To lu",
+        "Just then, brightness fell upon me in the barrel, and, looki",
+        "[image]"
+      ],
+      "textHash": "9558263c554c",
+      "pageHash": "6f068a56058b"
+    },
+    {
+      "title": "Part II — Chapter 12 - Council of War",
+      "blockCount": 39,
+      "types": "hpppppppppppppppppppipppppppppppppppppi",
+      "pageMin": 94,
+      "pageMax": 100,
+      "openPages": [
+        94,
+        94,
+        94,
+        94,
+        94,
+        94,
+        94,
+        94
+      ],
+      "open": [
+        "Chapter 12 - Council of War",
+        "There was a rush of feet across the deck. Slipping out of my",
+        "“I have, sir,” said Silver.",
+        "“I’ve watered there with a trader I was cook in.”",
+        "“The anchorage is on the south, behind an islet, I fancy?” a",
+        "“Yes, sir. Skeleton Island they calls it. It were a main pla"
+      ],
+      "closePages": [
+        99,
+        100,
+        null
+      ],
+      "close": [
+        "“Hawkins, I put a lot of faith in you,” added the squire.",
+        "I felt helpless, and yet, by an odd train of circumstances, ",
+        "[image]"
+      ],
+      "textHash": "335c2467a57a",
+      "pageHash": "91dec899de73"
+    },
+    {
+      "title": "Part III — My Shore Adventure",
+      "blockCount": 2,
+      "types": "hi",
+      "pageMin": 102,
+      "pageMax": 102,
+      "openPages": [
+        102,
+        null
+      ],
+      "open": [
+        "Part III",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "4f874578ffe5",
+      "pageHash": "ca5a3080700d"
+    },
+    {
+      "title": "Part III — Chapter 13 - How I Began My Shore Adventure",
+      "blockCount": 24,
+      "types": "hppppppppppppppppppipppi",
+      "pageMin": 103,
+      "pageMax": 108,
+      "openPages": [
+        103,
+        103,
+        104,
+        104,
+        104,
+        104,
+        104,
+        105,
+        105,
+        105,
+        105,
+        106,
+        106,
+        106,
+        106,
+        106,
+        106,
+        106,
+        107,
+        null,
+        108,
+        108,
+        108,
+        null
+      ],
+      "open": [
+        "Chapter 13 - How I Began My Shore Adventure",
+        "WE WERE NOW LYING BECALMED about half a mile southeast of th",
+        "Perhaps it was the look of the island, with its grey, melanc",
+        "There was no wind, and the boats had to be manned and the sh",
+        "“Well,” he said, swearing, “it’s not forever.”",
+        "I thought this was a very bad sign, for up to that day, the ",
+        "All the way in, Long John stood by the steersman and directe",
+        "We brought up just where the anchor was in the chart, about ",
+        "The trees came right down to the highwater mark, the shores ",
+        "“I don’t know about treasure,” he said, “but I’ll stake my w",
+        "The conduct of the men became truly threatening. The slighte",
+        "Long John saw the danger as well, and was hard at work going",
+        "We held a council in the cabin.",
+        "“Sir,” said the captain, “I dare not risk another order. If ",
+        "“And who is that?” asked the squire.",
+        "“Silver,” said the captain.",
+        "“He’s as anxious as you and I to cover things up. He’d soon ",
+        "Loaded pistols were served out to all the sure men. Hunter, ",
+        "“Lads,” said he, “we’ve had a hot day, and are all tired and",
+        "[image]",
+        "Silver, from the other boat, called out to know if that were",
+        "The crews raced for the beach, but the boat I was in shot fa",
+        "“Jim! Jim!” I heard him shouting. But I paid no heed. Jumpin",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "031ac762d2ba",
+      "pageHash": "127dbbfb5430"
+    },
+    {
+      "title": "Part III — Chapter 14 - The First Blow",
+      "blockCount": 26,
+      "types": "hpppppppppppppppppppippppi",
+      "pageMin": 109,
+      "pageMax": 114,
+      "openPages": [
+        109,
+        109,
+        109,
+        110,
+        110,
+        110,
+        110,
+        110
+      ],
+      "open": [
+        "Chapter 14 - The First Blow",
+        "Iwas so pleased at having given the slip to Long John that I",
+        "I now felt the joy of exploration. There were flowering plan",
+        "Suddenly, a wild duck flew up with a quack, another followed",
+        "I crawled under cover of the nearest live oak, and squatted ",
+        "I could tell the direction of the speakers pretty exactly, n"
+      ],
+      "closePages": [
+        114,
+        114,
+        null
+      ],
+      "close": [
+        "Nothing was left for me but death by starvation, or by the h",
+        "All this while, running without taking notice, I had drawn n",
+        "[image]"
+      ],
+      "textHash": "0f0bdb3157ec",
+      "pageHash": "1e03267537c5"
+    },
+    {
+      "title": "Part III — Chapter 15 - The Man of the Island",
+      "blockCount": 51,
+      "types": "hppppppppppppppppppippppppppppppppppppppppppppppppi",
+      "pageMin": 115,
+      "pageMax": 122,
+      "openPages": [
+        115,
+        115,
+        115,
+        116,
+        116,
+        116,
+        116,
+        116
+      ],
+      "open": [
+        "Chapter 15 - The Man of the Island",
+        "From the side of the hill, which was steep and stony, gravel",
+        "I was now cut off on both sides. Behind me were the murderer",
+        "From trunk to trunk the creature flitted like a deer, runnin",
+        "I began to recall what I had heard of cannibals. I nearly ca",
+        "He was concealed, by this time, behind another tree trunk, b"
+      ],
+      "closePages": [
+        122,
+        122,
+        null
+      ],
+      "close": [
+        "He kept talking, neither expecting or receiving any",
+        "Then, in front of me, I beheld the",
+        "[image]"
+      ],
+      "textHash": "d00bdb5b9412",
+      "pageHash": "1152d9af3a2f"
+    },
+    {
+      "title": "Part IV — The Stockade",
+      "blockCount": 2,
+      "types": "hi",
+      "pageMin": 124,
+      "pageMax": 124,
+      "openPages": [
+        124,
+        null
+      ],
+      "open": [
+        "Part IV",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "bf30b7593eb8",
+      "pageHash": "5c778b1acda4"
+    },
+    {
+      "title": "Part IV — Chapter 16 - How the Ship Was Abandoned",
+      "blockCount": 34,
+      "types": "hpppppppppppppppppippppppppppppppi",
+      "pageMin": 125,
+      "pageMax": 132,
+      "openPages": [
+        125,
+        125,
+        125,
+        126,
+        126,
+        126,
+        126,
+        127
+      ],
+      "open": [
+        "Chapter 16 - How the Ship Was Abandoned",
+        "Narrative Continued by the Doctor:",
+        "It was about half-past one when the two gigs went ashore. Th",
+        "We ran on deck. The pitch was bubbling in the seams. The ste",
+        "Waiting was a strain, and it was decided that Hunter and I s",
+        "There was a slight bend in the coast, and I steered so as to"
+      ],
+      "closePages": [
+        132,
+        132,
+        null
+      ],
+      "close": [
+        "There was a scuffle, and out burst Abraham Gray with a knife",
+        "“I’m with you, sir,” said he. And the next moment he and the",
+        "[image]"
+      ],
+      "textHash": "238cbcc405ba",
+      "pageHash": "f9f719abe452"
+    },
+    {
+      "title": "Part IV — Chapter 17 - The Jolly Boat’s Last Trip",
+      "blockCount": 38,
+      "types": "hpppppppppppppppppppppppppppppppppippi",
+      "pageMin": 133,
+      "pageMax": 138,
+      "openPages": [
+        133,
+        133,
+        134,
+        134,
+        134,
+        134,
+        134,
+        134
+      ],
+      "open": [
+        "Chapter 17 - The Jolly Boat’s Last Trip",
+        "On this fifth trip the little boat was gravely overloaded. F",
+        "Even ripples were a danger to our overloaded craft. But the ",
+        "“I cannot keep her head for the stockade, sir,” said I to th",
+        "“The tide keeps washing her down. Could you pull stronger?”",
+        "“Not without swamping the boat,” said he."
+      ],
+      "closePages": [
+        138,
+        138,
+        null
+      ],
+      "close": [
+        "To add to our concern, we heard voices drawing near us in th",
+        "With all this in our minds, we waded ashore as fast as we co",
+        "[image]"
+      ],
+      "textHash": "659c39225c74",
+      "pageHash": "c1e1c91e0544"
+    },
+    {
+      "title": "Part IV — Chapter 18 - End of the First Day’s Fighting",
+      "blockCount": 39,
+      "types": "hpppppppppppppppppppppppppppppppppppipi",
+      "pageMin": 139,
+      "pageMax": 145,
+      "openPages": [
+        139,
+        139,
+        139,
+        140,
+        140,
+        140,
+        140,
+        140
+      ],
+      "open": [
+        "Chapter 18 - End of the First Day’s Fighting",
+        "Narrative Continued by the Doctor:",
+        "We made our best speed across the strip of wood that now div",
+        "They exchanged guns, and Trelawney, silent and cool, made su",
+        "Forty paces farther we came to the edge of the wood and saw ",
+        "They paused, and before they recovered, not only the squire "
+      ],
+      "closePages": [
+        null,
+        145,
+        null
+      ],
+      "close": [
+        "[image]",
+        "I ran to the door in time to see Jim Hawkins, safe and sound",
+        "[image]"
+      ],
+      "textHash": "1a117f25a663",
+      "pageHash": "c607c1ad06e7"
+    },
+    {
+      "title": "Part IV — Chapter 19 - The Garrison in the Stockade",
+      "blockCount": 40,
+      "types": "hppppppppppppppppppppppppppppppppppipppi",
+      "pageMin": 146,
+      "pageMax": 153,
+      "openPages": [
+        146,
+        146,
+        147,
+        147,
+        147,
+        147,
+        147,
+        147
+      ],
+      "open": [
+        "Chapter 19 - The Garrison in the Stockade",
+        "Narrative Resumed by Jim Hawkins: As soon as Ben Gunn saw th",
+        "A pirate “Nay, mate,” returned Ben.",
+        "“You’re flag. a good boy, but you’re only a boy, all told. R",
+        "“And when Ben Gunn is wanted, you know where to find him, Ji",
+        "“I believe I understand,” I said."
+      ],
+      "closePages": [
+        153,
+        153,
+        null
+      ],
+      "close": [
+        "“Flag of truce!” I heard someone say. And then, “Silver hims",
+        "And, at that, I jumped up, and rubbing my eyes, ran to an op",
+        "[image]"
+      ],
+      "textHash": "4155381263b2",
+      "pageHash": "52ee5440154b"
+    },
+    {
+      "title": "Part IV — Chapter 20 - Silver’s Embassy",
+      "blockCount": 49,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppii",
+      "pageMin": 154,
+      "pageMax": 159,
+      "openPages": [
+        154,
+        154,
+        154,
+        154,
+        155,
+        155,
+        155,
+        155
+      ],
+      "open": [
+        "Chapter 20 - Silver’s Embassy",
+        "Sure enough, there were two men just outside the stockade, o",
+        "“Keep indoors,” said the captain.",
+        "“Ten to one this “Who goes? Stand, or we fire.” 140 TREASURE",
+        "The captain was in the porch, protected from a treacherous s",
+        "“And what do you want with your flag of truce?” he cried."
+      ],
+      "closePages": [
+        159,
+        null,
+        null
+      ],
+      "close": [
+        "“There!” he cried, “that’s what I think of ye. Before an hou",
+        "[image]",
+        "[image]"
+      ],
+      "textHash": "770f30b46d0f",
+      "pageHash": "ccd887983cb5"
+    },
+    {
+      "title": "Part IV — Chapter 21 - The Attack",
+      "blockCount": 39,
+      "types": "hpppppppppppppppppppppipppppppppppppppi",
+      "pageMin": 162,
+      "pageMax": 168,
+      "openPages": [
+        162,
+        162,
+        162,
+        163,
+        163,
+        163,
+        163,
+        163
+      ],
+      "open": [
+        "Chapter 21 - The Attack",
+        "As soon as Silver disappeared, the captain turned towards th",
+        "The doctor’s watch returned to their loopholes, and the rest",
+        "The captain looked on in silence. Then he spoke.",
+        "“Lads,” said he, “I’ve given Silver a broadside, and pitched",
+        "On the two short sides of the house, east and west, there we"
+      ],
+      "closePages": [
+        168,
+        168,
+        null
+      ],
+      "close": [
+        "“Five!” cried the captain.",
+        "“That’s better. Five against three leaves us four to nine. T",
+        "[image]"
+      ],
+      "textHash": "7279ad4fff57",
+      "pageHash": "55c25bb53b37"
+    },
+    {
+      "title": "Part V — My Sea Adventure",
+      "blockCount": 2,
+      "types": "hi",
+      "pageMin": 170,
+      "pageMax": 170,
+      "openPages": [
+        170,
+        null
+      ],
+      "open": [
+        "Part V",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "7a80a8f8db4f",
+      "pageHash": "e287fbd2ea39"
+    },
+    {
+      "title": "Part V — Chapter 22 - How I Began My Sea Adventure",
+      "blockCount": 21,
+      "types": "hpppppppppppppppppipi",
+      "pageMin": 171,
+      "pageMax": 176,
+      "openPages": [
+        171,
+        171,
+        172,
+        172,
+        172,
+        172,
+        172,
+        172,
+        173,
+        173,
+        174,
+        174,
+        174,
+        174,
+        175,
+        175,
+        175,
+        175,
+        null,
+        176,
+        null
+      ],
+      "open": [
+        "Chapter 22 - How I Began My Sea Adventure",
+        "There was no return of the mutineers. They had had enough, a",
+        "After dinner the squire and the doctor sat by the captain’s ",
+        "“Is Dr. Livesey mad?” Gray asked me.",
+        "“He’s about the last of this crew for that,” I said.",
+        "“If I am right, he’s going to see Ben Gunn.”",
+        "I was right, as appeared later. But in the meantime, the hou",
+        "All the time I was washing out the blockhouse, this 158 TREA",
+        "This was my second folly, far worse than the first, as I lef",
+        "I headed straight for the east coast of the island, for I wa",
+        "I walked along the surf till, thinking I was far enough to t",
+        "Behind me was the sea, in front, the anchorage, which lay st",
+        "Alongside lay one of the gigs, with Silver in the rear. A co",
+        "Soon the boat shoved off and the man with the red 160 TREASU",
+        "The sun had gone down behind the Spyglass, and it grew dark ",
+        "The white rock was still further down the spit, and it took ",
+        "I dropped into the hollow, lifted the side of the tent, and ",
+        "I sat down to wait for darkness and made a hearty meal of bi",
+        "[image]",
+        "One was the great fire on shore, by which the defeated pirat",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8ed43730a4ef",
+      "pageHash": "1b3ec8a36e29"
+    },
+    {
+      "title": "Part V — Chapter 23 - The Ebb-Tide Runs",
+      "blockCount": 20,
+      "types": "hppppppppppppppipppi",
+      "pageMin": 177,
+      "pageMax": 182,
+      "openPages": [
+        177,
+        177,
+        178,
+        178,
+        178,
+        179,
+        179,
+        179,
+        179,
+        179,
+        180,
+        180,
+        180,
+        180,
+        180,
+        null,
+        182,
+        182,
+        182,
+        null
+      ],
+      "open": [
+        "Chapter 23 - The Ebb-Tide Runs",
+        "The coracle was a very safe boat for a person my size, but s",
+        "The hawser was as taut as a bowstring, and the current so st",
+        "So far so good, but I remembered that a taut hawser, suddenl",
+        "With that, I took out my knife, opened it with my teeth, and",
+        "All this time I had heard loud voices from the cabin. One I ",
+        "On shore, I could see the glow of the great camp fire burnin",
+        "At last the breeze came. I felt the hawser slacken once more",
+        "The breeze had little effect on the coracle, and I was almos",
+        "I expected to be swamped, and since I found I could not push",
+        "It was at first mere instinct, but once I had it in my hands",
+        "I pulled myself up, at infinite risk, and thus commanded a s",
+        "By this time the schooner and her consort were gliding swift",
+        "Suddenly I was surprised by a lurch of the coracle. She seem",
+        "I glanced over my shoulder, and my heart jumped 166 TREASURE",
+        "[image]",
+        "Suddenly the schooner gave a violent lurch, and a shout came",
+        "I lay down flat in the bottom of my boat, and offered my spi",
+        "So I must have lain for hours, continually beaten to and fro",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "3c83a9c93a95",
+      "pageHash": "586961dda0f3"
+    },
+    {
+      "title": "Part V — Chapter 24 - The Cruise of the Coracle",
+      "blockCount": 21,
+      "types": "hpppppppppipppppppppi",
+      "pageMin": 183,
+      "pageMax": 189,
+      "openPages": [
+        183,
+        183,
+        184,
+        184,
+        184,
+        184,
+        185,
+        185,
+        185,
+        185,
+        null,
+        187,
+        187,
+        188,
+        188,
+        188,
+        188,
+        189,
+        189,
+        189,
+        null
+      ],
+      "open": [
+        "Chapter 24 - The Cruise of the Coracle",
+        "It was broad day when I awoke and found myself tossing at th",
+        "I saw myself, if I ventured nearer, dashed to death upon the",
+        "In the meantime I had a better chance before me. To the nort",
+        "It is surprising how easily and securely my little boat coul",
+        "I began to grow bold, and sat up to try my skill paddling. B",
+        "I was drenched and terrified, and fell instantly back into m",
+        "I found each wave, instead of the big, smooth glossy mountai",
+        "I lay on my elbows and every now and again in the smooth pla",
+        "It was very tiring and slow work, yet I did make progress. I",
+        "[image]",
+        "Right in front of me, I beheld the Hispaniola under sail. I ",
+        "Meanwhile, the schooner gradually fell off and filled again ",
+        "The current was bearing coracle and schooner southward at an",
+        "I set myself to paddle. Once I had to stop and bail, but gra",
+        "I was now gaining rapidly on the schooner. And still no soul",
+        "For some time she had been doing the worst thing possible fo",
+        "Hispaniola revolved slowly round her center, and at last pre",
+        "I was not a hundred yards from her when the wind came again ",
+        "My first impulse was one of despair, but my second was towar",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "2c8d954f16bb",
+      "pageHash": "ba7a974e4701"
+    },
+    {
+      "title": "Part V — Chapter 25 - I Strike the Jolly Roger",
+      "blockCount": 32,
+      "types": "hppppppppppppppppipppppppppppppi",
+      "pageMin": 190,
+      "pageMax": 195,
+      "openPages": [
+        190,
+        190,
+        190,
+        190,
+        191,
+        191,
+        191,
+        191
+      ],
+      "open": [
+        "Chapter 25 - I Strike the Jolly Roger",
+        "Ihad scarce gained a position on the bowsprit, when the flyi",
+        "Drain holes along A broken bottle tumbled to and fro like a ",
+        "Suddenly the Hispaniola came right 176 TREASUREISLAND into t",
+        "There were the two watchmen: red-cap was on his back, as sti",
+        "The ship kept bucking like a vicious horse, the sails fillin"
+      ],
+      "closePages": [
+        195,
+        195,
+        null
+      ],
+      "close": [
+        "We skimmed before the breeze like a bird, the coast flashing",
+        "I was elated with my new command, and my conscience, which h",
+        "[image]"
+      ],
+      "textHash": "b88bb6266955",
+      "pageHash": "c5b8fd997f68"
+    },
+    {
+      "title": "Part V — Chapter 26 - Israel Hands",
+      "blockCount": 57,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppipi",
+      "pageMin": 196,
+      "pageMax": 205,
+      "openPages": [
+        196,
+        196,
+        196,
+        196,
+        196,
+        196,
+        197,
+        197
+      ],
+      "open": [
+        "Chapter 26 - Israel Hands",
+        "The wind now hauled into the west. We could run easy from th",
+        "“Cap’n,” said he, at length, with that same un-",
+        "comfortable smile, “Here’s old O’Brien. Suppose you was to h",
+        "“I’m not strong enough, and I don’t like the job, and there ",
+        "“This here’s an unlucky ship, Jim,” he went on."
+      ],
+      "closePages": [
+        null,
+        205,
+        null
+      ],
+      "close": [
+        "[image]",
+        "I was drinking in his words, as conceited as a cock upon a w",
+        "[image]"
+      ],
+      "textHash": "d00782a07540",
+      "pageHash": "fa56bbd390cb"
+    },
+    {
+      "title": "Part V — Chapter 27 - Pieces of Eight",
+      "blockCount": 27,
+      "types": "hppppppppppppppippppppppppi",
+      "pageMin": 206,
+      "pageMax": 212,
+      "openPages": [
+        206,
+        206,
+        206,
+        207,
+        207,
+        207,
+        207,
+        208
+      ],
+      "open": [
+        "Chapter 27 - Pieces of Eight",
+        "Owing to the lean of the vessel, the masts hung far out over",
+        "I began to feel faint and terrified. Hot blood was running o",
+        "It was my first thought to pull out the dirk, but either it ",
+        "These I broke through with a sudden jerk, and then regained ",
+        "He had pitched against the bulwarks, where he lay like some "
+      ],
+      "closePages": [
+        212,
+        212,
+        null
+      ],
+      "close": [
+        "“Bring a torch, Dick,” said Silver, when my capture was thus",
+        "One of the men left the log house and presently returned wit",
+        "[image]"
+      ],
+      "textHash": "4300b65abc7e",
+      "pageHash": "ca9e644619a6"
+    },
+    {
+      "title": "Part VI — Captain Silver",
+      "blockCount": 2,
+      "types": "hi",
+      "pageMin": 214,
+      "pageMax": 214,
+      "openPages": [
+        214,
+        null
+      ],
+      "open": [
+        "Part VI",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8fe6b2db9243",
+      "pageHash": "09593d00b1db"
+    },
+    {
+      "title": "Part VI — Chapter 28 - In the Enemy’s Camp",
+      "blockCount": 57,
+      "types": "hppppppppppppppppppppppppppppppippppppppppppppppppppppppi",
+      "pageMin": 215,
+      "pageMax": 223,
+      "openPages": [
+        215,
+        215,
+        215,
+        215,
+        215,
+        215,
+        216,
+        216
+      ],
+      "open": [
+        "Chapter 28 - In the Enemy’s Camp",
+        "The glare of the torch lighting up the interior of the block",
+        "There were six buccaneers, all told. Not another man was lef",
+        "“So,” said Long John, “here’s Jim Hawkins, shiver my timbers",
+        "“Give me a light, Dick,” said he.",
+        "“And so,"
+      ],
+      "closePages": [
+        223,
+        223,
+        null
+      ],
+      "close": [
+        "My face expressed wonder so unaffected that he saw the needl",
+        "“There’s something under that, no doubt.” And he took anothe",
+        "[image]"
+      ],
+      "textHash": "9017441731ed",
+      "pageHash": "9c92c6e51a72"
+    },
+    {
+      "title": "Part VI — Chapter 29 - The Black Spot Again",
+      "blockCount": 60,
+      "types": "hppipppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 224,
+      "pageMax": 231,
+      "openPages": [
+        224,
+        224,
+        224,
+        null,
+        226,
+        226,
+        226,
+        226
+      ],
+      "open": [
+        "Chapter 29 - The Black Spot Again",
+        "The council had lasted some time, when one of them re-entere",
+        "Halfway down the slope, the conspirators were collected in a",
+        "[image]",
+        "“Let ‘em come, lad,” said Silver, cheerily.",
+        "“I’ve still a shot in my locker.”"
+      ],
+      "closePages": [
+        231,
+        231,
+        null
+      ],
+      "close": [
+        "It was long before I could sleep. Heaven knows I had matter ",
+        "Yet my heart was sore for him, wicked as he was, to think on",
+        "[image]"
+      ],
+      "textHash": "6bed5f33a0be",
+      "pageHash": "243a6d7b9350"
+    },
+    {
+      "title": "Part VI — Chapter 30 - On Parole",
+      "blockCount": 59,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppippppppppppppppi",
+      "pageMin": 232,
+      "pageMax": 239,
+      "openPages": [
+        232,
+        232,
+        232,
+        233,
+        233,
+        233,
+        233,
+        233
+      ],
+      "open": [
+        "Chapter 30 - On Parole",
+        "Wewere wa kened by a clear, hearty voice hailing us from the",
+        "“George, help Dr. Livesey over the ship’s side. All a-doin’ ",
+        "“We’ve quite a surprise for you, too, sir,” he contin-",
+        "ued.",
+        "“We’ve a stranger here – he! he! A new lodger, sir, slept al"
+      ],
+      "closePages": [
+        239,
+        239,
+        null
+      ],
+      "close": [
+        "“My second is advice: Keep the boy close beside you, and whe",
+        "Dr. Livesey shook hands with me through the stockade, nodded",
+        "[image]"
+      ],
+      "textHash": "06d25fc5e211",
+      "pageHash": "58929f6991c1"
+    },
+    {
+      "title": "Part VI — Chapter 31 - Flint’s Pointer",
+      "blockCount": 40,
+      "types": "hppppppipppppppppppppppppppppppppppppppi",
+      "pageMin": 240,
+      "pageMax": 246,
+      "openPages": [
+        240,
+        240,
+        240,
+        241,
+        241,
+        241,
+        241,
+        null
+      ],
+      "open": [
+        "Chapter 31 - Flint’s Pointer",
+        "Jim,” said Silver, when we were alone, “if I saved your life",
+        "Just then a man hailed us that breakfast was ready, and we w",
+        "Even Silver, eating away, with Captain Flint upon his should",
+        "“Ay, mates,” said he, “it’s lucky you have Barbecue to think",
+        "“As for the hostage,” he continued, “I’ll take him in a line"
+      ],
+      "closePages": [
+        246,
+        246,
+        null
+      ],
+      "close": [
+        "Men’ were his only song, mates, and I tell you true, I never",
+        "“Come, come,” said Silver, “stow this talk. He’s dead, and h",
+        "[image]"
+      ],
+      "textHash": "3ab5e3b6e883",
+      "pageHash": "5f12474f6065"
+    },
+    {
+      "title": "Part VI — Chapter 32 - The Voice Among the Trees",
+      "blockCount": 52,
+      "types": "hppppppppppppppppppppppppppipppppppppppppppppppppppi",
+      "pageMin": 247,
+      "pageMax": 254,
+      "openPages": [
+        247,
+        247,
+        248,
+        248,
+        248,
+        248,
+        248,
+        248
+      ],
+      "open": [
+        "Chapter 32 - The Voice Among the Trees",
+        "Partly from the influence of this alarm, partly to rest Silv",
+        "Silver took bearings with his compass.",
+        "“There are three tall trees,” said he, “about in the right l",
+        "“I don’t feel sharp,” growled Morgan.",
+        "“Thinkin’ o’ Flint – I think it were – ‘as done me.”"
+      ],
+      "closePages": [
+        254,
+        254,
+        null
+      ],
+      "close": [
+        "Before us was a great excavation, not very recent, for the s",
+        "The cache had been found and rifled. The seven hundred thous",
+        "[image]"
+      ],
+      "textHash": "fd9e3c0cb543",
+      "pageHash": "f512f72f0d3c"
+    },
+    {
+      "title": "Part VI — Chapter 33 - The Fall of a Chieftain",
+      "blockCount": 44,
+      "types": "hppppppppipppppppppppppppppppppppppppppppppi",
+      "pageMin": 255,
+      "pageMax": 263,
+      "openPages": [
+        255,
+        255,
+        256,
+        256,
+        256,
+        256,
+        256,
+        256
+      ],
+      "open": [
+        "Chapter 33 - The Fall of a Chieftain",
+        "Each of these six men seemed struck by a blow. But with Silv",
+        "There was no time left for him to answer. The buccaneers, wi",
+        "“Two guineas!” roared Merry, shaking it at Sil-",
+        "ver.",
+        "“That’s your seven hundred thousand pounds, is it? You’re th"
+      ],
+      "closePages": [
+        263,
+        263,
+        null
+      ],
+      "close": [
+        "“Ah!” was all the captain said.",
+        "What a supper I had that night, with all my friends around m",
+        "[image]"
+      ],
+      "textHash": "18d5e070af97",
+      "pageHash": "f9a67017650e"
+    },
+    {
+      "title": "Part VI — Chapter 34 - And Last",
+      "blockCount": 33,
+      "types": "hppppppppippppppppppppihppppppppi",
+      "pageMin": 264,
+      "pageMax": 273,
+      "openPages": [
+        264,
+        264,
+        264,
+        265,
+        265,
+        265,
+        265,
+        265
+      ],
+      "open": [
+        "Chapter 34 - And Last",
+        "The next morning we fell to work early, for the transportati",
+        "Therefore the work pushed on briskly. Gray and Ben Gunn came",
+        "It was a strange collection of coins. Doubloons, double guin",
+        "Day after day this work went on, and all this time we heard ",
+        "At last – I think it was on the third night – the doctor and"
+      ],
+      "closePages": [
+        273,
+        273,
+        null
+      ],
+      "close": [
+        "Though his health was better, the cares of his household wer",
+        "In his own time, his wandering life itself seemed a romantic",
+        "[image]"
+      ],
+      "textHash": "eaab285aa643",
+      "pageHash": "bf4641fe9199"
+    }
+  ]
 }

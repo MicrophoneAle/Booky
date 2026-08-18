@@ -1,5 +1,5 @@
 {
-  "parserVersion": 134,
+  "parserVersion": 135,
   "totalBlocks": 3949,
   "totalWords": 157083,
   "chapterCount": 53,
@@ -62,5 +62,2016 @@
   "lastBlockText": "",
   "headingCount": 55,
   "avgBlockLength": 223,
-  "proseBlockCount": 3894
+  "proseBlockCount": 3894,
+  "frontMatter": {
+    "blockCount": 3,
+    "types": "hhp",
+    "pageMin": 0,
+    "pageMax": 0,
+    "openPages": [
+      0,
+      0,
+      0
+    ],
+    "open": [
+      "Oliver Twist",
+      "By Charles Dickens",
+      "Charles Dickens"
+    ],
+    "closePages": [],
+    "close": [],
+    "textHash": "aad9634d68d6",
+    "pageHash": "7c01691d53eb"
+  },
+  "chapterOrder": [
+    {
+      "title": "Chapter 1 - Treats of the Place Where Oliver Twist Was Born and of the Circumstances Attending His Birth",
+      "blockCount": 18,
+      "types": "hppppppppppppppppp",
+      "pageMin": 3,
+      "pageMax": 5,
+      "openPages": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        5
+      ],
+      "open": [
+        "Chapter 1 - Treats of the Place Where Oliver Twist Was Born ",
+        "Among other public buildings in a certain town, which for ma",
+        "For a long time after it was ushered into this world of sorr",
+        "Although I am not disposed to maintain that the being born i",
+        "Oliver had been surrounded by careful grandmothers, anxious ",
+        "The surgeon had been sitting with his face turned towards th",
+        "'Lor bless her dear heart, no!' interposed the nurse, hastil",
+        "'Lor bless her dear heart, when she has lived as long as I h",
+        "Apparently this consolatory perspective of a mother's prospe",
+        "The surgeon deposited it in her arms. She imprinted her cold",
+        "'It's all over, Mrs. Thingummy!' said the surgeon at last.",
+        "'Ah, poor dear, so it is!' said the nurse, picking up the co",
+        "'You needn't mind sending up to me, if the child cries, nurs",
+        "'She was brought here last night,' replied the old woman, 'b",
+        "The surgeon leaned over the body, and raised the left hand. ",
+        "The medical gentleman walked away to dinner; and the nurse, ",
+        "What an excellent example of the power of dress, young Olive",
+        "Oliver cried lustily. If he could have known that he was an "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "336c3ece5006",
+      "pageHash": "21e7c61d0459"
+    },
+    {
+      "title": "Chapter 2 - Treats of Oliver Twist's Growth, Education, and Board",
+      "blockCount": 76,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 6,
+      "pageMax": 13,
+      "openPages": [
+        6,
+        6,
+        6,
+        6,
+        7,
+        7,
+        7,
+        7
+      ],
+      "open": [
+        "Chapter 2 - Treats of Oliver Twist's Growth, Education, and ",
+        "For the next eight or ten months, Oliver was the victim of a",
+        "Everybody knows the story of another experimental philosophe",
+        "Occasionally, when there was some more than usually interest",
+        "It cannot be expected that this system of farming would prod",
+        "'Goodness gracious! Is that you, Mr. Bumble, sir?' said Mrs."
+      ],
+      "closePages": [
+        13,
+        13,
+        13
+      ],
+      "close": [
+        "'That boy will be hung,' said the gentleman in the white wai",
+        "Nobody controverted the prophetic gentleman's opinion. An an",
+        "'I never was more convinced of anything in my life,' said th"
+      ],
+      "textHash": "931e9010d9aa",
+      "pageHash": "a973559db82f"
+    },
+    {
+      "title": "Chapter 3 - Relates How Oliver Twist Was Very Near Getting a Place Which Would Not Have Been a Sinecure",
+      "blockCount": 72,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 14,
+      "pageMax": 20,
+      "openPages": [
+        14,
+        14,
+        14,
+        14,
+        15,
+        15,
+        15,
+        15
+      ],
+      "open": [
+        "Chapter 3 - Relates How Oliver Twist Was Very Near Getting a",
+        "For a week after the commission of the impious and profane o",
+        "Let it not be supposed by the enemies of 'the system,' that,",
+        "It chanced one morning, while Oliver's affairs were in this ",
+        "'Wo--o!' said Mr. Gamfield to the donkey.",
+        "The donkey was in a state of profound abstraction: wondering"
+      ],
+      "closePages": [
+        20,
+        20,
+        20
+      ],
+      "close": [
+        "'I hope,' stammered Mr. Limbkins: 'I hope the magistrates wi",
+        "'The magistrates are not called upon to pronounce any opinio",
+        "The next morning, the public were once informed that Oliver "
+      ],
+      "textHash": "be2b31edde28",
+      "pageHash": "471762544e53"
+    },
+    {
+      "title": "Chapter 4 - Oliver, Being Offered Another Place, Makes His First Entry Into Public Life",
+      "blockCount": 63,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 21,
+      "pageMax": 26,
+      "openPages": [
+        21,
+        21,
+        21,
+        21,
+        21,
+        21,
+        21,
+        21
+      ],
+      "open": [
+        "Chapter 4 - Oliver, Being Offered Another Place, Makes His F",
+        "In great families, when an advantageous place cannot be obta",
+        "Mr. Bumble had been despatched to make various preliminary i",
+        "Mr. Sowerberry was a tall gaunt, large-jointed man, attired ",
+        "'I have taken the measure of the two women that died last ni",
+        "'Think so?' said the undertaker in a tone which half admitte"
+      ],
+      "closePages": [
+        26,
+        26,
+        26
+      ],
+      "close": [
+        "There being nothing eatable within his reach, Oliver replied",
+        "'Then come with me,' said Mrs. Sowerberry: taking up a dim a",
+        "Oliver lingered no longer, but meekly followed his new mistr"
+      ],
+      "textHash": "3421e9b2207b",
+      "pageHash": "53fe1c07ab6c"
+    },
+    {
+      "title": "Chapter 5 - Oliver Mingles With New Associates. Going to a Funeral for the First Time, He Forms an Unfavourable Notion of His Master's Business",
+      "blockCount": 95,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 27,
+      "pageMax": 35,
+      "openPages": [
+        27,
+        27,
+        27,
+        27,
+        27,
+        27,
+        27,
+        27
+      ],
+      "open": [
+        "Chapter 5 - Oliver Mingles With New Associates. Going to a F",
+        "Oliver, being left to himself in the undertaker's shop, set ",
+        "The shop was close and hot. The atmosphere seemed tainted wi",
+        "Nor were these the only dismal feelings which depressed Oliv",
+        "Oliver was awakened in the morning, by a loud kicking at the",
+        "'Open the door, will yer?' cried the voice which belonged to"
+      ],
+      "closePages": [
+        35,
+        35,
+        35
+      ],
+      "close": [
+        "'Pretty well, thank you, sir' replied Oliver, with considera",
+        "'Ah, you'll get used to it in time, Oliver,' said Sowerberry",
+        "Oliver wondered, in his own mind, whether it had taken a ver"
+      ],
+      "textHash": "d3de4553fbc8",
+      "pageHash": "2d9ff52133b3"
+    },
+    {
+      "title": "Chapter 6 - Oliver, Being Goaded by the Taunts of Noah, Rouses Into Action, and Rather Astonishes Him",
+      "blockCount": 36,
+      "types": "hppppppppppppppppppppppppppppppppppp",
+      "pageMin": 36,
+      "pageMax": 39,
+      "openPages": [
+        36,
+        36,
+        36,
+        36,
+        37,
+        37,
+        37,
+        37
+      ],
+      "open": [
+        "Chapter 6 - Oliver, Being Goaded by the Taunts of Noah, Rous",
+        "The month's trial over, Oliver was formally apprenticed. It ",
+        "For instance; when Sowerberry had an order for the burial of",
+        "Charlotte treated him ill, because Noah did; and Mrs. Sowerb",
+        "One day, Oliver and Noah had descended into the kitchen at t",
+        "Intent upon this innocent amusement, Noah put his feet on th"
+      ],
+      "closePages": [
+        39,
+        39,
+        39
+      ],
+      "close": [
+        "'No, no,' said Mrs. Sowerberry: bethinking herself of Oliver",
+        "It'll keep the swelling down.'",
+        "Noah stopped to make no reply, but started off at his fulles"
+      ],
+      "textHash": "7eee7895c25a",
+      "pageHash": "bdf41b6351db"
+    },
+    {
+      "title": "Chapter 7 - Oliver Continues Refractory",
+      "blockCount": 63,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 40,
+      "pageMax": 45,
+      "openPages": [
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40
+      ],
+      "open": [
+        "Chapter 7 - Oliver Continues Refractory",
+        "Noah Claypole ran along the streets at his swiftest pace, an",
+        "'Why, what's the matter with the boy!' said the old pauper.",
+        "'Mr. Bumble! Mr. Bumble!' cried Noah, wit well-affected dism",
+        "and agitated, that they not only caught the ear of Mr. Bumbl",
+        "'Oh, Mr. Bumble, sir!' said Noah: 'Oliver, sir, --Oliver has"
+      ],
+      "closePages": [
+        45,
+        45,
+        45
+      ],
+      "close": [
+        "'Yes, yes, I will, to say good-b'ye to you,' replied Oliver.",
+        "'I hope so,' replied the child. 'After I am dead, but not be",
+        "The blessing was from a young child's lips, but it was the f"
+      ],
+      "textHash": "a4350b42b9b5",
+      "pageHash": "04b8d0883f15"
+    },
+    {
+      "title": "Chapter 8 - Oliver Walks to London. He Encounters on the Road a Strange Sort of Young Gentleman",
+      "blockCount": 55,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 46,
+      "pageMax": 52,
+      "openPages": [
+        46,
+        46,
+        46,
+        46,
+        46,
+        46,
+        46,
+        46
+      ],
+      "open": [
+        "Chapter 8 - Oliver Walks to London. He Encounters on the Roa",
+        "Oliver reached the stile at which the by-path terminated; an",
+        "The stone by which he was seated, bore, in large characters,",
+        "London!--that great place!--nobody--not even Mr. Bumble--cou",
+        "He had diminished the distance between himself and London by",
+        "'A clean shirt,' thought Oliver, 'is a very comfortable thin"
+      ],
+      "closePages": [
+        52,
+        52,
+        52
+      ],
+      "close": [
+        "'We are very glad to see you, Oliver, very,' said the Jew. '",
+        "The latter part of this speech, was hailed by a boisterous s",
+        "Oliver ate his share, and the Jew then mixed him a glass of "
+      ],
+      "textHash": "54bdeeb28a25",
+      "pageHash": "88fefa600479"
+    },
+    {
+      "title": "Chapter 9 - Containing Further Particulars Concerning the Pleasant Old Gentleman, and His Hopeful Pupils",
+      "blockCount": 63,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 53,
+      "pageMax": 58,
+      "openPages": [
+        53,
+        53,
+        53,
+        53,
+        53,
+        53,
+        53,
+        54
+      ],
+      "open": [
+        "Chapter 9 - Containing Further Particulars Concerning the Pl",
+        "It was late next morning when Oliver awoke, from a sound, lo",
+        "Oliver was precisely in this condition. He saw the Jew with ",
+        "When the coffee was done, the Jew drew the saucepan to the h",
+        "After satisfiying himself upon this head, the Jew stepped ge",
+        "'Aha!' said the Jew, shrugging up his shoulders, and distort"
+      ],
+      "closePages": [
+        57,
+        58,
+        58
+      ],
+      "close": [
+        "'Here it is, sir,' said Oliver, showing it in his hand.",
+        "'You're a clever boy, my dear,' said the playful old gentlem",
+        "Oliver wondered what picking the old gentleman's pocket in p"
+      ],
+      "textHash": "1e97e7019c55",
+      "pageHash": "39fbac2b9e68"
+    },
+    {
+      "title": "Chapter 10 - Oliver Becomes Better Acquainted With the Characters of His New Associates; and Purchases Experience at a High Price. Being a Short, but Very Important Chapter, in This History",
+      "blockCount": 37,
+      "types": "hpppppppppppppppppppppppppppppppppppp",
+      "pageMin": 59,
+      "pageMax": 62,
+      "openPages": [
+        59,
+        59,
+        59,
+        59,
+        59,
+        59,
+        60,
+        60
+      ],
+      "open": [
+        "Chapter 10 - Oliver Becomes Better Acquainted With the Chara",
+        "For many days, Oliver remained in the Jew's room, picking th",
+        "Oliver was rendered the more anxious to be actively employed",
+        "At length, one morning, Oliver obtained the permission he ha",
+        "The three boys sallied out; the Dodger with his coat-sleeves",
+        "The pace at which they went, was such a very lazy, ill-looki"
+      ],
+      "closePages": [
+        62,
+        62,
+        62
+      ],
+      "close": [
+        "'Don't hurt him,' said the old gentleman, compassionately.",
+        "'Oh no, I won't hurt him,' replied the officer, tearing his ",
+        "Oliver, who could hardly stand, made a shift to raise himsel"
+      ],
+      "textHash": "e344309dfa63",
+      "pageHash": "6e0d85851d15"
+    },
+    {
+      "title": "Chapter 11 - Treats of Mr. Fang the Police Magistrate; and Furnishes a Slight Specimen of His Mode of Administering Justice",
+      "blockCount": 91,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 63,
+      "pageMax": 69,
+      "openPages": [
+        63,
+        63,
+        63,
+        63,
+        63,
+        63,
+        63,
+        63
+      ],
+      "open": [
+        "Chapter 11 - Treats of Mr. Fang the Police Magistrate; and F",
+        "The offence had been committed within the district, and inde",
+        "'What's the matter now?' said the man carelessly.",
+        "'A young fogle-hunter,' replied the man who had Oliver in ch",
+        "'Are you the party that's been robbed, sir?' inquired the ma",
+        "'Yes, I am,' replied the old gentleman; 'but I am not sure t"
+      ],
+      "closePages": [
+        69,
+        69,
+        69
+      ],
+      "close": [
+        "'May I accompany you?' said the book-stall keeper, looking i",
+        "'Bless me, yes, my dear sir,' said Mr. Brownlow quickly. 'I ",
+        "The book-stall keeper got into the coach; and away they drov"
+      ],
+      "textHash": "f94e3f4124ac",
+      "pageHash": "caa30dd1bfbe"
+    },
+    {
+      "title": "Chapter 12 - In Which Oliver Is Taken Better Care of Than He Ever Was Before. and in Which the Narrative Reverts to the Merry Old Gentleman and His Youthful Friends",
+      "blockCount": 82,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 70,
+      "pageMax": 77,
+      "openPages": [
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70
+      ],
+      "open": [
+        "Chapter 12 - In Which Oliver Is Taken Better Care of Than He",
+        "The coach rattled away, over nearly the same ground as that ",
+        "But, for many days, Oliver remained insensible to all the go",
+        "Weak, and thin, and pallid, he awoke at last from what seeme",
+        "'What room is this? Where have I been brought to?' said Oliv",
+        "He uttered these words in a feeble voice, being very faint a"
+      ],
+      "closePages": [
+        77,
+        77,
+        77
+      ],
+      "close": [
+        "The noise of footsteps on the creaking stairs, a few minutes",
+        "'Why, how's this?' muttered the Jew: changing countenance; '",
+        "The footsteps approached nearer; they reached the landing. T"
+      ],
+      "textHash": "123a8e58aa74",
+      "pageHash": "51a46990b488"
+    },
+    {
+      "title": "Chapter 13 - Some New Acquaintances Are Introduced to the Intelligent Reader, Connected With Whom Various Pleasant Matters Are Related, Appertaining to This History",
+      "blockCount": 84,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 78,
+      "pageMax": 84,
+      "openPages": [
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78
+      ],
+      "open": [
+        "Chapter 13 - Some New Acquaintances Are Introduced to the In",
+        "'Where's Oliver?' said the Jew, rising with a menacing look.",
+        "The young thieves eyed their preceptor as if they were alarm",
+        "'What's become of the boy?' said the Jew, seizing the Dodger",
+        "Mr. Fagin looked so very much in earnest, that Charley Bates",
+        "'Will you speak?' thundered the Jew: shaking the Dodger so m"
+      ],
+      "closePages": [
+        84,
+        84,
+        84
+      ],
+      "close": [
+        "'Yes,' replied the Jew, 'wherever she lays hands on him. Fin",
+        "The boy murmured a reply of intelligence: and hurried downst",
+        "'He has not peached so far,' said the Jew as he pursued his "
+      ],
+      "textHash": "50a955ea3a30",
+      "pageHash": "38e3b6c28f95"
+    },
+    {
+      "title": "Chapter 14 - Comprising Further Particulars of Oliver's Stay at Mr. Brownlow's, With the Remarkable Prediction Which One Mr. Grimwig Uttered Concerning Him, When He Went Out on an Errand",
+      "blockCount": 97,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 85,
+      "pageMax": 93,
+      "openPages": [
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85
+      ],
+      "open": [
+        "Chapter 14 - Comprising Further Particulars of Oliver's Stay",
+        "Oliver soon recovering from the fainting-fit into which Mr. ",
+        "'Ah!' said the housekeeper, watching the direction of Oliver",
+        "'I see it is ma'am,' replied Oliver. 'Why have they taken it",
+        "'It has been taken down, child, because Mr. Brownlow said, t",
+        "'Oh, no, indeed. It didn't worry me, ma'am,' said Oliver. 'I"
+      ],
+      "closePages": [
+        93,
+        93,
+        93
+      ],
+      "close": [
+        "With these words he drew his chair closer to the table; and ",
+        "It is worthy of remark, as illustrating the importance we at",
+        "It grew so dark, that the figures on the dial-plate were sca"
+      ],
+      "textHash": "bc2de1571af3",
+      "pageHash": "0617c5e90cab"
+    },
+    {
+      "title": "Chapter 15 - Showing How Very Fond of Oliver Twist, the Merry Old Jew and Miss Nancy Were",
+      "blockCount": 66,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 94,
+      "pageMax": 99,
+      "openPages": [
+        94,
+        94,
+        94,
+        94,
+        94,
+        94,
+        94,
+        94
+      ],
+      "open": [
+        "Chapter 15 - Showing How Very Fond of Oliver Twist, the Merr",
+        "In the obscure parlour of a low public-house, in the filthie",
+        "At his feet, sat a white-coated, red-eyed dog; who occupied ",
+        "'Keep quiet, you warmint! Keep quiet!' said Mr. Sikes, sudde",
+        "Dogs are not generally apt to revenge injuries inflicted upo",
+        "'You would, would you?' said Sikes, seizing the poker in one"
+      ],
+      "closePages": [
+        99,
+        99,
+        99
+      ],
+      "close": [
+        "'And he shall have it, too!' rejoined the man, administering",
+        "Weak with recent illness; stupified by the blows and the sud",
+        "******** The gas-lamps were lighted; Mrs. Bedwin was waiting"
+      ],
+      "textHash": "5c6e31db044b",
+      "pageHash": "d5767981d03d"
+    },
+    {
+      "title": "Chapter 16 - Relates What Became of Oliver Twist, After He Had Been Claimed by Nancy",
+      "blockCount": 96,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 100,
+      "pageMax": 107,
+      "openPages": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "open": [
+        "Chapter 16 - Relates What Became of Oliver Twist, After He H",
+        "The narrow streets and courts, at length, terminated in a la",
+        "'Do you hear?' growled Sikes, as Oliver hesitated, and looke",
+        "They were in a dark corner, quite out of the track of passen",
+        "Oliver saw, but too plainly, that resistance would be of no ",
+        "'Give me the other,' said Sikes, seizing Oliver's unoccupied"
+      ],
+      "closePages": [
+        107,
+        107,
+        107
+      ],
+      "close": [
+        "'Put off the smart ones,' said Charley, 'and I'll give 'em t",
+        "Poor Oliver unwillingly complied. Master Bates rolling up th",
+        "The noise of Charley's laughter, and the voice of Miss Betsy"
+      ],
+      "textHash": "e5b29cd03524",
+      "pageHash": "339e81782ff1"
+    },
+    {
+      "title": "Chapter 17 - Oliver's Destiny Continuing Unpropitious, Brings a Great Man to London to Injure His Reputation",
+      "blockCount": 96,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 108,
+      "pageMax": 115,
+      "openPages": [
+        108,
+        108,
+        108,
+        108,
+        108,
+        109,
+        109,
+        109
+      ],
+      "open": [
+        "Chapter 17 - Oliver's Destiny Continuing Unpropitious, Bring",
+        "It is the custom on the stage, in all good murderous melodra",
+        "Such changes appear absurd; but they are not so unnatural as",
+        "Mr. Bumble emerged at early morning from the workhouse-gate,",
+        "Mr. Bumble stopped not to converse with the small shopkeeper",
+        "'Drat that beadle!' said Mrs. Mann, hearing the well-known s"
+      ],
+      "closePages": [
+        115,
+        115,
+        115
+      ],
+      "close": [
+        "'Silence!' said the old gentleman, feigning an anger he was ",
+        "There were sad hearts at Mr. Brownlow's that night.",
+        "Oliver's heart sank within him, when he thought of his good "
+      ],
+      "textHash": "bece9b388815",
+      "pageHash": "33f0f12581a0"
+    },
+    {
+      "title": "Chapter 18 - How Oliver Passed His Time in the Improving Society of His Reputable Friends",
+      "blockCount": 66,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 116,
+      "pageMax": 122,
+      "openPages": [
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        117,
+        117
+      ],
+      "open": [
+        "Chapter 18 - How Oliver Passed His Time in the Improving Soc",
+        "About noon next day, when the Dodger and Master Bates had go",
+        "Oliver in, and cherished him, when, without his timely aid, ",
+        "Little Oliver's blood ran cold, as he listened to the Jew's ",
+        "Sikes: which seemed to bear reference to some foregone consp",
+        "The Jew, smiling hideously, patted Oliver on the head, and s"
+      ],
+      "closePages": [
+        121,
+        121,
+        122
+      ],
+      "close": [
+        "After some words apart between the last comer and Fagin, the",
+        "From this day, Oliver was seldom left alone; but was placed ",
+        "In short, the wily old Jew had the boy in his toils. Having "
+      ],
+      "textHash": "65db99401113",
+      "pageHash": "eb40ab250028"
+    },
+    {
+      "title": "Chapter 19 - In Which a Notable Plan Is Discussed and Determined On",
+      "blockCount": 110,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 123,
+      "pageMax": 131,
+      "openPages": [
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123,
+        123
+      ],
+      "open": [
+        "Chapter 19 - In Which a Notable Plan Is Discussed and Determ",
+        "It was a chill, damp, windy night, when the Jew: buttoning h",
+        "The house to which Oliver had been conveyed, was in the neig",
+        "The mud lay thick upon the stones, and a black mist hung ove",
+        "He kept on his course, through many winding and narrow ways,",
+        "The Jew was evidently too familiar with the ground he traver"
+      ],
+      "closePages": [
+        130,
+        130,
+        131
+      ],
+      "close": [
+        "'Hours ago,' replied the Dodger, throwing open a door. 'Here",
+        "The boy was lying, fast asleep, on a rude bed upon the floor",
+        "'Not now,' said the Jew, turning softly away. 'To-morrow. To"
+      ],
+      "textHash": "d213adbe48ae",
+      "pageHash": "98b726d3b3b6"
+    },
+    {
+      "title": "Chapter 20 - Wherein Olver Is Delivered Over to Mr. William Sikes",
+      "blockCount": 81,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 132,
+      "pageMax": 138,
+      "openPages": [
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132,
+        132
+      ],
+      "open": [
+        "Chapter 20 - Wherein Olver Is Delivered Over to Mr. William ",
+        "When Oliver awoke in the morning, he was a good deal surpris",
+        "'To--to--stop there, sir?' asked Oliver, anxiously.",
+        "'No, no, my dear. Not to stop there,' replied the Jew. 'We s",
+        "The old man, who was stooping over the fire toasting a piece",
+        "'I suppose,' said the Jew, fixing his eyes on Oliver, 'you w"
+      ],
+      "closePages": [
+        138,
+        138,
+        138
+      ],
+      "close": [
+        "Oliver was not long in making his toilet; having taken some ",
+        "Nancy, scarcely looking at the boy, threw him a handkerchief",
+        "Oliver turned, for an instant, when they reached the door, i"
+      ],
+      "textHash": "15aeda9e5065",
+      "pageHash": "4f96d08fbe47"
+    },
+    {
+      "title": "Chapter 21 - The Expedition",
+      "blockCount": 44,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 139,
+      "pageMax": 143,
+      "openPages": [
+        139,
+        139,
+        139,
+        139,
+        139,
+        140,
+        140,
+        140
+      ],
+      "open": [
+        "Chapter 21 - The Expedition",
+        "It was a cheerless morning when they got into the street; bl",
+        "By the time they had turned into the Bethnal Green Road, the",
+        "Turning down Sun Street and Crown Street, and crossing Finsb",
+        "It was market-morning. The ground was covered, nearly ankle-",
+        "Mr. Sikes, dragging Oliver after him, elbowed his way throug"
+      ],
+      "closePages": [
+        143,
+        143,
+        143
+      ],
+      "close": [
+        "'The water!' thought Oliver, turning sick with fear. 'He has",
+        "He was about to throw himself on the ground, and make one st",
+        "Sikes, with Oliver's hand still in his, softly approached th"
+      ],
+      "textHash": "9e1e8e892ab4",
+      "pageHash": "b949cf765095"
+    },
+    {
+      "title": "Chapter 22 - The Burglary",
+      "blockCount": 71,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 144,
+      "pageMax": 149,
+      "openPages": [
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144,
+        144
+      ],
+      "open": [
+        "Chapter 22 - The Burglary",
+        "'Hallo!' cried a loud, hoarse voice, as soon as they set foo",
+        "'Don't make such a row,' said Sikes, bolting the door. 'Show",
+        "'Aha! my pal!' cried the same voice. 'A glim, Barney, a glim",
+        "The speaker appeared to throw a boot-jack, or some such arti",
+        "'Do you hear?' cried the same voice. 'There's Bill Sikes in "
+      ],
+      "closePages": [
+        149,
+        149,
+        149
+      ],
+      "close": [
+        "The cry was repeated--a light appeared--a vision of two terr",
+        "Sikes had disappeared for an instant; but he was up again, a",
+        "'Clasp your arm tighter,' said Sikes, as he drew him through"
+      ],
+      "textHash": "f0938966d5f1",
+      "pageHash": "8405dbaf1978"
+    },
+    {
+      "title": "Chapter 23 - Which Contains the Substance of a Pleasant Conversation Between Mr. Bumble and a Lady; and Shows That Even a Beadle May Be Susceptible on Some Points",
+      "blockCount": 69,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 150,
+      "pageMax": 155,
+      "openPages": [
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150,
+        150
+      ],
+      "open": [
+        "Chapter 23 - Which Contains the Substance of a Pleasant Conv",
+        "The night was bitter cold. The snow lay on the ground, froze",
+        "Such was the aspect of out-of-doors affairs, when Mr. Corney",
+        "'Well!' said the matron, leaning her elbow on the table, and",
+        "Mrs. Corney shook her head mournfully, as if deploring the m",
+        "How slight a thing will disturb the equanimity of our frail "
+      ],
+      "closePages": [
+        155,
+        155,
+        155
+      ],
+      "close": [
+        "At this intelligence, the worthy Mrs. Corney muttered a vari",
+        "Mr. Bumble's conduct on being left to himself, was rather in",
+        "Having gone through this very extraordinary performance, he "
+      ],
+      "textHash": "13db3a915a69",
+      "pageHash": "02fdc918ee7a"
+    },
+    {
+      "title": "Chapter 24 - Treats on a Very Poor Subject. but Is a Short One, and May Be Found of Importance in This History",
+      "blockCount": 59,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 156,
+      "pageMax": 160,
+      "openPages": [
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156,
+        156
+      ],
+      "open": [
+        "Chapter 24 - Treats on a Very Poor Subject. but Is a Short O",
+        "It was no unfit messanger of death, who had disturbed the qu",
+        "Alas! How few of Nature's faces are left alone to gladden us",
+        "The old crone tottered alone the passages, and up the stairs",
+        "It was a bare garret-room, with a dim light burning at the f",
+        "'Cold night, Mrs. Corney,' said this young gentleman, as the"
+      ],
+      "closePages": [
+        160,
+        160,
+        160
+      ],
+      "close": [
+        "******* 'Stone dead!' said one of the old women, hurrying in",
+        "'And nothing to tell, after all,' rejoined the matron, walki",
+        "The two crones, to all appearance, too busily occupied in th"
+      ],
+      "textHash": "56a70d4318f4",
+      "pageHash": "1eda46aaad09"
+    },
+    {
+      "title": "Chapter 25 - Wherein This History Reverts to Mr. Fagin and Company",
+      "blockCount": 61,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 161,
+      "pageMax": 166,
+      "openPages": [
+        161,
+        161,
+        161,
+        161,
+        161,
+        161,
+        162,
+        162
+      ],
+      "open": [
+        "Chapter 25 - Wherein This History Reverts to Mr. Fagin and C",
+        "While these things were passing in the country workhouse, Mr",
+        "At a table behind him sat the Artful Dodger, Master Charles ",
+        "Master Bates was also attentive to the play; but being of a ",
+        "'That's two doubles and the rub,' said Mr. Chitling, with a ",
+        "Either the master or the manner of this remark, which was ma"
+      ],
+      "closePages": [
+        166,
+        166,
+        166
+      ],
+      "close": [
+        "'The boy!'",
+        "'Bill had him on his back, and scudded like the wind. We sto",
+        "The Jew stopped to hear no more; but uttering a loud yell, a"
+      ],
+      "textHash": "70865696ed30",
+      "pageHash": "5892d80f5f86"
+    },
+    {
+      "title": "Chapter 26 - In Which a Mysterious Character Appears Upon the Scene; and Many Things, Inseparable From This History, Are Done and Performed",
+      "blockCount": 98,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 167,
+      "pageMax": 176,
+      "openPages": [
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        167,
+        168
+      ],
+      "open": [
+        "Chapter 26 - In Which a Mysterious Character Appears Upon th",
+        "The old man had gained the street corner, before he began to",
+        "Near to the spot on which Snow Hill and Holborn Hill meet, o",
+        "It was into this place that the Jew turned. He was well know",
+        "'Why, the sight of you, Mr. Fagin, would cure the hoptalymy!",
+        "'The neighbourhood was a little too hot, Lively,' said Fagin"
+      ],
+      "closePages": [
+        176,
+        176,
+        176
+      ],
+      "close": [
+        "The Jew glanced contemptuously at the pale face of his assoc",
+        "'What do you think now?' said the Jew, when they had regaine",
+        "This accumulated testimony effectually staggered Mr. Monks. "
+      ],
+      "textHash": "d1c08b601650",
+      "pageHash": "0d62d07cb50b"
+    },
+    {
+      "title": "Chapter 27 - Atones for the Unpoliteness of a Former Chapter; Which Deserted a Lady, Most Unceremoniously",
+      "blockCount": 51,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 177,
+      "pageMax": 181,
+      "openPages": [
+        177,
+        177,
+        177,
+        177,
+        177,
+        178,
+        178,
+        178
+      ],
+      "open": [
+        "Chapter 27 - Atones for the Unpoliteness of a Former Chapter",
+        "As it would be, by no means, seemly in a humble author to ke",
+        "Mr. Bumble had re-counted the teaspoons, re-weighed the suga",
+        "Bumble that it would be an innocent and virtuous way of spen",
+        "Having listened at the keyhole, to assure himself that nobod",
+        "He was still placidly engaged in this latter survey, when Mr"
+      ],
+      "closePages": [
+        181,
+        181,
+        181
+      ],
+      "close": [
+        "'Yer are; yer know yer are!' retorted Noah. 'She's always a-",
+        "she chucks me under the chin, please, sir; and makes all man",
+        "'Silence!' cried Mr. Bumble, sternly. 'Take yourself downsta"
+      ],
+      "textHash": "1526a9382075",
+      "pageHash": "19223d38a62e"
+    },
+    {
+      "title": "Chapter 28 - Looks After Oliver, and Proceeds With His Adventures",
+      "blockCount": 89,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 183,
+      "pageMax": 190,
+      "openPages": [
+        183,
+        183,
+        183,
+        183,
+        183,
+        183,
+        183,
+        183
+      ],
+      "open": [
+        "Chapter 28 - Looks After Oliver, and Proceeds With His Adven",
+        "'Wolves tear your throats!' muttered Sikes, grinding his tee",
+        "There was little to be made out, in the mist and darkness; b",
+        "'Stop, you white-livered hound!' cried the robber, shouting ",
+        "making the best use of his long legs, was already ahead. 'St",
+        "The repetition of the word, brought Toby to a dead stand-sti"
+      ],
+      "closePages": [
+        190,
+        190,
+        190
+      ],
+      "close": [
+        "'But won't you take one look at him, first, miss?' asked Mr.",
+        "'Not now, for the world,' replied the young lady. 'Poor fell",
+        "The old servant looked up at the speaker, as she turned away"
+      ],
+      "textHash": "2ba51b698d64",
+      "pageHash": "749d9ae27be0"
+    },
+    {
+      "title": "Chapter 29 - Has an Introductory Account of the Inmates of the House, to Which Oliver Resorted",
+      "blockCount": 37,
+      "types": "hpppppppppppppppppppppppppppppppppppp",
+      "pageMin": 191,
+      "pageMax": 194,
+      "openPages": [
+        191,
+        191,
+        191,
+        191,
+        191,
+        191,
+        191,
+        191
+      ],
+      "open": [
+        "Chapter 29 - Has an Introductory Account of the Inmates of t",
+        "In a handsome room: though its furniture had rather the air ",
+        "Of the two ladies, one was well advanced in years; but the h",
+        "She was not past seventeen. Cast in so slight and exquisite ",
+        "She was busily engaged in the little offices of the table. C",
+        "'And Brittles has been gone upwards of an hour, has he?' ask"
+      ],
+      "closePages": [
+        194,
+        194,
+        194
+      ],
+      "close": [
+        "'Humph!' rejoined the doctor. 'There is nothing very alarmin",
+        "'If it be necessary,' replied the old lady, 'certainly not.'",
+        "'Then I think it is necessary,' said the doctor; 'at all eve"
+      ],
+      "textHash": "38b6778bbbfd",
+      "pageHash": "f3929c6e3a5e"
+    },
+    {
+      "title": "Chapter 30 - Relates What Oliver's New Visitors Thought of Him",
+      "blockCount": 65,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 195,
+      "pageMax": 200,
+      "openPages": [
+        195,
+        195,
+        195,
+        195,
+        195,
+        195,
+        195,
+        195
+      ],
+      "open": [
+        "Chapter 30 - Relates What Oliver's New Visitors Thought of H",
+        "With many loquacious assurances that they would be agreeably",
+        "'Now,' said the doctor, in a whisper, as he softly turned th",
+        "Stepping before them, he looked into the room. Motioning the",
+        "The honest gentleman held the curtain in his hand, and looke",
+        "The boy stirred, and smiled in his sleep, as though these ma"
+      ],
+      "closePages": [
+        200,
+        200,
+        200
+      ],
+      "close": [
+        "'Yes,' replied Brittles; 'I sent a message up by the coachma",
+        "'You did, did you? Then confound your--slow coaches down her",
+        "doctor, walking away."
+      ],
+      "textHash": "b7ebad4cfec6",
+      "pageHash": "3795cfdf2488"
+    },
+    {
+      "title": "Chapter 31 - Involves a Critical Position",
+      "blockCount": 107,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 201,
+      "pageMax": 209,
+      "openPages": [
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        201
+      ],
+      "open": [
+        "Chapter 31 - Involves a Critical Position",
+        "'Who's that?' inquired Brittles, opening the door a little w",
+        "'Open the door,' replied a man outside; 'it's the officers f",
+        "Much comforted by this assurance, Brittles opened the door t",
+        "'Just send somebody out to relieve my mate, will you, young ",
+        "Brittles replying in the affirmative, and pointing out the b"
+      ],
+      "closePages": [
+        208,
+        209,
+        209
+      ],
+      "close": [
+        "With the next morning, there came a rumour, that two men and",
+        "In short, after some more examination, and a great deal more",
+        "Meanwhile, Oliver gradually throve and prospered under the u"
+      ],
+      "textHash": "13f591216ef2",
+      "pageHash": "a68a212da260"
+    },
+    {
+      "title": "Chapter 32 - Of the Happy Life Oliver Began to Lead With His Kind Friends",
+      "blockCount": 64,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 210,
+      "pageMax": 216,
+      "openPages": [
+        210,
+        210,
+        210,
+        210,
+        210,
+        210,
+        210,
+        210
+      ],
+      "open": [
+        "Chapter 32 - Of the Happy Life Oliver Began to Lead With His",
+        "Oliver's ailings were neither slight nor few. In addition to",
+        "'Poor fellow!' said Rose, when Oliver had been one day feebl",
+        "'The trouble!' cried Oliver. 'Oh! dear lady, if I could but ",
+        "'You shall give nothing at all,' said Miss Maylie, smiling; ",
+        "'Happy, ma'am!' cried Oliver; 'how kind of you to say so!'"
+      ],
+      "closePages": [
+        216,
+        216,
+        216
+      ],
+      "close": [
+        "In the morning, Oliver would be a-foot by six o'clock, roami",
+        "Miss Rose made her appearance: when there were a thousand co",
+        "So three months glided away; three months which, in the life"
+      ],
+      "textHash": "f4ab2954662b",
+      "pageHash": "bce0bb372691"
+    },
+    {
+      "title": "Chapter 33 - Wherein the Happiness of Oliver and His Friends, Experiences a Sudden Check",
+      "blockCount": 65,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 217,
+      "pageMax": 223,
+      "openPages": [
+        217,
+        217,
+        217,
+        217,
+        217,
+        217,
+        217,
+        217
+      ],
+      "open": [
+        "Chapter 33 - Wherein the Happiness of Oliver and His Friends",
+        "Spring flew swiftly by, and summer came. If the village had ",
+        "Still, the same quiet life went on at the little cottage, an",
+        "One beautiful night, when they had taken a longer walk than ",
+        "'Rose, my dear!' said the elder lady.",
+        "Rose made no reply, but played a little quicker, as though t"
+      ],
+      "closePages": [
+        223,
+        223,
+        223
+      ],
+      "close": [
+        "'Let me go, in God's name! My dear child! She is dead! She i",
+        "'No!' cried the doctor, passionately. 'As He is good and mer",
+        "The lady fell upon her knees, and tried to fold her hands to"
+      ],
+      "textHash": "9ecc205616dc",
+      "pageHash": "b76de0180809"
+    },
+    {
+      "title": "Chapter 34 - Contains Some Introductory Particulars Relative to a Young Gentleman Who Now Arrives Upon the Scene; and a New Adventure Which Happened to Oliver",
+      "blockCount": 72,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 224,
+      "pageMax": 231,
+      "openPages": [
+        224,
+        224,
+        224,
+        224,
+        224,
+        224,
+        224,
+        224
+      ],
+      "open": [
+        "Chapter 34 - Contains Some Introductory Particulars Relative",
+        "It was almost too much happiness to bear. Oliver felt stunne",
+        "The night was fast closing in, when he returned homeward: la",
+        "Then, the nightcap once again appeared: and the same voice c",
+        "'Here!' cried the voice. 'Oliver, what's the news? Miss Rose",
+        "'Is is you, Giles?' cried Oliver, running up to the chaise-d"
+      ],
+      "closePages": [
+        231,
+        231,
+        231
+      ],
+      "close": [
+        "The man seemed to say this, with such dreadful hatred, that ",
+        "Good Heaven! what was that, which sent the blood tingling to",
+        "It was but an instant, a glance, a flash, before his eyes; a"
+      ],
+      "textHash": "8a259a1eab6b",
+      "pageHash": "07cdfd2b1aff"
+    },
+    {
+      "title": "Chapter 35 - Containing the Unsatisfactory Result of Oliver's Adventure; and a Conversation of Some Importance Between Harry Maylie and Rose",
+      "blockCount": 62,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 232,
+      "pageMax": 237,
+      "openPages": [
+        232,
+        232,
+        232,
+        232,
+        232,
+        232,
+        232,
+        232
+      ],
+      "open": [
+        "Chapter 35 - Containing the Unsatisfactory Result of Oliver'",
+        "When the inmates of the house, attracted by Oliver's cries, ",
+        "Mr. Giles was at a loss to comprehend what this outcry meant",
+        "'What direction did he take?' he asked, catching up a heavy ",
+        "'That,' replied Oliver, pointing out the course the man had ",
+        "'Then, they are in the ditch!' said Harry. 'Follow! And keep"
+      ],
+      "closePages": [
+        237,
+        237,
+        237
+      ],
+      "close": [
+        "'No,' said Harry; 'to hear you repeat it, if you will--final",
+        "'Then let it be so,' rejoined Rose; 'it is but one pang the ",
+        "She extended her hand again. But the young man caught her to"
+      ],
+      "textHash": "889c68068f57",
+      "pageHash": "830869341bdb"
+    },
+    {
+      "title": "Chapter 36 - Is a Very Short One, and May Appear of No Great Importance in Its Place, but It Should Be Read Notwithstanding, as a Sequel to the Last, and a Key to One That Will Follow When Its Time Arrives",
+      "blockCount": 26,
+      "types": "hppppppppppppppppppppppppp",
+      "pageMin": 238,
+      "pageMax": 240,
+      "openPages": [
+        238,
+        238,
+        238,
+        238,
+        238,
+        238,
+        238,
+        238
+      ],
+      "open": [
+        "Chapter 36 - Is a Very Short One, and May Appear of No Great",
+        "'And so you are resolved to be my travelling companion this ",
+        "'You will tell me a different tale one of these days,' said ",
+        "'I hope I may have good cause to do so,' replied Mr. Losbern",
+        "'I should have been very sorry not to have been at home when",
+        "'That's a fine fellow,' said the doctor; 'you shall come and"
+      ],
+      "closePages": [
+        239,
+        240,
+        240
+      ],
+      "close": [
+        "Jingling and clattering, till distance rendered its noise in",
+        "'He seems in high spirits and happy,' she said, at length. '",
+        "Tears are signs of gladness as well as grief; but those whic"
+      ],
+      "textHash": "04f982f551c8",
+      "pageHash": "40039b09de7b"
+    },
+    {
+      "title": "Chapter 37 - In Which the Reader May Perceive a Contrast, Not Uncommon in Matrimonial Cases",
+      "blockCount": 98,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 241,
+      "pageMax": 249,
+      "openPages": [
+        241,
+        241,
+        241,
+        241,
+        241,
+        241,
+        241,
+        241
+      ],
+      "open": [
+        "Chapter 37 - In Which the Reader May Perceive a Contrast, No",
+        "Mr. Bumble sat in the workhouse parlour, with his eyes moodi",
+        "Bumble would heave a deep sigh, while a more gloomy shadow o",
+        "Nor was Mr. Bumble's gloom the only thing calculated to awak",
+        "There are some promotions in life, which, independent of the",
+        "Mr. Bumle had married Mrs. Corney, and was master of the wor"
+      ],
+      "closePages": [
+        249,
+        249,
+        249
+      ],
+      "close": [
+        "'What do you want?' cried the man. turning quickly round, as",
+        "'Only to ask a question,' said the other, pointing to the sc",
+        "'Monks!' rejoined the man; and strode hastily, away."
+      ],
+      "textHash": "1de2eb3f97c2",
+      "pageHash": "162e2a8ab735"
+    },
+    {
+      "title": "Chapter 38 - Containing an Account of What Passed Between Mr. and Mrs. Bumble, and Mr. Monks, at Their Nocturnal Interview",
+      "blockCount": 113,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 250,
+      "pageMax": 258,
+      "openPages": [
+        250,
+        250,
+        250,
+        250,
+        250,
+        250,
+        251,
+        251
+      ],
+      "open": [
+        "Chapter 38 - Containing an Account of What Passed Between Mr",
+        "It was a dull, close, overcast summer evening. The clouds, w",
+        "They were both wrapped in old and shabby outer garments, whi",
+        "This was far from being a place of doubtful character; for i",
+        "In the heart of this cluster of huts; and skirting the river",
+        "It was before this ruinous building that the worthy couple p"
+      ],
+      "closePages": [
+        258,
+        258,
+        258
+      ],
+      "close": [
+        "It was fortunate that the conversation terminated at this po",
+        "They traversed the lower room, slowly, and with caution; for",
+        "They were no sooner gone, than Monks, who appeared to entert"
+      ],
+      "textHash": "fdcfe609a65f",
+      "pageHash": "ad67db444d21"
+    },
+    {
+      "title": "Chapter 39 - Introduces Some Respectable Characters With Whom the Reader Is Already Acquainted, and Shows How Monks and the Jew Laid Their Worthy Heads Together",
+      "blockCount": 141,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 259,
+      "pageMax": 270,
+      "openPages": [
+        259,
+        259,
+        259,
+        259,
+        259,
+        259,
+        259,
+        259
+      ],
+      "open": [
+        "Chapter 39 - Introduces Some Respectable Characters With Who",
+        "On the evening following that upon which the three worthies ",
+        "The room in which Mr. Sikes propounded this question, was no",
+        "The housebreaker was lying on the bed, wrapped in his white ",
+        "'Not long gone seven,' said the girl. 'How do you feel to-ni",
+        "'As weak as water,' replied Mr. Sikes, with an imprecation o"
+      ],
+      "closePages": [
+        270,
+        270,
+        270
+      ],
+      "close": [
+        "'Brass can do better than the gold what has stood the fire,'",
+        "The third contented herself with wondering 'what ladies was ",
+        "Regardless of all this: for she had weightier matters at hea"
+      ],
+      "textHash": "d2b275e2787d",
+      "pageHash": "b169949bb00f"
+    },
+    {
+      "title": "Chapter 40 - A Strange Interview, Which Is a Sequel to the Last Chamber",
+      "blockCount": 56,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 271,
+      "pageMax": 276,
+      "openPages": [
+        271,
+        271,
+        271,
+        271,
+        271,
+        271,
+        271,
+        271
+      ],
+      "open": [
+        "Chapter 40 - A Strange Interview, Which Is a Sequel to the L",
+        "The girl's life had been squandered in the streets, and amon",
+        "She raised her eyes sufficiently to observe that the figure ",
+        "'I am very sorry if any one has behaved harshly to you,' rep",
+        "The kind tone of this answer, the sweet voice, the gentle ma",
+        "'Oh, lady, lady!' she said, clasping her hands passionately "
+      ],
+      "closePages": [
+        276,
+        276,
+        276
+      ],
+      "close": [
+        "'Do not close your heart against all my efforts to help you,",
+        "'You would serve me best, lady,' replied the girl, wringing ",
+        "Thus speaking, and sobbing aloud, the unhappy creature turne"
+      ],
+      "textHash": "cc998ea264ea",
+      "pageHash": "03c6e42e3321"
+    },
+    {
+      "title": "Chapter 41 - Containing Fresh Discoveries, and Showing That Suprises, Like Misfortunes, Seldom Come Alone",
+      "blockCount": 84,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 277,
+      "pageMax": 284,
+      "openPages": [
+        277,
+        277,
+        277,
+        277,
+        277,
+        277,
+        277,
+        277
+      ],
+      "open": [
+        "Chapter 41 - Containing Fresh Discoveries, and Showing That ",
+        "Her situation was, indeed, one of no common trial and diffic",
+        "While she felt the most eager and burning desire to penetrat",
+        "They purposed remaining in London only three days, prior to ",
+        "Mr. Losberne was with them, and would be for the next two da",
+        "Disturbed by these different reflections; inclining now to o"
+      ],
+      "closePages": [
+        284,
+        284,
+        284
+      ],
+      "close": [
+        "'We stay in town, of course,' said Mrs. Maylie, 'while there",
+        "'Good!' rejoined Mr. Brownlow. 'And as I see on the faces ab",
+        "With these words, the old gentleman gave his hand to Mrs. Ma"
+      ],
+      "textHash": "29e8d2c955cd",
+      "pageHash": "3cbc609cf97a"
+    },
+    {
+      "title": "Chapter 42 - An Old Acquaintance of Oliver's, Exhibiting Decided Marks of Genius, Becomes a Public Character in the Metropolis",
+      "blockCount": 122,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 285,
+      "pageMax": 294,
+      "openPages": [
+        285,
+        285,
+        285,
+        285,
+        285,
+        285,
+        285,
+        285
+      ],
+      "open": [
+        "Chapter 42 - An Old Acquaintance of Oliver's, Exhibiting Dec",
+        "Upon the night when Nancy, having lulled Mr. Sikes to sleep,",
+        "They were a man and woman; or perhaps they would be better d",
+        "Thus, they had toiled along the dusty road, taking little he",
+        "'It's a heavy load, I can tell you,' said the female, coming",
+        "'Heavy! What are yer talking about? What are yer made for?' "
+      ],
+      "closePages": [
+        294,
+        294,
+        294
+      ],
+      "close": [
+        "'Oh yes, I understand--perfectly,' replied Fagin, telling th",
+        "Good-night!'",
+        "With many adieus and good wishes, Mr. Fagin went his way. No"
+      ],
+      "textHash": "b4824499c54d",
+      "pageHash": "3f5d8306cfd7"
+    },
+    {
+      "title": "Chapter 43 - Wherein Is Shown How the Artful Dodger Got Into Trouble",
+      "blockCount": 108,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 295,
+      "pageMax": 303,
+      "openPages": [
+        295,
+        295,
+        295,
+        295,
+        295,
+        295,
+        295,
+        295
+      ],
+      "open": [
+        "Chapter 43 - Wherein Is Shown How the Artful Dodger Got Into",
+        "'And so it was you that was your own friend, was it?' asked ",
+        "'Every man's his own friend, my dear,' replied Fagin, with h",
+        "'Except sometimes,' replied Morris Bolter, assuming the air ",
+        "'Don't believe that,' said Fagin. 'When a man's his own enem",
+        "'There oughn't to be, if there is,' replied Mr. Bolter."
+      ],
+      "closePages": [
+        303,
+        303,
+        303
+      ],
+      "close": [
+        "With these last words, the Dodger suffered himself to be led",
+        "Having seen him locked up by himself in a little cell, Noah ",
+        "The two hastened back together, to bear to Mr. Fagin the ani"
+      ],
+      "textHash": "c97862dc2df2",
+      "pageHash": "8628f57064f7"
+    },
+    {
+      "title": "Chapter 44 - The Time Arrives for Nancy to Redeem Her Pledge to Rose Maylie. She Fails",
+      "blockCount": 68,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 304,
+      "pageMax": 309,
+      "openPages": [
+        304,
+        304,
+        304,
+        304,
+        304,
+        304,
+        304,
+        304
+      ],
+      "open": [
+        "Chapter 44 - The Time Arrives for Nancy to Redeem Her Pledge",
+        "Adept as she was, in all the arts of cunning and dissimulati",
+        "But, these were the mere wanderings of a mind unwholly to de",
+        "Though all her mental struggles terminated in this conclusio",
+        "It was Sunday night, and the bell of the nearest church stru",
+        "'An hour this side of midnight,' said Sikes, raising the bli"
+      ],
+      "closePages": [
+        309,
+        309,
+        309
+      ],
+      "close": [
+        "Such brains are fertile in expedients. If, without extractin",
+        "'I can,' said Fagin, almost aloud. 'She durst not refuse me ",
+        "He cast back a dark look, and a threatening motion of the ha"
+      ],
+      "textHash": "0ef98868f3e1",
+      "pageHash": "1fab4d26eb45"
+    },
+    {
+      "title": "Chapter 45 - Noah Claypole Is Employed by Fagin on a Secret Mission",
+      "blockCount": 47,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 310,
+      "pageMax": 313,
+      "openPages": [
+        310,
+        310,
+        310,
+        310,
+        310,
+        310,
+        310,
+        310
+      ],
+      "open": [
+        "Chapter 45 - Noah Claypole Is Employed by Fagin on a Secret ",
+        "The old man was up, betimes, next morning, and waited impati",
+        "'Bolter,' said Fagin, drawing up a chair and seating himself",
+        "'Well, here I am,' returned Noah. 'What's the matter? Don't ",
+        "'You can talk as you eat, can't you?' said Fagin, cursing hi",
+        "'Oh yes, I can talk. I get on better when I talk,' said Noah"
+      ],
+      "closePages": [
+        312,
+        313,
+        313
+      ],
+      "close": [
+        "'Hist!' cried the lad who held the door. 'Dow.' Noah exchang",
+        "'To the left,' whispered the lad; 'take the left had, and ke",
+        "He did so; and, by the light of the lamps, saw the girl's re"
+      ],
+      "textHash": "71c1c808f81d",
+      "pageHash": "0d4a7ea2fa07"
+    },
+    {
+      "title": "Chapter 46 - The Appointment Kept",
+      "blockCount": 93,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 314,
+      "pageMax": 321,
+      "openPages": [
+        314,
+        314,
+        314,
+        314,
+        314,
+        314,
+        315,
+        315
+      ],
+      "open": [
+        "Chapter 46 - The Appointment Kept",
+        "The church clocks chimed three quarters past eleven, as two ",
+        "It was a very dark night. The day had been unfavourable, and",
+        "A mist hung over the river, deepening the red glare of the f",
+        "The girl had taken a few restless turns to and fro--closely ",
+        "The hour had not struck two minutes, when a young lady, acco"
+      ],
+      "closePages": [
+        321,
+        321,
+        321
+      ],
+      "close": [
+        "Rose Maylie lingered, but the old gentleman drew her arm thr",
+        "After a time she arose, and with feeble and tottering steps ",
+        "Peeping out, more than once, when he reached the top, to mak"
+      ],
+      "textHash": "26ed2ac1f59d",
+      "pageHash": "cd01b12bd38f"
+    },
+    {
+      "title": "Chapter 47 - Fatal Consequences",
+      "blockCount": 83,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 322,
+      "pageMax": 327,
+      "openPages": [
+        322,
+        322,
+        322,
+        322,
+        322,
+        322,
+        322,
+        322
+      ],
+      "open": [
+        "Chapter 47 - Fatal Consequences",
+        "It was nearly two hours before day-break; that time which in",
+        "He sat crouching over a cold hearth, wrapped in an old torn ",
+        "Stretched upon a mattress on the floor, lay Noah Claypole, f",
+        "Indeed they were. Mortification at the overthrow of his nota",
+        "He sat without changing his attitude in the least, or appear"
+      ],
+      "closePages": [
+        327,
+        327,
+        327
+      ],
+      "close": [
+        "'Bill,' cried the girl, striving to lay her head upon his br",
+        "The housebreaker freed one arm, and grasped his pistol. The ",
+        "It was a ghastly figure to look upon. The murderer staggerin"
+      ],
+      "textHash": "b3458d8bcb4a",
+      "pageHash": "75656cb217e6"
+    },
+    {
+      "title": "Chapter 48 - The Flight of Sikes",
+      "blockCount": 61,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 328,
+      "pageMax": 334,
+      "openPages": [
+        328,
+        328,
+        328,
+        328,
+        328,
+        328,
+        328,
+        328
+      ],
+      "open": [
+        "Chapter 48 - The Flight of Sikes",
+        "Of all bad deeds that, under cover of the darkness, had been",
+        "The sun--the bright sun, that brings back, not light alone, ",
+        "He had not moved; he had been afraid to stir. There had been",
+        "He struck a light, kindled a fire, and thrust the club into ",
+        "All this time he had, never once, turned his back upon the c"
+      ],
+      "closePages": [
+        334,
+        334,
+        334
+      ],
+      "close": [
+        "The dog wagged his tail, but moved not. Sikes made a running",
+        "The dog advanced, retreated, paused an instant, and scoured ",
+        "The man whistled again and again, and sat down and waited in"
+      ],
+      "textHash": "97108cd9e092",
+      "pageHash": "6cfcc4ea0f51"
+    },
+    {
+      "title": "Chapter 49 - Monks and Mr. Brownlow at Length Meet. Their Conversation, and the Intelligence That Interrupts It",
+      "blockCount": 86,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 335,
+      "pageMax": 342,
+      "openPages": [
+        335,
+        335,
+        335,
+        335,
+        335,
+        335,
+        335,
+        335
+      ],
+      "open": [
+        "Chapter 49 - Monks and Mr. Brownlow at Length Meet. Their Co",
+        "The twilight was beginning to close in, when Mr. Brownlow al",
+        "They walked in the same manner up the stairs without speakin",
+        "'He knows the alternative,' said Mr. Browlow. 'If he hesitat",
+        "'How dare you say this of me?' asked Monks.",
+        "'How dare you urge me to it, young man?' replied Mr. Brownlo"
+      ],
+      "closePages": [
+        342,
+        342,
+        342
+      ],
+      "close": [
+        "'All that I could hope to do, and even more. Coupling the po",
+        "'Drive straight to the office and you will be in time,' repl",
+        "The two gentlemen hastily separated; each in a fever of exci"
+      ],
+      "textHash": "1d32c23853b5",
+      "pageHash": "b08091464f96"
+    },
+    {
+      "title": "Chapter 50 - The Pursuit and Escape",
+      "blockCount": 105,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 343,
+      "pageMax": 351,
+      "openPages": [
+        343,
+        343,
+        343,
+        343,
+        343,
+        344,
+        344,
+        344
+      ],
+      "open": [
+        "Chapter 50 - The Pursuit and Escape",
+        "Near to that part of the Thames on which the church at Rothe",
+        "To reach this place, the visitor has to penetrate through a ",
+        "In such a neighborhood, beyond Dockhead in the Borough of So",
+        "In Jacob's Island, the warehouses are roofless and empty; th",
+        "In an upper room of one of these houses--a detached house of"
+      ],
+      "closePages": [
+        351,
+        351,
+        351
+      ],
+      "close": [
+        "Staggering as if struck by lightning, he lost his balance an",
+        "The old chimney quivered with the shock, but stood it bravel",
+        "A dog, which had lain concealed till now, ran backwards and "
+      ],
+      "textHash": "443a073f65aa",
+      "pageHash": "d426ee5ade7c"
+    },
+    {
+      "title": "Chapter 51 - Affording an Explanation of More Mysteries Than One, and Comprehending a Proposal of Marriage With No Word of Settlement or Pin-Money",
+      "blockCount": 116,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 352,
+      "pageMax": 362,
+      "openPages": [
+        352,
+        352,
+        352,
+        352,
+        352,
+        352,
+        353,
+        353
+      ],
+      "open": [
+        "Chapter 51 - Affording an Explanation of More Mysteries Than",
+        "The events narrated in the last chapter were yet but two day",
+        "They had not talked much upon the way; for Oliver was in a f",
+        "The same kind friend had, with Mr. Losberne's assistance, ca",
+        "'See there, there!' cried Oliver, eagerly clasping the hand ",
+        "'You will see him soon,' replied Rose, gently taking his fol"
+      ],
+      "closePages": [
+        362,
+        362,
+        362
+      ],
+      "close": [
+        "'Oliver, my child,' said Mrs. Maylie, 'where have you been, ",
+        "It is a world of disappointment: often to the hopes we most ",
+        "Poor Dick was dead!"
+      ],
+      "textHash": "5908b7df8f8d",
+      "pageHash": "4d17718816c9"
+    },
+    {
+      "title": "Chapter 52 - Fagin's Last Night Alive",
+      "blockCount": 60,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 363,
+      "pageMax": 369,
+      "openPages": [
+        363,
+        363,
+        363,
+        363,
+        363,
+        363,
+        363,
+        364
+      ],
+      "open": [
+        "Chapter 52 - Fagin's Last Night Alive",
+        "The court was paved, from floor to roof, with human faces. I",
+        "He stood there, in all this glare of living light, with one ",
+        "A slight bustle in the court, recalled him to himself. Looki",
+        "They only sought permission to retire.",
+        "He looked, wistfully, into their faces, one by one when they"
+      ],
+      "closePages": [
+        369,
+        369,
+        369
+      ],
+      "close": [
+        "The men laid hands upon him, and disengaging Oliver from his",
+        "It was some time before they left the prison. Oliver nearly ",
+        "Day was dawning when they again emerged. A great multitude h"
+      ],
+      "textHash": "bb3241b2c256",
+      "pageHash": "ed0d794b9765"
+    },
+    {
+      "title": "Chapter 53 - And Last",
+      "blockCount": 18,
+      "types": "hppppppppppppppppb",
+      "pageMin": 370,
+      "pageMax": 372,
+      "openPages": [
+        370,
+        370,
+        370,
+        370,
+        370,
+        370,
+        370,
+        370,
+        371,
+        371,
+        371,
+        371,
+        371,
+        372,
+        372,
+        372,
+        372,
+        null
+      ],
+      "open": [
+        "Chapter 53 - And Last",
+        "The fortunes of those who have figured in this tale are near",
+        "Before three months had passed, Rose Fleming and Harry Mayli",
+        "Mrs. Maylie took up her abode with her son and daughter-in-l",
+        "It appeared, on full and careful investigation, that if the ",
+        "Monks, still bearing that assumed name, retired with his por",
+        "Mr. Brownlow adopted Oliver as his son. Removing with him an",
+        "Soon after the marriage of the young people, the worthy doct",
+        "Before his removal, he had managed to contract a strong frie",
+        "Mr. Noah Claypole: receiving a free pardon from the Crown in",
+        "Mr. and Mrs. Bumble, deprived of their situations, were grad",
+        "Losberne, that to this day the villagers have never beenable",
+        "Master Charles Bates, appalled by Sikes's crime, fell into a",
+        "I would fain linger yet with a few of those among whom I hav",
+        "How Mr. Brownlow went on, from day to day, filling the mind ",
+        "Within the altar of the old village church there stands a wh",
+        "----- The End -----",
+        "[banner]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "46a23fc5cabe",
+      "pageHash": "6c1bd8c7d671"
+    }
+  ]
 }

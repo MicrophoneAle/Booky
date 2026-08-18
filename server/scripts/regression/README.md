@@ -12,7 +12,10 @@ node scripts/regression/run.mjs --book=oldman
 node scripts/regression/run.mjs --book=way-of-kings
 node scripts/regression/run.mjs --full
 node scripts/regression/run.mjs --update-snapshots
+node scripts/regression/run.mjs --update-snapshots --full
 ```
+
+`--update-snapshots` without `--book=` refreshes all 14 books, including Way of Kings. `npm run regression:update` passes `--full` for the same reason.
 
 Exit code `0` when every selected book passes **blocking** checks, book-specific assertions, and snapshot diff.
 
@@ -26,6 +29,7 @@ Exit code `0` when every selected book passes **blocking** checks, book-specific
 |---------|-------|
 | `npm run regression` | 13 books - original five plus Treasure Island, Frankenstein, Oliver Twist, Jungle Book, Aesop, Metamorphosis, Narnia, Maya Angelou |
 | `npm run regression:full` | All 14 sample PDFs, including Way of Kings (OCR-heavy; minutes, not seconds) |
+| `npm run regression:update` | Rewrite committed snapshots for all 14 books (`--update-snapshots --full`) |
 | `npm run test:assets` | Lightweight parse of every PDF under `client/src/assets/` (blocking general checks only; no book-specific assertions) |
 
 Way of Kings is opt-in via `--full` because a full illustrated parse dominates local turnaround. It remains runnable in CI through `regression:full` / `--book=way-of-kings`.
@@ -83,7 +87,7 @@ npm run test:assets
 - Book-specific assertions follow the ground-truth convention below. Maya Angelou intentionally fails `[KNOWN GAP] On the Pulse of Morning` (no title in the PDF text layer); see `maya-angelou.mjs`.
 - Moby Dick skips `indentationConsistency` and `headingDensitySane` via `skipGeneralChecks`.
 - Advisory general checks (watermarks, dialogue attribution centering, orphaned fragments, paragraph continuity, indentation) report as `[WARN]` and do not fail the run - they surface ongoing prose-reflow / dialogue-split debt without blocking structural parity.
-- Only refresh snapshots with `npm run regression:update` when parser output **intentionally** changed, then commit the JSON with the code change.
+- Only refresh snapshots with `npm run regression:update` when parser output **intentionally** changed, then commit the JSON with the code change. That command includes Way of Kings. A plain `--update-snapshots` without `--book=` does the same.
 
 ## Ground-truth convention
 
@@ -157,8 +161,11 @@ Written to `snapshots/<id>.json` with `--update-snapshots` (`npm run regression:
 - Chapter count and titles
 - Heading count ± 10%
 - First / last block text (first 80 chars)
+- `frontMatter` + `chapterOrder`: exact match on block count, compact type sequence (`h` heading, `p` prose, `i` image, `b` chapter-banner image), `sourcePdfPageIndex` min/max, opening pages/prefixes, closing pages/prefixes on long chapters, and SHA-256 prefixes of ordered block text (`textHash`) and ordered page indexes (`pageHash`). Runs of 24 blocks or fewer store every prefix so short front matter and Aesop-sized chapters stay readable.
 
-Do not treat `--update-snapshots` as a prerequisite for drift detection on a fresh clone - the baselines are already present. Refresh only when parser output is meant to change.
+These ordering fields record parser output for **drift detection**. They are not ground-truth assertions. Do not add book-specific checks whose expected values are copied from a snapshot.
+
+Do not treat `--update-snapshots` as a prerequisite for drift detection on a fresh clone - the baselines are already present. Refresh only when parser output is meant to change. `npm run regression:update` always includes Way of Kings.
 
 ## Extending checks
 

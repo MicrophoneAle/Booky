@@ -1,6 +1,6 @@
 {
-  "parserVersion": 134,
-  "totalBlocks": 664,
+  "parserVersion": 135,
+  "totalBlocks": 663,
   "totalWords": 13266,
   "chapterCount": 9,
   "chapterTitles": [
@@ -18,5 +18,364 @@
   "lastBlockText": "“How is it he speaks our language with a man’s lips?”",
   "headingCount": 10,
   "avgBlockLength": 105,
-  "proseBlockCount": 654
+  "proseBlockCount": 653,
+  "frontMatter": {
+    "blockCount": 5,
+    "types": "ihppp",
+    "pageMin": 0,
+    "pageMax": 1,
+    "openPages": [
+      null,
+      0,
+      0,
+      1,
+      1
+    ],
+    "open": [
+      "[image]",
+      "The Jungle Book",
+      "RUDYARD KIPLING",
+      "RUDYARD KIPLING",
+      "ADAPTED BY"
+    ],
+    "closePages": [],
+    "close": [],
+    "textHash": "b26e019a0bd2",
+    "pageHash": "ab0b4ac0c9d1"
+  },
+  "chapterOrder": [
+    {
+      "title": "Mowgli’s Brothers",
+      "blockCount": 73,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 4,
+      "pageMax": 11,
+      "openPages": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "open": [
+        "Mowgli’s Brothers",
+        "It was a very warm evening when Father Wolf woke up from his",
+        "“Arugh!” said Father Wolf.",
+        "“It is time to hunt again.” He was about to run downhill whe",
+        "A small voice whined, “Good luck go with you, O Chief of the",
+        "It was the despised jackal, Tabaqui—the one who runs about m"
+      ],
+      "closePages": [
+        11,
+        11,
+        11
+      ],
+      "close": [
+        "When the others went off to find the dead bull, only Akela, ",
+        "“Roar well,” Bagheera muttered to himself, under his whisker",
+        "“The time will come when this naked frog will make you roar "
+      ],
+      "textHash": "a375eca49b2d",
+      "pageHash": "857aa10c87e9"
+    },
+    {
+      "title": "Kaa’s Hunting",
+      "blockCount": 93,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 12,
+      "pageMax": 22,
+      "openPages": [
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12
+      ],
+      "open": [
+        "Kaa’s Hunting",
+        "When Mowgli was a bit older, Baloo began teaching him the La",
+        "Mowgli slid down a half-fallen tree trunk.",
+        "“I come for Bagheera and not for you, fat old Baloo!” he sai",
+        "“That is all one to me,” said Baloo, though Mowgli’s words h",
+        "“Tell Bagheera then. Tell him the Master Words I have taught"
+      ],
+      "closePages": [
+        22,
+        22,
+        22
+      ],
+      "close": [
+        "“You will learn,” said Bagheera.",
+        "“Now jump on my back, Little Brother, and we will go home.”",
+        "Mowgli laid his head down on Bagheera’s neck and slept."
+      ],
+      "textHash": "2509de620808",
+      "pageHash": "2b6505ac2c5a"
+    },
+    {
+      "title": "How Fear Came",
+      "blockCount": 50,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 23,
+      "pageMax": 29,
+      "openPages": [
+        23,
+        23,
+        23,
+        23,
+        24,
+        24,
+        24,
+        24
+      ],
+      "open": [
+        "How Fear Came",
+        "One winter, it hardly rained at all. The spring blossoms wer",
+        "One day Hathi the Wild Elephant saw that only the main chann",
+        "By the Law of the Jungle, no animal could kill at drinking p",
+        "One furnace-hot evening, Bagheera and Mowgli came to the riv",
+        "The deer heard him. A frightened whisper quickly carried alo"
+      ],
+      "closePages": [
+        29,
+        29,
+        29
+      ],
+      "close": [
+        "“When Tha saw what the First of the Tigers had done, he said",
+        "Bagheera turned to Hathi and said, “Do men know this—tale?”",
+        "Hathi said, “None have known it except the tigers and the el"
+      ],
+      "textHash": "796b53fd28c6",
+      "pageHash": "4d72983dd8cf"
+    },
+    {
+      "title": "The Outcast",
+      "blockCount": 54,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 30,
+      "pageMax": 36,
+      "openPages": [
+        30,
+        30,
+        30,
+        30,
+        30,
+        31,
+        31,
+        31
+      ],
+      "open": [
+        "The Outcast",
+        "By the time Mowgli was 10 or 11, Father Wolf had taught him ",
+        "When the pack met, Mowgli took his place at the Council Rock",
+        "Shere Khan was always crossing Mowgli’s path. Now that Akela",
+        "“They tell me,” Shere Khan would say, “that you dare not loo",
+        "Bagheera warned Mowgli of Shere Khan’s plans."
+      ],
+      "closePages": [
+        36,
+        36,
+        36
+      ],
+      "close": [
+        "“I will surely come,” promised Mowgli.",
+        "“Tell my friends in the jungle never to forget me!”",
+        "The dawn was beginning to break when Mowgli went down to the"
+      ],
+      "textHash": "9458a95de17b",
+      "pageHash": "06d0ce71781e"
+    },
+    {
+      "title": "Tiger! Tiger!",
+      "blockCount": 81,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 37,
+      "pageMax": 44,
+      "openPages": [
+        37,
+        37,
+        37,
+        37,
+        37,
+        37,
+        37,
+        37
+      ],
+      "open": [
+        "Tiger! Tiger!",
+        "After leaving the jungle, Mowgli came upon a great plain whe",
+        "“They have no manners, these Men-Folk,”",
+        "Mowgli said to himself.",
+        "The village priest said to the crowd, “There is nothing to b",
+        "One of the women cried, “Look closely, Messua! By my honor, "
+      ],
+      "closePages": [
+        44,
+        44,
+        44
+      ],
+      "close": [
+        "“Now I must hunt alone in the jungle.”",
+        "“Not alone,” said the four cubs.",
+        "“We will hunt with you.”"
+      ],
+      "textHash": "6c1de45d91df",
+      "pageHash": "c16a2eb2bd47"
+    },
+    {
+      "title": "Letting In The Jungle",
+      "blockCount": 73,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 45,
+      "pageMax": 52,
+      "openPages": [
+        45,
+        45,
+        45,
+        45,
+        45,
+        45,
+        45,
+        45
+      ],
+      "open": [
+        "Letting In The Jungle",
+        "the Jungle For a few days after Mowgli laid Shere Khan’s hid",
+        "“Men have cast me out! What more do they need?” The four cub",
+        "“We will roll his skull before noon!” promised Gray Brother.",
+        "“No!” Mowgli cried out to his wolf brothers.",
+        "“Man does not eat man!”"
+      ],
+      "closePages": [
+        51,
+        51,
+        52
+      ],
+      "close": [
+        "The villagers tried to hang on, eating what little food was ",
+        "Finally, there was nothing to do but leave. As the last fami",
+        "A month later, the village was nothing but a dirt mound, cov"
+      ],
+      "textHash": "10898fd39185",
+      "pageHash": "e92a7ea25f17"
+    },
+    {
+      "title": "The King’s Ankus",
+      "blockCount": 75,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 53,
+      "pageMax": 59,
+      "openPages": [
+        53,
+        53,
+        53,
+        53,
+        53,
+        53,
+        53,
+        54
+      ],
+      "open": [
+        "The King’s Ankus",
+        "Kaa and Mowgli were bathing in the wise snake’s favorite poo",
+        "“So the jungle gives you all that you wish, Little Brother?”",
+        "“I have the jungle,” said Mowgli.",
+        "“What more could there be between sunrise and sunset?”",
+        "Kaa said, “Three or four moons ago, I hunted in the Cold Lai"
+      ],
+      "closePages": [
+        59,
+        59,
+        59
+      ],
+      "close": [
+        "“So the ankus returns, then. Why are you still alive?”",
+        "“I do not know,” said Mowgli.",
+        "“But let the ankus out no more.”"
+      ],
+      "textHash": "dd0a5a6764cd",
+      "pageHash": "4207c6acfa87"
+    },
+    {
+      "title": "Red Dog",
+      "blockCount": 78,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 60,
+      "pageMax": 68,
+      "openPages": [
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        61
+      ],
+      "open": [
+        "Red Dog",
+        "When Mowgli was about 15 years old, Mother and Father Wolf d",
+        "A young wolf named Phao had become leader of the wolf pack. ",
+        "“It must be a great killing!” cried Gray Brother.",
+        "They hurried to the Council Rock. There they found the pack ",
+        "“Good hunting!” said Phao."
+      ],
+      "closePages": [
+        68,
+        68,
+        68
+      ],
+      "close": [
+        "“Who will drive me?” said Mowgli.",
+        "“Mowgli will drive Mowgli,” Akela sighed. Then Akela sang th",
+        "Twenty-one of the wolves lay dead by the river. And every li"
+      ],
+      "textHash": "9c96f8b39f61",
+      "pageHash": "b5587cf94b0f"
+    },
+    {
+      "title": "The Spring Running",
+      "blockCount": 81,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppippp",
+      "pageMin": 69,
+      "pageMax": 78,
+      "openPages": [
+        69,
+        69,
+        69,
+        69,
+        69,
+        69,
+        69,
+        69
+      ],
+      "open": [
+        "The Spring Running",
+        "It was the second year after the great fight with the Red Do",
+        "It was spring in the jungle, the Time of New Talk. All the s",
+        "One day Bagheera, too, was purring and singing to himself.",
+        "“Why are you singing?” asked Mowgli.",
+        "“There is no game here.”"
+      ],
+      "closePages": [
+        78,
+        78,
+        78
+      ],
+      "close": [
+        "RUDYARD KIPLING",
+        "“Who is this man who is not afraid?” the cobra asked.",
+        "“How is it he speaks our language with a man’s lips?”"
+      ],
+      "textHash": "85ffcb2c91f5",
+      "pageHash": "8fe92aca1f5a"
+    }
+  ]
 }

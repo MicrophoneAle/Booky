@@ -1,6 +1,6 @@
 {
-  "parserVersion": 134,
-  "totalBlocks": 977,
+  "parserVersion": 135,
+  "totalBlocks": 976,
   "totalWords": 72725,
   "chapterCount": 30,
   "chapterTitles": [
@@ -39,5 +39,1123 @@
   "lastBlockText": "He sprung from the cabin-window, as he said this, upon the ice-raft which lay cl",
   "headingCount": 32,
   "avgBlockLength": 414,
-  "proseBlockCount": 945
+  "proseBlockCount": 944,
+  "frontMatter": {
+    "blockCount": 8,
+    "types": "hhpppppp",
+    "pageMin": 0,
+    "pageMax": 7,
+    "openPages": [
+      0,
+      0,
+      0,
+      6,
+      6,
+      7,
+      7,
+      7
+    ],
+    "open": [
+      "Frankenstein",
+      "By Mary Shelley",
+      "Mary Shelley ii iv vi",
+      "T HE event on which this fiction is founded has been suppose",
+      "I have thus endeavoured to preserve the truth of the element",
+      "The circumstance on which my story rests was suggested in ca",
+      "It is a subject also of additional interest to the author, t",
+      "The weather, however, suddenly became serene; and my two fri"
+    ],
+    "closePages": [],
+    "close": [],
+    "textHash": "b3dfe631cff7",
+    "pageHash": "ec6f25c0343d"
+  },
+  "chapterOrder": [
+    {
+      "title": "Volume I",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 10,
+      "pageMax": 10,
+      "openPages": [
+        10
+      ],
+      "open": [
+        "Volume I"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "43a0fa49e421",
+      "pageHash": "4a44dc153642"
+    },
+    {
+      "title": "Volume I — Letter I",
+      "blockCount": 14,
+      "types": "hppppppppppppp",
+      "pageMin": 12,
+      "pageMax": 16,
+      "openPages": [
+        12,
+        12,
+        12,
+        12,
+        12,
+        13,
+        13,
+        14,
+        14,
+        14,
+        15,
+        15,
+        15,
+        16
+      ],
+      "open": [
+        "Letter I",
+        "To Mrs. Saville, England.",
+        "Y OU will rejoice to hear that no disaster has accompanied t",
+        "I am already far north of London; and as I walk in the stree",
+        "— there snow and frost are banished; and, sailing over a cal",
+        "These reflections have dispelled the agitation with which I ",
+        "You may remember, that a history of all the voyages made for",
+        "These visions faded when I perused, for the first time, thos",
+        "Six years have passed since I resolved on my present underta",
+        "I must own I felt a little proud, when my captain offered me",
+        "This is the most favourable period for travelling in Russia.",
+        "I shall depart for the latter town in a fortnight or three w",
+        "Farewell, my dear, excellent, Margaret. Heaven shower down b",
+        "Your affectionate brother, R. Walton ."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "53871cda8ab1",
+      "pageHash": "b9af255a1088"
+    },
+    {
+      "title": "Volume I — Letter II",
+      "blockCount": 12,
+      "types": "hppppppppppp",
+      "pageMin": 18,
+      "pageMax": 21,
+      "openPages": [
+        18,
+        18,
+        18,
+        19,
+        19,
+        20,
+        20,
+        20,
+        21,
+        21,
+        21,
+        21
+      ],
+      "open": [
+        "Letter II",
+        "To Mrs. Saville, England.",
+        "H OW slowly the time passes here, encompassed as I am by fro",
+        "Well, these are useless complaints; I shall certainly find n",
+        "The master is a person of an excellent disposition, and is r",
+        "My generous friend reassured the suppliant, and on being inf",
+        "“What a noble fellow!” you will exclaim. He is so; but then ",
+        "I may sail sooner than I expected. I shall do nothing rashly",
+        "I cannot describe to you my sensations on the near prospect ",
+        "Shall I meet you again, after having traversed immense seas,",
+        "Remember me with affection, should you never hear from me ag",
+        "Your affectionate brother,"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "4837126be7fe",
+      "pageHash": "a5c71ceea5b1"
+    },
+    {
+      "title": "Volume I — Letter III",
+      "blockCount": 8,
+      "types": "hppppppp",
+      "pageMin": 22,
+      "pageMax": 23,
+      "openPages": [
+        22,
+        22,
+        22,
+        22,
+        22,
+        23,
+        23,
+        23
+      ],
+      "open": [
+        "Letter III",
+        "To Mrs. Saville, England.",
+        "MY DEAR SISTER ,",
+        "I WRITE a few lines in haste, to say that I am safe, and wel",
+        "No incidents have hitherto befallen us, that would make a fi",
+        "Adieu, my dear Margaret. Be assured, that for my own sake, a",
+        "Remember me to all my English friends.",
+        "Most affectionately yours, R. W."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8687aa45f14f",
+      "pageHash": "c6ecd0da64bc"
+    },
+    {
+      "title": "Volume I — Letter IV",
+      "blockCount": 39,
+      "types": "hpppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 24,
+      "pageMax": 31,
+      "openPages": [
+        24,
+        24,
+        24,
+        24,
+        24,
+        25,
+        25,
+        25
+      ],
+      "open": [
+        "Letter IV",
+        "To Mrs. Saville, England.",
+        "S O strange an accident has happened to us, that I cannot fo",
+        "Last Monday (July 31st), we were nearly surrounded by ice, w",
+        "About two o’clock the mist cleared away, and we beheld, stre",
+        "We watched the rapid progress of the traveller with our tele"
+      ],
+      "closePages": [
+        30,
+        30,
+        31
+      ],
+      "close": [
+        "You may easily conceive that I was much gratified by the off",
+        "“I thank you,” he replied, “for your sympathy, but it is use",
+        "He then told me, that he would commence his narrative the ne"
+      ],
+      "textHash": "9ed9dadee7f2",
+      "pageHash": "5bedc8e54f86"
+    },
+    {
+      "title": "Volume I — Chapter I",
+      "blockCount": 31,
+      "types": "hpppppppppppppppppppppppppppppp",
+      "pageMin": 32,
+      "pageMax": 41,
+      "openPages": [
+        32,
+        32,
+        33,
+        33,
+        33,
+        34,
+        34,
+        34
+      ],
+      "open": [
+        "Chapter I",
+        "I AM by birth a Genevese; and my family is one of the most d",
+        "Beaufort had taken effectual measures to conceal himself; an",
+        "His daughter attended him with the greatest tenderness; but ",
+        "Several months passed in this manner. Her father grew worse;",
+        "When my father became a husband and a parent, he found his t"
+      ],
+      "closePages": [
+        40,
+        41,
+        41
+      ],
+      "close": [
+        "My occupations at this age were principally the mathematics,",
+        "Another task also devolved upon me, when I became the instru",
+        "Such was our domestic circle, from which care and pain seeme"
+      ],
+      "textHash": "dc1591251718",
+      "pageHash": "279639ae23a5"
+    },
+    {
+      "title": "Volume I — Chapter II",
+      "blockCount": 27,
+      "types": "hpppppppppppppppppppppppppp",
+      "pageMin": 42,
+      "pageMax": 49,
+      "openPages": [
+        42,
+        42,
+        42,
+        43,
+        43,
+        43,
+        43,
+        44
+      ],
+      "open": [
+        "Chapter II",
+        "W HEN I had attained the age of seventeen, my parents resolv",
+        "Elizabeth had caught the scarlet fever; but her illness was ",
+        "I regret that I am taken from you; and, happy and beloved as",
+        "She died calmly; and her countenance expressed affection eve",
+        "I describe a sorrow which all have felt, and must feel? The "
+      ],
+      "closePages": [
+        48,
+        49,
+        49
+      ],
+      "close": [
+        "ciple; and if your application equals your ability, I have n",
+        "He then took me into his laboratory, and explained to me the",
+        "Thus ended a day memorable to me; it decided my future desti"
+      ],
+      "textHash": "c8d1ca581f45",
+      "pageHash": "a82ac472a81a"
+    },
+    {
+      "title": "Volume I — Chapter III",
+      "blockCount": 16,
+      "types": "hppppppppppppppp",
+      "pageMin": 50,
+      "pageMax": 57,
+      "openPages": [
+        50,
+        50,
+        51,
+        51,
+        51,
+        53,
+        53,
+        53,
+        54,
+        54,
+        55,
+        55,
+        56,
+        56,
+        56,
+        57
+      ],
+      "open": [
+        "Chapter III",
+        "F ROM this day natural philosophy, and particularly chemistr",
+        "Professor Krempe often asked me, with a sly smile, how Corne",
+        "When I had arrived at this point, and had become as well acq",
+        "One of the phænonema which had peculiarly attracted my atten",
+        "Remember, I am not recording the vision of a madman. The sun",
+        "The astonishment which I had at first experienced on this di",
+        "I see by your eagerness, and the wonder and hope which your ",
+        "When I found so astonishing a power placed within my hands, ",
+        "No one can conceive the variety of feelings which bore me on",
+        "These thoughts supported my spirits, while I pursued my unde",
+        "I seemed to have lost all soul or sensation but for this one",
+        "The summer months passed while I was thus engaged, heart and",
+        "I knew well therefore what would be my father’s feelings; bu",
+        "I then thought that my father would be unjust if he ascribed",
+        "My father made no reproach in his letters; and only took not"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "6ba1c7da615c",
+      "pageHash": "97383ff7e6d0"
+    },
+    {
+      "title": "Volume I — Chapter IV",
+      "blockCount": 35,
+      "types": "hpppppppppppppppppppppppppppppppppp",
+      "pageMin": 58,
+      "pageMax": 65,
+      "openPages": [
+        58,
+        58,
+        58,
+        58,
+        59,
+        60,
+        60,
+        60
+      ],
+      "open": [
+        "Chapter IV",
+        "I T was on a dreary night of November, that I beheld the acc",
+        "How can I describe my emotions at this catastrophe, or how d",
+        "The different accidents of life are not so changeable as the",
+        "I beheld the wretch — the miserable monster whom I had creat",
+        "Oh! no mortal could support the horror of that countenance. "
+      ],
+      "closePages": [
+        65,
+        65,
+        65
+      ],
+      "close": [
+        "ange of colour, “I will not mention it, if it agitates you; ",
+        "“Is that all? my dear Henry. How could you suppose that my f",
+        "“If this is your present temper, my friend, you will perhaps"
+      ],
+      "textHash": "66cde2671a7e",
+      "pageHash": "feeb1412dae8"
+    },
+    {
+      "title": "Volume I — Chapter V",
+      "blockCount": 33,
+      "types": "hpppppppppppppppppppppppppppppppp",
+      "pageMin": 66,
+      "pageMax": 74,
+      "openPages": [
+        66,
+        66,
+        66,
+        66,
+        66,
+        66,
+        66,
+        66
+      ],
+      "open": [
+        "Chapter V",
+        "C LERVAL then put the following letter into my hands.",
+        "“ To V. F RANKENSTEIN .",
+        "“ MY DEAR COUSIN ,",
+        "“I cannot describe to you the uneasiness we have all felt co",
+        "I eagerly hope that you will confirm this intelligence soon "
+      ],
+      "closePages": [
+        73,
+        74,
+        74
+      ],
+      "close": [
+        "We passed a fortnight in these perambulations: my health and",
+        "Henry rejoiced in my gaiety, and sincerely sympathized in my",
+        "We returned to our college on a Sunday afternoon: the peasan"
+      ],
+      "textHash": "426c642fee3a",
+      "pageHash": "c561a28a2ce4"
+    },
+    {
+      "title": "Volume I — Chapter VI",
+      "blockCount": 65,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 76,
+      "pageMax": 86,
+      "openPages": [
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        76,
+        77
+      ],
+      "open": [
+        "Chapter VI",
+        "O N my return, I found the following letter from my father: ",
+        "“ MY DEAR VICTOR ,",
+        "“You have probably waited impatiently for a letter to fix th",
+        "“William is dead! — that sweet child, whose smiles de-",
+        "lighted and warmed my heart, who was so gentle, yet so gay! "
+      ],
+      "closePages": [
+        86,
+        86,
+        86
+      ],
+      "close": [
+        "“She is innocent, my Elizabeth,” said I, “and that shall be ",
+        "“How kind you are! every one else believes in her guilt, and",
+        "“Sweet niece,” said my father, “dry your tears. If she is, a"
+      ],
+      "textHash": "dad96910a1b2",
+      "pageHash": "1eda43a4730d"
+    },
+    {
+      "title": "Volume I — Chapter VII",
+      "blockCount": 49,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 88,
+      "pageMax": 97,
+      "openPages": [
+        88,
+        88,
+        88,
+        89,
+        89,
+        89,
+        90,
+        90
+      ],
+      "open": [
+        "Chapter VII",
+        "W E passed a few sad hours, until eleven o’clock, when the t",
+        "The appearance of Justine was calm. She was dressed in mourn",
+        "The trial began; and after the advocate against her had stat",
+        "The woman asked her what she did there; but she looked very ",
+        "Elizabeth, in a faltering voice, proved that it was the same"
+      ],
+      "closePages": [
+        96,
+        97,
+        97
+      ],
+      "close": [
+        "Justine assumed an air of cheerfulness, while she with diffi",
+        "Victor, how much I am relieved, now that I trust in the inno",
+        "Amiable cousin! such were your thoughts, mild and gentle as "
+      ],
+      "textHash": "092b23f8957f",
+      "pageHash": "12a86047a8d0"
+    },
+    {
+      "title": "Volume II",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 98,
+      "pageMax": 98,
+      "openPages": [
+        98
+      ],
+      "open": [
+        "Volume II"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "1fb75e79834a",
+      "pageHash": "29db0c6782db"
+    },
+    {
+      "title": "Volume II — Chapter I",
+      "blockCount": 23,
+      "types": "hpppppppppppppppppppppp",
+      "pageMin": 100,
+      "pageMax": 106,
+      "openPages": [
+        100,
+        100,
+        100,
+        101,
+        101,
+        101,
+        101,
+        102,
+        102,
+        102,
+        103,
+        103,
+        103,
+        104,
+        104,
+        104,
+        104,
+        105,
+        105,
+        105,
+        105,
+        105,
+        106
+      ],
+      "open": [
+        "Chapter I",
+        "N OTHING is more painful to the human mind, than, after the ",
+        "This state of mind preyed upon my health, which had entirely",
+        "My father observed with pain the alteration perceptible in m",
+        "“Do you think, Victor,” said he, “that I do not suffer also?",
+        "This advice, although good, was totally inapplicable to my c",
+        "About this time we retired to our house at Belrive. This cha",
+        "At these moments I wept bitterly, and wished that peace woul",
+        "When I thought of him, I gnashed my teeth, my eyes became in",
+        "Our house was the house of mourning. My father’s health was ",
+        "“When I reflect, my dear cousin,” said she, “on the miser-",
+        "able death of Justine Moritz, I no longer see the world and ",
+        "Yet she was innocent. I know, I feel she was innocent; you a",
+        "I listened to this discourse with the extremest agony. I, no",
+        "She shed tears as she said this, distrusting the very solace",
+        "It was from this cause that he had removed to the country; a",
+        "The weather was uncommonly fine; and if mine had been a sorr",
+        "During the first day we travelled in a carriage. In the morn",
+        "The next day we pursued our journey upon mules; and as we as",
+        "We passed the bridge of Pelissier, where the ravine, which t",
+        "Blânc, raised itself from the surrounding aiguilles , and it",
+        "During this journey, I sometimes joined Elizabeth, and exert",
+        "We retired early to our apartments, but not to sleep; at lea"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "5d04c74be674",
+      "pageHash": "2dba4a9362ac"
+    },
+    {
+      "title": "Volume II — Chapter II",
+      "blockCount": 27,
+      "types": "hpppppppppppppppppppppppppp",
+      "pageMin": 108,
+      "pageMax": 114,
+      "openPages": [
+        108,
+        108,
+        108,
+        108,
+        108,
+        109,
+        110,
+        110
+      ],
+      "open": [
+        "Chapter II",
+        "T HE next day, contrary to the prognostications of our guide",
+        "“My dear cousin,” said she, “you see what happiness you diff",
+        "The following morning the rain poured down in torrents, and ",
+        "I knew that they would remain that day at the inn; and as I ",
+        "The ascent is precipitous, but the path is cut into continua"
+      ],
+      "closePages": [
+        113,
+        114,
+        114
+      ],
+      "close": [
+        "“Thus I relieve thee, my creator,” he said, and placed his h",
+        "Hear my tale; it is long and strange, and the temperature of",
+        "My heart was full, and I did not answer him; but, as I proce"
+      ],
+      "textHash": "b0fdd04901f4",
+      "pageHash": "cd127ee7d4f1"
+    },
+    {
+      "title": "Volume II — Chapter III",
+      "blockCount": 33,
+      "types": "hpppppppppppppppppppppppppppppppp",
+      "pageMin": 116,
+      "pageMax": 122,
+      "openPages": [
+        116,
+        116,
+        116,
+        116,
+        117,
+        117,
+        117,
+        117
+      ],
+      "open": [
+        "Chapter III",
+        "“I T is with considerable difficulty that I remember the ori",
+        "nal æra of my being: all the events of that period appear co",
+        "The light became more and more oppressive to me; and, the he",
+        "“It was dark when I awoke; I felt cold also, and half-",
+        "frightened as it were instinctively, finding myself so desol"
+      ],
+      "closePages": [
+        122,
+        122,
+        122
+      ],
+      "close": [
+        "“The old man had, in the mean time, been pensive; but, on th",
+        "“Night quickly shut in; but, to my extreme wonder, I found t",
+        "“The family, after having been thus occupied for a short tim"
+      ],
+      "textHash": "bac3caaecec6",
+      "pageHash": "bf53d12e648c"
+    },
+    {
+      "title": "Volume II — Chapter IV",
+      "blockCount": 31,
+      "types": "hpppppppppppppppppppppppppppppp",
+      "pageMin": 126,
+      "pageMax": 132,
+      "openPages": [
+        126,
+        126,
+        126,
+        126,
+        126,
+        127,
+        127,
+        127
+      ],
+      "open": [
+        "Chapter IV",
+        "“I LAY on my straw, but I could not sleep. I thought of the ",
+        "“The cottagers arose the next morning before the sun.",
+        "The young woman arranged the cottage, and prepared the food;",
+        "“This day was passed in the same routine as that which prece",
+        "“They were not entirely happy. The young man and his compani"
+      ],
+      "closePages": [
+        131,
+        132,
+        132
+      ],
+      "close": [
+        "“These thoughts exhilarated me, and led me to apply with fre",
+        "“The pleasant showers and genial warmth of spring gr-",
+        "eatly altered the aspect of the earth. Men, who before this "
+      ],
+      "textHash": "a8707b84a344",
+      "pageHash": "48c79bbf3b81"
+    },
+    {
+      "title": "Volume II — Chapter V",
+      "blockCount": 31,
+      "types": "hpppppppppppppppppppppppppppppp",
+      "pageMin": 134,
+      "pageMax": 139,
+      "openPages": [
+        134,
+        134,
+        134,
+        134,
+        134,
+        134,
+        134,
+        134
+      ],
+      "open": [
+        "Chapter V",
+        "“I NOW hasten to the more moving part of my story. I shall r",
+        "“Spring advanced rapidly; the weather became fine, and the s",
+        "“It was on one of these days, when my cottagers peri-",
+        "odically rested from labour — the old man played on his guit",
+        "“It was a lady on horseback, accompanied by a country-"
+      ],
+      "closePages": [
+        139,
+        139,
+        139
+      ],
+      "close": [
+        "“Other lessons were impressed upon me even more deeply. I he",
+        "“But where were my friends and relations? No father had watc",
+        "“I will soon explain to what these feelings tended; but allo"
+      ],
+      "textHash": "608adcea8d4e",
+      "pageHash": "f61d06710ea1"
+    },
+    {
+      "title": "Volume II — Chapter VI",
+      "blockCount": 34,
+      "types": "hppppppppppppppppppppppppppppppppp",
+      "pageMin": 142,
+      "pageMax": 147,
+      "openPages": [
+        142,
+        142,
+        142,
+        142,
+        142,
+        142,
+        143,
+        143
+      ],
+      "open": [
+        "Chapter VI",
+        "“S OME time elapsed before I learned the history of my frien",
+        "“The name of the old man was De Lacey. He was de-",
+        "scended from a good family in France, where he had lived for",
+        "“The father of Safie had been the cause of their ruin.",
+        "He was a Turkish merchant, and had inhabited Paris for many "
+      ],
+      "closePages": [
+        147,
+        147,
+        147
+      ],
+      "close": [
+        "“When alone, Safie resolved in her own mind the plan of cond",
+        "“She arrived in safety at a town about twenty leagues from t",
+        "The Italian had mentioned the name of the spot for which the"
+      ],
+      "textHash": "e70e3b4af6ad",
+      "pageHash": "e35a9d99dc9f"
+    },
+    {
+      "title": "Volume II — Chapter VII",
+      "blockCount": 40,
+      "types": "hppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 148,
+      "pageMax": 157,
+      "openPages": [
+        148,
+        148,
+        148,
+        148,
+        148,
+        148,
+        149,
+        149
+      ],
+      "open": [
+        "Chapter VII",
+        "“S UCH was the history of my beloved cottagers. It impressed",
+        "“As yet I looked upon crime as a distant evil; benevo-",
+        "lence and generosity were ever present before me, inciting w",
+        "“One night, during my accustomed visit to the neighbour-",
+        "ing wood, where I collected my own food, and brought home fi"
+      ],
+      "closePages": [
+        156,
+        157,
+        157
+      ],
+      "close": [
+        "less, cannot you undeceive them?’ “ ‘I am about to undertake",
+        "I struggled vainly for firmness sufficient to answer him, bu",
+        "Safie, and Agatha entered. Who can describe their horror and"
+      ],
+      "textHash": "53c9c5bdf3da",
+      "pageHash": "50185a7cccfd"
+    },
+    {
+      "title": "Volume II — Chapter VIII",
+      "blockCount": 46,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 158,
+      "pageMax": 167,
+      "openPages": [
+        158,
+        158,
+        158,
+        158,
+        158,
+        158,
+        158,
+        158
+      ],
+      "open": [
+        "Chapter VIII",
+        "“C URSED , cursed creator! Why did I live? Why, in that inst",
+        "“When night came, I quitted my retreat, and wandered in the ",
+        "“But this was a luxury of sensation that could not endure;",
+        "I became fatigued with excess of bodily exertion, and sank o",
+        "“The sun rose; I heard the voices of men, and knew that it w"
+      ],
+      "closePages": [
+        166,
+        166,
+        167
+      ],
+      "close": [
+        "“While I was overcome by these feelings, I left the spot whe",
+        "“For some days I haunted the spot where these scenes had tak",
+        "At length I wandered towards these mountains, and have range"
+      ],
+      "textHash": "27c72a0b5744",
+      "pageHash": "8ee5e1d144f7"
+    },
+    {
+      "title": "Volume II — Chapter IX",
+      "blockCount": 25,
+      "types": "hpppppppppppppppppppppppp",
+      "pageMin": 168,
+      "pageMax": 174,
+      "openPages": [
+        168,
+        168,
+        168,
+        168,
+        168,
+        168,
+        169,
+        169
+      ],
+      "open": [
+        "Chapter IX",
+        "T HE being finished speaking, and fixed his looks upon me in",
+        "The latter part of his tale had kindled anew in me the anger",
+        "“I do refuse it,” I replied; “and no torture shall ever exto",
+        "Shall I create another like yourself, whose joint wickedness",
+        "“You are in the wrong,” replied the fiend; “and, instead of "
+      ],
+      "closePages": [
+        173,
+        173,
+        174
+      ],
+      "close": [
+        "The following day we returned to Geneva. The intention of my",
+        "For myself, I was passive in all their arrangements; and the",
+        "By degrees, however, these feelings became calmed. I entered"
+      ],
+      "textHash": "04ebb89b405c",
+      "pageHash": "9e637a6a646d"
+    },
+    {
+      "title": "Volume III",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 176,
+      "pageMax": 176,
+      "openPages": [
+        176
+      ],
+      "open": [
+        "Volume III"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "f41263b2118c",
+      "pageHash": "cba28b89eb85"
+    },
+    {
+      "title": "Volume III — Chapter I",
+      "blockCount": 38,
+      "types": "hppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 178,
+      "pageMax": 186,
+      "openPages": [
+        178,
+        178,
+        179,
+        179,
+        179,
+        179,
+        179,
+        179
+      ],
+      "open": [
+        "Chapter I",
+        "D AY after day, week after week, passed away on my return to",
+        "I met the salutations of my friends with a readier smile and",
+        "It was after my return from one of these rambles that my fat",
+        "“I am happy to remark, my dear son, that you have re-",
+        "sumed your former pleasures, and seem to be returning to you"
+      ],
+      "closePages": [
+        186,
+        186,
+        186
+      ],
+      "close": [
+        "Beyond Cologne we descended to the plains of Holland; and we",
+        "Our journey here lost the interest arising from beautiful sc",
+        "At length we saw the numerous steeples of London, St. Paul’s"
+      ],
+      "textHash": "268cfe5bc501",
+      "pageHash": "8c4f6dd622ad"
+    },
+    {
+      "title": "Volume III — Chapter II",
+      "blockCount": 31,
+      "types": "hpppppppppppppppppppppppppppppp",
+      "pageMin": 188,
+      "pageMax": 195,
+      "openPages": [
+        188,
+        188,
+        188,
+        189,
+        189,
+        189,
+        190,
+        190
+      ],
+      "open": [
+        "Chapter II",
+        "L ONDON was our present point of rest; we determined to rema",
+        "I could fill my mind with the sights of heaven and earth; th",
+        "The difference of manners which he observed was to him an in",
+        "After passing some months in London, we received a letter fr",
+        "We had arrived in England at the beginning of October, and i"
+      ],
+      "closePages": [
+        195,
+        195,
+        195
+      ],
+      "close": [
+        "In this manner I distributed my occupations when I first arr",
+        "Thus situated, employed in the most detestable occupation, i",
+        "In the mean time I worked on, and my labour was already cons"
+      ],
+      "textHash": "e41f296dd01c",
+      "pageHash": "056a768f6c60"
+    },
+    {
+      "title": "Volume III — Chapter III",
+      "blockCount": 44,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 198,
+      "pageMax": 208,
+      "openPages": [
+        198,
+        198,
+        198,
+        199,
+        199,
+        199,
+        200,
+        200
+      ],
+      "open": [
+        "Chapter III",
+        "I SAT one evening in my laboratory; the sun had set, and the",
+        "I was alike ignorant; she might become ten thousand times mo",
+        "Even if they were to leave Europe, and inhabit the deserts o",
+        "I trembled, and my heart failed within me; when, on looking ",
+        "I left the room, and, locking the door, made a solemn vow in"
+      ],
+      "closePages": [
+        207,
+        207,
+        208
+      ],
+      "close": [
+        "“Aye, Sir, free enough for honest folks. Mr. Kirwin is a mag",
+        "This answer startled me; but I presently recovered myself. I",
+        "I must pause here; for it requires all my fortitude to recal"
+      ],
+      "textHash": "f40222779da9",
+      "pageHash": "c282a1c173c5"
+    },
+    {
+      "title": "Volume III — Chapter IV",
+      "blockCount": 49,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 210,
+      "pageMax": 220,
+      "openPages": [
+        210,
+        210,
+        210,
+        210,
+        211,
+        211,
+        211,
+        211
+      ],
+      "open": [
+        "Chapter IV",
+        "I WAS soon introduced into the presence of the magistrate, a",
+        "About half a dozen men came forward; and one being selected ",
+        "Their first supposition was, that it was the corpse of some ",
+        "The first part of this deposition did not in the least inter",
+        "The son confirmed his father’s account: but when Daniel Nuge"
+      ],
+      "closePages": [
+        220,
+        220,
+        220
+      ],
+      "close": [
+        "My father easily acceded to my desire; and, after having tak",
+        "It was midnight. My father slept in the cabin; and I lay on ",
+        "Ever since my recovery from the fever I had been in the cust"
+      ],
+      "textHash": "cad25f4f28fd",
+      "pageHash": "631f8b0b5679"
+    },
+    {
+      "title": "Volume III — Chapter V",
+      "blockCount": 48,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 222,
+      "pageMax": 232,
+      "openPages": [
+        222,
+        222,
+        222,
+        222,
+        223,
+        223,
+        223,
+        223
+      ],
+      "open": [
+        "Chapter V",
+        "W E had resolved not to go to London, but to cross the count",
+        "His tenderness and attentions were unremitting; my grief and",
+        "“Alas! my father,” said I, “how little do you know me. Human",
+        "My father had often, during my imprisonment, heard me make t",
+        "Upon this occasion my father said, with an expression of unb"
+      ],
+      "closePages": [
+        232,
+        232,
+        232
+      ],
+      "close": [
+        "Thus Elizabeth endeavoured to divert her thoughts and mine f",
+        "The sun sunk lower in the heavens; we passed the river Dranc",
+        "The wind, which had hitherto carried us along with amazing r"
+      ],
+      "textHash": "441c8dcaf514",
+      "pageHash": "9cdb9f796d52"
+    },
+    {
+      "title": "Volume III — Chapter VI",
+      "blockCount": 35,
+      "types": "hpppppppppppppppppppppppppppppppppp",
+      "pageMin": 234,
+      "pageMax": 241,
+      "openPages": [
+        234,
+        234,
+        234,
+        234,
+        234,
+        235,
+        235,
+        235
+      ],
+      "open": [
+        "Chapter VI",
+        "I T was eight o’clock when we landed; we walked for a short ",
+        "The wind, which had fallen in the south, now rose with great",
+        "I had been calm during the day; but so soon as night obscure",
+        "Elizabeth observed my agitation for some time in timid and f",
+        "“Oh! peace, peace, my love,” replied I, “this night, and all"
+      ],
+      "closePages": [
+        241,
+        241,
+        241
+      ],
+      "close": [
+        "“Man,” I cried, “how ignorant art thou in thy pride of wis-",
+        "dom! Cease; you know not what it is you say.”",
+        "I broke from the house angry and disturbed, and retired to m"
+      ],
+      "textHash": "72225b643993",
+      "pageHash": "2516d6ecebe8"
+    },
+    {
+      "title": "Volume III — Chapter VII",
+      "blockCount": 101,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 242,
+      "pageMax": 267,
+      "openPages": [
+        242,
+        242,
+        242,
+        242,
+        242,
+        243,
+        243,
+        243
+      ],
+      "open": [
+        "Chapter VII",
+        "M Y present situation was one in which all voluntary thought",
+        "My first resolution was to quit Geneva for ever; my country,",
+        "I hardly know; many times have I stretched my failing limbs ",
+        "When I quitted Geneva, my first labour was to gain some clue",
+        "The spirits of the departed seemed to flit around, and to ca"
+      ],
+      "closePages": [
+        266,
+        267,
+        267
+      ],
+      "close": [
+        "“But soon,” he cried, with sad and solemn enthusiasm, “I sha",
+        "The light of that conflagration will fade away; my ashes wil",
+        "He sprung from the cabin-window, as he said this, upon the i"
+      ],
+      "textHash": "f608a12b8d86",
+      "pageHash": "85337f977a3e"
+    }
+  ]
 }

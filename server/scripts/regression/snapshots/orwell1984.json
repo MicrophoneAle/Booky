@@ -1,5 +1,5 @@
 {
-  "parserVersion": 134,
+  "parserVersion": 135,
   "totalBlocks": 883,
   "totalWords": 104667,
   "chapterCount": 26,
@@ -35,5 +35,1073 @@
   "lastBlockText": "THE END",
   "headingCount": 29,
   "avgBlockLength": 665,
-  "proseBlockCount": 854
+  "proseBlockCount": 854,
+  "frontMatter": {
+    "blockCount": 8,
+    "types": "hhpppppp",
+    "pageMin": 0,
+    "pageMax": 3,
+    "openPages": [
+      0,
+      0,
+      1,
+      1,
+      1,
+      2,
+      3,
+      3
+    ],
+    "open": [
+      "Nineteen Eighty-Four",
+      "By George Orwell",
+      "ERIC ARTHUR BLAIR was born in British India in 1903, the son",
+      "Blair completed Down and Out in 1932, and it was published e",
+      "Orwell took a job at the BBC Eastern Service in 1941, superv",
+      "GEORGE ORWELL",
+      "Language: English are in the public domain in Australia, unl",
+      "Copyright laws are changing all over the world. Be sure to c"
+    ],
+    "closePages": [],
+    "close": [],
+    "textHash": "e5cf506f1a01",
+    "pageHash": "be36b2329e55"
+  },
+  "chapterOrder": [
+    {
+      "title": "PART ONE",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 4,
+      "pageMax": 4,
+      "openPages": [
+        4
+      ],
+      "open": [
+        "PART ONE"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "9d673cd3d6bc",
+      "pageHash": "4b227777d4dd"
+    },
+    {
+      "title": "PART ONE — Chapter 1",
+      "blockCount": 58,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 4,
+      "pageMax": 19,
+      "openPages": [
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6
+      ],
+      "open": [
+        "Chapter 1",
+        "It was a bright cold day in April, and the clocks were strik",
+        "Inside the flat a fruity voice was reading out a list of fig",
+        "Outside, even through the shut window-pane, the world looked",
+        "Behind Winston’s back the voice from the telescreen was stil",
+        "Winston kept his back turned to the telescreen. It was safer"
+      ],
+      "closePages": [
+        19,
+        19,
+        19
+      ],
+      "close": [
+        "It was always at night — the arrests invariably happened at ",
+        "For a moment he was seized by a kind of hysteria. He began w",
+        "He sat back in his chair, slightly ashamed of himself, and l"
+      ],
+      "textHash": "422e2448178e",
+      "pageHash": "8f5092d3b11e"
+    },
+    {
+      "title": "PART ONE — Chapter 2",
+      "blockCount": 31,
+      "types": "hpppppppppppppppppppppppppppppp",
+      "pageMin": 20,
+      "pageMax": 27,
+      "openPages": [
+        20,
+        20,
+        20,
+        20,
+        21,
+        21,
+        21,
+        22
+      ],
+      "open": [
+        "Chapter 2",
+        "As he put his hand to the door-knob Winston saw that he had ",
+        "He drew in his breath and opened the door. Instantly a warm ",
+        "‘Of course it’s only because Tom isn’t home,’ said Mrs Parso",
+        "Brother. There was the usual boiled-cabbage smell, common to",
+        "‘It’s the children,’ said Mrs Parsons, casting a half-appreh"
+      ],
+      "closePages": [
+        27,
+        27,
+        27
+      ],
+      "close": [
+        "Thoughtcrime does not entail death: thoughtcrime IS death.",
+        "Now he had recognized himself as a dead man it became import",
+        "He put the diary away in the drawer. It was quite useless to"
+      ],
+      "textHash": "a96608e5db93",
+      "pageHash": "5452370c37ef"
+    },
+    {
+      "title": "PART ONE — Chapter 3",
+      "blockCount": 22,
+      "types": "hppppppppppppppppppppp",
+      "pageMin": 28,
+      "pageMax": 34,
+      "openPages": [
+        28,
+        28,
+        28,
+        28,
+        28,
+        29,
+        29,
+        29,
+        29,
+        30,
+        31,
+        31,
+        31,
+        32,
+        32,
+        32,
+        32,
+        33,
+        33,
+        34,
+        34,
+        34
+      ],
+      "open": [
+        "Chapter 3",
+        "Winston was dreaming of his mother. He must, he thought, hav",
+        "At this moment his mother was sitting in some place deep dow",
+        "They were in the saloon of a sinking ship, looking up at him",
+        "He could not remember what had happened, but he knew in his ",
+        "His mother’s memory tore at his heart because she had died l",
+        "Suddenly he was standing on short springy turf, on a summer ",
+        "The girl with dark hair was coming towards them across the f",
+        "The telescreen was giving forth an ear-splitting whistle whi",
+        "‘Thirty to forty group!’ yapped a piercing female voice. ‘Th",
+        "Winston could not definitely remember a time when his countr",
+        "There were people sitting all over the stone-flagged floor, ",
+        "That’s what comes of trusting ‘em. I said so all along. We d",
+        "Since about that time, war had been literally continuous, th",
+        "At this moment, for example, in 1984 (if it was 1984), Ocean",
+        "Officially the change of partners had never happened. Oceani",
+        "HAPPENED — that, surely, was more terrifying than mere tortu",
+        "All that was needed was an unending series of victories over",
+        "The instructress had called them to attention again. ‘And no",
+        "Everything melted into mist. Sometimes, indeed, you could pu",
+        "‘Smith!’ screamed the shrewish voice from the telescreen. ‘6",
+        "‘THERE, comrades! THAT’S how I want to see you doing it. Wat"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "13f511843768",
+      "pageHash": "ab470a4509d6"
+    },
+    {
+      "title": "PART ONE — Chapter 4",
+      "blockCount": 20,
+      "types": "hppppppppppppppppppp",
+      "pageMin": 36,
+      "pageMax": 44,
+      "openPages": [
+        36,
+        36,
+        36,
+        37,
+        37,
+        38,
+        39,
+        39,
+        40,
+        40,
+        41,
+        41,
+        42,
+        42,
+        43,
+        43,
+        43,
+        44,
+        44,
+        44
+      ],
+      "open": [
+        "Chapter 4",
+        "With the deep, unconscious sigh which not even the nearness ",
+        "When one knew that any document was due for destruction, or ",
+        "Winston dialled ‘back numbers’ on the telescreen and called ",
+        "Command had launched its offensive in South India and left N",
+        "What happened in the unseen labyrinth to which the pneumatic",
+        "Winston glanced across the hall. In the corresponding cubicl",
+        "Winston hardly knew Tillotson, and had no idea what work he ",
+        "Ampleforth, with very hairy ears and a surprising talent for",
+        "Department. Beyond, above, below, were other swarms of worke",
+        "Three messages had slid out of the pneumatic tube while Wins",
+        "He unrolled the message that he had set aside earlier. It ra",
+        "Winston read through the offending article. Big Brother’s Or",
+        "Perhaps thirty people personally known to Winston, not count",
+        "Winston did not know why Withers had been disgraced. Perhaps",
+        "He might turn the speech into the usual denunciation of trai",
+        "Ogilvy. It was true that there was no such person as Comrade",
+        "At the age of three Comrade Ogilvy had refused all toys exce",
+        "At seventeen he had been a district organizer of the Junior ",
+        "Winston debated with himself whether to award Comrade Ogilvy"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "dc61df9583d8",
+      "pageHash": "c25e4ea22ee9"
+    },
+    {
+      "title": "PART ONE — Chapter 5",
+      "blockCount": 47,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 46,
+      "pageMax": 58,
+      "openPages": [
+        46,
+        46,
+        46,
+        46,
+        46,
+        47,
+        47,
+        47
+      ],
+      "open": [
+        "Chapter 5",
+        "In the low-ceilinged canteen, deep underground, the lunch qu",
+        "‘Just the man I was looking for,’ said a voice at Winston’s ",
+        "‘I wanted to ask you whether you’d got any razor blades,’ he",
+        "Sometimes it was buttons, sometimes it was darning wool, som",
+        "‘Did you go and see the prisoners hanged yesterday?’ said Sy"
+      ],
+      "closePages": [
+        57,
+        58,
+        58
+      ],
+      "close": [
+        "His earlier thought returned to him: probably she was not ac",
+        "The girl had turned her back on him again. Perhaps after all",
+        "‘Did I ever tell you, old boy,’ he said, chuckling round the"
+      ],
+      "textHash": "17c2ea1d2733",
+      "pageHash": "8a8d58554977"
+    },
+    {
+      "title": "PART ONE — Chapter 6",
+      "blockCount": 21,
+      "types": "hpppppppppppppppppppp",
+      "pageMin": 59,
+      "pageMax": 64,
+      "openPages": [
+        59,
+        59,
+        59,
+        59,
+        59,
+        59,
+        59,
+        60,
+        60,
+        61,
+        61,
+        62,
+        62,
+        62,
+        63,
+        63,
+        63,
+        63,
+        63,
+        63,
+        64
+      ],
+      "open": [
+        "Chapter 6",
+        "Winston was writing in his diary:",
+        "It was three years ago. It was on a dark evening, in a narro",
+        "I —— For the moment it was too difficult to go on. He shut h",
+        "Your worst enemy, he reflected, was your own nervous system.",
+        "It happened again just as they were passing one another: it ",
+        "He drew his breath and went on writing: I went with her thro",
+        "When he had gone with that woman it had been his first lapse",
+        "The aim of the Party was not merely to prevent men and women",
+        "There were even organizations such as the Junior Anti-Sex Le",
+        "He thought again of Katharine. It must be nine, ten — nearly",
+        "Quite soon he grew to have a feeling of positive dread when ",
+        "She threw herself down on the bed, and at once, without any ",
+        "He saw himself standing there in the dim lamplight, with the",
+        "Chastity was as deep ingrained in them as Party loyalty. By ",
+        "I turned up the lamp. When I saw her in the light ——",
+        "After the darkness the feeble light of the paraffin lamp had",
+        "It had got to be written down, it had got to be confessed. W",
+        "He wrote hurriedly, in scrabbling handwriting:",
+        "When I saw her in the light she was quite an old woman, fift",
+        "He pressed his fingers against his eyelids again. He had wri"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "9ce3a3c0b5e0",
+      "pageHash": "d1ec3dd4218f"
+    },
+    {
+      "title": "PART ONE — Chapter 7",
+      "blockCount": 31,
+      "types": "hpppppppppppppppppppppppppppppp",
+      "pageMin": 65,
+      "pageMax": 75,
+      "openPages": [
+        65,
+        65,
+        65,
+        65,
+        66,
+        66,
+        66,
+        66
+      ],
+      "open": [
+        "Chapter 7",
+        "‘If there is hope,’ wrote Winston, ‘it lies in the proles.’ ",
+        "Brotherhood existed, as just possibly it might, it was incon",
+        "He remembered how once he had been walking down a crowded st",
+        "He wrote:",
+        "Until they become conscious they will never rebel, and until"
+      ],
+      "closePages": [
+        74,
+        75,
+        75
+      ],
+      "close": [
+        "He picked up the children’s history book and looked at the p",
+        "The Party told you to reject the evidence of your eyes and e",
+        "Freedom is the freedom to say that two plus two make four. I"
+      ],
+      "textHash": "c640d56ae8e8",
+      "pageHash": "ad7ac40515e8"
+    },
+    {
+      "title": "PART ONE — Chapter 8",
+      "blockCount": 68,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 76,
+      "pageMax": 95,
+      "openPages": [
+        76,
+        76,
+        76,
+        77,
+        77,
+        77,
+        77,
+        78
+      ],
+      "open": [
+        "Chapter 8",
+        "From somewhere at the bottom of a passage the smell of roast",
+        "‘If there is hope,’ he had written in the diary, ‘it lies in",
+        "Perhaps a quarter of the windows in the street were broken a",
+        "“But if you’d of been in my place you’d of done the same as ",
+        "‘Ah,’ said the other, ‘that’s jest it. That’s jest where it "
+      ],
+      "closePages": [
+        95,
+        95,
+        95
+      ],
+      "close": [
+        "WAR IS PEACE",
+        "FREEDOM IS SLAVERY",
+        "IGNORANCE IS STRENGTH"
+      ],
+      "textHash": "eb479a5e685b",
+      "pageHash": "1ec01575b55c"
+    },
+    {
+      "title": "PART TWO",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 96,
+      "pageMax": 96,
+      "openPages": [
+        96
+      ],
+      "open": [
+        "PART TWO"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "a5bb74fd3c51",
+      "pageHash": "7b1a278f5abe"
+    },
+    {
+      "title": "PART TWO — Chapter 1",
+      "blockCount": 33,
+      "types": "hpppppppppppppppppppppppppppppppp",
+      "pageMin": 96,
+      "pageMax": 106,
+      "openPages": [
+        96,
+        96,
+        96,
+        96,
+        96,
+        97,
+        97,
+        97
+      ],
+      "open": [
+        "Chapter 1",
+        "It was the middle of the morning, and Winston had left the c",
+        "They were perhaps four metres apart when the girl stumbled a",
+        "A curious emotion stirred in Winston’s heart. In front of hi",
+        "‘It’s nothing. My arm. It’ll be all right in a second.’ She ",
+        "Not to let one’s feelings appear in one’s face was a habit t"
+      ],
+      "closePages": [
+        105,
+        105,
+        106
+      ],
+      "close": [
+        "From over scrubby cheekbones eyes looked into Winston’s, som",
+        "It could not have been ten seconds, and yet it seemed a long",
+        "To turn his head and look at her would have been inconceivab"
+      ],
+      "textHash": "e1ff051371be",
+      "pageHash": "12fb034530fe"
+    },
+    {
+      "title": "PART TWO — Chapter 2",
+      "blockCount": 31,
+      "types": "hpppppppppppppppppppppppppppppp",
+      "pageMin": 107,
+      "pageMax": 114,
+      "openPages": [
+        107,
+        107,
+        107,
+        107,
+        108,
+        108,
+        108,
+        109
+      ],
+      "open": [
+        "Chapter 2",
+        "Winston picked his way up the lane through dappled light and",
+        "There were no telescreens, of course, but there was always t",
+        "The lane widened, and in a minute he came to the footpath sh",
+        "He looked up. It was the girl. She shook her head, evidently",
+        "‘Here we are,’ she said. He was facing her at several paces’"
+      ],
+      "closePages": [
+        114,
+        114,
+        114
+      ],
+      "close": [
+        "‘Listen. The more men you’ve had, the more I love you. Do yo",
+        "Winston woke first. He sat up and watched the freckled face,",
+        "The young, strong body, now helpless in sleep, awoke in him "
+      ],
+      "textHash": "92addc0c3ca7",
+      "pageHash": "489c96c6e86d"
+    },
+    {
+      "title": "PART TWO — Chapter 3",
+      "blockCount": 27,
+      "types": "hpppppppppppppppppppppppppp",
+      "pageMin": 116,
+      "pageMax": 124,
+      "openPages": [
+        116,
+        116,
+        116,
+        116,
+        116,
+        117,
+        118,
+        118
+      ],
+      "open": [
+        "Chapter 3",
+        "‘We can come here once again,’ said Julia. ‘It’s generally s",
+        "The route she gave him was quite different from the one by w",
+        "She had named a place where they could meet after work, four",
+        "‘And now I must go,’ she said as soon as he had mastered his",
+        "There were evenings when they reached their rendezvous and t"
+      ],
+      "closePages": [
+        123,
+        124,
+        124
+      ],
+      "close": [
+        "‘We are the dead,’ he said. ‘We’re not dead yet,’ said Julia",
+        "‘Oh, rubbish! Which would you sooner sleep with, me or a ske",
+        "‘Yes, I like that,’ he said. ‘Then stop talking about dying."
+      ],
+      "textHash": "2b3c474c8924",
+      "pageHash": "4e1f6761d032"
+    },
+    {
+      "title": "PART TWO — Chapter 4",
+      "blockCount": 33,
+      "types": "hpppppppppppppppppppppppppppppppp",
+      "pageMin": 125,
+      "pageMax": 133,
+      "openPages": [
+        125,
+        125,
+        125,
+        125,
+        126,
+        126,
+        126,
+        127
+      ],
+      "open": [
+        "Chapter 4",
+        "Winston looked round the shabby little room above Mr Charrin",
+        "Coffee and some saccharine tablets. The clock’s hands said s",
+        "Under the window somebody was singing. Winston peeped out, s",
+        "Whenever her mouth was not corked with clothes pegs she was ",
+        "The tune had been haunting London for weeks past. It was one"
+      ],
+      "closePages": [
+        133,
+        133,
+        133
+      ],
+      "close": [
+        "‘I can’t remember how it goes on after that. But anyway I re",
+        "‘My grandfather. He used to say it to me when I was a little",
+        "‘I bet that picture’s got bugs behind it,’ said Julia. ‘I’ll"
+      ],
+      "textHash": "90c0ab28d99c",
+      "pageHash": "31cb2bded7fb"
+    },
+    {
+      "title": "PART TWO — Chapter 5",
+      "blockCount": 20,
+      "types": "hppppppppppppppppppp",
+      "pageMin": 135,
+      "pageMax": 142,
+      "openPages": [
+        135,
+        135,
+        135,
+        135,
+        136,
+        136,
+        137,
+        137,
+        137,
+        138,
+        139,
+        139,
+        139,
+        139,
+        140,
+        140,
+        141,
+        141,
+        142,
+        142
+      ],
+      "open": [
+        "Chapter 5",
+        "Syme had vanished. A morning came, and he was missing from w",
+        "The weather was baking hot. In the labyrinthine Ministry the",
+        "The new tune which was to be the theme-song of Hate Week (th",
+        "A new poster had suddenly appeared all over London. It had n",
+        "Another bomb fell on a piece of waste ground which was used ",
+        "In the room over Mr Charrington’s shop, when they could get ",
+        "Four, five, six — seven times they met during the month of J",
+        "What mattered was that the room over the junk-shop should ex",
+        "Cock Robin. ‘It just occurred to me you might be interested,",
+        "Sometimes, too, they talked of engaging in active rebellion ",
+        "Times beyond number, at Party rallies and spontaneous demons",
+        "Minutes Hate she always excelled all others in shouting insu",
+        "In some ways she was far more acute than Winston, and far le",
+        "She also stirred a sort of envy in him by telling him that d",
+        "‘Who cares?’ she said impatiently. ‘It’s always one bloody w",
+        "‘Were they friends of yours?’ she said. ‘No, I never knew th",
+        "‘And what good was that?’ ‘It was no good, because I threw i",
+        "‘I’m not interested in the next generation, dear. I’m intere",
+        "Talking to her, he realized how easy it was to present an ap"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8a9c3a66ce8d",
+      "pageHash": "ba703568e984"
+    },
+    {
+      "title": "PART TWO — Chapter 6",
+      "blockCount": 10,
+      "types": "hppppppppp",
+      "pageMin": 143,
+      "pageMax": 145,
+      "openPages": [
+        143,
+        143,
+        143,
+        143,
+        143,
+        143,
+        144,
+        144,
+        144,
+        145
+      ],
+      "open": [
+        "Chapter 6",
+        "It had happened at last. The expected message had come. All ",
+        "At last they were face to face, and it seemed that his only ",
+        "‘I had been hoping for an opportunity of talking to you,’ he",
+        "‘But you write it very elegantly,’ said O’Brien. ‘That is no",
+        "O’Brien’s remark must obviously have been intended as a sign",
+        "‘No,’ said Winston. ‘I didn’t think it had been issued yet. ",
+        "They were standing in front of a telescreen. Somewhat absent",
+        "He was gone, leaving Winston holding the scrap of paper, whi",
+        "He knew that sooner or later he would obey O’Brien’s summons"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "a898c34c88a5",
+      "pageHash": "804dd8a51805"
+    },
+    {
+      "title": "PART TWO — Chapter 7",
+      "blockCount": 23,
+      "types": "hpppppppppppppppppppppp",
+      "pageMin": 146,
+      "pageMax": 152,
+      "openPages": [
+        146,
+        146,
+        146,
+        146,
+        147,
+        147,
+        147,
+        148,
+        148,
+        148,
+        148,
+        149,
+        149,
+        149,
+        149,
+        150,
+        150,
+        150,
+        151,
+        151,
+        151,
+        151,
+        152
+      ],
+      "open": [
+        "Chapter 7",
+        "Winston had woken up with his eyes full of tears. Julia roll",
+        "‘Do you know,’ he said, ‘that until this moment I believed I",
+        "His father had disappeared some time earlier, how much earli",
+        "He remembered long afternoons spent with other boys in scrou",
+        "When his father disappeared, his mother did not show any sur",
+        "He remembered the room where they lived, a dark, closesmelli",
+        "His mother was quite ready to give him more than his share. ",
+        "One day a chocolate ration was issued. There had been no suc",
+        "There was a long, nagging argument that went round and round",
+        "‘Winston, Winston!’ his mother called after him. ‘Come back!",
+        "He never saw his mother again. After he had devoured the cho",
+        "The dream was still vivid in his mind, especially the envelo",
+        "He told Julia the story of his mother’s disappearance. Witho",
+        "Her feelings were her own, and could not be altered from out",
+        "It would not have occurred to her that an action which is in",
+        "The terrible thing that the Party had done was to persuade y",
+        "They had held on to the primitive emotions which he himself ",
+        "He thought for a little while. ‘Has it ever occurred to you,",
+        "‘No. I’ve thought it all out. What you do, I’m going to do. ",
+        "‘If you mean confessing,’ she said, ‘we shall do that, right",
+        "ANYTHING — but they can’t make you believe it. They can’t ge",
+        "Facts, at any rate, could not be kept hidden. They could be "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "edfdcf53dc5c",
+      "pageHash": "188859d814d2"
+    },
+    {
+      "title": "PART TWO — Chapter 8",
+      "blockCount": 34,
+      "types": "hppppppppppppppppppppppppppppppppp",
+      "pageMin": 153,
+      "pageMax": 163,
+      "openPages": [
+        153,
+        153,
+        153,
+        153,
+        153,
+        154,
+        154,
+        154
+      ],
+      "open": [
+        "Chapter 8",
+        "They had done it, they had done it at last! The room they we",
+        "He had not bothered to look up when the servant showed Julia",
+        "It was only on very rare occasions that one saw inside the d",
+        "O’Brien had a slip of paper between his fingers and seemed t",
+        "He rose deliberately from his chair and came towards them ac"
+      ],
+      "closePages": [
+        162,
+        162,
+        163
+      ],
+      "close": [
+        "‘Did you ever happen to hear an old rhyme that begins “Orang",
+        "‘Oranges and lemons, say the bells of St Clement’s, You owe ",
+        "Within thirty seconds, it occurred to him, O’Brien would be "
+      ],
+      "textHash": "2c12dc96039d",
+      "pageHash": "f89eb163af21"
+    },
+    {
+      "title": "PART TWO — Chapter 9",
+      "blockCount": 103,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 164,
+      "pageMax": 205,
+      "openPages": [
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        165,
+        165
+      ],
+      "open": [
+        "Chapter 9",
+        "Winston was gelatinous with fatigue. Gelatinous was the righ",
+        "His overalls fretted his shoulders, the pavement tickled his",
+        "Charrington’s shop, keeping one eye open for the patrols, bu",
+        "On the sixth day of Hate Week, after the processions, the sp",
+        "Eurasian war-criminals who were to be publicly hanged on the"
+      ],
+      "closePages": [
+        204,
+        205,
+        205
+      ],
+      "close": [
+        "He stood dead still. No one had hit him yet. Thoughts which ",
+        "There was another, lighter step in the passage. Mr Charringt",
+        "He gave Winston a single sharp glance, as though verifying h"
+      ],
+      "textHash": "a6e45cbfa299",
+      "pageHash": "9dad1bb49029"
+    },
+    {
+      "title": "PART THREE",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 206,
+      "pageMax": 206,
+      "openPages": [
+        206
+      ],
+      "open": [
+        "PART THREE"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "84d9a2e529c5",
+      "pageHash": "5cf4e26bd3d8"
+    },
+    {
+      "title": "PART THREE — Chapter 1",
+      "blockCount": 47,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 206,
+      "pageMax": 217,
+      "openPages": [
+        206,
+        206,
+        206,
+        206,
+        206,
+        207,
+        207,
+        208
+      ],
+      "open": [
+        "Chapter 1",
+        "He did not know where he was. Presumably he was in the Minis",
+        "There were four telescreens, one in each wall. There was a d",
+        "Since he was arrested he had not been fed. He sat as still a",
+        "‘Smith!’ yelled a voice from the telescreen. ‘6079 Smith W.!",
+        "The Party prisoners were always silent and terrified, but th"
+      ],
+      "closePages": [
+        217,
+        217,
+        217
+      ],
+      "close": [
+        "Julia by doubling my own pain, would I do it? Yes, I would.’",
+        "The boots were approaching again. The door opened. O’Brien c",
+        "‘You know this, Winston,’ said O’Brien. ‘Don’t deceive yours"
+      ],
+      "textHash": "e4a9581c13a7",
+      "pageHash": "03be4b39345a"
+    },
+    {
+      "title": "PART THREE — Chapter 2",
+      "blockCount": 62,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 219,
+      "pageMax": 236,
+      "openPages": [
+        219,
+        219,
+        219,
+        219,
+        219,
+        220,
+        221,
+        221
+      ],
+      "open": [
+        "Chapter 2",
+        "He was lying on something that felt like a camp bed, except ",
+        "Even after his eyes were open he took in his surroundings on",
+        "With that first blow on the elbow the nightmare had started.",
+        "Sometimes it was fists, sometimes it was truncheons, sometim",
+        "The beatings grew less frequent, and became mainly a threat,"
+      ],
+      "closePages": [
+        236,
+        236,
+        236
+      ],
+      "close": [
+        "‘That, Winston, you will never know. If we choose to set you",
+        "He had got to ask it, and yet it was as though his tongue wo",
+        "‘You know what is in Room 101, Winston. Everyone knows what "
+      ],
+      "textHash": "1da0f1abc79a",
+      "pageHash": "60ce5d3b86d2"
+    },
+    {
+      "title": "PART THREE — Chapter 3",
+      "blockCount": 42,
+      "types": "hppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 237,
+      "pageMax": 248,
+      "openPages": [
+        237,
+        237,
+        237,
+        237,
+        238,
+        238,
+        238,
+        239
+      ],
+      "open": [
+        "Chapter 3",
+        "‘There are three stages in your reintegration,’ said O’Brien",
+        "‘As you lie there,’ said O’Brien, ‘you have often wondered —",
+        "Did it tell you anything that you did not know already?’ ‘Yo",
+        "There is no way in which the Party can be overthrown. The ru",
+        "Nevertheless Winston did not speak for another moment or two"
+      ],
+      "closePages": [
+        247,
+        248,
+        248
+      ],
+      "close": [
+        "‘We have beaten you, Winston. We have broken you up. You hav",
+        "Winston had stopped weeping, though the tears were still ooz",
+        "‘Tell me,’ he said, ‘how soon will they shoot me?’ ‘It might"
+      ],
+      "textHash": "7b6062be9f92",
+      "pageHash": "c9c1a9cefcbf"
+    },
+    {
+      "title": "PART THREE — Chapter 4",
+      "blockCount": 24,
+      "types": "hppppppppppppppppppppppp",
+      "pageMin": 249,
+      "pageMax": 255,
+      "openPages": [
+        249,
+        249,
+        249,
+        249,
+        249,
+        250,
+        250,
+        251,
+        251,
+        251,
+        251,
+        251,
+        252,
+        252,
+        253,
+        253,
+        253,
+        253,
+        254,
+        254,
+        254,
+        255,
+        255,
+        255
+      ],
+      "open": [
+        "Chapter 4",
+        "He was much better. He was growing fatter and stronger every",
+        "Weeks or months must have passed. It would have been possibl",
+        "They had given him a white slate with a stump of pencil tied",
+        "Country, or he was sitting among enormous glorious, sunlit r",
+        "By degrees he came to spend less time in sleep, but he still",
+        "His mind grew more active. He sat down on the plank bed, his",
+        "The pencil felt thick and awkward in his fingers. He began t",
+        "FREEDOM IS SLAVERY Then almost without a pause he wrote bene",
+        "TWO AND TWO MAKE FIVE But then there came a sort of check. H",
+        "GOD IS POWER",
+        "He accepted everything. The past was alterable. The past nev",
+        "Anything could be true. The so-called laws of Nature were no",
+        "He had no difficulty in disposing of the fallacy, and he was",
+        "Stupidity was as necessary as intelligence, and as difficult",
+        "One day — but ‘one day’ was not the right expression; just a",
+        "His body was healthy and strong. He walked easily, with a jo",
+        "Suddenly he started up with a shock of horror. The sweat bro",
+        "He lay back on the bed and tried to compose himself. What ha",
+        "He would have to start all over again. It might take years. ",
+        "One day they would decide to shoot him. You could not tell w",
+        "They would have blown a hole in their own perfection. To die",
+        "There was a heavy tramp of boots in the passage. The steel d",
+        "He paused, and went on in a gentler tone: ‘You are improving"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "ea185cfef50f",
+      "pageHash": "e8a61c11c2c8"
+    },
+    {
+      "title": "PART THREE — Chapter 5",
+      "blockCount": 15,
+      "types": "hpppppppppppppp",
+      "pageMin": 257,
+      "pageMax": 260,
+      "openPages": [
+        257,
+        257,
+        257,
+        257,
+        257,
+        258,
+        258,
+        258,
+        258,
+        259,
+        259,
+        259,
+        260,
+        260,
+        260
+      ],
+      "open": [
+        "Chapter 5",
+        "At each stage of his imprisonment he had known, or seemed to",
+        "It was bigger than most of the cells he had been in. But he ",
+        "For a moment he was alone, then the door opened and O’Brien ",
+        "‘The worst thing in the world,’ said O’Brien, ‘varies from i",
+        "‘In your case,’ said O’Brien, ‘the worst thing in the world ",
+        "‘You can’t do that!’ he cried out in a high cracked voice. ‘",
+        "‘You know this is not necessary. What is it that you want me",
+        "For you, they are unendurable. They are a form of pressure t",
+        "‘The rat,’ said O’Brien, still addressing his invisible audi",
+        "There was an outburst of squeals from the cage. It seemed to",
+        "‘I have pressed the first lever,’ said O’Brien. ‘You underst",
+        "The circle of the mask was large enough now to shut out the ",
+        "‘It was a common punishment in Imperial China,’ said O’Brien",
+        "‘Do it to Julia! Do it to Julia! Not me! Julia! I don’t care"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "2d0c7252929e",
+      "pageHash": "cc21bbadd506"
+    },
+    {
+      "title": "PART THREE — Chapter 6",
+      "blockCount": 70,
+      "types": "hppppppppppppppppppppppppppppppppphppppppppppppppppppppppppppppppppppp",
+      "pageMin": 261,
+      "pageMax": 282,
+      "openPages": [
+        261,
+        261,
+        261,
+        261,
+        261,
+        262,
+        262,
+        262
+      ],
+      "open": [
+        "Chapter 6",
+        "The Chestnut Tree was almost empty. A ray of sunlight slanti",
+        "Winston was listening to the telescreen. At present only mus",
+        "A violent emotion, not fear exactly but a sort of undifferen",
+        "The cloves and saccharine, themselves disgusting enough in t",
+        "He had grown fatter since they released him, and had regaine"
+      ],
+      "closePages": [
+        282,
+        282,
+        282
+      ],
+      "close": [
+        "It would have been quite impossible to render this into News",
+        "Milton, Swift, Byron, Dickens, and some others were therefor",
+        "THE END"
+      ],
+      "textHash": "23f4f03a26b8",
+      "pageHash": "bed56d440ad7"
+    }
+  ]
 }

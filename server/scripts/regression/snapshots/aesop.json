@@ -1,6 +1,6 @@
 {
-  "parserVersion": 134,
-  "totalBlocks": 1020,
+  "parserVersion": 135,
+  "totalBlocks": 1019,
   "totalWords": 27599,
   "chapterCount": 177,
   "chapterTitles": [
@@ -186,5 +186,4714 @@
   "lastBlockText": "",
   "headingCount": 180,
   "avgBlockLength": 138,
-  "proseBlockCount": 840
+  "proseBlockCount": 839,
+  "frontMatter": {
+    "blockCount": 24,
+    "types": "ihhhpppppiippppppppppipp",
+    "pageMin": 0,
+    "pageMax": 17,
+    "openPages": [
+      null,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      null,
+      null,
+      5,
+      5,
+      6,
+      12,
+      14,
+      14,
+      14,
+      15,
+      15,
+      16,
+      null,
+      17,
+      17
+    ],
+    "open": [
+      "[image]",
+      "Aesop's Fables",
+      "ÆSOP'S",
+      "FABLES",
+      "other parts of the world at no cost and with almost no restr",
+      "Author: J. H. Stickney",
+      "Illustrator: Charles Livingston Bull",
+      "Language: English",
+      "Produced by Juliet Sutherland, Emmy and the Online Distribut",
+      "[image]",
+      "[image]",
+      "It is well recognized by scholars, and should be taught to c",
+      "No occasion has been found to change in this edition the sty",
+      "The teacher who is interested in dramatic work will find als",
+      "Note 215 THE HISTORY OF FABLE",
+      "MODERN versions of Æsop go back no further than 480 A.D. In ",
+      "There is for Æsop’s Fables no authorized original version. A",
+      "ÆSOP, THE FATHER OF THE FABLE The life of Æsop, like that of",
+      "At the court of Crœsus he met with Solon, Thales, and other ",
+      "On the invitation of Crœsus he fixed his residence at Sardis",
+      "The fable on pages 197-200 is a translation of La Fontaine’s",
+      "[image]",
+      "ÆSOP’S FABLES",
+      "ÆSOP’S FABLES"
+    ],
+    "closePages": [],
+    "close": [],
+    "textHash": "6e5c00be9368",
+    "pageHash": "adc60486fa8e"
+  },
+  "chapterOrder": [
+    {
+      "title": "THE WOLF AND THE LAMB",
+      "blockCount": 8,
+      "types": "hppppppp",
+      "pageMin": 18,
+      "pageMax": 18,
+      "openPages": [
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18
+      ],
+      "open": [
+        "THE WOLF AND THE LAMB",
+        "ONE day a Wolf and a Lamb happened to come at the same time ",
+        "The Wolf wished very much to eat the Lamb, but meeting her a",
+        "So he began by trying to pick a quarrel, and said angrily: “",
+        "The Lamb, very much alarmed, said gently: “I do not see how ",
+        "“Be that as it may,” said the Wolf, with a snarl, “you are a",
+        "“Dear Mr. Wolf,” cried the poor Lamb, “that could not be, fo",
+        "Finding it of no use to argue any more, the Wolf began to sn"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "891e1e68925d",
+      "pageHash": "84bee1fffdd1"
+    },
+    {
+      "title": "THE FOX AND THE LION",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 19,
+      "pageMax": 20,
+      "openPages": [
+        19,
+        20,
+        20,
+        20,
+        20,
+        20
+      ],
+      "open": [
+        "THE FOX AND THE LION",
+        "A LITTLE fox was out playing one day, when a Lion came roari",
+        "“Dear me,” said the Fox, as he hid behind a tree, “I never s",
+        "The next time the Fox met the Lion he was not so much afraid",
+        "The third time they met, the Fox was not frightened at all. ",
+        "It would not be safe for little foxes always to follow the e"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "270f1eacf18b",
+      "pageHash": "ec849598a07e"
+    },
+    {
+      "title": "THE DOG AND HIS SHADOW",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 21,
+      "pageMax": 21,
+      "openPages": [
+        21,
+        21,
+        21,
+        21,
+        21
+      ],
+      "open": [
+        "THE DOG AND HIS SHADOW",
+        "A DOG once had a nice piece of meat for his dinner. Some say",
+        "Dogs like best to eat at home, and he went trotting along wi",
+        "On the dog’s way there was a stream with a plank across it. ",
+        "“I’ll try to get that,” said he; “then with both mine and hi"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "b22876475f43",
+      "pageHash": "26af926c3816"
+    },
+    {
+      "title": "THE CRAB AND HIS MOTHER",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 22,
+      "pageMax": 22,
+      "openPages": [
+        22,
+        22,
+        22,
+        22,
+        22,
+        22,
+        22
+      ],
+      "open": [
+        "THE CRAB AND HIS MOTHER",
+        "“MY child,” said a Crab to her son, “why do you walk so awkw",
+        "“I do wish to make a good appearance, mamma,” said the young",
+        "“Why, this is the way, of course,” said the mother, as she s",
+        "“No, this is the way,” said she, as she made another attempt",
+        "The little Crab smiled.",
+        "“When you learn to do it yourself, you can teach me,” he sai"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "42d3c57cf517",
+      "pageHash": "c24afa37efed"
+    },
+    {
+      "title": "THE FOX AND THE GRAPES",
+      "blockCount": 7,
+      "types": "hppppip",
+      "pageMin": 23,
+      "pageMax": 24,
+      "openPages": [
+        23,
+        23,
+        23,
+        23,
+        23,
+        null,
+        24
+      ],
+      "open": [
+        "THE FOX AND THE GRAPES",
+        "IT WAS a sultry day, and a Fox was almost famishing with hun",
+        "“What luck!” he said; “if only they weren’t quite so high, I",
+        "Jumping into the air is not the easiest thing in the world f",
+        "“I’ll do better next time,” he said.",
+        "[image]",
+        "He tried again and again, but did not succeed so well as at "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "95bf5f0a61d6",
+      "pageHash": "d5fe865374fe"
+    },
+    {
+      "title": "THE WOLF AND THE CRANE",
+      "blockCount": 10,
+      "types": "hppppppppp",
+      "pageMin": 25,
+      "pageMax": 25,
+      "openPages": [
+        25,
+        25,
+        25,
+        25,
+        25,
+        25,
+        25,
+        25,
+        25,
+        25
+      ],
+      "open": [
+        "THE WOLF AND THE CRANE",
+        "ONE day a Wolf, who was eating his dinner much too fast, swa",
+        "Just then he saw a Crane passing by.",
+        "“Dear friend,” said he to the Crane, “there is a bone sticki",
+        "“I’ll try,” said the Crane. Then he put his head into the Wo",
+        "“There!” said the Wolf, “I am glad it is out; I must be more",
+        "“I will go now, if you will pay me,” said the Crane.",
+        "“Pay you, indeed!” cried the Wolf.",
+        "“Be thankful that I did not bite your head off when it was i",
+        "Gentle, kindly folk sometimes have to learn that kindness mu"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "d3b9aa4cc856",
+      "pageHash": "31dd771e1e40"
+    },
+    {
+      "title": "THE ANTS AND THE GRASSHOPPERS",
+      "blockCount": 9,
+      "types": "hpppppppp",
+      "pageMin": 26,
+      "pageMax": 26,
+      "openPages": [
+        26,
+        26,
+        26,
+        26,
+        26,
+        26,
+        26,
+        26,
+        26
+      ],
+      "open": [
+        "THE ANTS AND THE GRASSHOPPERS",
+        "THE Ants and the Grasshoppers lived together in the great fi",
+        "When the frost came, it put an end to the work of the Ants a",
+        "“Good day to you, kind neighbor,” said she; “will you not le",
+        "“How does it happen that you have no food of your own?” aske",
+        "“There was an abundance in the field where we lived side by ",
+        "What were you doing, pray?”",
+        "“Oh,” said the Grasshopper, forgetting his hunger, “I sang a",
+        "“Well, then,” interrupted the Ant, “I must not deprive my ow"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "97ce6d4eba4e",
+      "pageHash": "0574048e42ea"
+    },
+    {
+      "title": "THE FROGS WHO ASKED FOR A KING",
+      "blockCount": 15,
+      "types": "hpppppppipppppp",
+      "pageMin": 27,
+      "pageMax": 29,
+      "openPages": [
+        27,
+        27,
+        27,
+        27,
+        27,
+        27,
+        27,
+        27,
+        null,
+        28,
+        28,
+        29,
+        29,
+        29,
+        29
+      ],
+      "open": [
+        "THE FROGS WHO ASKED FOR A KING",
+        "THERE were once some Frogs who lived together in perfect sec",
+        "So they sent to Jupiter, their god, to ask him to give them ",
+        "Jupiter laughed at their folly, for he knew that they were b",
+        "It fell with such a splash that the Frogs were terrified and",
+        "By and by, one braver than the rest peeped out to look at th",
+        "“This is not a King,” said a wise old Frog; “it is nothing b",
+        "Again they sent to Jupiter, and begged him to give them a Ki",
+        "[image]",
+        "Jupiter did not like to be disturbed again by the silly Frog",
+        "“Ah!” they said, “see how grand he looks! How he strides alo",
+        "“What is this?” cried the Frogs, and they began to draw back",
+        "“Oh! if we had only been—” said the oldest Frog. He was goin",
+        "add “content,” but was eaten up before he could finish the s",
+        "The remaining Frogs cried to Jupiter to help them, but he wo"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "69c5d099d2d5",
+      "pageHash": "f40e44ee4702"
+    },
+    {
+      "title": "THE DONKEY IN THE LION’S SKIN",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 30,
+      "pageMax": 30,
+      "openPages": [
+        30,
+        30,
+        30,
+        30
+      ],
+      "open": [
+        "THE DONKEY IN THE LION’S SKIN",
+        "A DONKEY once put on a Lion’s skin which some hunters had sp",
+        "By and by he met a Fox, and tried to frighten him by roaring",
+        "“My dear Donkey,” said the wise Fox, “you are braying, and n"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "92f0955df26e",
+      "pageHash": "b9a8cfe2e819"
+    },
+    {
+      "title": "THE MICE IN COUNCIL",
+      "blockCount": 24,
+      "types": "hppppppppppppppppppppppp",
+      "pageMin": 31,
+      "pageMax": 32,
+      "openPages": [
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        31,
+        32,
+        32,
+        32,
+        32
+      ],
+      "open": [
+        "THE MICE IN COUNCIL",
+        "SOME little Mice, who lived in the walls of a house, met tog",
+        "“There is no comfort in the house,” said Brown-back.",
+        "“If I but step",
+        "into the pantry to pick up a few crumbs, down comes the Cat,",
+        "“What can we do?” asked Gray-ear.",
+        "“Shall we all run at her at",
+        "once and bite her, and frighten her away?”",
+        "“No,” said White-whisker; “she is so bold we could not frigh",
+        "her. I have thought of something better than that. Let us ha",
+        "“O yes! yes!” cried all the Mice.",
+        "“That is a capital idea. We will bell the Cat! Hurrah! hurra",
+        "When their glee had subsided a little, Brown-back asked, “Bu",
+        "No one answered.",
+        "“Will you?” he asked of White-whisker.",
+        "“I don’t think I can,” replied White-whisker; “I am lame, yo",
+        "It needs some one who can move quickly.”",
+        "“Will you, Gray-ear?” said Brown-back.",
+        "“Excuse me,” answered Gray-ear; “I have not been well since ",
+        "time when I was almost caught in the trap.”",
+        "“Who will bell the Cat, then?” said Brown-back.",
+        "“If it is to be done,",
+        "Not a sound was heard, and one by one the little Mice stole ",
+        "When there is trouble there is need of some one to act, as w"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "e575a323f746",
+      "pageHash": "cc0360d0f409"
+    },
+    {
+      "title": "THE KID AND THE WOLF",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 33,
+      "pageMax": 33,
+      "openPages": [
+        33,
+        33,
+        33,
+        33,
+        33,
+        33,
+        33
+      ],
+      "open": [
+        "THE KID AND THE WOLF",
+        "A KID coming home alone one night met a big Wolf.",
+        "“Oh, oh, I know you will kill me,” said the little Kid; “but",
+        "“Very well,” said the Wolf, “I will try, for I should like t",
+        "“It is my own fault,” said the Wolf, as the Dogs caught him.",
+        "“My business is to kill Kids and eat them, and not to play f",
+        "“You didn’t play very well, either,” said the Kid."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "9b4313833e0c",
+      "pageHash": "d96556d496ce"
+    },
+    {
+      "title": "THE HAWK AND THE NIGHTINGALE",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 34,
+      "pageMax": 34,
+      "openPages": [
+        34,
+        34,
+        34,
+        34,
+        34
+      ],
+      "open": [
+        "THE HAWK AND THE NIGHTINGALE",
+        "A NIGHTINGALE sitting on the top of an oak, singing her even",
+        "“If you are hungry,” said she, “why not catch some large bir",
+        "“Do you happen to see many large birds flying about?” said t",
+        "“You are the only bird I have seen to-day, and I should be f"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "c46f1d02e1ee",
+      "pageHash": "426511755769"
+    },
+    {
+      "title": "THE CROW AND THE PITCHER",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 35,
+      "pageMax": 35,
+      "openPages": [
+        35,
+        35,
+        35,
+        35,
+        35,
+        35
+      ],
+      "open": [
+        "THE CROW AND THE PITCHER",
+        "A THIRSTY Crow once spied a pitcher, and flew to it to see i",
+        "When she looked in, she saw that there was water, but that i",
+        "She stopped, and thought to herself, “How shall I get that w",
+        "They sank to the bottom; and at last the water was pushed up",
+        "“Where there’s a will, there’s a way,” said the Crow."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "196b68af3925",
+      "pageHash": "96577542e937"
+    },
+    {
+      "title": "THE ANT AND THE DOVE",
+      "blockCount": 13,
+      "types": "hpppppppppppp",
+      "pageMin": 36,
+      "pageMax": 36,
+      "openPages": [
+        36,
+        36,
+        36,
+        36,
+        36,
+        36,
+        36,
+        36,
+        36,
+        36,
+        36,
+        36,
+        36
+      ],
+      "open": [
+        "THE ANT AND THE DOVE",
+        "AN Ant, walking by the river one day, said to himself, “How ",
+        "A Dove, sitting in a tree that overhung the river, heard him",
+        "“Climb up on that leaf,” said she, “and you will float The A",
+        "“Good-by, kind Dove,” said he, as he ran home.",
+        "“You have saved",
+        "my life, and I wish I could do something for you.”",
+        "“Good-by,” said the Dove; “be careful not to fall in again.”",
+        "A few days after this, when the Dove was busy building her n",
+        "He ran quickly, and bit the man’s leg so hard that he cried ",
+        "This startled the Dove, and she flew away. The man picked up",
+        "“Thank you, my little friend,” she said.",
+        "“You have saved my life.” And the little Ant was overjoyed t"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "84e823da3619",
+      "pageHash": "ba4d23e5cf6b"
+    },
+    {
+      "title": "THE OX AND THE FROG",
+      "blockCount": 14,
+      "types": "hppppppppppppi",
+      "pageMin": 37,
+      "pageMax": 37,
+      "openPages": [
+        37,
+        37,
+        37,
+        37,
+        37,
+        37,
+        37,
+        37,
+        37,
+        37,
+        37,
+        37,
+        37,
+        null
+      ],
+      "open": [
+        "THE OX AND THE FROG",
+        "AN Ox, drinking at a pool, chanced to set his foot on a youn",
+        "His brothers and sisters, who were playing near, ran at once",
+        "“Oh, Mother,” they cried, “a very huge beast, with four grea",
+        "The old Frog was very vain. She was rather large, as Frogs g",
+        "“Was the cruel beast so very “Oh!” said the young Frogs.",
+        "“It was a terrible monster!”",
+        "“Was it as big as this?” she said, blowing and puffing herse",
+        "“Oh, much bigger,” replied the young Frogs.",
+        "“As big as this, then?” she added, puffing and blowing with ",
+        "“Well, was it so big?”",
+        "“Oh, Mother!” cried the Frogs; “pray do not try to be so big",
+        "It is useless to attempt what is impossible.",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8d8e734b787d",
+      "pageHash": "e2e5ee120337"
+    },
+    {
+      "title": "THE BAT AND THE WEASELS",
+      "blockCount": 10,
+      "types": "hppppppppp",
+      "pageMin": 38,
+      "pageMax": 39,
+      "openPages": [
+        38,
+        38,
+        38,
+        38,
+        39,
+        39,
+        39,
+        39,
+        39,
+        39
+      ],
+      "open": [
+        "THE BAT AND THE WEASELS",
+        "A BAT, trying to fly one day, fell to the ground, and a Weas",
+        "“There is nothing I hate like a bird,” said the Weasel; “I a",
+        "“But I am not a bird,” said the Bat, as he folded his wings ",
+        "“Yes, yes,” said the Weasel, “I did not notice them at first",
+        "Some time after, the Bat took another flight, and again fell",
+        "“Pray don’t kill me,” said the Bat.",
+        "“Certainly I shall,” said the Weasel; “I kill mice wherever ",
+        "“I beg your pardon,” said the Weasel; “I did not know that y",
+        "So the cunning Bat escaped a second time, but it is not ofte"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "e0b443d3ad71",
+      "pageHash": "9abeac1739ae"
+    },
+    {
+      "title": "THE FOX AND THE GOAT",
+      "blockCount": 15,
+      "types": "hpppppppppppppp",
+      "pageMin": 40,
+      "pageMax": 41,
+      "openPages": [
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        40,
+        41
+      ],
+      "open": [
+        "THE FOX AND THE GOAT",
+        "A FOX once happened to fall into a deep well. He tried in ev",
+        "“Halloo,” said the Goat, “what are you doing down there? Is ",
+        "“The best I ever tasted,” answered the Fox.",
+        "“It is cool, and clear, and delicious. Come down and try it ",
+        "“I will,” said the Goat, “for I am nearly dead with thirst.”",
+        "So he jumped down, and drank as much water as he wanted.",
+        "“Oh, how refreshing!” cried he.",
+        "“Yes,” said the Fox; “and now, if you have finished drinking",
+        "“Oh, I don’t know,” replied the Goat.",
+        "“How do you expect to get out?”",
+        "“That is what I have been wondering about for the last hour,",
+        "“Very well,” said the Goat, who was a simple creature, “that",
+        "“Wait a moment,” called the Goat; “you forgot to help me out",
+        "“You foolish fellow!” said the Fox, with a mocking laugh; “y"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "3ec38de023fb",
+      "pageHash": "99409896906c"
+    },
+    {
+      "title": "THE WOMAN AND HER HEN",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 42,
+      "pageMax": 42,
+      "openPages": [
+        42,
+        42,
+        42,
+        42,
+        42
+      ],
+      "open": [
+        "THE WOMAN AND HER HEN",
+        "A WOMAN had a Hen that laid an egg every day. The eggs were ",
+        "It began to look a small thing to her to get but a single eg",
+        "“If I were to give a double allowance of barley, the Hen mig",
+        "So she doubled the food, and the Hen grew very fat and sleek"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "05f1566cd82c",
+      "pageHash": "6b7a88da74b4"
+    },
+    {
+      "title": "THE DOG IN THE MANGER",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 43,
+      "pageMax": 43,
+      "openPages": [
+        43,
+        43,
+        43,
+        43,
+        43,
+        43,
+        43
+      ],
+      "open": [
+        "THE DOG IN THE MANGER",
+        "A SLEEPY Dog went to the barn, and jumped into a manger full",
+        "“Stop a moment,” said one of the Oxen.",
+        "“Do you want to eat this “No,” said the Dog; “I shouldn’t th",
+        "“Very well, then,” said the Ox, “we do want to eat it, for w",
+        "“What an ugly, snappish fellow!” said the Ox.",
+        "“He will neither eat"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "16c631c5faf4",
+      "pageHash": "8f8b93476be4"
+    },
+    {
+      "title": "THE MOUSE, THE FROG, AND THE HAWK",
+      "blockCount": 14,
+      "types": "hpppippppppppp",
+      "pageMin": 44,
+      "pageMax": 46,
+      "openPages": [
+        44,
+        44,
+        44,
+        44,
+        null,
+        45,
+        45,
+        45,
+        45,
+        46,
+        46,
+        46,
+        46,
+        46
+      ],
+      "open": [
+        "THE MOUSE, THE FROG, AND THE HAWK",
+        "A MOUSE, who had always lived on the land, and a Frog, who p",
+        "The Mouse showed the Frog his nest and everything he could t",
+        "“Not much,” said the Mouse.",
+        "[image]",
+        "“No matter,” said the Frog; “I will tie your foot to my foot",
+        "When the Frog had tied the Mouse’s foot to his own, they sta",
+        "“Oh, how cool and nice the water is, after the dry, hot land",
+        "“Please let me go,” said he, “or I shall die.”",
+        "“Oh, never mind,” said the unkind Frog; “you will get used t",
+        "Just then a Hawk saw the Mouse, and pounced upon it. As he f",
+        "“Let me go. It is the Mouse you want.”",
+        "“Come along,” said the Hawk; “I want you both. I will eat yo",
+        "In a few moments the Hawk had made a good supper, and there "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "42bc6f74ce17",
+      "pageHash": "23ba812d8278"
+    },
+    {
+      "title": "THE SHEPHERD’S BOY AND THE WOLF",
+      "blockCount": 8,
+      "types": "hppppppp",
+      "pageMin": 47,
+      "pageMax": 47,
+      "openPages": [
+        47,
+        47,
+        47,
+        47,
+        47,
+        47,
+        47,
+        47
+      ],
+      "open": [
+        "THE SHEPHERD’S BOY AND THE WOLF",
+        "A MAN who had a fine flock of Sheep put them all into a fiel",
+        "The Sheep went nibbling the grass all day, up and down the h",
+        "After a while the Boy began to wish that something would hap",
+        "So he called out as loudly as he could, “Help! help! The Wol",
+        "When they found it was only a joke, they laughed, and went b",
+        "On the next day the Boy tried the same trick again. As befor",
+        "After a while, the Wolf did get into the field. Then in real"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "6b08290ccb0c",
+      "pageHash": "d7634761da43"
+    },
+    {
+      "title": "THE FISHERMAN AND THE LITTLE FISH",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 49,
+      "pageMax": 49,
+      "openPages": [
+        49,
+        49,
+        49,
+        49,
+        49,
+        49,
+        49
+      ],
+      "open": [
+        "THE FISHERMAN AND THE LITTLE FISH",
+        "ALL day long a Fisherman had been toiling and had caught not",
+        "“I will make one more effort,” thought he, “and then I must ",
+        "He threw in his line, and soon drew up a very small perch.",
+        "The little Fish was terribly frightened when he found himsel",
+        "“Ah!” said the Fisherman, “it is true you are small, but I h",
+        "You are better than nothing. I will keep you”; and he put th"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "eb8c2b0f9092",
+      "pageHash": "d881155f9d33"
+    },
+    {
+      "title": "THE FOX AND THE CROW",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 50,
+      "pageMax": 50,
+      "openPages": [
+        50,
+        50,
+        50,
+        50,
+        50,
+        50,
+        50
+      ],
+      "open": [
+        "THE FOX AND THE CROW",
+        "A CROW stole a piece of cheese one day, and flew with it up ",
+        "“How good that cheese smells!” thought he; “I’ll have it, su",
+        "Coming close to the tree, he said, “My dear Madam, what a be",
+        "Now it is well known that the Caw! Caw! of the Crow family i",
+        "The Fox ate it at one mouthful, then stopped to say, “Thank ",
+        "The Crow learned that we do well to be on our guard when peo"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "df36cc642de1",
+      "pageHash": "37955189f913"
+    },
+    {
+      "title": "THE PARTRIDGE AND THE FOWLER",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 51,
+      "pageMax": 51,
+      "openPages": [
+        51,
+        51,
+        51,
+        51,
+        51,
+        51,
+        51
+      ],
+      "open": [
+        "THE PARTRIDGE AND THE FOWLER",
+        "A FOWLER caught a Partridge, and was just going to kill it.",
+        "“Wait a moment,” said the Partridge; “don’t kill me.”",
+        "“Why not?” said the Fowler.",
+        "“Because I like to live,” said the Partridge; “and, besides,",
+        "“You are willing, then, that your friends and neighbors shou",
+        "“Wicked Partridge! you have lived long enough.” And he kille"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "61eba6410b4c",
+      "pageHash": "26045e9f3034"
+    },
+    {
+      "title": "THE THIRSTY PIGEON",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 52,
+      "pageMax": 52,
+      "openPages": [
+        52,
+        52,
+        52
+      ],
+      "open": [
+        "THE THIRSTY PIGEON",
+        "A PIGEON who was very thirsty saw a goblet of water painted ",
+        "Without stopping to see what it was, she flew to it with a l"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "c5293ef30500",
+      "pageHash": "7fbf70cd0a40"
+    },
+    {
+      "title": "THE THREE TRADESMEN",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 53,
+      "pageMax": 53,
+      "openPages": [
+        53,
+        53,
+        53,
+        53,
+        53,
+        53
+      ],
+      "open": [
+        "THE THREE TRADESMEN",
+        "A GREAT city was once besieged, and all its inhabitants were",
+        "A Bricklayer earnestly recommended bricks as the best materi",
+        "A Carpenter with equal energy proposed timber as a preferabl",
+        "Hearing which, a Currier stood up and said, “Sirs, I differ ",
+        "Every man for his own trade."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8c41d96f2116",
+      "pageHash": "84ca7db58ef2"
+    },
+    {
+      "title": "THE HARES AND THE FROGS",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 54,
+      "pageMax": 54,
+      "openPages": [
+        54,
+        54,
+        54,
+        54,
+        54,
+        54,
+        54
+      ],
+      "open": [
+        "THE HARES AND THE FROGS",
+        "IN A FOREST, deep, shady, and still, there once lived a comp",
+        "Whenever a leaf fell rustling to the ground, or a squirrel, ",
+        "One day there came a great wind, rushing through the tops of",
+        "It frightened the Hares so much that they all started togeth",
+        "“What a sad state is ours,” they said, “never to eat in comf",
+        "The timid Hares were startled by the splash; but, as they sa"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "d433f2e05fb9",
+      "pageHash": "6d38f95d1f8c"
+    },
+    {
+      "title": "THE EAGLE AND THE ARROW",
+      "blockCount": 6,
+      "types": "hpppip",
+      "pageMin": 55,
+      "pageMax": 56,
+      "openPages": [
+        55,
+        55,
+        55,
+        55,
+        null,
+        56
+      ],
+      "open": [
+        "THE EAGLE AND THE ARROW",
+        "A MOST rapacious Eagle had his eyrie on a lofty rock. Sittin",
+        "The poor creatures had no protection from such a foe. But an",
+        "The Eagle gave one look at the Arrow that had entered his he",
+        "[image]",
+        "“Ah!” said the Eagle, “it is indeed a double grief that I sh"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "a515578281c0",
+      "pageHash": "8a0cfb5ea4b9"
+    },
+    {
+      "title": "THE EAGLE AND THE FOX",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 57,
+      "pageMax": 57,
+      "openPages": [
+        57,
+        57,
+        57,
+        57,
+        57,
+        57,
+        57
+      ],
+      "open": [
+        "THE EAGLE AND THE FOX",
+        "ONE day a mother Eagle came flying out of her nest to look f",
+        "By and by she saw a little baby Fox, whose mother had left i",
+        "Down came the bird, whir went her wings, and away she soared",
+        "The poor mother Fox just at that moment came running home to",
+        "“O Eagle!” she cried, “leave me my one little baby. Remember",
+        "The Eagle saw her coming, and knew that the Fox would soon h"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "75d37f09cebd",
+      "pageHash": "715af99f0a24"
+    },
+    {
+      "title": "THE DRUM AND THE VASE OF SWEET HERBS",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 58,
+      "pageMax": 59,
+      "openPages": [
+        58,
+        59,
+        59
+      ],
+      "open": [
+        "THE DRUM AND THE VASE OF SWEET HERBS",
+        "A DRUM once boasted to a Vase of Sweet Herbs in this way: “L",
+        "The Vase spoke no words, but gave out a fine, sweet perfume,"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "2f74c921d6d3",
+      "pageHash": "4d78c769cf6e"
+    },
+    {
+      "title": "THE TWO FROGS",
+      "blockCount": 12,
+      "types": "hppppppppppp",
+      "pageMin": 60,
+      "pageMax": 60,
+      "openPages": [
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60,
+        60
+      ],
+      "open": [
+        "THE TWO FROGS",
+        "ONCE there were two Frogs who were dear friends.",
+        "One lived in a deep pond in the woods, where the trees hung ",
+        "The other lived in a small pool. This was not a good place f",
+        "One day the Frog from the pond said to the other, “Do come a",
+        "“Thank you,” said the other Frog; “you are very kind, but I ",
+        "The next time the Frog from the pond came to visit his frien",
+        "“Too late!” sang a Bird, who lived in a tree that overhung t",
+        "“What do you mean?” said the Frog.",
+        "“Dead and gone!” said the Bird.",
+        "“Run over by a wagon and killed, two days ago, and a big Haw",
+        "“Alas! if he had only taken my advice, he might have been we"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "74d55dc572ab",
+      "pageHash": "df5e5c038157"
+    },
+    {
+      "title": "THE LION AND THE MOUSE",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 62,
+      "pageMax": 62,
+      "openPages": [
+        62,
+        62,
+        62,
+        62,
+        62,
+        62,
+        62
+      ],
+      "open": [
+        "THE LION AND THE MOUSE",
+        "IT ONCE happened that a hungry Lion woke to find a Mouse jus",
+        "In most piteous tones the Mouse said: “Do not eat me. I mean",
+        "The Lion laughed scornfully at this, but it amused him so mu",
+        "It befell the great Lion, not long afterward, to be in as ev",
+        "He was caught by some hunters, who bound him with a strong r",
+        "Hearing his loud groans, the Mouse came promptly to his resc"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "91933a2313de",
+      "pageHash": "a53384cc9b0e"
+    },
+    {
+      "title": "THE MOUSE, THE CAT, AND THE COCK",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 63,
+      "pageMax": 63,
+      "openPages": [
+        63,
+        63,
+        63,
+        63
+      ],
+      "open": [
+        "THE MOUSE, THE CAT, AND THE COCK",
+        "A YOUNG Mouse, that had not seen much of the world, came hom",
+        "“All at once he stretched his long neck, and opened his mout",
+        "“My dear child,” said the mother, “you did well to run away."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "feaef5d9609e",
+      "pageHash": "43e9c42cdf25"
+    },
+    {
+      "title": "THE AX AND THE TREES",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 64,
+      "pageMax": 64,
+      "openPages": [
+        64,
+        64,
+        64
+      ],
+      "open": [
+        "THE AX AND THE TREES",
+        "ONCE upon a time a man came to a forest to ask the Trees if ",
+        "The Trees thought this was very little to ask of them, and t"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "d1903b19c0be",
+      "pageHash": "c84ae265f2db"
+    },
+    {
+      "title": "THE JACKDAW AND THE SHEEP",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 65,
+      "pageMax": 65,
+      "openPages": [
+        65,
+        65,
+        65,
+        65,
+        65,
+        65
+      ],
+      "open": [
+        "THE JACKDAW AND THE SHEEP",
+        "A JACKDAW sat chattering upon the back of a Sheep.",
+        "“Peace, I pray you, noisy bird,” said the Sheep.",
+        "“You are wearing my life out If I were a dog, you would not ",
+        "“That is true,” replied the Jackdaw; “you are right. I never",
+        "“I wonder if all cowards are not like the Jackdaw,” mused th"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "b59ada550871",
+      "pageHash": "696bea583c7a"
+    },
+    {
+      "title": "THE CAT AND THE COCK",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 66,
+      "pageMax": 66,
+      "openPages": [
+        66,
+        66,
+        66,
+        66,
+        66
+      ],
+      "open": [
+        "THE CAT AND THE COCK",
+        "A HUNGRY Cat, who had tried in vain to find a Mouse for her ",
+        "“You are a noisy creature,” she said to him, “and have lived",
+        "“You are mistaken,” answered the Cock; “I disturb no one. I ",
+        "“Never mind,” said the Cat; “don’t trouble yourself to make "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "68bfe0c131d1",
+      "pageHash": "10f1aa7164a2"
+    },
+    {
+      "title": "THE WOLF AND THE GOAT",
+      "blockCount": 7,
+      "types": "hppppip",
+      "pageMin": 67,
+      "pageMax": 68,
+      "openPages": [
+        67,
+        67,
+        67,
+        67,
+        67,
+        null,
+        68
+      ],
+      "open": [
+        "THE WOLF AND THE GOAT",
+        "A WOLF saw a Goat feeding at the top of a steep precipice, w",
+        "“My dear friend,” said the Wolf, “be careful! I am afraid yo",
+        "“Are you very hungry?” said the Goat.",
+        "“And is it your dinner time? And would you like to eat me? I",
+        "[image]",
+        "د LIVINGSTAN BOL"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "46d3c52e6254",
+      "pageHash": "224ba8bad5e3"
+    },
+    {
+      "title": "THE HEN AND THE SWALLOW",
+      "blockCount": 8,
+      "types": "hppppppp",
+      "pageMin": 69,
+      "pageMax": 69,
+      "openPages": [
+        69,
+        69,
+        69,
+        69,
+        69,
+        69,
+        69,
+        69
+      ],
+      "open": [
+        "THE HEN AND THE SWALLOW",
+        "A HEN who had no nest of her own found some eggs, and, in th",
+        "A Swallow, who was passing, stopped to look at them.",
+        "“What a foolish creature you were, to hatch those eggs!” sai",
+        "“Don’t you know that as soon as the little snakes grow big e",
+        "“Then,” said the Hen, as she stood on one leg and looked at ",
+        "“I certainly do,” said the Swallow, as she flew away.",
+        "“Good judgment is better than thoughtless kindness.”"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "dd98c503bea4",
+      "pageHash": "2d89519e540c"
+    },
+    {
+      "title": "STONE BROTH",
+      "blockCount": 9,
+      "types": "hpppppppp",
+      "pageMin": 70,
+      "pageMax": 70,
+      "openPages": [
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70,
+        70
+      ],
+      "open": [
+        "STONE BROTH",
+        "ONE very stormy day a Poor Man came to a rich man’s house to",
+        "“Away with you!” said the servants; “do not come here troubl",
+        "The Poor Man then asked the cook to let him have a pan, so t",
+        "“Stone broth!” said the cook.",
+        "“I should like to see how you can make broth out of a stone”",
+        "“But you must have some salt,” said the cook.",
+        "“Do you think so?” courteously replied the stranger. She gav",
+        "“You see,” said the Man, “that if you only try long enough, "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "22459d9aa1eb",
+      "pageHash": "47f655013288"
+    },
+    {
+      "title": "THE MULE AND THE GRASSHOPPERS",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 71,
+      "pageMax": 71,
+      "openPages": [
+        71,
+        71,
+        71,
+        71
+      ],
+      "open": [
+        "THE MULE AND THE GRASSHOPPERS",
+        "A MULE, hearing some Grasshoppers chirping, was much pleased",
+        "“What sort of food do you eat,” said he to the Grasshoppers,",
+        "The Mule then decided that he too would live upon dew. And i"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "04c072eb6bb8",
+      "pageHash": "e6f2af1d9cf3"
+    },
+    {
+      "title": "THE GNAT AND THE BULL",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 72,
+      "pageMax": 72,
+      "openPages": [
+        72,
+        72,
+        72,
+        72,
+        72,
+        72,
+        72
+      ],
+      "open": [
+        "THE GNAT AND THE BULL",
+        "A GNAT, who had flown about until he was tired, sat down to ",
+        "After sitting there a long time, he thought he would go home",
+        "“Just as you please,” said the Bull.",
+        "“I did not know when you came, and I am sure I shall not mis",
+        "“What an amount of self-importance for such a tiny creature,",
+        "thought the sleepy Bull."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "155216846c50",
+      "pageHash": "60c00bd1f1f2"
+    },
+    {
+      "title": "A FOX AND A CRAB",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 73,
+      "pageMax": 73,
+      "openPages": [
+        73,
+        73,
+        73,
+        73
+      ],
+      "open": [
+        "A FOX AND A CRAB",
+        "A HUNGRY Fox surprised a Crab, who had left the sea and was ",
+        "“What good luck, to find a breakfast so easily,” said the Fo",
+        "“Well,” said the Crab, when he found that he was to be eaten"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "0875e358cff0",
+      "pageHash": "3f2c6e5cdb28"
+    },
+    {
+      "title": "THE DONKEY AND THE FROGS",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 74,
+      "pageMax": 74,
+      "openPages": [
+        74,
+        74,
+        74,
+        74,
+        74
+      ],
+      "open": [
+        "THE DONKEY AND THE FROGS",
+        "A DONKEY was one day walking through a pond, with a load of ",
+        "“Help, help!” cried the poor Donkey, as he struggled and kic",
+        "The Frogs heard his groans but showed no pity.",
+        "“What a foolish fellow,” said they, “to make such a fuss abo"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "052616736a90",
+      "pageHash": "418ffce5a146"
+    },
+    {
+      "title": "THE NURSE AND THE WOLF",
+      "blockCount": 8,
+      "types": "hppppppp",
+      "pageMin": 75,
+      "pageMax": 75,
+      "openPages": [
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75,
+        75
+      ],
+      "open": [
+        "THE NURSE AND THE WOLF",
+        "A WOLF, prowling about to find something for supper, heard a",
+        "The Wolf sat down near the door, thinking within himself, “I",
+        "The Baby cried and cried, till at last it went to sleep; and",
+        "The Wolf trotted sadly home. On his way he met the Fox.",
+        "“What makes you look so sour and so forlorn, my friend?” sai",
+        "“Don’t speak to me!” growled the Wolf.",
+        "“I have lost my supper just because I believed what a Nurse "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "35d312869b1f",
+      "pageHash": "38bd128c9503"
+    },
+    {
+      "title": "THE CAT AND THE MARTINS",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 76,
+      "pageMax": 76,
+      "openPages": [
+        76,
+        76,
+        76,
+        76
+      ],
+      "open": [
+        "THE CAT AND THE MARTINS",
+        "A CAT, hearing that some Birds who lived in a martin box nea",
+        "“I hear that you are all sick,” said he, “and have come to c",
+        "“No, thank you,” said the Birds, who saw his whiskers and kn"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8d05d1d17b0d",
+      "pageHash": "e94a82985b8a"
+    },
+    {
+      "title": "THE COCK AND THE FOX",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 77,
+      "pageMax": 77,
+      "openPages": [
+        77,
+        77,
+        77,
+        77,
+        77
+      ],
+      "open": [
+        "THE COCK AND THE FOX",
+        "A FOX went prowling about a farmyard, not seeing a trap whic",
+        "A Cock, hearing the noise, flew to the top of the fence. Loo",
+        "The Fox, looking up, said: “Dear Mr. Cock, you see how unluc",
+        "The Cock said nothing, but went as fast as he could and told"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "d608d4b7c958",
+      "pageHash": "b0bd85252e39"
+    },
+    {
+      "title": "THE HORSE AND HIS RIDER",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 78,
+      "pageMax": 78,
+      "openPages": [
+        78,
+        78,
+        78,
+        78,
+        78
+      ],
+      "open": [
+        "THE HORSE AND HIS RIDER",
+        "A CAVALRY officer took the greatest of pains with his charge",
+        "When, in course of time, war was again proclaimed, the soldi",
+        "“You must go to the war on foot,” he said to his master, “fo",
+        "He who slights his friends when he does not need their best "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "f2cece83e612",
+      "pageHash": "4ce7c3c32365"
+    },
+    {
+      "title": "THE FOX AND THE STORK",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 79,
+      "pageMax": 79,
+      "openPages": [
+        79,
+        79,
+        79,
+        79,
+        79,
+        79
+      ],
+      "open": [
+        "THE FOX AND THE STORK",
+        "THE Fox and the Stork were on what seemed to be friendly ter",
+        "The Fox presided at the feast with great dignity, and, as if",
+        "This he did in a few days, but ordered that nothing be broug",
+        "Reynard could not conceal his vexation, but was obliged to o",
+        "They who practice cunning must expect to suffer by it, and h"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "1282bd28aa4a",
+      "pageHash": "d9fc519e26c3"
+    },
+    {
+      "title": "THE DOG, THE COCK, AND THE FOX",
+      "blockCount": 11,
+      "types": "hpppppppppi",
+      "pageMin": 80,
+      "pageMax": 80,
+      "openPages": [
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        80,
+        null
+      ],
+      "open": [
+        "THE DOG, THE COCK, AND THE FOX",
+        "A DOG and a Cock, who were neighbors, once made a little jou",
+        "When night came on, the Cock flew up into the branches of a ",
+        "A Fox, hearing the sound and thinking he was sure of a good ",
+        "“Good morning,” said he to the Cock.",
+        "“How glad I am to make the acquaintance of the owner of such",
+        "“Thank you, I cannot just yet,” replied the Cock; “but if yo",
+        "He will open the door and let you in.”",
+        "The Fox did as he was requested; but as he approached the tr",
+        "“Two can play at the same game,” said the Cock, as he looked",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "4508678a9a24",
+      "pageHash": "baee20f135b0"
+    },
+    {
+      "title": "THE FLY AND THE MOTH",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 82,
+      "pageMax": 82,
+      "openPages": [
+        82,
+        82,
+        82,
+        82,
+        82,
+        82
+      ],
+      "open": [
+        "THE FLY AND THE MOTH",
+        "A FLY alighted one night upon a pot of honey, and finding it",
+        "Little by little, however, he had soon crept away from the e",
+        "Just then a Moth flew by, and seeing him struggling there, s",
+        "The poor Fly had nothing to say in reply. What the Moth said",
+        "“What!” said the Fly, “are you foolish, too? You found fault"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "a9881c3740ef",
+      "pageHash": "1af8a6f92c7f"
+    },
+    {
+      "title": "THE BOY BATHING",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 83,
+      "pageMax": 83,
+      "openPages": [
+        83,
+        83,
+        83,
+        83,
+        83,
+        83,
+        83
+      ],
+      "open": [
+        "THE BOY BATHING",
+        "A LITTLE Boy once went in bathing where the water was too de",
+        "“Can’t you swim?” asked the Man.",
+        "“No,” replied the Boy, “I don’t know how.”",
+        "“How foolish you were, then,” said the Man, “to go into deep",
+        "“Oh, good sir, please help me now, or I shall drown!” cried ",
+        "“You can scold me when I am safe on shore again.”"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8a9672a38801",
+      "pageHash": "5241b8becce1"
+    },
+    {
+      "title": "THE HARE AND THE TORTOISE",
+      "blockCount": 8,
+      "types": "hppppppp",
+      "pageMin": 84,
+      "pageMax": 84,
+      "openPages": [
+        84,
+        84,
+        84,
+        84,
+        84,
+        84,
+        84,
+        84
+      ],
+      "open": [
+        "THE HARE AND THE TORTOISE",
+        "A HARE one day made himself merry over the slow pace of the ",
+        "The Tortoise took the laughing and boasting in good part.",
+        "“Let us try a race,” she said; “I will run with you five mil",
+        "The Hare agreed, a course was arranged, and away they starte",
+        "The Tortoise never for a moment stopped, but jogged along wi",
+        "When the Hare awoke, the Tortoise was not in sight; and runn",
+        "Those who are very quick are apt to be too sure. Slow and st"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "571c7a330430",
+      "pageHash": "f28934e2b0ac"
+    },
+    {
+      "title": "THE ARAB AND HIS CAMEL",
+      "blockCount": 12,
+      "types": "hppppppppppp",
+      "pageMin": 85,
+      "pageMax": 85,
+      "openPages": [
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85
+      ],
+      "open": [
+        "THE ARAB AND HIS CAMEL",
+        "AS AN Arab sat in his tent one cold night, he saw the curtai",
+        "“What is it?” he asked kindly.",
+        "“It is cold, master,” said the Camel; “suffer me, I pray the",
+        "“By all means,” replied the hospitable Arab; and the Camel s",
+        "“Might I also warm my neck a little?” he entreated after a m",
+        "The Arab readily consented, and the Camel’s neck was thrust ",
+        "He stood, moving his head from side to side uneasily, and pr",
+        "“You may place your forelegs within the tent,” said the Arab",
+        "The Camel spoke again: “I keep the tent open by standing thu",
+        "“Yes,” said the Arab, whose compassion included his beast as",
+        "“I think, after all,” said the Camel, as he crowded himself "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8af04ec54e4a",
+      "pageHash": "add6ca1916ff"
+    },
+    {
+      "title": "THE FOX WHO HAD LOST HIS TAIL",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 87,
+      "pageMax": 87,
+      "openPages": [
+        87,
+        87,
+        87,
+        87,
+        87,
+        87
+      ],
+      "open": [
+        "THE FOX WHO HAD LOST HIS TAIL",
+        "A FOX was once caught in a trap by his tail. He succeeded in",
+        "“I must not own that it is a misfortune not to have a bushy ",
+        "So he set about to induce all the other Foxes to part with t",
+        "“The tail,” he said, “is no real part of our persons, and be",
+        "When he had ended his speech, a sly old Fox arose, and givin"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "6abe976cea37",
+      "pageHash": "f8ea3837a550"
+    },
+    {
+      "title": "THE BOYS AND THE FROGS",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 88,
+      "pageMax": 88,
+      "openPages": [
+        88,
+        88,
+        88,
+        88
+      ],
+      "open": [
+        "THE BOYS AND THE FROGS",
+        "SOME Boys, playing near a pond, saw a number of Frogs sporti",
+        "“Let us see if we can hit them; it is great fun to make them",
+        "At last, after several Frogs had been hit, one of them put h"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "100d7e08b90c",
+      "pageHash": "69f79349d64e"
+    },
+    {
+      "title": "THE SWALLOW AND THE OTHER BIRDS",
+      "blockCount": 8,
+      "types": "hppppppp",
+      "pageMin": 89,
+      "pageMax": 89,
+      "openPages": [
+        89,
+        89,
+        89,
+        89,
+        89,
+        89,
+        89,
+        89
+      ],
+      "open": [
+        "THE SWALLOW AND THE OTHER BIRDS",
+        "A WISE Swallow, seeing a man sow seed in a field, went behin",
+        "She found that it was flax.",
+        "“When this flax has grown,” she said to herself, “the man wi",
+        "So she went to all the Birds and told them what she had disc",
+        "“This field,” she said, “is as much ours as it is his. And w",
+        "By and by the flax sprang up, and the Swallow tried again to",
+        "When she saw how heedless all the Birds were, the Swallow wo"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "91908c0b88e3",
+      "pageHash": "35330953789c"
+    },
+    {
+      "title": "THE FARMER AND THE SNAKE",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 90,
+      "pageMax": 90,
+      "openPages": [
+        90,
+        90,
+        90,
+        90
+      ],
+      "open": [
+        "THE FARMER AND THE SNAKE",
+        "ONE wintry day a Farmer found a Snake lying on the frozen gr",
+        "In a fit of compassion the Farmer brought him carefully to h",
+        "“Oh!” said the Farmer, “is that the way you repay me for my "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "77b33c51fdaf",
+      "pageHash": "0d7aa01668f9"
+    },
+    {
+      "title": "THE RAVEN AND THE SWAN",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 91,
+      "pageMax": 91,
+      "openPages": [
+        91,
+        91,
+        91,
+        91
+      ],
+      "open": [
+        "THE RAVEN AND THE SWAN",
+        "A RAVEN saw a snowy Swan floating on the lake.",
+        "“No wonder the Swan is so white,” thought the Raven, as he l",
+        "“I dare say I should be, if I were all the time washing myse"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "b10909343d7a",
+      "pageHash": "21400d58a0cf"
+    },
+    {
+      "title": "THE BIRDS, THE BEASTS, AND THE BAT",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 92,
+      "pageMax": 92,
+      "openPages": [
+        92,
+        92,
+        92,
+        92,
+        92,
+        92,
+        92
+      ],
+      "open": [
+        "THE BIRDS, THE BEASTS, AND THE BAT",
+        "THERE was once a big battle between the Birds and the Beasts",
+        "“No, indeed,” said the Bat.",
+        "“Look at my body covered with hair and at my mouth with its ",
+        "After a while, as the fight went on, the Birds began to have",
+        "“What Beast comes here?” said the Birds.",
+        "“I am not a Beast,” said the Bat; “I am a Bird. Look at my w"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "22536717d5e3",
+      "pageHash": "f563d33a52b2"
+    },
+    {
+      "title": "THE MAN, HIS SON, AND HIS DONKEY",
+      "blockCount": 14,
+      "types": "hppppppppppppp",
+      "pageMin": 93,
+      "pageMax": 94,
+      "openPages": [
+        93,
+        93,
+        93,
+        93,
+        93,
+        93,
+        93,
+        93,
+        93,
+        93,
+        93,
+        94,
+        94,
+        94
+      ],
+      "open": [
+        "THE MAN, HIS SON, AND HIS DONKEY",
+        "A MAN and his Son were once driving their Donkey along a cou",
+        "“Look,” said one of the girls; “see those silly people trudg",
+        "The Man heard what they said, and put his boy on the Donkey’",
+        "“See here, now,” said one of them to the others, “this shows",
+        "Hearing this, the Man told his Son to get down, and he mount",
+        "“For shame!” said the women.",
+        "“How can you let that poor boy walk when he looks so tired, ",
+        "The Man then took the boy up behind him on the saddle, and t",
+        "“Yes,” said the Man.",
+        "“One would not think so,” said they, “by the way you load hi",
+        "So the Man and the boy got off, tied the Donkey’s legs with ",
+        "By and by they came to a bridge. Then the Donkey began to ki",
+        "The old Man and his Son made their way home as best they cou"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "5e3f7e0d5da8",
+      "pageHash": "274fc80c5a6c"
+    },
+    {
+      "title": "THE COUNTRY MOUSE AND THE CITY MOUSE",
+      "blockCount": 9,
+      "types": "hppppippp",
+      "pageMin": 95,
+      "pageMax": 96,
+      "openPages": [
+        95,
+        95,
+        95,
+        95,
+        95,
+        null,
+        96,
+        96,
+        96
+      ],
+      "open": [
+        "THE COUNTRY MOUSE AND THE CITY MOUSE",
+        "A MOUSE from the city went on a visit to a friend in the cou",
+        "The Country Mouse, with many apologies, brought out the best",
+        "There was plenty of oatmeal and peas, a nice scrap of bacon,",
+        "When the dinner was over, the City Mouse said: “Old friend, ",
+        "[image]",
+        "After being urged a long time, the Country Mouse at last agr",
+        "All at once the doors of the dining room were flung open, an",
+        "The Mice rushed for the hole, to escape, and the little fiel"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "a6931811ca4a",
+      "pageHash": "be1af29e77f9"
+    },
+    {
+      "title": "THE COCK AND THE JEWEL",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 98,
+      "pageMax": 99,
+      "openPages": [
+        98,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "open": [
+        "THE COCK AND THE JEWEL",
+        "“COME, my dears,” said a Cock to his hens one morning; “I am",
+        "The hens stood waiting while he scratched. But the first thi",
+        "“Dear me!” said the Cock; “what is this? a Jewel! How glad a",
+        "“And so would we,” said the hens.",
+        "“Nothing can do us good if it is not a thing that we ourselv"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "4c0e1238954a",
+      "pageHash": "b41b155a7dde"
+    },
+    {
+      "title": "THE OLD HOUND",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 100,
+      "pageMax": 100,
+      "openPages": [
+        100,
+        100,
+        100,
+        100
+      ],
+      "open": [
+        "THE OLD HOUND",
+        "ONCE there was a beautiful Hound. He had long, silky ears an",
+        "One day a stag had been chased till it was almost tired out,",
+        "“Hold! hold! O dear Master,” said he, “do not strike me. I m"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "98c4df8e2e2b",
+      "pageHash": "80a705c9777b"
+    },
+    {
+      "title": "THE VAIN JACKDAW",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 101,
+      "pageMax": 101,
+      "openPages": [
+        101,
+        101,
+        101,
+        101,
+        101
+      ],
+      "open": [
+        "THE VAIN JACKDAW",
+        "JUPITER having determined, it is said, to appoint a sovereig",
+        "The Jackdaw, knowing his own ugliness, yet wishing to rule o",
+        "When the appointed day arrived, and the birds had assembled,",
+        "Upon seeing this, the other birds were indignant, and each p"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "af42391fd565",
+      "pageHash": "1e92e480a2ae"
+    },
+    {
+      "title": "THE DONKEY AND THE LAP DOG",
+      "blockCount": 7,
+      "types": "hpppppi",
+      "pageMin": 102,
+      "pageMax": 102,
+      "openPages": [
+        102,
+        102,
+        102,
+        102,
+        102,
+        102,
+        null
+      ],
+      "open": [
+        "THE DONKEY AND THE LAP DOG",
+        "THERE was once a man who had a Donkey and a little pet Dog. ",
+        "The Donkey grumbled a great deal at this.",
+        "“How hard I work!” said he, “and I never get any pay but blo",
+        "So the Donkey pushed his way into the house, and jumped up o",
+        "The master, almost deafened by the noise and in danger from ",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "b0b24f9b6e2e",
+      "pageHash": "21ac51c31e8e"
+    },
+    {
+      "title": "THE ONE-EYED DOE",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 103,
+      "pageMax": 104,
+      "openPages": [
+        103,
+        103,
+        103,
+        104
+      ],
+      "open": [
+        "THE ONE-EYED DOE",
+        "A DOE, blind in one eye, used to graze as near as she could ",
+        "Some boatmen sailing by saw her standing thus on the edge of",
+        "Finding herself wounded, she said, “O unhappy creature that "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "e862f47bc745",
+      "pageHash": "4fb067bf7c30"
+    },
+    {
+      "title": "THE CAMEL",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 105,
+      "pageMax": 105,
+      "openPages": [
+        105,
+        105,
+        105
+      ],
+      "open": [
+        "THE CAMEL",
+        "WHEN man first beheld the Camel, he was so awed by his vast ",
+        "Since then Camels are valued for the service they render."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "d76b5fa8dc6d",
+      "pageHash": "2458e06e4b94"
+    },
+    {
+      "title": "THE WOLF AND THE HOUSE DOG",
+      "blockCount": 10,
+      "types": "hppppppppp",
+      "pageMin": 106,
+      "pageMax": 106,
+      "openPages": [
+        106,
+        106,
+        106,
+        106,
+        106,
+        106,
+        106,
+        106,
+        106,
+        106
+      ],
+      "open": [
+        "THE WOLF AND THE HOUSE DOG",
+        "A WOLF met a Dog, and seeing that he looked fat and sleek, s",
+        "“Why,” said the Dog, “I do not have to run after my food. I ",
+        "“That I should like,” said the Wolf.",
+        "“I will at least go with you and try the life.” As they trot",
+        "“Oh, that is nothing,” said the Dog; “only a little mark mad",
+        "“Do you wear a chain?” asked the Wolf; “and do you mean to s",
+        "“Why, yes,” said the Dog; “they tie me in the daytime, but a",
+        "“Good-by,” said the Wolf; “that is enough for me. Though I m",
+        "not be fat, I will at least be free.”"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "6441161c1aa2",
+      "pageHash": "0b629326335d"
+    },
+    {
+      "title": "THE OAK AND THE REED",
+      "blockCount": 5,
+      "types": "hpppi",
+      "pageMin": 107,
+      "pageMax": 107,
+      "openPages": [
+        107,
+        107,
+        107,
+        107,
+        null
+      ],
+      "open": [
+        "THE OAK AND THE REED",
+        "ON THE bank of a river grew a tall Oak Tree. It stood with i",
+        "“O Reed,” said the Tree, “how did it happen that you were no",
+        "“Ah, poor Tree!” said the Reed, “that is just the reason tha",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "ae25517d26fa",
+      "pageHash": "309ae26a33ad"
+    },
+    {
+      "title": "THE DOG AND THE HARE",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 108,
+      "pageMax": 108,
+      "openPages": [
+        108,
+        108,
+        108
+      ],
+      "open": [
+        "THE DOG AND THE HARE",
+        "A DOG once gave chase to a Hare. Having not long since made ",
+        "At times he would snap at his prey, and at times play with h"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "2afe8032e8d4",
+      "pageHash": "d7dd2f71bdde"
+    },
+    {
+      "title": "THE HAWK, KITE, AND PIGEONS",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 110,
+      "pageMax": 110,
+      "openPages": [
+        110,
+        110,
+        110,
+        110,
+        110
+      ],
+      "open": [
+        "THE HAWK, KITE, AND PIGEONS",
+        "THE Pigeons, terrified by the frequent appearance of a Kite,",
+        "“You are the only bird of our acquaintance,” they said, “tha",
+        "The Hawk at once consented, and took up his abode in the dov",
+        "The oldest, wisest pigeon among them said: “When we are in t"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "42fa87fde159",
+      "pageHash": "8f95df72650d"
+    },
+    {
+      "title": "THE WAR HORSE AND THE MULE",
+      "blockCount": 8,
+      "types": "hppppppp",
+      "pageMin": 111,
+      "pageMax": 111,
+      "openPages": [
+        111,
+        111,
+        111,
+        111,
+        111,
+        111,
+        111,
+        111
+      ],
+      "open": [
+        "THE WAR HORSE AND THE MULE",
+        "A WAR Horse, ready for battle, with his splendid saddle and ",
+        "A poor old Mule, with a heavy load on his back, was going sl",
+        "“Out of my way,” said the War Horse, “or I will trample you ",
+        "The poor Mule made room for him as fast as he could, and the",
+        "Not long after this the Horse was shot in the eye; and, as h",
+        "Since he had not been trained to the work, it came hard to h",
+        "The Mule, meeting him soon after, knew him and called out: “"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "f49733e1bc35",
+      "pageHash": "25258bb3bad4"
+    },
+    {
+      "title": "THE WIND AND THE SUN",
+      "blockCount": 8,
+      "types": "hppppppp",
+      "pageMin": 112,
+      "pageMax": 112,
+      "openPages": [
+        112,
+        112,
+        112,
+        112,
+        112,
+        112,
+        112,
+        112
+      ],
+      "open": [
+        "THE WIND AND THE SUN",
+        "THE North Wind and the Sun once fell into a dispute as to wh",
+        "Just then a traveler came in sight, and they agreed to test ",
+        "The boastful North Wind was the first to try, the Sun meanwh",
+        "Mortified by his failure to do so simple a thing, the Wind w",
+        "“I don’t believe you can do it, either,” he said. Then out c",
+        "The Man looked up gratefully, but, growing faint with sudden",
+        "Persuasion is often better than force."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "c2fc486703cc",
+      "pageHash": "733a399d083f"
+    },
+    {
+      "title": "THE BEAR AND THE TWO TRAVELERS",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 113,
+      "pageMax": 113,
+      "openPages": [
+        113,
+        113,
+        113,
+        113,
+        113,
+        113,
+        113
+      ],
+      "open": [
+        "THE BEAR AND THE TWO TRAVELERS",
+        "TWO men were traveling together, when a Bear suddenly crosse",
+        "One of the men climbed quickly into a tree, and tried to con",
+        "Seeing that he must be attacked, the other one fell flat upo",
+        "The Bear soon left him, for it is said a Bear will not touch",
+        "When the Bear had gone, the man in the tree came down to joi",
+        "His friend replied very gravely: “He gave me this bit of adv"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "04483b152be3",
+      "pageHash": "9c2cd391efb0"
+    },
+    {
+      "title": "THE TWO GOATS",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 114,
+      "pageMax": 114,
+      "openPages": [
+        114,
+        114,
+        114
+      ],
+      "open": [
+        "THE TWO GOATS",
+        "TWO Goats started at the same moment, from opposite ends, to",
+        "Meeting at the middle of the bridge, neither would yield to "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "4748b1a1167d",
+      "pageHash": "334a8ddbe61f"
+    },
+    {
+      "title": "THE BULL AND THE CALF",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 115,
+      "pageMax": 115,
+      "openPages": [
+        115,
+        115,
+        115,
+        115
+      ],
+      "open": [
+        "THE BULL AND THE CALF",
+        "A BULL was once striving with all his might to squeeze himse",
+        "“I will go through,” said a young Calf, “and show you the wa",
+        "“Save yourself the trouble,” said the Bull; “I knew the way "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "5a4d968bda27",
+      "pageHash": "88586c359d74"
+    },
+    {
+      "title": "THE FAWN AND HIS MOTHER",
+      "blockCount": 5,
+      "types": "hpppi",
+      "pageMin": 116,
+      "pageMax": 116,
+      "openPages": [
+        116,
+        116,
+        116,
+        116,
+        null
+      ],
+      "open": [
+        "THE FAWN AND HIS MOTHER",
+        "A YOUNG Fawn once said to his Mother: “I do not see, Mother,",
+        "The Mother smiled upon her brave young son.",
+        "“I know very well,” she said, “that all you say is true. I l",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "93f7c2efb8dc",
+      "pageHash": "04f66e386969"
+    },
+    {
+      "title": "THE MULE AND HIS SHADOW",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 118,
+      "pageMax": 118,
+      "openPages": [
+        118,
+        118,
+        118,
+        118
+      ],
+      "open": [
+        "THE MULE AND HIS SHADOW",
+        "ONE very hot day a Traveler hired a Mule with his driver to ",
+        "The way lay across a sandy plain, and the day being intensel",
+        "The discussion grew so violent that they forgot the Mule, wh"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "6ad53eaee791",
+      "pageHash": "701401b06529"
+    },
+    {
+      "title": "THE BLIND MAN AND THE LAME MAN",
+      "blockCount": 9,
+      "types": "hpppppppp",
+      "pageMin": 119,
+      "pageMax": 119,
+      "openPages": [
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119,
+        119
+      ],
+      "open": [
+        "THE BLIND MAN AND THE LAME MAN",
+        "A BLIND Man, being stopped in a bad piece of road, met a Lam",
+        "“How can I,” replied the Lame Man, “since I can scarcely dra",
+        "“I am strong enough,” said the other.",
+        "“I could go if I could but see the way.”",
+        "“Oh, then we may help each other,” said the Lame Man.",
+        "“If you will take me on your shoulders, we will seek our for",
+        "“With all my heart,” said the Blind Man.",
+        "“Let us render each other our mutual services.” So he took h"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "330c1bafc4bb",
+      "pageHash": "70896cb88719"
+    },
+    {
+      "title": "THE TWO POTS",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 120,
+      "pageMax": 120,
+      "openPages": [
+        120,
+        120,
+        120,
+        120,
+        120
+      ],
+      "open": [
+        "THE TWO POTS",
+        "A RIVER carried down, in its stream, two Pots, one made of E",
+        "The Brass Pot was disposed to be social.",
+        "“Since we must be companions, let us be friendly,” he said.",
+        "“In union is strength. Though we are carried away against ou"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "d31a63136674",
+      "pageHash": "3876117433e0"
+    },
+    {
+      "title": "THE QUACK FROG",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 121,
+      "pageMax": 121,
+      "openPages": [
+        121,
+        121,
+        121,
+        121
+      ],
+      "open": [
+        "THE QUACK FROG",
+        "THERE was once a Frog who made proclamation that he was a le",
+        "He went so far as to tell the beasts that it was their own f",
+        "A Fox, hearing it, asked: “How is it, since you can do such "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "6f0c354340a7",
+      "pageHash": "dc01b11b381c"
+    },
+    {
+      "title": "THE WOLF IN SHEEP’S CLOTHING",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 122,
+      "pageMax": 122,
+      "openPages": [
+        122,
+        122,
+        122,
+        122
+      ],
+      "open": [
+        "THE WOLF IN SHEEP’S CLOTHING",
+        "A WOLF once clothed himself in the fleece of a sheep, and be",
+        "Tying him to a tree, he left him hanging there, still in his",
+        "Some shepherds who chanced to pass by saw him there, and sto"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "fa15249e076e",
+      "pageHash": "18e1696f9b12"
+    },
+    {
+      "title": "THE BOY AND THE FILBERTS",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 123,
+      "pageMax": 123,
+      "openPages": [
+        123,
+        123
+      ],
+      "open": [
+        "THE BOY AND THE FILBERTS",
+        "A BOY once thrust his hand into a pitcher nearly filled with"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8747d29cf413",
+      "pageHash": "3cccf42ac601"
+    },
+    {
+      "title": "THE MISER",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 124,
+      "pageMax": 124,
+      "openPages": [
+        124,
+        124,
+        124,
+        124
+      ],
+      "open": [
+        "THE MISER",
+        "A MISER who had buried a lump of gold in the ground came to ",
+        "Finding one day that it had been stolen, he began to tear hi",
+        "A neighbor, seeing him, said: “Pray do not grieve so. Bury a"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "f7649ee48b1e",
+      "pageHash": "3f8e7ca55a3d"
+    },
+    {
+      "title": "THE WIDOW AND HER LITTLE MAIDS",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 125,
+      "pageMax": 125,
+      "openPages": [
+        125,
+        125,
+        125,
+        125,
+        125
+      ],
+      "open": [
+        "THE WIDOW AND HER LITTLE MAIDS",
+        "A WIDOW who had great reputation as a housekeeper, because s",
+        "She herself was wakened before dawn by the crowing of the co",
+        "The Maids, who had no taste for such excessive tidiness, and",
+        "“If it were not for him,” they said, “the mistress would sle"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "2af5a05d4a7c",
+      "pageHash": "18b30aef84f0"
+    },
+    {
+      "title": "THE CHARCOAL BURNER AND THE FULLER",
+      "blockCount": 5,
+      "types": "hpppi",
+      "pageMin": 126,
+      "pageMax": 126,
+      "openPages": [
+        126,
+        126,
+        126,
+        126,
+        null
+      ],
+      "open": [
+        "THE CHARCOAL BURNER AND THE FULLER",
+        "A CHARCOAL Burner carried on his trade at his own house. One",
+        "“We shall be far better friends if we live together,” he sai",
+        "The Fuller replied: “The arrangement would not suit me in th",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8e572ec4da53",
+      "pageHash": "10ad6c8c7c70"
+    },
+    {
+      "title": "THE PORCUPINE AND THE SNAKES",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 127,
+      "pageMax": 128,
+      "openPages": [
+        127,
+        127,
+        127,
+        127,
+        128,
+        128
+      ],
+      "open": [
+        "THE PORCUPINE AND THE SNAKES",
+        "A PRICKLY Porcupine came wandering along one day, looking fo",
+        "He found a family of Snakes in a warm cave, and asked them t",
+        "The Snakes consented, though much against their will, and th",
+        "“Dear Porcupine, please go away,” they said; “you are so lar",
+        "It was too late that the Snakes learned that it is easier to"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "e72b285dd878",
+      "pageHash": "9ab4fbde383e"
+    },
+    {
+      "title": "THE BUNDLE OF STICKS",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 129,
+      "pageMax": 129,
+      "openPages": [
+        129,
+        129,
+        129,
+        129
+      ],
+      "open": [
+        "THE BUNDLE OF STICKS",
+        "AN Old Man had many Sons, who were often quarreling. He trie",
+        "“Now,” said the Father, “see if you can break this bundle of",
+        "Each of the Sons in turn took the bundle and tried with all "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "b89eb09ac617",
+      "pageHash": "d93ab5cd0613"
+    },
+    {
+      "title": "THE MISCHIEVOUS DOG",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 130,
+      "pageMax": 130,
+      "openPages": [
+        130,
+        130,
+        130,
+        130,
+        130
+      ],
+      "open": [
+        "THE MISCHIEVOUS DOG",
+        "THERE was once a Dog who used to run at every one whom he me",
+        "In order to give notice to strangers that the Dog could not ",
+        "For a time the Dog hung his head; but seeing that his bell a",
+        "An old Hound, seeing it, said: “Why do you make such an exhi"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "49021d17224f",
+      "pageHash": "3d49ea7733e7"
+    },
+    {
+      "title": "THE DOG AND THE OYSTER",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 131,
+      "pageMax": 131,
+      "openPages": [
+        131,
+        131
+      ],
+      "open": [
+        "THE DOG AND THE OYSTER",
+        "A DOG, seeing an Oyster, took it to be an egg and swallowed "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "1447ebfc6365",
+      "pageHash": "6b8721240bd8"
+    },
+    {
+      "title": "THE FOX AND THE LEOPARD",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 132,
+      "pageMax": 132,
+      "openPages": [
+        132,
+        132
+      ],
+      "open": [
+        "THE FOX AND THE LEOPARD",
+        "THE Fox and the Leopard once disputed who was the more beaut"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "b182bcf93ae9",
+      "pageHash": "6939c2130984"
+    },
+    {
+      "title": "THE DOGS AND THE HIDES",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 133,
+      "pageMax": 133,
+      "openPages": [
+        133,
+        133
+      ],
+      "open": [
+        "THE DOGS AND THE HIDES",
+        "SOME Dogs, famished with hunger, saw cowhides steeping in a "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "95e04defa7c8",
+      "pageHash": "43f965f30985"
+    },
+    {
+      "title": "THE WOODMAN AND THE TREES",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 134,
+      "pageMax": 134,
+      "openPages": [
+        134,
+        134,
+        134,
+        134,
+        134,
+        134
+      ],
+      "open": [
+        "THE WOODMAN AND THE TREES",
+        "A WOODMAN came into a forest, and made a petition to the Tre",
+        "The Trees, honored by his civility, acceded to his request, ",
+        "Without a dissenting voice, they chose the Ash, who, it seem",
+        "The Woodman cut down the Tree, and fitted the handle to his ",
+        "Lamenting too late the fate of his companions, an old Oak re"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8bcc2ff88a9e",
+      "pageHash": "9104b394e1a2"
+    },
+    {
+      "title": "THE MILKMAID AND HER PAIL OF MILK",
+      "blockCount": 9,
+      "types": "hpppppppi",
+      "pageMin": 135,
+      "pageMax": 135,
+      "openPages": [
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        135,
+        null
+      ],
+      "open": [
+        "THE MILKMAID AND HER PAIL OF MILK",
+        "DOLLY the Milkmaid having been a good girl and careful in he",
+        "With the pail upon her head, Dolly tripped gayly along on he",
+        "“For this milk,” said Dolly, “I shall get a shilling, and wi",
+        "“Then I shall buy that jacket that I saw in the village the ",
+        "“Robin will be there, and will come up and offer to be frien",
+        "Here Dolly gave her head the least bit of a toss, when down ",
+        "Poor Dolly! it was her good-by to eggs, chickens, jacket, ha",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "34fa1d8b2a43",
+      "pageHash": "9cf68bae5efd"
+    },
+    {
+      "title": "THE CAT AND THE FOX",
+      "blockCount": 12,
+      "types": "hppppppppppp",
+      "pageMin": 136,
+      "pageMax": 137,
+      "openPages": [
+        136,
+        136,
+        136,
+        136,
+        136,
+        137,
+        137,
+        137,
+        137,
+        137,
+        137,
+        137
+      ],
+      "open": [
+        "THE CAT AND THE FOX",
+        "THE Cat and the Fox were once talking together in the middle",
+        "“I do not care what happens,” said the Fox, “for I have a th",
+        "“I have but one course,” Puss replied.",
+        "“If that would not serve me, I should be undone.”",
+        "“I am sorry for you,” said the Fox.",
+        "“I would gladly teach you one or two of my tricks, but it is",
+        "These words were hardly spoken, when a pack of hounds came u",
+        "The Cat, by means of her one well-proved safeguard, ran up a",
+        "“This is my way,” she said to the Fox.",
+        "“What is yours to be?”",
+        "The Fox, with all his thousand tricks, was not able to get o"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "ad309a74b689",
+      "pageHash": "2c9dcecc0d44"
+    },
+    {
+      "title": "THE MONKEY AND THE CAT",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 138,
+      "pageMax": 138,
+      "openPages": [
+        138,
+        138,
+        138,
+        138,
+        138,
+        138
+      ],
+      "open": [
+        "THE MONKEY AND THE CAT",
+        "A MONKEY and a Cat lived in the same family, and it was hard",
+        "One day, as they were roaming together, they spied some ches",
+        "“Come,” said the cunning Monkey, “we shall not go dinnerless",
+        "day. Your claws are better than mine for the purpose; pull t",
+        "Puss pulled them out, burning her paws very much in doing so"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "cf552a8353b7",
+      "pageHash": "93e691eb3f85"
+    },
+    {
+      "title": "THE WOLF AND THE SHEPHERD",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 139,
+      "pageMax": 139,
+      "openPages": [
+        139,
+        139,
+        139,
+        139,
+        139,
+        139,
+        139
+      ],
+      "open": [
+        "THE WOLF AND THE SHEPHERD",
+        "FOR a long time the Wolf had followed the Sheep without atte",
+        "The Shepherd stood on his guard against him for a while, and",
+        "“He is really quite a help to me,” said the Shepherd to hims",
+        "So, having occasion to go to town one day, he left his flock",
+        "“I have been rightly served,” said the Shepherd, on his retu",
+        "“Why did I not know better than to trust my Sheep to their w"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "2050a6050cb4",
+      "pageHash": "8f3b4be8ae5a"
+    },
+    {
+      "title": "THE WOLF, THE FOX, AND THE APE",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 140,
+      "pageMax": 140,
+      "openPages": [
+        140,
+        140,
+        140
+      ],
+      "open": [
+        "THE WOLF, THE FOX, AND THE APE",
+        "A WOLF accused of theft a Fox, who utterly denied the charge",
+        "When each had fully stated his case, the Ape pronounced this"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "d046d39aac56",
+      "pageHash": "f54b00943d53"
+    },
+    {
+      "title": "THE BLIND MAN AND THE WHELP",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 141,
+      "pageMax": 141,
+      "openPages": [
+        141,
+        141,
+        141,
+        141
+      ],
+      "open": [
+        "THE BLIND MAN AND THE WHELP",
+        "A BLIND Man was accustomed to distinguish different animals ",
+        "The whelp of a wolf was brought him, with the request that h",
+        "Being in doubt, he said, “I do not quite know whether it is "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "0c565b65fbbf",
+      "pageHash": "ad6f73c5d5c9"
+    },
+    {
+      "title": "THE SPENDTHRIFT AND THE SWALLOW",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 142,
+      "pageMax": 142,
+      "openPages": [
+        142,
+        142,
+        142,
+        142
+      ],
+      "open": [
+        "THE SPENDTHRIFT AND THE SWALLOW",
+        "A YOUNG man who had been a great spendthrift, and had run th",
+        "The next day there happened to be a severe frost, and, shive",
+        "“Unhappy bird,” he said, “had you not come before your time,"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "c1e10eca8b98",
+      "pageHash": "5b9e015c1b87"
+    },
+    {
+      "title": "THE BOAR AND THE FOX",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 143,
+      "pageMax": 144,
+      "openPages": [
+        143,
+        144,
+        144,
+        144
+      ],
+      "open": [
+        "THE BOAR AND THE FOX",
+        "A BOAR stood whetting his tusks against a tree.",
+        "“What do you mean,” asked a Fox, “by such warlike preparatio",
+        "“When the enemy is in sight,” said the Boar, “it is time to "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "00a7764b3c30",
+      "pageHash": "9a5cbd8e7e09"
+    },
+    {
+      "title": "HERCULES AND THE WAGONER",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 145,
+      "pageMax": 145,
+      "openPages": [
+        145,
+        145,
+        145,
+        145
+      ],
+      "open": [
+        "HERCULES AND THE WAGONER",
+        "AS A WAGONER drove his wagon through a miry lane, the wheels",
+        "The Man, without making the least effort to remedy the matte",
+        "“Lazy fellow,” said Hercules, “lay your own shoulder to the "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "76255bdd17f1",
+      "pageHash": "3926446442cb"
+    },
+    {
+      "title": "THE MULES AND THE ROBBERS",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 146,
+      "pageMax": 146,
+      "openPages": [
+        146,
+        146,
+        146,
+        146,
+        146,
+        146
+      ],
+      "open": [
+        "THE MULES AND THE ROBBERS",
+        "TWO Mules, laden with packs, were trudging along the highway",
+        "The Mule that carried the treasure walked with head erect an",
+        "His companion followed at a quiet, easy pace.",
+        "Suddenly a band of Robbers sprang upon them, attracted by th",
+        "“I am glad,” said the other, “that I was thought of so littl"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8f5725f962aa",
+      "pageHash": "ce087709107f"
+    },
+    {
+      "title": "THE SWALLOW AND THE CROW",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 147,
+      "pageMax": 147,
+      "openPages": [
+        147,
+        147
+      ],
+      "open": [
+        "THE SWALLOW AND THE CROW",
+        "THE Swallow and the Crow were once contending about their pl"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "cad428776ca5",
+      "pageHash": "481a73e557b5"
+    },
+    {
+      "title": "JUPITER AND THE BEE",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 148,
+      "pageMax": 148,
+      "openPages": [
+        148,
+        148,
+        148,
+        148,
+        148
+      ],
+      "open": [
+        "JUPITER AND THE BEE",
+        "A BEE made Jupiter a present of a pot of honey, which was so",
+        "The Bee, who was nursing a private spite for the loss of som",
+        "Jupiter was loath to leave mankind at the mercy of a little ",
+        "Ill will often does greater harm to the one who acts from it"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "b20fd1ace5aa",
+      "pageHash": "65adcdae92a3"
+    },
+    {
+      "title": "THE TWO TRAVELERS",
+      "blockCount": 8,
+      "types": "hppppppp",
+      "pageMin": 149,
+      "pageMax": 149,
+      "openPages": [
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149,
+        149
+      ],
+      "open": [
+        "THE TWO TRAVELERS",
+        "AS TWO men were traveling through a wood, one of them took u",
+        "“Look here,” said he to his companion; “I have found an ax.”",
+        "“Don’t say I have found it,” said the other, “but we . As we",
+        "“No,” said the first, “I found the ax. It is mine.”",
+        "They had not gone far when they heard the owner of the ax pu",
+        "“We are in for it now,” said he who had the ax.",
+        "“Nay,” said the other; “say I am in for it, not we . When yo"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "ac63ee58de6d",
+      "pageHash": "11ff764e97f9"
+    },
+    {
+      "title": "THE KID AND THE WOLF",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 150,
+      "pageMax": 150,
+      "openPages": [
+        150,
+        150,
+        150
+      ],
+      "open": [
+        "THE KID AND THE WOLF",
+        "A KID, mounted on a high rock where she felt safe, bestowed ",
+        "The Wolf replied: “Do not think, silly little creature, that"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "6f3f768ca4e5",
+      "pageHash": "246d06072c76"
+    },
+    {
+      "title": "THE GOURD AND THE PINE",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 151,
+      "pageMax": 151,
+      "openPages": [
+        151,
+        151,
+        151,
+        151,
+        151
+      ],
+      "open": [
+        "THE GOURD AND THE PINE",
+        "A GOURD was once planted close beside a large and noble Pine",
+        "The leaves were so large and the flowers and fruit so fair t",
+        "“Why,” said the Gourd, “you have been more years in growing ",
+        "“That is true,” said the Pine; “but after the many winters a"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "f40fc627d8fd",
+      "pageHash": "16a3083a275a"
+    },
+    {
+      "title": "THE HARE AND THE HOUND",
+      "blockCount": 4,
+      "types": "hppi",
+      "pageMin": 152,
+      "pageMax": 152,
+      "openPages": [
+        152,
+        152,
+        152,
+        null
+      ],
+      "open": [
+        "THE HARE AND THE HOUND",
+        "A HOUND, having started a Hare which proved to be a capital ",
+        "“Ah, Master,” answered the Dog, “it’s all very well to laugh",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "989e74df015f",
+      "pageHash": "d18d6a08d9ed"
+    },
+    {
+      "title": "THE OWL AND THE GRASSHOPPER",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 153,
+      "pageMax": 154,
+      "openPages": [
+        153,
+        153,
+        153,
+        153,
+        154
+      ],
+      "open": [
+        "THE OWL AND THE GRASSHOPPER",
+        "AN Owl, who was sitting in a hollow tree, dozing away a long",
+        "So far from moving away at the request of the Owl, or keepin",
+        "The Owl waited in silence for a while, and then artfully add",
+        "The silly Grasshopper came hopping up to the Owl, who at onc"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "c60ab6337c1e",
+      "pageHash": "139d9ac77b3b"
+    },
+    {
+      "title": "THE MULE EATING THISTLES",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 155,
+      "pageMax": 155,
+      "openPages": [
+        155,
+        155,
+        155,
+        155
+      ],
+      "open": [
+        "THE MULE EATING THISTLES",
+        "A MULE, laden with choice provision of several sorts, was on",
+        "Seeing a large, strong thistle by the roadside, he stopped t",
+        "“Many people would wonder,” thought he, “that, with such dai"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "509b1997a99c",
+      "pageHash": "60e53fdd8e7b"
+    },
+    {
+      "title": "THE SICK STAG",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 156,
+      "pageMax": 156,
+      "openPages": [
+        156,
+        156,
+        156,
+        156,
+        156
+      ],
+      "open": [
+        "THE SICK STAG",
+        "A STAG, whose joints had become stiff with age, was at great",
+        "He stretched himself beside it, in a quiet, sunny corner of ",
+        "He had been a favorite among his companions, and they now ca",
+        "The end of the matter was, that the poor Stag died, not so m"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "0708a9866062",
+      "pageHash": "9bbe25ba1f11"
+    },
+    {
+      "title": "THE WOLF AND THE SHEPHERDS",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 157,
+      "pageMax": 157,
+      "openPages": [
+        157,
+        157
+      ],
+      "open": [
+        "THE WOLF AND THE SHEPHERDS",
+        "A WOLF, passing by, saw some Shepherds in a hut, eating for "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "aba97c7c4dcc",
+      "pageHash": "0d8215536a1d"
+    },
+    {
+      "title": "THE BOY AND THE NETTLE",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 158,
+      "pageMax": 158,
+      "openPages": [
+        158,
+        158,
+        158,
+        158
+      ],
+      "open": [
+        "THE BOY AND THE NETTLE",
+        "A BOY was once stung by a Nettle. Crying with pain, he ran h",
+        "“That was just it,” said his mother.",
+        "“It was that which gave you so bad a sting. The next time yo"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "2c23f3a31a26",
+      "pageHash": "ff6b20b6ccb7"
+    },
+    {
+      "title": "THE HARES AND THE FOXES",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 159,
+      "pageMax": 159,
+      "openPages": [
+        159,
+        159,
+        159
+      ],
+      "open": [
+        "THE HARES AND THE FOXES",
+        "THE Hares waged war with the Eagles and called upon the Foxe",
+        "The Foxes replied: “We would willingly have helped you, if w"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "6cb904978fd2",
+      "pageHash": "e80b264e8f7a"
+    },
+    {
+      "title": "MERCURY AND THE WOODMAN",
+      "blockCount": 11,
+      "types": "hpppppppppp",
+      "pageMin": 160,
+      "pageMax": 161,
+      "openPages": [
+        160,
+        160,
+        160,
+        160,
+        160,
+        160,
+        160,
+        160,
+        160,
+        160,
+        161
+      ],
+      "open": [
+        "MERCURY AND THE WOODMAN",
+        "A WOODMAN, felling a tree by the side of a river, let his ax",
+        "Being thus suddenly deprived of the tool by means of which h",
+        "To his surprise Mercury appeared and asked him what was the ",
+        "On his saying that it was not his, Mercury dived a second ti",
+        "This also the Woodman refused, saying that it was none of hi",
+        "So pleased was Mercury with the honesty of the man, that he ",
+        "The Woodman, on his return home, related to his companions a",
+        "He ran to the river and threw his ax in, then sat down upon ",
+        "Mercury appeared as before and demanded to know the cause of",
+        "Transported at the sight of the precious metal, the fellow e"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "19a4b702cce4",
+      "pageHash": "8dbe24eb4fc1"
+    },
+    {
+      "title": "THE RAT AND THE ELEPHANT",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 162,
+      "pageMax": 162,
+      "openPages": [
+        162,
+        162,
+        162,
+        162,
+        162
+      ],
+      "open": [
+        "THE RAT AND THE ELEPHANT",
+        "A RAT, traveling on the highway, met a huge Elephant, bearin",
+        "An admiring crowd followed the great beast and his attendant",
+        "“How foolish you are,” said the Rat to the people, “to make ",
+        "At this moment, the Cat from her high place spied the Rat. S"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "345f67db3f67",
+      "pageHash": "35eb744fbb91"
+    },
+    {
+      "title": "THE HUSBANDMAN AND THE STORK",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 163,
+      "pageMax": 163,
+      "openPages": [
+        163,
+        163,
+        163,
+        163,
+        163
+      ],
+      "open": [
+        "THE HUSBANDMAN AND THE STORK",
+        "A HUSBANDMAN pitched a net in his fields, to take the cranes",
+        "In this net he captured several cranes and geese, and among ",
+        "Among other reasons why he should not be put to death, the S",
+        "“All this may be true,” replied the Husbandman; “but, as I h"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "1da63e4af6a0",
+      "pageHash": "b1e880e35ab7"
+    },
+    {
+      "title": "THE SATYR AND THE TRAVELER",
+      "blockCount": 12,
+      "types": "hppppppppppi",
+      "pageMin": 164,
+      "pageMax": 164,
+      "openPages": [
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        164,
+        null
+      ],
+      "open": [
+        "THE SATYR AND THE TRAVELER",
+        "A SATYR, ranging in the forest in winter, once came across a",
+        "He took pity upon him and invited him to come to his cave fo",
+        "On their way, the Man kept blowing upon his fingers.",
+        "“Why do you do that?” said the Satyr, who had seen but littl",
+        "“To warm my hands,” replied the Man; “they are nearly frozen",
+        "Arriving at the cave, the Satyr poured out a smoking mess of",
+        "“What, blowing again!” exclaimed the Satyr.",
+        "“Is it not hot enough?”",
+        "“It is, indeed,” answered the Man; “that is the very reason ",
+        "Upon this the Satyr exclaimed in alarm, “Be off with you! I ",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "c656efafea3d",
+      "pageHash": "99e31de11061"
+    },
+    {
+      "title": "THE STAG AT THE LAKE",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 166,
+      "pageMax": 166,
+      "openPages": [
+        166,
+        166,
+        166,
+        166,
+        166
+      ],
+      "open": [
+        "THE STAG AT THE LAKE",
+        "A STAG, one hot day, came to drink from a clear lake, and st",
+        "“How beautiful are my fine spreading horns!” said he.",
+        "“How strong and graceful they are, branching from each side ",
+        "Just at this moment a lion came crashing through the forest "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "ba111f002df9",
+      "pageHash": "cd12c0811699"
+    },
+    {
+      "title": "THE PEASANT AND THE APPLE TREE",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 167,
+      "pageMax": 167,
+      "openPages": [
+        167,
+        167,
+        167,
+        167,
+        167,
+        167
+      ],
+      "open": [
+        "THE PEASANT AND THE APPLE TREE",
+        "A PEASANT had in his garden an Apple Tree which for year aft",
+        "Seeing no good to himself in the tree, he resolved to cut it",
+        "Each in his own way, the grasshoppers and sparrows entreated",
+        "“We will do our best to make up to you the worth of the wood",
+        "When he reached the hollow of the tree, he found a hive full"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "d022d923869e",
+      "pageHash": "ab2457f0fa1c"
+    },
+    {
+      "title": "JUPITER, NEPTUNE, MINERVA, AND MOMUS",
+      "blockCount": 8,
+      "types": "hppppppp",
+      "pageMin": 168,
+      "pageMax": 168,
+      "openPages": [
+        168,
+        168,
+        168,
+        168,
+        168,
+        168,
+        168,
+        168
+      ],
+      "open": [
+        "JUPITER, NEPTUNE, MINERVA, AND MOMUS",
+        "ACCORDING to an old legend, the first man was made by Jupite",
+        "On the completion of their labors, a dispute arose as to whi",
+        "They agreed to rest the decision with Momus, a judge, and to",
+        "Momus, however, being very envious of the handicraft of each",
+        "He criticized the work of Neptune because he had not made th",
+        "He condemned the work of Jupiter because he had not placed t",
+        "Indignant at such inveterate fault-finding, Jupiter drove Mo"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "be3c293e5ec9",
+      "pageHash": "ea1ffeb4b53a"
+    },
+    {
+      "title": "THE FARTHING RUSHLIGHT",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 169,
+      "pageMax": 169,
+      "openPages": [
+        169,
+        169,
+        169
+      ],
+      "open": [
+        "THE FARTHING RUSHLIGHT",
+        "A RUSHLIGHT, in love with its own brilliancy, once boasted t",
+        "Just then a door opened, and a puff of wind blew it out. As "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "17217b7672ba",
+      "pageHash": "fdc58c99635a"
+    },
+    {
+      "title": "THE HORSE AND THE GROOM",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 170,
+      "pageMax": 170,
+      "openPages": [
+        170,
+        170,
+        170
+      ],
+      "open": [
+        "THE HORSE AND THE GROOM",
+        "A GROOM, who used to steal a Horse’s corn and sell it, was y",
+        "“If you really wish me,” said the Horse, “to look sleek and "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "679df3d1841b",
+      "pageHash": "83657d29cbc9"
+    },
+    {
+      "title": "THE TRUMPETER TAKEN PRISONER",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 171,
+      "pageMax": 171,
+      "openPages": [
+        171,
+        171,
+        171,
+        171,
+        171
+      ],
+      "open": [
+        "THE TRUMPETER TAKEN PRISONER",
+        "A TRUMPETER who had been taken prisoner in a battle begged h",
+        "“Spare me, I entreat you,” said he; “put me not to death wit",
+        "“For that very reason,” said they who held him captive, “you",
+        "He who incites to strife is worse than he who takes part in "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "1b66ac31d972",
+      "pageHash": "3869d12c2146"
+    },
+    {
+      "title": "THE BOASTING TRAVELER",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 172,
+      "pageMax": 172,
+      "openPages": [
+        172,
+        172,
+        172
+      ],
+      "open": [
+        "THE BOASTING TRAVELER",
+        "A MAN who had traveled in foreign parts bragged, on his retu",
+        "“It is quite possible,” said one who heard him boasting of i"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "34a71cb03c53",
+      "pageHash": "78a3ac4e452e"
+    },
+    {
+      "title": "THE HEDGE AND THE VINEYARD",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 173,
+      "pageMax": 173,
+      "openPages": [
+        173,
+        173
+      ],
+      "open": [
+        "THE HEDGE AND THE VINEYARD",
+        "A FOOLISH young Heir, who had come into possession of his wi"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8c95a737f2d9",
+      "pageHash": "e9909304a6ae"
+    },
+    {
+      "title": "THE MOUSE AND THE WEASEL",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 174,
+      "pageMax": 174,
+      "openPages": [
+        174,
+        174
+      ],
+      "open": [
+        "THE MOUSE AND THE WEASEL",
+        "A LITTLE starveling Mouse had made his way with some difficu"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "ac3c555a6ca0",
+      "pageHash": "e082febb9db9"
+    },
+    {
+      "title": "THE WOLF AND THE SHEEP",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 175,
+      "pageMax": 175,
+      "openPages": [
+        175,
+        175,
+        175,
+        175
+      ],
+      "open": [
+        "THE WOLF AND THE SHEEP",
+        "A WOLF, that had been bitten by a dog and was unable to move",
+        "“If you will bring me a drink,” said he, “I will find meat m",
+        "“Yes,” said the Sheep, “I make no doubt of it; for if I come"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "72392c87288b",
+      "pageHash": "e67f529667e2"
+    },
+    {
+      "title": "A WIDOW AND HER SHEEP",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 176,
+      "pageMax": 176,
+      "openPages": [
+        176,
+        176
+      ],
+      "open": [
+        "A WIDOW AND HER SHEEP",
+        "A CERTAIN widow, who had only a single Sheep and wished to m"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "1fa4d17ac499",
+      "pageHash": "29839fde15dd"
+    },
+    {
+      "title": "THE MAN AND THE LION",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 177,
+      "pageMax": 177,
+      "openPages": [
+        177,
+        177,
+        177,
+        177,
+        177
+      ],
+      "open": [
+        "THE MAN AND THE LION",
+        "A MAN and a Lion were once journeying together and came at l",
+        "“See there,” said the Man.",
+        "“What more proof can you have of our undeniable superiority ",
+        "“That,” said the Lion, “is a man’s version of the story; let"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "82509413afba",
+      "pageHash": "6040bd7b3325"
+    },
+    {
+      "title": "THE LIONESS",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 178,
+      "pageMax": 178,
+      "openPages": [
+        178,
+        178,
+        178,
+        178,
+        178
+      ],
+      "open": [
+        "THE LIONESS",
+        "A GREAT stir was once made as to which of the Beasts could b",
+        "“And how many,” was asked, “do you have at a birth?”",
+        "“One,” she replied; “but that one is a Lion!”",
+        "Quality is before quantity."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "0e53c5cf9485",
+      "pageHash": "44c394fab559"
+    },
+    {
+      "title": "THE BOY WHO STOLE APPLES",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 179,
+      "pageMax": 179,
+      "openPages": [
+        179,
+        179,
+        179,
+        179,
+        179
+      ],
+      "open": [
+        "THE BOY WHO STOLE APPLES",
+        "AN Old Man once found a rude Boy in his Apple Tree and stern",
+        "“Then I will fetch you down,” said the Old Man. So he threw ",
+        "“Very well,” said the Old Man.",
+        "“If neither words nor grass will bring you down, I will try "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "f4235e8a409a",
+      "pageHash": "36c4ebf4c00c"
+    },
+    {
+      "title": "THE GOOSE WITH THE GOLDEN EGGS",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 180,
+      "pageMax": 180,
+      "openPages": [
+        180,
+        180,
+        180
+      ],
+      "open": [
+        "THE GOOSE WITH THE GOLDEN EGGS",
+        "A CERTAIN man had the good fortune to possess a Goose which ",
+        "Wanting more, he lost all."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "4a30671eaee3",
+      "pageHash": "0f243b75413c"
+    },
+    {
+      "title": "THE OLD MAN AND DEATH",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 181,
+      "pageMax": 181,
+      "openPages": [
+        181,
+        181,
+        181
+      ],
+      "open": [
+        "THE OLD MAN AND DEATH",
+        "AN Old Laborer, bent with age and toil, was gathering brush ",
+        "“Pray, good sir,” replied the Man, “do me but the favor to l"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "ded56b232905",
+      "pageHash": "10406b24a0ad"
+    },
+    {
+      "title": "A FATHER AND HIS TWO DAUGHTERS",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 182,
+      "pageMax": 182,
+      "openPages": [
+        182,
+        182,
+        182,
+        182,
+        182,
+        182
+      ],
+      "open": [
+        "A FATHER AND HIS TWO DAUGHTERS",
+        "A MAN who had two Daughters married one to a Gardener, the o",
+        "“Excellently well,” said she; “we have all that we want if o",
+        "Going on to the Potter’s, he asked his other Daughter how ma",
+        "“There is nothing that we want but that this fine weather an",
+        "“Alas,” said the Father, “if you wish for fine weather, and "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "aa91800595ac",
+      "pageHash": "559792a68104"
+    },
+    {
+      "title": "THE SICK LION AND THE FOX",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 183,
+      "pageMax": 183,
+      "openPages": [
+        183,
+        183,
+        183
+      ],
+      "open": [
+        "THE SICK LION AND THE FOX",
+        "A LION who was too old and feeble to hunt for prey saw that ",
+        "“So I would, gladly,” replied the Fox, “but I notice that al"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "882d38dfce8a",
+      "pageHash": "841ace3076fa"
+    },
+    {
+      "title": "THE MOUNTAIN IN LABOR",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 184,
+      "pageMax": 184,
+      "openPages": [
+        184,
+        184,
+        184
+      ],
+      "open": [
+        "THE MOUNTAIN IN LABOR",
+        "IN DAYS of old, a mighty rumbling was heard in a Mountain. I",
+        "A magnificent promise, but a paltry performance."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "9f191777794e",
+      "pageHash": "113c49d2f6cd"
+    },
+    {
+      "title": "JUPITER AND THE CAMEL",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 185,
+      "pageMax": 185,
+      "openPages": [
+        185,
+        185,
+        185
+      ],
+      "open": [
+        "JUPITER AND THE CAMEL",
+        "THE Camel, in days of yore, besought Jupiter to grant him ho",
+        "By asking for what we do not need, we may lose what we alrea"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "b567145d0e6f",
+      "pageHash": "b499f6d78377"
+    },
+    {
+      "title": "THE MOON AND HER MOTHER",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 186,
+      "pageMax": 186,
+      "openPages": [
+        186,
+        186,
+        186
+      ],
+      "open": [
+        "THE MOON AND HER MOTHER",
+        "THE Moon once asked her Mother to make her a little coat tha",
+        "“How,” replied the Mother, “can I make a cloak to fit you, w"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "48115bf5416f",
+      "pageHash": "d2e990ba9a42"
+    },
+    {
+      "title": "THE HORSE AND THE STAG",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 187,
+      "pageMax": 187,
+      "openPages": [
+        187,
+        187,
+        187,
+        187
+      ],
+      "open": [
+        "THE HORSE AND THE STAG",
+        "A HORSE once had the whole range of a meadow to himself; but",
+        "“I will,” said the Man, “if you will let me put a bit in you",
+        "Revenge is dearly punished at the price of liberty."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "d653676846a0",
+      "pageHash": "414743b1c60b"
+    },
+    {
+      "title": "THE COUNCIL HELD BY THE RATS",
+      "blockCount": 7,
+      "types": "hpipppp",
+      "pageMin": 188,
+      "pageMax": 190,
+      "openPages": [
+        188,
+        188,
+        null,
+        189,
+        189,
+        190,
+        190
+      ],
+      "open": [
+        "THE COUNCIL HELD BY THE RATS",
+        "O LD Rodiland, a certain Cat, Such havoc of the Rats had mad",
+        "[image]",
+        "Now, on a day, this dread rat-eater, Who had a wife, went ou",
+        "Indeed, he knew no other means; And all the rest At once con",
+        "That, thus resolving wisely, Fell through like this, precise",
+        "To argue or refute, Wise councilors abound. The man to execu"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "774400913e7a",
+      "pageHash": "c4fa80464039"
+    },
+    {
+      "title": "THE RAIN CLOUD",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 191,
+      "pageMax": 191,
+      "openPages": [
+        191,
+        191
+      ],
+      "open": [
+        "THE RAIN CLOUD",
+        "A GREAT Cloud passed rapidly over a country which was parche"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "4ff11675fd92",
+      "pageHash": "bb4f785bf011"
+    },
+    {
+      "title": "THE ELEPHANT IN FAVOR",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 192,
+      "pageMax": 193,
+      "openPages": [
+        192,
+        193,
+        193,
+        193,
+        193,
+        193,
+        193
+      ],
+      "open": [
+        "THE ELEPHANT IN FAVOR",
+        "ONCE upon a time the Elephant stood high in the good graces ",
+        "“It is no beauty,” say the beasts to each other, “and it is ",
+        "“If it had possessed such a bushy tail as mine, I should not",
+        "“Or, sister,” says the Bear, “if it had gotten into favor on",
+        "“Isn’t it its tusks that have gotten it into favor?” thus th",
+        "“Haven’t they, perhaps, been mistaken for horns?” Then said "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "865580ecf713",
+      "pageHash": "2990a945f148"
+    },
+    {
+      "title": "THE CUCKOO AND THE EAGLE",
+      "blockCount": 8,
+      "types": "hppppppi",
+      "pageMin": 194,
+      "pageMax": 194,
+      "openPages": [
+        194,
+        194,
+        194,
+        194,
+        194,
+        194,
+        194,
+        null
+      ],
+      "open": [
+        "THE CUCKOO AND THE EAGLE",
+        "THE Eagle promoted the Cuckoo to the rank of a Nightingale, ",
+        "After a time it looked around. All the other birds were flyi",
+        "“Have pity on me!” it begged.",
+        "“I have been appointed Nightingale to these woods, and yet t",
+        "“My friend,” answered the Eagle, “I am a king, but I am not ",
+        "It is impossible for me to remedy the cause of your complain",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "a3c455bda2cb",
+      "pageHash": "79a376bee7f0"
+    },
+    {
+      "title": "THE FOX IN THE ICE",
+      "blockCount": 9,
+      "types": "hpppppppp",
+      "pageMin": 196,
+      "pageMax": 196,
+      "openPages": [
+        196,
+        196,
+        196,
+        196,
+        196,
+        196,
+        196,
+        196,
+        196
+      ],
+      "open": [
+        "THE FOX IN THE ICE",
+        "VERY early one winter morning, during a hard frost, a Fox wa",
+        "Meanwhile, whether by accident or from negligence does not m",
+        "No great harm was done; the Fox could easily remedy it. It h",
+        "So it waits; it goes on waiting, but its tail only freezes a",
+        "Luckily, a Wolf comes running that way.",
+        "“Dear friend! father!” cries the Fox; “do save me; I am all ",
+        "So the Wolf stopped and set to work to rescue the Fox. Its m",
+        "So our foolish friend went home tailless, but rejoicing that"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "61b1bbaaaa20",
+      "pageHash": "b74bcfc9b113"
+    },
+    {
+      "title": "THE INQUISITIVE MAN",
+      "blockCount": 8,
+      "types": "hppppppp",
+      "pageMin": 197,
+      "pageMax": 197,
+      "openPages": [
+        197,
+        197,
+        197,
+        197,
+        197,
+        197,
+        197,
+        197
+      ],
+      "open": [
+        "THE INQUISITIVE MAN",
+        "“GOOD day, dear friend; where do you come from?”",
+        "“From the Museum, where I have spent three hours. I saw ever",
+        "“How rich is Nature in inventions! What birds and beasts hav",
+        "“But did you see the elephant? What did you think of it? I’l",
+        "“The elephant? Are you quite sure it is there?”",
+        "“Quite sure.”",
+        "“Well, brother, you mustn’t be too hard on me; but to tell t"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "246534b5b02b",
+      "pageHash": "7deddc9a09df"
+    },
+    {
+      "title": "THE SQUIRREL IN SERVICE",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 198,
+      "pageMax": 198,
+      "openPages": [
+        198,
+        198,
+        198,
+        198,
+        198,
+        198
+      ],
+      "open": [
+        "THE SQUIRREL IN SERVICE",
+        "A SQUIRREL once served a Lion—I know not where or in what ca",
+        "In return for this he was promised a whole wagonload of nuts",
+        "Promised—yes; but meanwhile time continues to fly by. The Sq",
+        "When he looks around in the forest, his former comrades show",
+        "The Squirrel takes a look at them—he can do no more. At one "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "1ab265c602ff",
+      "pageHash": "69e684c793ec"
+    },
+    {
+      "title": "THE WOLF AND THE CAT",
+      "blockCount": 12,
+      "types": "hppppppipppp",
+      "pageMin": 199,
+      "pageMax": 201,
+      "openPages": [
+        199,
+        199,
+        199,
+        199,
+        199,
+        199,
+        199,
+        null,
+        200,
+        200,
+        200,
+        201
+      ],
+      "open": [
+        "THE WOLF AND THE CAT",
+        "A WOLF ran out of the forest into a village—not to pay a vis",
+        "It would fain have rushed in through the first gateway, but ",
+        "“Well, then, try Demian.”",
+        "“I’m afraid he’s angry with me, too; I carried off one of hi",
+        "“Run over there, then; Trofim lives there.”",
+        "“Trofim! I should be afraid of even meeting him. Ever since ",
+        "[image]",
+        "“Oh, Vaska, I have killed one of his calves!”",
+        "“What do I hear, friend? You’ve quarreled with all the villa",
+        "“What sort of protection can you hope for here? No, no; our ",
+        "NOTE. Since the purpose of the fable is not merely to entert"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "e704ac3dcfd6",
+      "pageHash": "a8f91639940c"
+    },
+    {
+      "title": "THE WOLF AND THE LAMB",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 202,
+      "pageMax": 202,
+      "openPages": [
+        202,
+        202,
+        202,
+        202,
+        202,
+        202,
+        202
+      ],
+      "open": [
+        "THE WOLF AND THE LAMB",
+        "A WOLF and a Lamb came to a running brook to quench their th",
+        "The Lamb, affrighted by the charge, humbly replied that she ",
+        "“Be that as it may,” retorted the Wolf.",
+        "“You are a rascal, all the same, and I have heard that you s",
+        "“Nay,” said the Lamb, “that could not have been, for a year ",
+        "“Well, if it was not you it was your father, and that is all"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "57868f99cf73",
+      "pageHash": "a901fa5adb37"
+    },
+    {
+      "title": "THE FOX AND THE LION",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 203,
+      "pageMax": 203,
+      "openPages": [
+        203,
+        203
+      ],
+      "open": [
+        "THE FOX AND THE LION",
+        "THE first time the Fox saw the Lion, he was ready to die of "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "80548bb92c68",
+      "pageHash": "2e41a2fc1816"
+    },
+    {
+      "title": "THE DOG AND HIS SHADOW",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 204,
+      "pageMax": 204,
+      "openPages": [
+        204,
+        204
+      ],
+      "open": [
+        "THE DOG AND HIS SHADOW",
+        "A DOG had stolen a piece of meat out of a butcher’s shop and"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "5374f66cd907",
+      "pageHash": "63d55a23f94e"
+    },
+    {
+      "title": "THE CRAB AND HIS MOTHER",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 205,
+      "pageMax": 205,
+      "openPages": [
+        205,
+        205,
+        205,
+        205
+      ],
+      "open": [
+        "THE CRAB AND HIS MOTHER",
+        "SAID an old Crab to a young one, “Why do you walk so crooked",
+        "“Mother,” said the young Crab, “show me the way, will you? W",
+        "Example is better than precept."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "2c2503dc7401",
+      "pageHash": "2bda1e23841b"
+    },
+    {
+      "title": "THE FOX AND THE GRAPES",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 206,
+      "pageMax": 206,
+      "openPages": [
+        206,
+        206,
+        206
+      ],
+      "open": [
+        "THE FOX AND THE GRAPES",
+        "A FOX came at vintage time to a place where ripe grapes were",
+        "“I will get them,” said the Fox. He made many a spring and j"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "e96fb68a82e0",
+      "pageHash": "c954454fccda"
+    },
+    {
+      "title": "THE WOLF AND THE CRANE",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 207,
+      "pageMax": 207,
+      "openPages": [
+        207,
+        207
+      ],
+      "open": [
+        "THE WOLF AND THE CRANE",
+        "A WOLF had a bone in his throat and ran up and down in the g"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "6f3574901fc8",
+      "pageHash": "3a417dc0ef98"
+    },
+    {
+      "title": "THE ANTS AND THE GRASSHOPPERS",
+      "blockCount": 5,
+      "types": "hpppp",
+      "pageMin": 208,
+      "pageMax": 208,
+      "openPages": [
+        208,
+        208,
+        208,
+        208,
+        208
+      ],
+      "open": [
+        "THE ANTS AND THE GRASSHOPPERS",
+        "A COLONY of Ants were busily employed in the care and preser",
+        "A Grasshopper, who had chanced to out-live the summer and wa",
+        "“Alas! gentlemen,” said he, “I passed away the time merrily ",
+        "“If that be the case,” replied the Ant, “all I have to say i"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "cd7503b6fee9",
+      "pageHash": "b35457e75cdf"
+    },
+    {
+      "title": "THE FROGS WHO ASKED FOR A KING",
+      "blockCount": 6,
+      "types": "hppppp",
+      "pageMin": 209,
+      "pageMax": 209,
+      "openPages": [
+        209,
+        209,
+        209,
+        209,
+        209,
+        209
+      ],
+      "open": [
+        "THE FROGS WHO ASKED FOR A KING",
+        "THE commonwealth of Frogs, a discontented race, weary of lib",
+        "The good-natured deity, in order to grant their request with",
+        "Dissatisfied with this state of things, they renewed their r",
+        "In his wrath the Thunderer sent them a Crane, who no sooner ",
+        "They were now far more dissatisfied than before. Applying to"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "5778d1e53559",
+      "pageHash": "f3ad318ac121"
+    },
+    {
+      "title": "THE DONKEY IN THE LION’S SKIN",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 210,
+      "pageMax": 210,
+      "openPages": [
+        210,
+        210
+      ],
+      "open": [
+        "THE DONKEY IN THE LION’S SKIN",
+        "A DONKEY, having put on the skin of a Lion, which he found d"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "5550337470c9",
+      "pageHash": "1da6be2cac26"
+    },
+    {
+      "title": "THE MICE IN COUNCIL",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 211,
+      "pageMax": 211,
+      "openPages": [
+        211,
+        211,
+        211,
+        211
+      ],
+      "open": [
+        "THE MICE IN COUNCIL",
+        "THE Mice, being sadly distressed on account of their common ",
+        "The proposal was hailed with applause and agreed to unanimou",
+        "The old Mouse said, “It is easy to advise; what is wanted is"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "6b20cc9c64a2",
+      "pageHash": "27414781ee76"
+    },
+    {
+      "title": "THE KID AND THE WOLF",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 212,
+      "pageMax": 212,
+      "openPages": [
+        212,
+        212
+      ],
+      "open": [
+        "THE KID AND THE WOLF",
+        "A KID, coming alone from its pasture, was pursued by a Wolf."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "fdb34c1b5a3f",
+      "pageHash": "30336261b5fc"
+    },
+    {
+      "title": "THE HAWK AND THE NIGHTINGALE",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 213,
+      "pageMax": 213,
+      "openPages": [
+        213,
+        213,
+        213,
+        213
+      ],
+      "open": [
+        "THE HAWK AND THE NIGHTINGALE",
+        "THE Nightingale, sitting aloft upon an oak, was seen by a Ha",
+        "“Do you happen to see many large birds flying about?” the Ha",
+        "“I should be foolish, indeed, to let you go for the sake of "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "2fa208cc552d",
+      "pageHash": "460c91fdc145"
+    },
+    {
+      "title": "THE CROW AND THE PITCHER",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 214,
+      "pageMax": 214,
+      "openPages": [
+        214,
+        214
+      ],
+      "open": [
+        "THE CROW AND THE PITCHER",
+        "A CROW who was nearly perishing with thirst spied a pitcher "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "c0b758b4dcf4",
+      "pageHash": "3678bbdfe3d6"
+    },
+    {
+      "title": "THE ANT AND THE DOVE",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 215,
+      "pageMax": 215,
+      "openPages": [
+        215,
+        215,
+        215
+      ],
+      "open": [
+        "THE ANT AND THE DOVE",
+        "GOING to a fountain to quench his thirst, an Ant tumbled in ",
+        "One good turn deserves another."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "691ad2e31e74",
+      "pageHash": "aa3bb80d4f4f"
+    },
+    {
+      "title": "THE OX AND THE FROG",
+      "blockCount": 7,
+      "types": "hpppppp",
+      "pageMin": 216,
+      "pageMax": 216,
+      "openPages": [
+        216,
+        216,
+        216,
+        216,
+        216,
+        216,
+        216
+      ],
+      "open": [
+        "THE OX AND THE FROG",
+        "AN Ox, grazing in a swampy meadow, chanced to set his foot a",
+        "“It was a beast—such a big four-footed beast—that did it.”",
+        "“Big?” asked the old Frog, and she puffed herself out, “as b",
+        "“A great deal bigger,” said the little one.",
+        "“Well, was it so big?” and she swelled herself out yet more.",
+        "“Indeed, Mother, but it was; and if you were to burst yourse"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "e7056c713e85",
+      "pageHash": "80d60e353fbe"
+    },
+    {
+      "title": "THE BAT AND THE WEASELS",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 217,
+      "pageMax": 217,
+      "openPages": [
+        217,
+        217,
+        217
+      ],
+      "open": [
+        "THE BAT AND THE WEASELS",
+        "A BAT, falling to the ground, was caught by a Weasel, whom h",
+        "Some time afterward, on another flight, the Bat fell again t"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "46bfcb938ac6",
+      "pageHash": "39d70dd5e6a2"
+    },
+    {
+      "title": "THE FOX AND THE GOAT",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 218,
+      "pageMax": 218,
+      "openPages": [
+        218,
+        218,
+        218
+      ],
+      "open": [
+        "THE FOX AND THE GOAT",
+        "A FOX who had fallen into a deep well was casting about to f",
+        "Hiding the real danger in his case, the Fox replied: “The be"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "943bd46f18c2",
+      "pageHash": "ab704be4ff8a"
+    },
+    {
+      "title": "THE WOMAN AND HER HEN",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 219,
+      "pageMax": 219,
+      "openPages": [
+        219,
+        219,
+        219
+      ],
+      "open": [
+        "THE WOMAN AND HER HEN",
+        "A THRIFTY Woman kept a Hen that could be depended on to lay ",
+        "Thrift sometimes overreaches, and figures are not always fac"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "1b7554c52d39",
+      "pageHash": "144e0c4e25a1"
+    },
+    {
+      "title": "THE DOG IN THE MANGER",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 220,
+      "pageMax": 220,
+      "openPages": [
+        220,
+        220
+      ],
+      "open": [
+        "THE DOG IN THE MANGER",
+        "A DOG once made his bed in a manger and lay there snarling a"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8eddf6625300",
+      "pageHash": "97acac54bf92"
+    },
+    {
+      "title": "THE MOUSE, THE FROG, AND THE HAWK",
+      "blockCount": 4,
+      "types": "hppp",
+      "pageMin": 221,
+      "pageMax": 221,
+      "openPages": [
+        221,
+        221,
+        221,
+        221
+      ],
+      "open": [
+        "THE MOUSE, THE FROG, AND THE HAWK",
+        "A MOUSE in an evil day made the acquaintance of a Frog, and ",
+        "They were barely halfway when the Frog took a sudden plunge ",
+        "Alliances that are ill-matched generally end in disaster; an"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "e755715184ba",
+      "pageHash": "63b880515917"
+    },
+    {
+      "title": "THE SHEPHERD BOY AND THE WOLF",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 222,
+      "pageMax": 222,
+      "openPages": [
+        222,
+        222
+      ],
+      "open": [
+        "THE SHEPHERD BOY AND THE WOLF",
+        "A SHEPHERD boy, tending his flock on the edge of a village, "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "f83d837e7c67",
+      "pageHash": "5f39e831ffe7"
+    },
+    {
+      "title": "THE FISHERMAN AND THE LITTLE FISH",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 223,
+      "pageMax": 223,
+      "openPages": [
+        223,
+        223,
+        223
+      ],
+      "open": [
+        "THE FISHERMAN AND THE LITTLE FISH",
+        "AFTER toiling all day and catching nothing, a Fisherman pull",
+        "A bird in the hand is worth two in the bush."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "a068bda1ddc3",
+      "pageHash": "ab230a9a594f"
+    },
+    {
+      "title": "THE FOX AND THE CROW",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 224,
+      "pageMax": 224,
+      "openPages": [
+        224,
+        224,
+        224
+      ],
+      "open": [
+        "THE FOX AND THE CROW",
+        "A CROW snatched a piece of cheese out of a window and flew w",
+        "“O Crow,” said he, “how beautiful are thy wings and how brig"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "f348ad64774a",
+      "pageHash": "b6b8c4f30208"
+    },
+    {
+      "title": "THE PARTRIDGE AND THE FOWLER",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 225,
+      "pageMax": 225,
+      "openPages": [
+        225,
+        225,
+        225
+      ],
+      "open": [
+        "THE PARTRIDGE AND THE FOWLER",
+        "A PARTRIDGE, having been taken in the net of a Fowler, cried",
+        "“No,” replied the man, “whatever I might have done, I am det"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "c4316ba515e3",
+      "pageHash": "fd340408a153"
+    },
+    {
+      "title": "THE THIRSTY PIGEON",
+      "blockCount": 3,
+      "types": "hpp",
+      "pageMin": 226,
+      "pageMax": 226,
+      "openPages": [
+        226,
+        226,
+        226
+      ],
+      "open": [
+        "THE THIRSTY PIGEON",
+        "A PIGEON, pressed by thirst and seeing a glass of water pain",
+        "Great haste is not always good speed."
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "31ab293f3b7d",
+      "pageHash": "cb28842dd443"
+    },
+    {
+      "title": "THE THREE TRADESMEN",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 227,
+      "pageMax": 227,
+      "openPages": [
+        227,
+        227
+      ],
+      "open": [
+        "THE THREE TRADESMEN",
+        "THERE was a certain city in danger of being besieged, and a "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "6d24c1c22cbd",
+      "pageHash": "ea115f6a8e19"
+    },
+    {
+      "title": "THE HARES AND THE FROGS",
+      "blockCount": 2,
+      "types": "hp",
+      "pageMin": 228,
+      "pageMax": 228,
+      "openPages": [
+        228,
+        228
+      ],
+      "open": [
+        "THE HARES AND THE FROGS",
+        "IN DESPERATION over the hard times they had on account of th"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "e178e1b6baaa",
+      "pageHash": "d32b0a2f4212"
+    },
+    {
+      "title": "THE EAGLE AND THE FOX",
+      "blockCount": 3,
+      "types": "hpi",
+      "pageMin": 229,
+      "pageMax": 229,
+      "openPages": [
+        229,
+        229,
+        null
+      ],
+      "open": [
+        "THE EAGLE AND THE FOX",
+        "AN EAGLE and a Fox had lived together as good neighbors, the",
+        "[image]"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "ca46e56f892b",
+      "pageHash": "f518fb087b56"
+    }
+  ]
 }

@@ -1,5 +1,5 @@
 {
-  "parserVersion": 134,
+  "parserVersion": 135,
   "totalBlocks": 2383,
   "totalWords": 121520,
   "chapterCount": 61,
@@ -70,5 +70,2574 @@
   "lastBlockText": "With the Gardiners, they were always on the most intimate terms. Darcy, as well ",
   "headingCount": 64,
   "avgBlockLength": 285,
-  "proseBlockCount": 2319
+  "proseBlockCount": 2319,
+  "frontMatter": {
+    "blockCount": 3,
+    "types": "hhh",
+    "pageMin": 0,
+    "pageMax": 0,
+    "openPages": [
+      0,
+      0,
+      0
+    ],
+    "open": [
+      "Pride and Prejudice",
+      "By Jane Austen",
+      "By Jane Austen"
+    ],
+    "closePages": [],
+    "close": [],
+    "textHash": "2d7990f9dee7",
+    "pageHash": "7c01691d53eb"
+  },
+  "chapterOrder": [
+    {
+      "title": "Chapter 1",
+      "blockCount": 32,
+      "types": "hppppppppppppppppppppppppppppppp",
+      "pageMin": 1,
+      "pageMax": 4,
+      "openPages": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "open": [
+        "Chapter 1",
+        "It is a truth universally acknowledged, that a single man in",
+        "However little known the feelings or views of such a man may",
+        "\"My dear Mr. Bennet,\" said his lady to him one day, \"have yo",
+        "Mr. Bennet replied that he had not.",
+        "\"But it is,\" returned she; \"for Mrs. Long has just been here"
+      ],
+      "closePages": [
+        4,
+        4,
+        4
+      ],
+      "close": [
+        "\"Mr. Bennet, how can you abuse your own children in such a w",
+        "\"You mistake me, my dear. I have a high respect for your ner",
+        "Mr. Bennet was so odd a mixture of quick parts, sarcastic hu"
+      ],
+      "textHash": "a093a7e77fb5",
+      "pageHash": "ac74f02136c8"
+    },
+    {
+      "title": "Chapter 2",
+      "blockCount": 30,
+      "types": "hppppppppppppppppppppppppppppp",
+      "pageMin": 5,
+      "pageMax": 8,
+      "openPages": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        6
+      ],
+      "open": [
+        "Chapter 2",
+        "Mr. Bennet was among the earliest of those who waited on Mr.",
+        "\"We are not in a way to know what Mr. Bingley likes,\" said h",
+        "\"But you forget, mamma,\" said Elizabeth, \"that we shall meet",
+        "\"I do not believe Mrs. Long will do any such thing. She has ",
+        "\"No more have I,\" said Mr. Bennet; \"and I am glad to find th"
+      ],
+      "closePages": [
+        8,
+        8,
+        8
+      ],
+      "close": [
+        "\"I do not know how you will ever make him amends for his kin",
+        "\"Oh!\" said Lydia stoutly, \"I am not afraid; for though I am ",
+        "The rest of the evening was spent in conjecturing how soon h"
+      ],
+      "textHash": "196f2426ae50",
+      "pageHash": "1940ec682f9e"
+    },
+    {
+      "title": "Chapter 3",
+      "blockCount": 24,
+      "types": "hppppppppppppppppppppppp",
+      "pageMin": 9,
+      "pageMax": 15,
+      "openPages": [
+        9,
+        9,
+        9,
+        9,
+        9,
+        10,
+        10,
+        10,
+        11,
+        12,
+        12,
+        12,
+        12,
+        12,
+        12,
+        13,
+        13,
+        13,
+        13,
+        14,
+        14,
+        15,
+        15,
+        15
+      ],
+      "open": [
+        "Chapter 3",
+        "Not all that Mrs. Bennet, however, with the assistance of he",
+        "Bingley's heart were entertained.",
+        "\"If I can but see one of my daughters happily settled at Net",
+        "In a few days Mr. Bingley returned Mr. Bennet's visit, and s",
+        "An invitation to dinner was soon afterwards dispatched; and ",
+        "Lady Lucas quieted her fears a little by starting the idea o",
+        "Mr. Bingley was good-looking and gentlemanlike; he had a ple",
+        "Mr. Bingley had soon made himself acquainted with all the pr",
+        "Elizabeth Bennet had been obliged, by the scarcity of gentle",
+        "\"Come, Darcy,\" said he, \"I must have you dance. I hate to se",
+        "\"I certainly shall not. You know how I detest it, unless I a",
+        "\"I would not be so fastidious as you are,\" cried Mr. Bingley",
+        "\" You are dancing with the only handsome girl in the room,\" ",
+        "\"Oh! She is the most beautiful creature I ever beheld! But t",
+        "\"Which do you mean?\" and turning round he looked for a momen",
+        "Mr. Bingley followed his advice. Mr. Darcy walked off; and E",
+        "The evening altogether passed off pleasantly to the whole fa",
+        "They returned, therefore, in good spirits to Longbourn, the ",
+        "\"Oh! my dear Mr. Bennet,\" as she entered the room, \"we have ",
+        "\"If he had had any compassion for me ,\" cried her husband im",
+        "\"Oh! my dear, I am quite delighted with him. He is so excess",
+        "Here she was interrupted again. Mr. Bennet protested against",
+        "\"But I can assure you,\" she added, \"that Lizzy does not lose"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "57802371c404",
+      "pageHash": "5a0acf93dec5"
+    },
+    {
+      "title": "Chapter 4",
+      "blockCount": 21,
+      "types": "hpppppppppppppppppppp",
+      "pageMin": 16,
+      "pageMax": 20,
+      "openPages": [
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+        17,
+        17,
+        17,
+        17,
+        17,
+        17,
+        18,
+        18,
+        19,
+        19,
+        19,
+        20
+      ],
+      "open": [
+        "Chapter 4",
+        "When Jane and Elizabeth were alone, the former, who had been",
+        "\"He is just what a young man ought to be,\" said she,",
+        "\"sensible, good-humoured, lively; and I never saw such happy",
+        "man-ners!--so much ease, with such perfect good breeding!\"",
+        "\"He is also handsome,\" replied Elizabeth, \"which a young man",
+        "\"I was very much flattered by his asking me to dance a secon",
+        "\"Did not you? I did for you. But that is one great differenc",
+        "\"Dear Lizzy!\"",
+        "\"Oh! you are a great deal too apt, you know, to like people ",
+        "\"I would not wish to be hasty in censuring anyone; but I alw",
+        "\"I know you do; and it is that which makes the wonder. With ",
+        "\"Certainly not--at first. But they are very pleasing women",
+        "when you converse with them. Miss Bingley is to live with he",
+        "Elizabeth listened in silence, but was not convinced; their ",
+        "Mr. Bingley inherited property to the amount of nearly a hun",
+        "His sisters were anxious for his having an estate of his own",
+        "Between him and Darcy there was a very steady friendship, in",
+        "Bingley was by no means deficient, but Darcy was clever. He ",
+        "The manner in which they spoke of the Meryton assembly was s",
+        "Mrs. Hurst and her sister allowed it to be so--but still the"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "31b214355bfe",
+      "pageHash": "dd9f491a7ddc"
+    },
+    {
+      "title": "Chapter 5",
+      "blockCount": 29,
+      "types": "hpppppppppppppppppppppppppppp",
+      "pageMin": 21,
+      "pageMax": 25,
+      "openPages": [
+        21,
+        21,
+        21,
+        22,
+        22,
+        22,
+        22,
+        22
+      ],
+      "open": [
+        "Chapter 5",
+        "Within a short walk of Longbourn lived a family with whom th",
+        "Lady Lucas was a very good kind of woman, not too clever to ",
+        "\" You began the evening well, Charlotte,\" said Mrs. Bennet w",
+        "\" You were Mr. Bingley's first choice.\"",
+        "\"Yes; but he seemed to like his second better.\""
+      ],
+      "closePages": [
+        24,
+        25,
+        25
+      ],
+      "close": [
+        "\"If I were as rich as Mr. Darcy,\" cried a young Lucas, who c",
+        "\"Then you would drink a great deal more than you ought,\" sai",
+        "The boy protested that she should not; she continued to decl"
+      ],
+      "textHash": "016dfeb6c27f",
+      "pageHash": "a02542b5e65a"
+    },
+    {
+      "title": "Chapter 6",
+      "blockCount": 60,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 26,
+      "pageMax": 36,
+      "openPages": [
+        26,
+        26,
+        26,
+        26,
+        27,
+        27,
+        27,
+        27
+      ],
+      "open": [
+        "Chapter 6",
+        "The ladies of Longbourn soon waited on those of Netherfield.",
+        "It was generally evident whenever they met, that he DID admi",
+        "\"It may perhaps be pleasant,\" replied Charlotte, \"to be able",
+        "\"But she does help him on, as much as her nature will allow.",
+        "\"Remember, Eliza, that he does not know Jane's disposition a"
+      ],
+      "closePages": [
+        36,
+        36,
+        36
+      ],
+      "close": [
+        "\"That is exactly the question which I expected you to ask. A",
+        "\"Nay, if you are serious about it, I shall consider the matt",
+        "He listened to her with perfect indifference while she chose"
+      ],
+      "textHash": "2af92d3eade8",
+      "pageHash": "19f62e3403d9"
+    },
+    {
+      "title": "Chapter 7",
+      "blockCount": 56,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 37,
+      "pageMax": 45,
+      "openPages": [
+        37,
+        37,
+        37,
+        37,
+        38,
+        38,
+        38,
+        38
+      ],
+      "open": [
+        "Chapter 7",
+        "Mr. Bennet's property consisted almost entirely in an estate",
+        "She had a sister married to a Mr. Phillips, who had been a c",
+        "The village of Longbourn was only one mile from Meryton; a m",
+        "Their visits to Mrs. Phillips were now productive of the mos",
+        "After listening one morning to their effusions on this subje"
+      ],
+      "closePages": [
+        45,
+        45,
+        45
+      ],
+      "close": [
+        "Bingley left them together, could attempt little besides exp",
+        "When breakfast was over they were joined by the sisters; and",
+        "When the clock struck three, Elizabeth felt that she must go"
+      ],
+      "textHash": "89f74728813b",
+      "pageHash": "131ab8295c93"
+    },
+    {
+      "title": "Chapter 8",
+      "blockCount": 62,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 46,
+      "pageMax": 55,
+      "openPages": [
+        46,
+        46,
+        46,
+        46,
+        47,
+        47,
+        47,
+        47
+      ],
+      "open": [
+        "Chapter 8",
+        "At five o'clock the two ladies retired to dress, and at half",
+        "Their brother, indeed, was the only one of the party whom sh",
+        "When dinner was over, she returned directly to Jane, and Mis",
+        "\"She has nothing, in short, to recommend her, but being an e",
+        "\"She did, indeed, Louisa. I could hardly keep my countenance"
+      ],
+      "closePages": [
+        54,
+        54,
+        55
+      ],
+      "close": [
+        "Miss Bingley was not so entirely satisfied with this reply a",
+        "Elizabeth joined them again only to say that her sister was ",
+        "Bennet were not decidedly better. Bingley was quite uncomfor"
+      ],
+      "textHash": "690db50e84ec",
+      "pageHash": "b7f63d437aa5"
+    },
+    {
+      "title": "Chapter 9",
+      "blockCount": 51,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 56,
+      "pageMax": 63,
+      "openPages": [
+        56,
+        56,
+        56,
+        56,
+        56,
+        56,
+        56,
+        57
+      ],
+      "open": [
+        "Chapter 9",
+        "Elizabeth passed the chief of the night in her sister's room",
+        "Bennet, accompanied by her two youngest girls, reached Nethe",
+        "Had she found Jane in any apparent danger, Mrs. Bennet would",
+        "Bingley met them with hopes that Mrs. Bennet had not found M",
+        "\"Indeed I have, sir,\" was her answer."
+      ],
+      "closePages": [
+        63,
+        63,
+        63
+      ],
+      "close": [
+        "Lydia declared herself satisfied.",
+        "\"Oh! yes--it would be much better to wait till Jane was well",
+        "Mrs. Bennet and her daughters then departed, and Elizabeth r"
+      ],
+      "textHash": "fad5579ac33d",
+      "pageHash": "23b212382b80"
+    },
+    {
+      "title": "Chapter 10",
+      "blockCount": 68,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 64,
+      "pageMax": 74,
+      "openPages": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        65
+      ],
+      "open": [
+        "Chapter 10",
+        "The day passed much as the day before had done. Mrs. Hurst a",
+        "Elizabeth took up some needlework, and was sufficiently amus",
+        "\"How delighted Miss Darcy will be to receive such a letter!\"",
+        "He made no answer.",
+        "\"You write uncommonly fast.\""
+      ],
+      "closePages": [
+        74,
+        74,
+        74
+      ],
+      "close": [
+        "\"This walk is not wide enough for our party. We had better g",
+        "\"No, no; stay where you are. You are charmingly grouped, and",
+        "She then ran gaily off, rejoicing as she rambled about, in t"
+      ],
+      "textHash": "e532b5b8296d",
+      "pageHash": "d6b952c3404b"
+    },
+    {
+      "title": "Chapter 11",
+      "blockCount": 45,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 75,
+      "pageMax": 81,
+      "openPages": [
+        75,
+        75,
+        75,
+        75,
+        76,
+        76,
+        76,
+        77
+      ],
+      "open": [
+        "Chapter 11",
+        "When the ladies removed after dinner, Elizabeth ran up to he",
+        "Darcy, and she had something to say to him before he had adv",
+        "When tea was over, Mr. Hurst reminded his sister-in-law of t",
+        "Hurst soon found even his open petition rejected. She assure",
+        "Miss Bingley's attention was quite as much engaged in watchi"
+      ],
+      "closePages": [
+        81,
+        81,
+        81
+      ],
+      "close": [
+        "\"Do let us have a little music,\" cried Miss Bingley, tired o",
+        "\"Louisa, you will not mind my waking Mr. Hurst?\"",
+        "Her sister had not the smallest objection, and the piano for"
+      ],
+      "textHash": "54a863167370",
+      "pageHash": "19768d4df4cc"
+    },
+    {
+      "title": "Chapter 12",
+      "blockCount": 9,
+      "types": "hpppppppp",
+      "pageMin": 82,
+      "pageMax": 84,
+      "openPages": [
+        82,
+        82,
+        82,
+        82,
+        83,
+        83,
+        83,
+        84,
+        84
+      ],
+      "open": [
+        "Chapter 12",
+        "In consequence of an agreement between the sisters, Elizabet",
+        "Against staying longer, however, Elizabeth was positively re",
+        "The communication excited many professions of concern; and e",
+        "The master of the house heard with real sorrow that they wer",
+        "To Mr. Darcy it was welcome intelligence--Elizabeth had been",
+        "On Sunday, after morning service, the separation, so agreeab",
+        "They were not welcomed home very cordially by their mother. ",
+        "They found Mary, as usual, deep in the study of thoroughbass"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "771f6842d76d",
+      "pageHash": "511f93c13439"
+    },
+    {
+      "title": "Chapter 13",
+      "blockCount": 38,
+      "types": "hppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 85,
+      "pageMax": 91,
+      "openPages": [
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85,
+        85
+      ],
+      "open": [
+        "Chapter 13",
+        "\"I hope, my dear,\" said Mr. Bennet to his wife, as they were",
+        "\"Who do you mean, my dear? I know of nobody that is coming, ",
+        "\"The person of whom I speak is a gentleman, and a stranger.\"",
+        "Mrs. Bennet's eyes sparkled.",
+        "\"A gentleman and a stranger! It is Mr. Bingley, I am sure! W"
+      ],
+      "closePages": [
+        91,
+        91,
+        91
+      ],
+      "close": [
+        "\"Ah! sir, I do indeed. It is a grievous affair to my poor gi",
+        "\"I am very sensible, madam, of the hardship to my fair cousi",
+        "He was interrupted by a summons to dinner; and the girls smi"
+      ],
+      "textHash": "0dc4699e8c28",
+      "pageHash": "5f3fbad160cf"
+    },
+    {
+      "title": "Chapter 14",
+      "blockCount": 19,
+      "types": "hpppppppppppppppppp",
+      "pageMin": 93,
+      "pageMax": 97,
+      "openPages": [
+        93,
+        93,
+        93,
+        94,
+        94,
+        94,
+        94,
+        94,
+        94,
+        95,
+        95,
+        95,
+        96,
+        96,
+        96,
+        96,
+        96,
+        97,
+        97
+      ],
+      "open": [
+        "Chapter 14",
+        "During dinner, Mr. Bennet scarcely spoke at all; but when th",
+        "She had always spoken to him as she would to any other gentl",
+        "\"That is all very proper and civil, I am sure,\" said Mrs. Be",
+        "\"The garden in which stands my humble abode is separated onl",
+        "\"I think you said she was a widow, sir? Has she any family?\"",
+        "\"She has only one daughter, the heiress of Rosings, and of v",
+        "\"Ah!\" said Mrs. Bennet, shaking her head, \"then she is bette",
+        "\"She is a most charming young lady indeed. Lady Catherine he",
+        "\"Has she been presented? I do not remember her name among th",
+        "\"Her indifferent state of health unhappily prevents her bein",
+        "\"You judge very properly,\" said Mr. Bennet, \"and it is happy",
+        "\"They arise chiefly from what is passing at the time, and th",
+        "Mr. Bennet's expectations were fully answered. His cousin wa",
+        "By tea-time, however, the dose had been enough, and Mr. Benn",
+        "Sermons. Lydia gaped as he opened the volume, and before he ",
+        "\"Do you know, mamma, that my uncle Phillips talks of turning",
+        "Lydia was bid by her two eldest sisters to hold her tongue; ",
+        "\"I have often observed how little young ladies are intereste"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "0b4f88eb3e3b",
+      "pageHash": "401d5b16cc63"
+    },
+    {
+      "title": "Chapter 15",
+      "blockCount": 14,
+      "types": "hppppppppppppp",
+      "pageMin": 98,
+      "pageMax": 104,
+      "openPages": [
+        98,
+        98,
+        98,
+        99,
+        99,
+        99,
+        99,
+        100,
+        100,
+        101,
+        102,
+        102,
+        102,
+        104
+      ],
+      "open": [
+        "Chapter 15",
+        "Mr. Collins was not a sensible man, and the deficiency of na",
+        "Having now a good house and a very sufficient income, he int",
+        "His plan did not vary on seeing them. Miss Bennet's lovely f",
+        "\"As to her YOUNGER daughters, she could not take upon her to",
+        "Mr. Collins had only to change from Jane to Elizabeth-and it",
+        "Mrs. Bennet treasured up the hint, and trusted that she migh",
+        "Lydia's intention of walking to Meryton was not forgotten; e",
+        "In pompous nothings on his side, and civil assents on that o",
+        "Denny addressed them directly, and entreated permission to i",
+        "Wickham, after a few moments, touched his hat--a salutation ",
+        "In another minute, Mr. Bingley, but without seeming to have ",
+        "Mrs. Phillips was always glad to see her nieces; and the two",
+        "Mr. Collins on his return highly gratified Mrs. Bennet by ad"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "ca2bdbc31aed",
+      "pageHash": "750d8fbdf94c"
+    },
+    {
+      "title": "Chapter 16",
+      "blockCount": 73,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 105,
+      "pageMax": 118,
+      "openPages": [
+        105,
+        105,
+        105,
+        105,
+        106,
+        106,
+        106,
+        107
+      ],
+      "open": [
+        "Chapter 16",
+        "As no objection was made to the young people's engagement wi",
+        "When this information was given, and they had all taken thei",
+        "In describing to her all the grandeur of Lady Catherine and ",
+        "Mr. Wickham walked into the room, Elizabeth felt that she ha",
+        "Mr. Wickham was the happy man towards whom almost every fema"
+      ],
+      "closePages": [
+        118,
+        118,
+        118
+      ],
+      "close": [
+        "\"I believe her to be both in a great degree,\" replied Wickha",
+        "Elizabeth allowed that he had given a very rational account ",
+        "She could think of nothing but of Mr. Wickham, and of what h"
+      ],
+      "textHash": "e7dda53d9320",
+      "pageHash": "688671e6824d"
+    },
+    {
+      "title": "Chapter 17",
+      "blockCount": 18,
+      "types": "hppppppppppppppppp",
+      "pageMin": 120,
+      "pageMax": 124,
+      "openPages": [
+        120,
+        120,
+        120,
+        120,
+        120,
+        121,
+        121,
+        121,
+        121,
+        121,
+        122,
+        122,
+        123,
+        123,
+        123,
+        123,
+        124,
+        124
+      ],
+      "open": [
+        "Chapter 17",
+        "Elizabeth related to Jane the next day what had passed betwe",
+        "\"They have both,\" said she, \"been deceived, I dare say, in s",
+        "\"Very true, indeed; and now, my dear Jane, what have you got",
+        "\"Laugh as much as you choose, but you will not laugh me out ",
+        "\"I can much more easily believe Mr. Bingley's being imposed ",
+        "\"It is difficult indeed--it is distressing. One does not kno",
+        "what to think.\"",
+        "\"I beg your pardon; one knows exactly what to think.\" But Ja",
+        "The two young ladies were summoned from the shrubbery, where",
+        "The prospect of the Netherfield ball was extremely agreeable",
+        "\"While I can have my mornings to myself,\" said she, \"it is e",
+        "Elizabeth's spirits were so high on this occasion, that thou",
+        "\"I am by no means of the opinion, I assure you,\" said he, \"t",
+        "Miss Elizabeth, for the two first dances especially, a prefe",
+        "Elizabeth felt herself completely taken in. She had fully pr",
+        "Mr. Collins might never make the offer, and till he did, it ",
+        "Wickham; and nothing less than a dance on Tuesday, could hav"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "af9942b3867e",
+      "pageHash": "d845291d3aaf"
+    },
+    {
+      "title": "Chapter 18",
+      "blockCount": 88,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 126,
+      "pageMax": 146,
+      "openPages": [
+        126,
+        126,
+        126,
+        127,
+        127,
+        128,
+        128,
+        129
+      ],
+      "open": [
+        "Chapter 18",
+        "Till Elizabeth entered the drawing-room at Netherfield, and ",
+        "This part of his intelligence, though unheard by Lydia, was ",
+        "Bingley, whose blind partiality provoked her. But Elizabeth ",
+        "She danced next with an officer, and had the refreshment of ",
+        "\"Heaven forbid! THAT would be the greatest misfortune of all"
+      ],
+      "closePages": [
+        146,
+        146,
+        146
+      ],
+      "close": [
+        "When at length they arose to take leave, Mrs. Bennet was mos",
+        "Mrs. Bennet was perfectly satisfied, and quitted the house u",
+        "Bingley and Netherfield."
+      ],
+      "textHash": "e51a0a8bec33",
+      "pageHash": "388a85a9ff59"
+    },
+    {
+      "title": "Chapter 19",
+      "blockCount": 26,
+      "types": "hppppppppppppppppppppppppp",
+      "pageMin": 147,
+      "pageMax": 154,
+      "openPages": [
+        147,
+        147,
+        147,
+        147,
+        147,
+        147,
+        148,
+        148
+      ],
+      "open": [
+        "Chapter 19",
+        "The next day opened a new scene at Longbourn. Mr. Collins ma",
+        "Mrs. Bennet, Elizabeth, and one of the younger girls togethe",
+        "\"May I hope, madam, for your interest with your fair daughte",
+        "Before Elizabeth had time for anything but a blush of surpri",
+        "\"No, no, nonsense, Lizzy. I desire you to stay where you are"
+      ],
+      "closePages": [
+        153,
+        154,
+        154
+      ],
+      "close": [
+        "\"I do assure you, sir, that I have no pretensions whatever t",
+        "\"You are uniformly charming!\" cried he, with an air of awkwa",
+        "To such perseverance in wilful self-deception Elizabeth woul"
+      ],
+      "textHash": "b5a8f93224a4",
+      "pageHash": "647c2f6172cd"
+    },
+    {
+      "title": "Chapter 20",
+      "blockCount": 38,
+      "types": "hppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 155,
+      "pageMax": 161,
+      "openPages": [
+        155,
+        155,
+        155,
+        155,
+        155,
+        156,
+        156,
+        156
+      ],
+      "open": [
+        "Chapter 20",
+        "Mr. Collins was not left long to the silent contemplation of",
+        "This information, however, startled Mrs. Bennet; she would h",
+        "\"But, depend upon it, Mr. Collins,\" she added, \"that Lizzy s",
+        "\"Pardon me for interrupting you, madam,\" cried Mr. Collins; ",
+        "\"Sir, you quite misunderstand me,\" said Mrs. Bennet, alarmed"
+      ],
+      "closePages": [
+        160,
+        160,
+        161
+      ],
+      "close": [
+        "Her daughters listened in silence to this effusion, sensible",
+        "Elizabeth passed quietly out of the room, Jane and Kitty fol",
+        "\"My dear madam,\" replied he, \"let us be for ever silent on t"
+      ],
+      "textHash": "1fc5030e5d51",
+      "pageHash": "d6a6df43ac6e"
+    },
+    {
+      "title": "Chapter 21",
+      "blockCount": 34,
+      "types": "hppppppppppppppppppppppppppppppppp",
+      "pageMin": 163,
+      "pageMax": 170,
+      "openPages": [
+        163,
+        163,
+        163,
+        163,
+        164,
+        164,
+        164,
+        165
+      ],
+      "open": [
+        "Chapter 21",
+        "The discussion of Mr. Collins's offer was now nearly at an e",
+        "The morrow produced no abatement of Mrs. Bennet's illhumour ",
+        "After breakfast, the girls walked to Meryton to inquire if M",
+        "\"I found,\" said he, \"as the time drew near that I had better",
+        "She highly approved his forbearance, and they had leisure fo"
+      ],
+      "closePages": [
+        170,
+        170,
+        170
+      ],
+      "close": [
+        "The idea of his returning no more Elizabeth treated with the",
+        "She represented to her sister as forcibly as possible what s",
+        "They agreed that Mrs. Bennet should only hear of the departu"
+      ],
+      "textHash": "b9089640c785",
+      "pageHash": "1f887e8db304"
+    },
+    {
+      "title": "Chapter 22",
+      "blockCount": 23,
+      "types": "hpppppppppppppppppppppp",
+      "pageMin": 172,
+      "pageMax": 178,
+      "openPages": [
+        172,
+        172,
+        172,
+        172,
+        173,
+        173,
+        173,
+        174,
+        175,
+        175,
+        175,
+        175,
+        175,
+        176,
+        176,
+        176,
+        177,
+        177,
+        177,
+        177,
+        178,
+        178,
+        178
+      ],
+      "open": [
+        "Chapter 22",
+        "The Bennets were engaged to dine with the Lucases and again ",
+        "\"It keeps him in good humour,\" said she, \"and I am more obli",
+        "Elizabeth had any conception of; its object was nothing else",
+        "His reception, however, was of the most flattering kind. Mis",
+        "In as short a time as Mr. Collins's long speeches would allo",
+        "Sir William and Lady Lucas were speedily applied to for thei",
+        "Without thinking highly either of men or matrimony, marriage",
+        "Bennet, with great politeness and cordiality, said how happy",
+        "\"My dear madam,\" he replied, \"this invitation is particularl",
+        "They were all astonished; and Mr. Bennet, who could by no me",
+        "\"But is there not danger of Lady Catherine's disapprobation ",
+        "\"My dear sir,\" replied Mr. Collins,\" I am particularly oblig",
+        "\"You cannot be too much upon your guard. Risk anything rathe",
+        "\"Believe me, my dear sir, my gratitude is warmly excited by ",
+        "With proper civilities the ladies then withdrew; all of them",
+        "The possibility of Mr. Collins's fancying herself in love wi",
+        "\"Engaged to Mr. Collins! My dear Charlotte--impossible!\"",
+        "The steady countenance which Miss Lucas had commanded in tel",
+        "\"Why should you be surprised, my dear Eliza? Do you think it",
+        "\"I see what you are feeling,\" replied Charlotte.",
+        "\"You must be surprised, very much surprised--so lately as Mr",
+        "Elizabeth quietly answered \"Undoubtedly;\" and after an awkwa"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "d815bf6612f3",
+      "pageHash": "d6434c66a6ed"
+    },
+    {
+      "title": "Chapter 23",
+      "blockCount": 27,
+      "types": "hpppppppppppppppppppppppppp",
+      "pageMin": 179,
+      "pageMax": 185,
+      "openPages": [
+        179,
+        179,
+        179,
+        179,
+        179,
+        180,
+        180,
+        180
+      ],
+      "open": [
+        "Chapter 23",
+        "Elizabeth was sitting with her mother and sisters, reflectin",
+        "Do not you know that Mr. Collins wants to marry Lizzy?\"",
+        "Nothing less than the complaisance of a courtier could have ",
+        "Elizabeth, feeling it incumbent on her to relieve him from s",
+        "Mrs. Bennet was in fact too much overpowered to say a great "
+      ],
+      "closePages": [
+        185,
+        185,
+        185
+      ],
+      "close": [
+        "\"Let us be thankful that you are preserved from a state of s",
+        "\"I never can be thankful, Mr. Bennet, for anything about the",
+        "\"I leave it to yourself to determine,\" said Mr. Bennet."
+      ],
+      "textHash": "98f68a92a343",
+      "pageHash": "f041990ec612"
+    },
+    {
+      "title": "Chapter 24",
+      "blockCount": 35,
+      "types": "hpppppppppppppppppppppppppppppppppp",
+      "pageMin": 186,
+      "pageMax": 193,
+      "openPages": [
+        186,
+        186,
+        186,
+        186,
+        187,
+        187,
+        187,
+        188
+      ],
+      "open": [
+        "Chapter 24",
+        "Miss Bingley's letter arrived, and put an end to doubt. The ",
+        "Hope was over, entirely over; and when Jane could attend to ",
+        "Elizabeth, to whom Jane very soon communicated the chief of ",
+        "Bingley's regard had really died away, or were suppressed by",
+        "A day or two passed before Jane had courage to speak of her "
+      ],
+      "closePages": [
+        193,
+        193,
+        193
+      ],
+      "close": [
+        "\"True,\" said Mr. Bennet, \"but it is a comfort to think that ",
+        "Mr. Wickham's society was of material service in dispelling ",
+        "Miss Bennet was the only creature who could suppose there mi"
+      ],
+      "textHash": "7365f5bb26d3",
+      "pageHash": "d4f58cd4cabc"
+    },
+    {
+      "title": "Chapter 25",
+      "blockCount": 24,
+      "types": "hppppppppppppppppppppppp",
+      "pageMin": 194,
+      "pageMax": 199,
+      "openPages": [
+        194,
+        194,
+        194,
+        194,
+        195,
+        195,
+        195,
+        196,
+        196,
+        196,
+        196,
+        196,
+        196,
+        197,
+        197,
+        197,
+        197,
+        197,
+        198,
+        198,
+        198,
+        198,
+        199,
+        199
+      ],
+      "open": [
+        "Chapter 25",
+        "After a week spent in professions of love and schemes of fel",
+        "On the following Monday, Mrs. Bennet had the pleasure of rec",
+        "The first part of Mrs. Gardiner's business on her arrival wa",
+        "\"I do not blame Jane,\" she continued, \"for Jane would have g",
+        "However, your coming just at this time is the greatest of co",
+        "Mrs. Gardiner, to whom the chief of this news had been given",
+        "When alone with Elizabeth afterwards, she spoke more on the ",
+        "\"It seems likely to have been a desirable match for Jane,\" s",
+        "\"I am sorry it went off. But these things happen so often! A",
+        "\"An excellent consolation in its way,\" said Elizabeth, \"but ",
+        "\"But that expression of 'violently in love' is so hackneyed,",
+        "\"I never saw a more promising inclination; he was growing qu",
+        "\"Oh, yes!--of that kind of love which I suppose him to",
+        "have felt. Poor Jane! I am sorry for her, because, with her ",
+        "Elizabeth was exceedingly pleased with this proposal, and fe",
+        "\"I hope,\" added Mrs. Gardiner, \"that no consideration with r",
+        "\"And THAT is quite impossible; for he is now in the custody ",
+        "\"So much the better. I hope they will not meet at all. But d",
+        "\"She will drop the acquaintance entirely.\" But in spite of t",
+        "Miss Bennet accepted her aunt's invitation with pleasure; an",
+        "The Gardiners stayed a week at Longbourn; and what with the ",
+        "To Mrs. Gardiner, Wickham had one means of affording pleasur",
+        "Mrs. Gardiner had seen Pemberley, and known the late Mr. Dar"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "15ebef52f52b",
+      "pageHash": "2a75b10974db"
+    },
+    {
+      "title": "Chapter 26",
+      "blockCount": 34,
+      "types": "hppppppppppppppppppppppppppppppppp",
+      "pageMin": 201,
+      "pageMax": 209,
+      "openPages": [
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        201,
+        201
+      ],
+      "open": [
+        "Chapter 26",
+        "Mrs. Gardiner's caution to Elizabeth was punctually and kind",
+        "\"You are too sensible a girl, Lizzy, to fall in love merely ",
+        "You must not disappoint your father.\"",
+        "\"My dear aunt, this is being serious indeed.\"",
+        "\"Yes, and I hope to engage you to be serious likewise.\""
+      ],
+      "closePages": [
+        208,
+        208,
+        209
+      ],
+      "close": [
+        "This letter gave Elizabeth some pain; but her spirits return",
+        "Mrs. Gardiner about this time reminded Elizabeth of her prom",
+        "All this was acknowledged to Mrs. Gardiner; and after relati"
+      ],
+      "textHash": "6e483c94e1c7",
+      "pageHash": "ec4b2f3eae24"
+    },
+    {
+      "title": "Chapter 27",
+      "blockCount": 27,
+      "types": "hpppppppppppppppppppppppppp",
+      "pageMin": 210,
+      "pageMax": 215,
+      "openPages": [
+        210,
+        210,
+        210,
+        211,
+        211,
+        211,
+        212,
+        212
+      ],
+      "open": [
+        "Chapter 27",
+        "With no greater events than these in the Longbourn family, a",
+        "The only pain was in leaving her father, who would certainly",
+        "The farewell between herself and Mr. Wickham was perfectly f",
+        "Her fellow-travellers the next day were not of a kind to mak",
+        "It was a journey of only twenty-four miles, and they began i"
+      ],
+      "closePages": [
+        214,
+        214,
+        215
+      ],
+      "close": [
+        "\"We have not determined how far it shall carry us,\" said Mrs",
+        "No scheme could have been more agreeable to Elizabeth, and h",
+        "\"Oh, my dear, dear aunt,\" she rapturously cried, \"what delig"
+      ],
+      "textHash": "0012c1b8e2da",
+      "pageHash": "e85d14931509"
+    },
+    {
+      "title": "Chapter 28",
+      "blockCount": 25,
+      "types": "hpppppppppppppppppppppppp",
+      "pageMin": 216,
+      "pageMax": 221,
+      "openPages": [
+        216,
+        216,
+        216,
+        216,
+        217,
+        218,
+        218,
+        218
+      ],
+      "open": [
+        "Chapter 28",
+        "Every object in the next day's journey was new and interesti",
+        "When they left the high road for the lane to Hunsford, every",
+        "At length the Parsonage was discernible. The garden sloping ",
+        "Elizabeth was prepared to see him in his glory; and she coul",
+        "From his garden, Mr. Collins would have led them round his t"
+      ],
+      "closePages": [
+        221,
+        221,
+        221
+      ],
+      "close": [
+        "\"She looks sickly and cross. Yes, she will do for him very w",
+        "Mr. Collins and Charlotte were both standing at the gate in ",
+        "At length there was nothing more to be said; the ladies drov"
+      ],
+      "textHash": "bb10e9273c12",
+      "pageHash": "ab1602bccd15"
+    },
+    {
+      "title": "Chapter 29",
+      "blockCount": 46,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 222,
+      "pageMax": 232,
+      "openPages": [
+        222,
+        222,
+        222,
+        222,
+        222,
+        223,
+        223,
+        223
+      ],
+      "open": [
+        "Chapter 29",
+        "Mr. Collins's triumph, in consequence of this invitation, wa",
+        "\"I confess,\" said he, \"that I should not have been at all su",
+        "\"I am the less surprised at what has happened,\" replied Sir ",
+        "Scarcely anything was talked of the whole day or next mornin",
+        "When the ladies were separating for the toilette, he said to"
+      ],
+      "closePages": [
+        231,
+        231,
+        232
+      ],
+      "close": [
+        "When the gentlemen had joined them, and tea was over, the ca",
+        "When Lady Catherine and her daughter had played as long as t",
+        "Mr. Collins, and he was very soon obliged to take her ladysh"
+      ],
+      "textHash": "012f467bf800",
+      "pageHash": "fa3308c38cd1"
+    },
+    {
+      "title": "Chapter 30",
+      "blockCount": 14,
+      "types": "hppppppppppppp",
+      "pageMin": 233,
+      "pageMax": 237,
+      "openPages": [
+        233,
+        233,
+        233,
+        234,
+        234,
+        235,
+        235,
+        235,
+        236,
+        236,
+        236,
+        237,
+        237,
+        237
+      ],
+      "open": [
+        "Chapter 30",
+        "Sir William stayed only a week at Hunsford, but his visit wa",
+        "From the drawing-room they could distinguish nothing in the ",
+        "Very few days passed in which Mr. Collins did not walk to Ro",
+        "Elizabeth soon perceived, that though this great lady was no",
+        "The entertainment of dining at Rosings was repeated about tw",
+        "In this quiet way, the first fortnight of her visit soon pas",
+        "Bingley's designs on him were, by his behaviour to his cousi",
+        "His arrival was soon known at the Parsonage; for Mr. Collins",
+        "Collins returned, the gentleman accompanied him. Charlotte h",
+        "Elizabeth had scarcely time to disclaim all right to the com",
+        "Colonel Fitzwilliam entered into conversation directly with ",
+        "Have you never happened to see her there?\"",
+        "She was perfectly sensible that he never had; but she wished"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "22cd490b7686",
+      "pageHash": "40f79bc09b1c"
+    },
+    {
+      "title": "Chapter 31",
+      "blockCount": 38,
+      "types": "hppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 238,
+      "pageMax": 244,
+      "openPages": [
+        238,
+        238,
+        238,
+        238,
+        239,
+        239,
+        239,
+        239
+      ],
+      "open": [
+        "Chapter 31",
+        "Colonel Fitzwilliam's manners were very much admired at the ",
+        "The invitation was accepted of course, and at a proper hour ",
+        "Colonel Fitzwilliam seemed really glad to see them; anything",
+        "Catherine herself, as well as of Mr. Darcy. HIS eyes had bee",
+        "\"What is that you are saying, Fitzwilliam? What is it you ar"
+      ],
+      "closePages": [
+        243,
+        244,
+        244
+      ],
+      "close": [
+        "\"Miss Bennet would not play at all amiss if she practised mo",
+        "Elizabeth looked at Darcy to see how cordially he assented t",
+        "Lady Catherine continued her remarks on Elizabeth's performa"
+      ],
+      "textHash": "ba1b446c6d09",
+      "pageHash": "1a6cce651c2a"
+    },
+    {
+      "title": "Chapter 32",
+      "blockCount": 31,
+      "types": "hpppppppppppppppppppppppppppppp",
+      "pageMin": 245,
+      "pageMax": 251,
+      "openPages": [
+        245,
+        245,
+        245,
+        245,
+        245,
+        246,
+        246,
+        246
+      ],
+      "open": [
+        "Chapter 32",
+        "Elizabeth was sitting by herself the next morning, and writi",
+        "He seemed astonished too on finding her alone, and apologise",
+        "They then sat down, and when her inquiries after Rosings wer",
+        "\"How very suddenly you all quitted Netherfield last November",
+        "\"Perfectly so, I thank you.\""
+      ],
+      "closePages": [
+        249,
+        250,
+        251
+      ],
+      "close": [
+        "\"My dear, Eliza, he must be in love with you, or he would ne",
+        "Eliza, she set herself seriously to work to find it out. She",
+        "In her kind schemes for Elizabeth, she sometimes planned her"
+      ],
+      "textHash": "0c421ad00067",
+      "pageHash": "44b6eadabba8"
+    },
+    {
+      "title": "Chapter 33",
+      "blockCount": 46,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 252,
+      "pageMax": 260,
+      "openPages": [
+        252,
+        252,
+        253,
+        253,
+        253,
+        253,
+        253,
+        253
+      ],
+      "open": [
+        "Chapter 33",
+        "More than once did Elizabeth, in her ramble within the park,",
+        "She was engaged one day as she walked, in perusing Jane's la",
+        "\"I have been making the tour of the park,\" he replied, \"as I",
+        "\"No, I should have turned in a moment.\" And accordingly she ",
+        "\"Do you certainly leave Kent on Saturday?\" said she."
+      ],
+      "closePages": [
+        259,
+        259,
+        260
+      ],
+      "close": [
+        "\"To Jane herself,\" she exclaimed, \"there could be no possibi",
+        "The agitation and tears which the subject occasioned, brough",
+        "Collins could not conceal his apprehension of Lady Catherine"
+      ],
+      "textHash": "63fb29ab9da7",
+      "pageHash": "976e3cb9e59f"
+    },
+    {
+      "title": "Chapter 34",
+      "blockCount": 34,
+      "types": "hppppppppppppppppppppppppppppppppp",
+      "pageMin": 261,
+      "pageMax": 269,
+      "openPages": [
+        261,
+        261,
+        261,
+        262,
+        262,
+        262,
+        262,
+        263
+      ],
+      "open": [
+        "Chapter 34",
+        "When they were gone, Elizabeth, as if intending to exasperat",
+        "She could not think of Darcy's leaving Kent without remember",
+        "While settling this point, she was suddenly roused by the so",
+        "Elizabeth was surprised, but said not a word. After a silenc",
+        "\"In vain I have struggled. It will not do. My feelings will "
+      ],
+      "closePages": [
+        268,
+        268,
+        269
+      ],
+      "close": [
+        "almost say--of my acquaintance with you, your manners, impre",
+        "\"You have said quite enough, madam. I perfectly comprehend y",
+        "The tumult of her mind, was now painfully great. She knew no"
+      ],
+      "textHash": "0d56014860dc",
+      "pageHash": "3c19fe1cb9ad"
+    },
+    {
+      "title": "Chapter 35",
+      "blockCount": 23,
+      "types": "hpppppppppppppppppppppp",
+      "pageMin": 270,
+      "pageMax": 280,
+      "openPages": [
+        270,
+        270,
+        270,
+        271,
+        271,
+        272,
+        272,
+        272,
+        273,
+        274,
+        274,
+        275,
+        275,
+        276,
+        276,
+        277,
+        277,
+        277,
+        278,
+        279,
+        280,
+        280,
+        280
+      ],
+      "open": [
+        "Chapter 35",
+        "Elizabeth awoke the next morning to the same thoughts and me",
+        "After walking two or three times along that part of the lane",
+        "With no expectation of pleasure, but with the strongest curi",
+        "\"Be not alarmed, madam, on receiving this letter, by the app",
+        "\"Two offenses of a very different nature, and by no means of",
+        "I shall hope to be in the future secured, when the following",
+        "\"I had not been long in Hertfordshire, before I saw, in comm",
+        "Lucas's accidental information, that Bingley's attentions to",
+        "Pardon me. It pains me to offend you. But amidst your concer",
+        "\"The part which I acted is now to be explained. His sisters'",
+        "There is but one part of my conduct in the whole affair on w",
+        "On this subject I have nothing more to say, no other apology",
+        "\"With respect to that other, more weighty accusation, of hav",
+        "\"Mr. Wickham is the son of a very respectable man, who had f",
+        "\"My excellent father died about five years ago; and his atta",
+        "Mr. Wickham wrote to inform me that, having finally resolved",
+        "I rather wished, than believed him to be sincere; but, at an",
+        "\"I must now mention a circumstance which I would wish to for",
+        "Mr. Wickham, undoubtedly by design; for there proved to have",
+        "\"This, madam, is a faithful narrative of every event in whic",
+        "\"You may possibly wonder why all this was not told you last ",
+        "\"FITZWILLIAM DARCY\""
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "bc955efc0661",
+      "pageHash": "4c6b1ff6b81d"
+    },
+    {
+      "title": "Chapter 36",
+      "blockCount": 19,
+      "types": "hpppppppppppppppppp",
+      "pageMin": 281,
+      "pageMax": 288,
+      "openPages": [
+        281,
+        281,
+        281,
+        282,
+        282,
+        283,
+        283,
+        283,
+        284,
+        285,
+        285,
+        285,
+        286,
+        286,
+        287,
+        287,
+        287,
+        288,
+        288
+      ],
+      "open": [
+        "Chapter 36",
+        "If Elizabeth, when Mr. Darcy gave her the letter, did not ex",
+        "Wickham--when she read with somewhat clearer attention a rel",
+        "In this perturbed state of mind, with thoughts that could re",
+        "What Wickham had said of the living was fresh in her memory,",
+        "Again she read on; but every line proved more clearly that t",
+        "The extravagance and general profligacy which he scrupled no",
+        "She tried to recollect some instance of goodness, some disti",
+        "She perfectly remembered everything that had passed in conve",
+        "Darcy might leave the country, but that HE should stand his ",
+        "How differently did everything now appear in which he was co",
+        "Bingley, when questioned by Jane, had long ago asserted his ",
+        "She grew absolutely ashamed of herself. Of neither Darcy nor",
+        "\"How despicably I have acted!\" she cried; \"I, who have pride",
+        "From herself to Jane--from Jane to Bingley, her thoughts wer",
+        "When she came to that part of the letter in which her family",
+        "The compliment to herself and her sister was not unfelt. It ",
+        "After wandering along the lane for two hours, giving way to ",
+        "She was immediately told that the two gentlemen from Rosings"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "a5fb216ef20a",
+      "pageHash": "73e5c6228e10"
+    },
+    {
+      "title": "Chapter 37",
+      "blockCount": 27,
+      "types": "hpppppppppppppppppppppppppp",
+      "pageMin": 289,
+      "pageMax": 294,
+      "openPages": [
+        289,
+        289,
+        289,
+        289,
+        289,
+        289,
+        290,
+        290
+      ],
+      "open": [
+        "Chapter 37",
+        "The two gentlemen left Rosings the next morning, and Mr. Col",
+        "Elizabeth could not see Lady Catherine without recollecting ",
+        "\"What would she have said? how would she have behaved?\" were",
+        "Their first subject was the diminution of the Rosings party.",
+        "\"I assure you, I feel it exceedingly,\" said Lady Catherine; "
+      ],
+      "closePages": [
+        294,
+        294,
+        294
+      ],
+      "close": [
+        "When to these recollections was added the development of Wic",
+        "Their engagements at Rosings were as frequent during the las",
+        "When they parted, Lady Catherine, with great condescension, "
+      ],
+      "textHash": "43ac237fe42f",
+      "pageHash": "225ff8aedfbb"
+    },
+    {
+      "title": "Chapter 38",
+      "blockCount": 19,
+      "types": "hpppppppppppppppppp",
+      "pageMin": 295,
+      "pageMax": 299,
+      "openPages": [
+        295,
+        295,
+        295,
+        295,
+        295,
+        296,
+        296,
+        296,
+        296,
+        297,
+        297,
+        298,
+        298,
+        298,
+        298,
+        298,
+        298,
+        298,
+        299
+      ],
+      "open": [
+        "Chapter 38",
+        "On Saturday morning Elizabeth and Mr. Collins met for breakf",
+        "\"I know not, Miss Elizabeth,\" said he, \"whether Mrs. Collins",
+        "Elizabeth was eager with her thanks and assurances of happin",
+        "\"It gives me great pleasure to hear that you have passed you",
+        "You see on what a footing we are. You see how continually we",
+        "Words were insufficient for the elevation of his feelings; a",
+        "\"You may, in fact, carry a very favourable report of us into",
+        "There is in everything a most remarkable resemblance of char",
+        "Elizabeth could safely say that it was a great happiness whe",
+        "At length the chaise arrived, the trunks were fastened on, t",
+        "\"But,\" he added, \"you will of course wish to have your humbl",
+        "Elizabeth made no objection; the door was then allowed to be",
+        "\"Good gracious!\" cried Maria, after a few minutes' silence, ",
+        "\"A great many indeed,\" said her companion with a sigh.",
+        "\"We have dined nine times at Rosings, besides drinking tea t",
+        "Their journey was performed without much conversation, or an",
+        "Jane looked well, and Elizabeth had little opportunity of st",
+        "It was not without an effort, meanwhile, that she could wait"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "742cc49fce9e",
+      "pageHash": "f60e1a5efd3b"
+    },
+    {
+      "title": "Chapter 39",
+      "blockCount": 28,
+      "types": "hppppppppppppppppppppppppppp",
+      "pageMin": 300,
+      "pageMax": 306,
+      "openPages": [
+        300,
+        300,
+        300,
+        300,
+        301,
+        301,
+        301,
+        301
+      ],
+      "open": [
+        "Chapter 39",
+        "It was the second week in May, in which the three young ladi",
+        "After welcoming their sisters, they triumphantly displayed a",
+        "\"And we mean to treat you all,\" added Lydia, \"but you must l",
+        "\"Are they indeed!\" cried Elizabeth, with the greatest satisf",
+        "\"They are going to be encamped near Brighton; and I do so wa"
+      ],
+      "closePages": [
+        305,
+        305,
+        306
+      ],
+      "close": [
+        "To this Mary very gravely replied, \"Far be it from me, my de",
+        "In the afternoon Lydia was urgent with the rest of the girls",
+        "She had not been many hours at home before she found that th"
+      ],
+      "textHash": "11b761bd8ea7",
+      "pageHash": "387e6576cdb2"
+    },
+    {
+      "title": "Chapter 40",
+      "blockCount": 39,
+      "types": "hpppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 307,
+      "pageMax": 314,
+      "openPages": [
+        307,
+        307,
+        307,
+        307,
+        307,
+        307,
+        308,
+        308
+      ],
+      "open": [
+        "Chapter 40",
+        "Elizabeth's impatience to acquaint Jane with what had happen",
+        "Miss Bennet's astonishment was soon lessened by the strong s",
+        "\"His being so sure of succeeding was wrong,\" said she, \"and ",
+        "\"Indeed,\" replied Elizabeth, \"I am heartily sorry for him; b",
+        "\"Blame you! Oh, no.\""
+      ],
+      "closePages": [
+        313,
+        313,
+        314
+      ],
+      "close": [
+        "\"A great deal of good management, depend upon it. Yes, yes. ",
+        "\"It was a subject which they could not mention before me.\"",
+        "\"No; it would have been strange if they had; but I make no d"
+      ],
+      "textHash": "683a1e4e2c96",
+      "pageHash": "9f664a9dcf6d"
+    },
+    {
+      "title": "Chapter 41",
+      "blockCount": 48,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 315,
+      "pageMax": 324,
+      "openPages": [
+        315,
+        315,
+        315,
+        315,
+        315,
+        315,
+        315,
+        315
+      ],
+      "open": [
+        "Chapter 41",
+        "The first week of their return was soon gone. The second beg",
+        "\"Good Heaven! what is to become of us? What are we to do?\" w",
+        "\"How can you be smiling so, Lizzy?\"",
+        "Their affectionate mother shared all their grief; she rememb",
+        "\"I am sure,\" said she, \"I cried for two days together when C"
+      ],
+      "closePages": [
+        323,
+        324,
+        324
+      ],
+      "close": [
+        "\"You, who so well know my feeling towards Mr. Darcy, will re",
+        "Elizabeth could not repress a smile at this, but she answere",
+        "When the party broke up, Lydia returned with Mrs. Forster to"
+      ],
+      "textHash": "47151347ae8d",
+      "pageHash": "94af21716e51"
+    },
+    {
+      "title": "Chapter 42",
+      "blockCount": 23,
+      "types": "hpppppppppppppppppppppp",
+      "pageMin": 325,
+      "pageMax": 331,
+      "openPages": [
+        325,
+        325,
+        325,
+        325,
+        326,
+        327,
+        327,
+        328,
+        328,
+        329,
+        329,
+        329,
+        329,
+        329,
+        330,
+        330,
+        330,
+        331,
+        331,
+        331,
+        331,
+        331,
+        331
+      ],
+      "open": [
+        "Chapter 42",
+        "Had Elizabeth's opinion been all drawn from her own family, ",
+        "Bennet was not of a disposition to seek comfort for the disa",
+        "Elizabeth, however, had never been blind to the impropriety ",
+        "When Elizabeth had rejoiced over Wickham's departure she fou",
+        "\"But it is fortunate,\" thought she, \"that I have something t",
+        "When Lydia went away she promised to write very often and ve",
+        "After the first fortnight or three weeks of her absence, hea",
+        "The time fixed for the beginning of their northern tour was ",
+        "Gardiner it had a peculiarly strong attraction. The town whe",
+        "Elizabeth was excessively disappointed; she had set her hear",
+        "With the mention of Derbyshire there were many ideas connect",
+        "\"But surely,\" said she, \"I may enter his county without impu",
+        "The period of expectation was now doubled. Four weeks were t",
+        "The Gardiners stayed only one night at Longbourn, and set of",
+        "It is not the object of this work to give a description of D",
+        "Mr. Gardiner declared his willingness, and Elizabeth was app",
+        "\"My love, should not you like to see a place of which you ha",
+        "Elizabeth was distressed. She felt that she had no business ",
+        "Mrs. Gardiner abused her stupidity.",
+        "\"If it were merely a fine house richly furnished,\" said she,",
+        "Elizabeth said no more--but her mind could not acquiesce. Th",
+        "Accordingly, when she retired at night, she asked the chambe"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "b50ffdd9585b",
+      "pageHash": "12d7d2e5f22a"
+    },
+    {
+      "title": "Chapter 43",
+      "blockCount": 89,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 333,
+      "pageMax": 353,
+      "openPages": [
+        333,
+        333,
+        333,
+        333,
+        334,
+        334,
+        335,
+        335
+      ],
+      "open": [
+        "Chapter 43",
+        "Elizabeth, as they drove along, watched for the first appear",
+        "The park was very large, and contained great variety of grou",
+        "Elizabeth's mind was too full for conversation, but she saw ",
+        "They descended the hill, crossed the bridge, and drove to th",
+        "The housekeeper came; a respectable-looking elderly woman, m"
+      ],
+      "closePages": [
+        352,
+        352,
+        353
+      ],
+      "close": [
+        "Elizabeth here felt herself called on to say something in vi",
+        "Mrs. Gardiner was surprised and concerned; but as they were ",
+        "The occurrences of the day were too full of interest to leav"
+      ],
+      "textHash": "a5138f6593ce",
+      "pageHash": "a5e530c2a101"
+    },
+    {
+      "title": "Chapter 44",
+      "blockCount": 20,
+      "types": "hppppppppppppppppppp",
+      "pageMin": 354,
+      "pageMax": 362,
+      "openPages": [
+        354,
+        354,
+        354,
+        355,
+        355,
+        355,
+        355,
+        356,
+        356,
+        357,
+        357,
+        357,
+        358,
+        358,
+        359,
+        360,
+        360,
+        360,
+        362,
+        362
+      ],
+      "open": [
+        "Chapter 44",
+        "Elizabeth had settled it that Mr. Darcy would bring his sist",
+        "Elizabeth immediately recognizing the livery, guessed what i",
+        "She retreated from the window, fearful of being seen; and as",
+        "Miss Darcy and her brother appeared, and this formidable int",
+        "Miss Darcy was tall, and on a larger scale than Elizabeth; a",
+        "They had not long been together before Mr. Darcy told her th",
+        "To Mr. and Mrs. Gardiner he was scarcely a less interesting ",
+        "Elizabeth, on her side, had much to do. She wanted to ascert",
+        "In seeing Bingley, her thoughts naturally flew to her sister",
+        "We have not met since the 26th of November, when we were all",
+        "Elizabeth was pleased to find his memory so exact; and he af",
+        "It was not often that she could turn her eyes on Mr. Darcy h",
+        "Their visitors stayed with them above half-an-hour; and when",
+        "Bingley expressed great pleasure in the certainty of seeing ",
+        "Darcy than they had before any idea of; it was evident that ",
+        "Of Mr. Darcy it was now a matter of anxiety to think well; a",
+        "With respect to Wickham, the travellers soon found that he w",
+        "It had been settled in the evening between the aunt and the ",
+        "Mr. Gardiner left them soon after breakfast. The fishing sch"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "fbb59c7c1cc7",
+      "pageHash": "f63d4896d3f7"
+    },
+    {
+      "title": "Chapter 45",
+      "blockCount": 23,
+      "types": "hpppppppppppppppppppppp",
+      "pageMin": 363,
+      "pageMax": 369,
+      "openPages": [
+        363,
+        363,
+        363,
+        363,
+        363,
+        364,
+        364,
+        364,
+        365,
+        365,
+        366,
+        366,
+        366,
+        367,
+        368,
+        368,
+        368,
+        368,
+        368,
+        369,
+        369,
+        369,
+        369
+      ],
+      "open": [
+        "Chapter 45",
+        "Convinced as Elizabeth now was that Miss Bingley's dislike o",
+        "On reaching the house, they were shown through the hall into",
+        "In this house they were received by Miss Darcy, who was sitt",
+        "By Mrs. Hurst and Miss Bingley they were noticed only by a c",
+        "Elizabeth soon saw that she was herself closely watched by M",
+        "She wished, she feared that the master of the house might be",
+        "The next variation which their visit afforded was produced b",
+        "While thus engaged, Elizabeth had a fair opportunity of deci",
+        "He had been some time with Mr. Gardiner, who, with two or th",
+        "\"Pray, Miss Eliza, are not the ----shire Militia removed",
+        "from Meryton? They must be a great loss to YOUR family.\"",
+        "In Darcy's presence she dared not mention Wickham's name; bu",
+        "Their visit did not continue long after the question and ans",
+        "\"How very ill Miss Eliza Bennet looks this morning, Mr. Darc",
+        "However little Mr. Darcy might have liked such an address, h",
+        "\"For my own part,\" she rejoined, \"I must confess that I neve",
+        "They have a sharp, shrewish look, which I do not like at all",
+        "Persuaded as Miss Bingley was that Darcy admired Elizabeth, ",
+        "\"I remember, when we first knew her in Hertfordshire, how am",
+        "\"Yes,\" replied Darcy, who could contain himself no longer, \"",
+        "He then went away, and Miss Bingley was left to all the sati",
+        "Mrs. Gardiner and Elizabeth talked of all that had occurred "
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "8dfe7db4d7c7",
+      "pageHash": "fb53abe0f7ff"
+    },
+    {
+      "title": "Chapter 46",
+      "blockCount": 42,
+      "types": "hppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 370,
+      "pageMax": 381,
+      "openPages": [
+        370,
+        370,
+        370,
+        370,
+        371,
+        371,
+        371,
+        372
+      ],
+      "open": [
+        "Chapter 46",
+        "Elizabeth had been a good deal disappointed in not finding a",
+        "They had just been preparing to walk as the letters came in;",
+        "\"Since writing the above, dearest Lizzy, something has occur",
+        "I can easily believe him, but this step (and let us rejoice ",
+        "Without allowing herself time for consideration, and scarcel"
+      ],
+      "closePages": [
+        380,
+        381,
+        381
+      ],
+      "close": [
+        "\"Yes; and I told him we should not be able to keep our engag",
+        "\"What is all settled?\" repeated the other, as she ran into h",
+        "\"And are they upon such terms as for her to disclose the rea"
+      ],
+      "textHash": "8404e6e05610",
+      "pageHash": "9fea39726aa7"
+    },
+    {
+      "title": "Chapter 47",
+      "blockCount": 86,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 382,
+      "pageMax": 398,
+      "openPages": [
+        382,
+        382,
+        382,
+        382,
+        382,
+        383,
+        383,
+        383
+      ],
+      "open": [
+        "Chapter 47",
+        "\"I have been thinking it over again, Elizabeth,\" said her un",
+        "\"Do you really think so?\" cried Elizabeth, brightening up fo",
+        "\"Upon my word,\" said Mrs. Gardiner, \"I begin to be of your u",
+        "\"Not, perhaps, of neglecting his own interest; but of every ",
+        "\"In the first place,\" replied Mr. Gardiner, \"there is no abs"
+      ],
+      "closePages": [
+        398,
+        398,
+        398
+      ],
+      "close": [
+        "\"She had better have stayed at home,\" cried Elizabeth; \"perh",
+        "She then proceeded to inquire into the measures which her fa",
+        "\"He meant I believe,\" replied Jane, \"to go to Epsom, the pla"
+      ],
+      "textHash": "fb795ac66af7",
+      "pageHash": "442fb9443da7"
+    },
+    {
+      "title": "Chapter 48",
+      "blockCount": 42,
+      "types": "hppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 399,
+      "pageMax": 408,
+      "openPages": [
+        399,
+        399,
+        399,
+        399,
+        400,
+        400,
+        401,
+        401
+      ],
+      "open": [
+        "Chapter 48",
+        "The whole party were in hopes of a letter from Mr. Bennet th",
+        "When he was gone, they were certain at least of receiving co",
+        "Mrs. Gardiner and the children were to remain in Hertfordshi",
+        "All Meryton seemed striving to blacken the man who, but thre",
+        "Mr. Gardiner left Longbourn on Sunday; on Tuesday his wife r"
+      ],
+      "closePages": [
+        407,
+        408,
+        408
+      ],
+      "close": [
+        "\"YOU go to Brighton. I would not trust you so near it as Eas",
+        "Kitty, who took all these threats in a serious light, began ",
+        "\"Well, well,\" said he, \"do not make yourself unhappy. If you"
+      ],
+      "textHash": "3f77e4ee656b",
+      "pageHash": "9af8ad55c566"
+    },
+    {
+      "title": "Chapter 49",
+      "blockCount": 63,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 409,
+      "pageMax": 419,
+      "openPages": [
+        409,
+        409,
+        409,
+        409,
+        409,
+        409,
+        410,
+        410
+      ],
+      "open": [
+        "Chapter 49",
+        "Two days after Mr. Bennet's return, as Jane and Elizabeth we",
+        "\"What do you mean, Hill? We have heard nothing from town.\"",
+        "\"Dear madam,\" cried Mrs. Hill, in great astonishment, \"don't",
+        "Away ran the girls, too eager to get in to have time for spe",
+        "\"If you are looking for my master, ma'am, he is walking towa"
+      ],
+      "closePages": [
+        418,
+        418,
+        419
+      ],
+      "close": [
+        "\"I will go to Meryton,\" said she, \"as soon as I am dressed, ",
+        "Mrs. Hill began instantly to express her joy. Elizabeth rece",
+        "Poor Lydia's situation must, at best, be bad enough; but tha"
+      ],
+      "textHash": "eb9b942b0793",
+      "pageHash": "1650f415e21a"
+    },
+    {
+      "title": "Chapter 50",
+      "blockCount": 23,
+      "types": "hpppppppppppppppppppppp",
+      "pageMin": 420,
+      "pageMax": 428,
+      "openPages": [
+        420,
+        420,
+        420,
+        420,
+        421,
+        421,
+        422,
+        422,
+        423,
+        423,
+        423,
+        424,
+        424,
+        424,
+        425,
+        425,
+        426,
+        426,
+        426,
+        427,
+        428,
+        428,
+        428
+      ],
+      "open": [
+        "Chapter 50",
+        "Mr. Bennet had very often wished before this period of his l",
+        "Britain to be her husband might then have rested in its prop",
+        "When first Mr. Bennet had married, economy was held to be pe",
+        "Five thousand pounds was settled by marriage articles on Mrs",
+        "He would scarcely be ten pounds a year the loser by the hund",
+        "The good news spread quickly through the house, and with pro",
+        "It was a fortnight since Mrs. Bennet had been downstairs; bu",
+        "\"Haye Park might do,\" said she, \"if the Gouldings could quit",
+        "Her husband allowed her to talk on without interruption whil",
+        "A long dispute followed this declaration; but Mr. Bennet was",
+        "Elizabeth was now most heartily sorry that she had, from the",
+        "She had no fear of its spreading farther through his means. ",
+        "From such a connection she could not wonder that he would sh",
+        "What a triumph for him, as she often thought, could he know ",
+        "She began now to comprehend that he was exactly the man who,",
+        "How Wickham and Lydia were to be supported in tolerable inde",
+        "Mr. Gardiner soon wrote again to his brother. To Mr. Bennet'",
+        "\"It was greatly my wish that he should do so,\" he added, \"as",
+        "Mr. Bennet and his daughters saw all the advantages of Wickh",
+        "\"She is so fond of Mrs. Forster,\" said she, \"it will be quit",
+        "His daughter's request, for such it might be considered, of ",
+        "Mr. Bennet wrote again to his brother, therefore, he sent hi"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "7be5ea5ee286",
+      "pageHash": "3893a222f71e"
+    },
+    {
+      "title": "Chapter 51",
+      "blockCount": 38,
+      "types": "hppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 429,
+      "pageMax": 437,
+      "openPages": [
+        429,
+        429,
+        429,
+        429,
+        429,
+        430,
+        430,
+        431
+      ],
+      "open": [
+        "Chapter 51",
+        "Their sister's wedding day arrived; and Jane and Elizabeth f",
+        "They came. The family were assembled in the breakfast room t",
+        "Lydia's voice was heard in the vestibule; the door was throw",
+        "Their reception from Mr. Bennet, to whom they then turned, w",
+        "Wickham was not at all more distressed than herself, but his"
+      ],
+      "closePages": [
+        436,
+        437,
+        437
+      ],
+      "close": [
+        "\"You may readily comprehend,\" she added, \"what my curiosity ",
+        "\"Not that I SHALL, though,\" she added to herself, as she fin",
+        "Jane's delicate sense of honour would not allow her to speak"
+      ],
+      "textHash": "561c9e300a8d",
+      "pageHash": "ccde60ff7db9"
+    },
+    {
+      "title": "Chapter 52",
+      "blockCount": 60,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 438,
+      "pageMax": 450,
+      "openPages": [
+        438,
+        438,
+        438,
+        438,
+        438,
+        438,
+        439,
+        439
+      ],
+      "open": [
+        "Chapter 52",
+        "Elizabeth had the satisfaction of receiving an answer to her",
+        "\"Gracechurch street, Sept. 6.",
+        "\"MY DEAR NIECE,",
+        "\"I have just received your letter, and shall devote this who",
+        "\"On the very day of my coming home from Longbourn, your uncl"
+      ],
+      "closePages": [
+        450,
+        450,
+        450
+      ],
+      "close": [
+        "They were now almost at the door of the house, for she had w",
+        "\"Come, Mr. Wickham, we are brother and sister, you know. Do ",
+        "She held out her hand; he kissed it with affectionate gallan"
+      ],
+      "textHash": "185c7350a44b",
+      "pageHash": "db37a85ebf00"
+    },
+    {
+      "title": "Chapter 53",
+      "blockCount": 70,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 451,
+      "pageMax": 463,
+      "openPages": [
+        451,
+        451,
+        451,
+        451,
+        451,
+        451,
+        451,
+        451
+      ],
+      "open": [
+        "Chapter 53",
+        "Mr. Wickham was so perfectly satisfied with this conversatio",
+        "The day of his and Lydia's departure soon came, and Mrs. Ben",
+        "\"Oh! my dear Lydia,\" she cried, \"when shall we meet again?\"",
+        "\"Oh, lord! I don't know. Not these two or three years, perha",
+        "\"Write to me very often, my dear.\""
+      ],
+      "closePages": [
+        463,
+        463,
+        463
+      ],
+      "close": [
+        "\"You are quite a visit in my debt, Mr. Bingley,\" she added, ",
+        "Bingley looked a little silly at this reflection, and said s",
+        "Mrs. Bennet had been strongly inclined to ask them to stay a"
+      ],
+      "textHash": "3b0c2c5d6aaf",
+      "pageHash": "1a879e23260a"
+    },
+    {
+      "title": "Chapter 54",
+      "blockCount": 40,
+      "types": "hppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 464,
+      "pageMax": 471,
+      "openPages": [
+        464,
+        464,
+        464,
+        464,
+        464,
+        464,
+        464,
+        465
+      ],
+      "open": [
+        "Chapter 54",
+        "As soon as they were gone, Elizabeth walked out to recover h",
+        "\"Why, if he came only to be silent, grave, and indifferent,\"",
+        "She could settle it in no way that gave her pleasure.",
+        "\"He could be still amiable, still pleasing, to my uncle and ",
+        "Her resolution was for a short time involuntarily kept by th"
+      ],
+      "closePages": [
+        470,
+        471,
+        471
+      ],
+      "close": [
+        "\"And how impossible in others!\"",
+        "\"But why should you wish to persuade me that I feel more tha",
+        "\"That is a question which I hardly know how to answer. We al"
+      ],
+      "textHash": "a528f46b07fc",
+      "pageHash": "ff79181b9a4b"
+    },
+    {
+      "title": "Chapter 55",
+      "blockCount": 58,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 472,
+      "pageMax": 482,
+      "openPages": [
+        472,
+        472,
+        472,
+        472,
+        472,
+        472,
+        472,
+        472
+      ],
+      "open": [
+        "Chapter 55",
+        "A few days after this visit, Mr. Bingley called again, and a",
+        "\"Next time you call,\" said she, \"I hope we shall be more luc",
+        "He should be particularly happy at any time, etc. etc.; and ",
+        "\"Can you come to-morrow?\"",
+        "Yes, he had no engagement at all for to-morrow; and her invi"
+      ],
+      "closePages": [
+        481,
+        482,
+        482
+      ],
+      "close": [
+        "\"If you were to give me forty such men, I never could be so ",
+        "The situation of affairs in the Longbourn family could not b",
+        "The Bennets were speedily pronounced to be the luckiest fami"
+      ],
+      "textHash": "f1248d84f31f",
+      "pageHash": "805c0434d215"
+    },
+    {
+      "title": "Chapter 56",
+      "blockCount": 78,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 483,
+      "pageMax": 495,
+      "openPages": [
+        483,
+        483,
+        483,
+        483,
+        483,
+        484,
+        484,
+        484
+      ],
+      "open": [
+        "Chapter 56",
+        "One morning, about a week after Bingley's engagement with Ja",
+        "The horses were post; and neither the carriage, nor the live",
+        "They were of course all intending to be surprised; but their",
+        "She entered the room with an air more than usually ungraciou",
+        "Mrs. Bennet, all amazement, though flattered by having a gue"
+      ],
+      "closePages": [
+        495,
+        495,
+        495
+      ],
+      "close": [
+        "\"She is a very fine-looking woman! and her calling here",
+        "was prodigiously civil! for she only came, I suppose, to tel",
+        "Elizabeth was forced to give into a little falsehood here; f"
+      ],
+      "textHash": "81b7d4a2e349",
+      "pageHash": "7d574ee446f8"
+    },
+    {
+      "title": "Chapter 57",
+      "blockCount": 28,
+      "types": "hppppppppppppppppppppppppppp",
+      "pageMin": 496,
+      "pageMax": 502,
+      "openPages": [
+        496,
+        496,
+        496,
+        496,
+        497,
+        497,
+        498,
+        498
+      ],
+      "open": [
+        "Chapter 57",
+        "The discomposure of spirits which this extraordinary visit t",
+        "Lodge, therefore (for through their communication with the C",
+        "In revolving Lady Catherine's expressions, however, she coul",
+        "In that case he would return no more. Lady Catherine might s",
+        "\"If, therefore, an excuse for not keeping his promise should"
+      ],
+      "closePages": [
+        502,
+        502,
+        502
+      ],
+      "close": [
+        "\"Yes--THAT is what makes it amusing. Had they fixed on",
+        "any other man it would have been nothing; but HIS perfect in",
+        "To this question his daughter replied only with a laugh; and"
+      ],
+      "textHash": "2a13033cb7de",
+      "pageHash": "16a78e3e21e5"
+    },
+    {
+      "title": "Chapter 58",
+      "blockCount": 52,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 503,
+      "pageMax": 513,
+      "openPages": [
+        503,
+        503,
+        503,
+        503,
+        503,
+        504,
+        504,
+        504
+      ],
+      "open": [
+        "Chapter 58",
+        "Instead of receiving any such letter of excuse from his frie",
+        "Very little was said by either; Kitty was too much afraid of",
+        "They walked towards the Lucases, because Kitty wished to cal",
+        "\"Mr. Darcy, I am a very selfish creature; and, for the sake ",
+        "\"I am sorry, exceedingly sorry,\" replied Darcy, in a tone of"
+      ],
+      "closePages": [
+        512,
+        512,
+        513
+      ],
+      "close": [
+        "\"It did. Bingley is most unaffectedly modest. His diffidence",
+        "He was angry. But his anger, I am persuaded, lasted no longe",
+        "Elizabeth longed to observe that Mr. Bingley had been a most"
+      ],
+      "textHash": "e34a491c1726",
+      "pageHash": "c9deff96aed1"
+    },
+    {
+      "title": "Chapter 59",
+      "blockCount": 54,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 514,
+      "pageMax": 524,
+      "openPages": [
+        514,
+        514,
+        514,
+        514,
+        514,
+        514,
+        515,
+        515
+      ],
+      "open": [
+        "Chapter 59",
+        "\"My dear Lizzy, where can you have been walking to?\" was a q",
+        "The evening passed quietly, unmarked by anything extraordina",
+        "At night she opened her heart to Jane. Though suspicion was ",
+        "\"You are joking, Lizzy. This cannot be!--engaged to Mr.",
+        "Darcy! No, no, you shall not deceive me. I know it to be imp"
+      ],
+      "closePages": [
+        524,
+        524,
+        524
+      ],
+      "close": [
+        "Elizabeth had the satisfaction of seeing her father taking p",
+        "\"I admire all my three sons-in-law highly,\" said he.",
+        "\"Wickham, perhaps, is my favourite; but I think I shall like"
+      ],
+      "textHash": "8f9d9a2a2f40",
+      "pageHash": "da3deab98ed3"
+    },
+    {
+      "title": "Chapter 60",
+      "blockCount": 33,
+      "types": "hpppppppppppppppppppppppppppppppp",
+      "pageMin": 525,
+      "pageMax": 531,
+      "openPages": [
+        525,
+        525,
+        525,
+        525,
+        525,
+        525,
+        525,
+        525
+      ],
+      "open": [
+        "Chapter 60",
+        "Elizabeth's spirits soon rising to playfulness again, she wa",
+        "\"How could you begin?\" said she.",
+        "\"I can comprehend your going on charmingly, when you had onc",
+        "\"I cannot fix on the hour, or the spot, or the look, or the ",
+        "\"My beauty you had early withstood, and as for my manners--m"
+      ],
+      "closePages": [
+        530,
+        531,
+        531
+      ],
+      "close": [
+        "Before any answer could arrive from Mr. Collins, or any cong",
+        "James's, with very decent composure. If he did shrug his sho",
+        "Mrs. Phillips's vulgarity was another, and perhaps a greater"
+      ],
+      "textHash": "89968a57763e",
+      "pageHash": "42105e6f4f47"
+    },
+    {
+      "title": "Chapter 61",
+      "blockCount": 16,
+      "types": "hppppppppppppppp",
+      "pageMin": 532,
+      "pageMax": 536,
+      "openPages": [
+        532,
+        532,
+        532,
+        532,
+        532,
+        533,
+        534,
+        534,
+        534,
+        534,
+        534,
+        535,
+        535,
+        535,
+        536,
+        536
+      ],
+      "open": [
+        "Chapter 61",
+        "Happy for all her maternal feelings was the day on which Mrs",
+        "Mr. Bennet missed his second daughter exceedingly; his affec",
+        "Mr. Bingley and Jane remained at Netherfield only a twelvemo",
+        "Kitty, to her very material advantage, spent the chief of he",
+        "Mary was the only daughter who remained at home; and she was",
+        "The letter was to this effect:",
+        "\"MY DEAR LIZZY,",
+        "\"I wish you joy. If you love Mr. Darcy half as well as I do ",
+        "Any place would do, of about three or four hundred a year; b",
+        "\"Yours, etc.\" As it happened that Elizabeth had MUCH rather ",
+        "Though Darcy could never receive HIM at Pemberley, yet, for ",
+        "Miss Bingley was very deeply mortified by Darcy's marriage; ",
+        "Pemberley was now Georgiana's home; and the attachment of th",
+        "Lady Catherine was extremely indignant on the marriage of he",
+        "With the Gardiners, they were always on the most intimate te"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "56aeefedc8b7",
+      "pageHash": "f700ab60e124"
+    }
+  ]
 }

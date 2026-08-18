@@ -375,7 +375,7 @@ Place test PDFs in `client/src/assets/`, then from `server/`:
 npm run regression              # 13 books (excludes Way of Kings)
 npm run regression -- --book=orwell1984
 npm run regression:full         # all 14 sample PDFs, including Way of Kings
-npm run regression:update       # rewrite committed snapshots after intentional output changes
+npm run regression:update       # rewrite all 14 committed snapshots (includes Way of Kings)
 npm run test:assets             # lightweight parse of every PDF under client/src/assets/
 ```
 

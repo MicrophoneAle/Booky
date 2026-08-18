@@ -1,5 +1,5 @@
 {
-  "parserVersion": 134,
+  "parserVersion": 135,
   "totalBlocks": 123,
   "totalWords": 22562,
   "chapterCount": 3,
@@ -12,5 +12,144 @@
   "lastBlockText": "‘This evening she’ll be let go,’ said Mr. Samsa, but he got no answer from eithe",
   "headingCount": 6,
   "avgBlockLength": 993,
-  "proseBlockCount": 117
+  "proseBlockCount": 117,
+  "frontMatter": {
+    "blockCount": 6,
+    "types": "hhihpp",
+    "pageMin": 0,
+    "pageMax": 1,
+    "openPages": [
+      0,
+      0,
+      null,
+      0,
+      0,
+      1
+    ],
+    "open": [
+      "The Metamorphosis",
+      "By Franz Kafka",
+      "[image]",
+      "By Franz Kafka (1915)",
+      "and email newsletter.",
+      "This text is a translation from the German by Ian Johnston, "
+    ],
+    "closePages": [],
+    "close": [],
+    "textHash": "de691580df71",
+    "pageHash": "2952b20ceaff"
+  },
+  "chapterOrder": [
+    {
+      "title": "I",
+      "blockCount": 42,
+      "types": "hppppppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 2,
+      "pageMax": 24,
+      "openPages": [
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        5,
+        5
+      ],
+      "open": [
+        "I",
+        "ne morning, as Gregor Samsa was waking up from O anxious dre",
+        "‘What’s happened to me,’ he thought. It was no dream. His ro",
+        "Gregor’s glance then turned to the window. The dreary weathe",
+        "‘O God,’ he thought, ‘what a demanding job I’ve chosen! Day ",
+        "He slid back again into his earlier position. ‘This getting "
+      ],
+      "closePages": [
+        23,
+        23,
+        24
+      ],
+      "close": [
+        "Now, unfortunately this flight of the manager also seemed co",
+        "Across the room from him his mother had pulled open a window",
+        "Gregor in this motion, but with the tip of the cane from a d"
+      ],
+      "textHash": "3803af5f5e34",
+      "pageHash": "577fa6f94af6"
+    },
+    {
+      "title": "II",
+      "blockCount": 37,
+      "types": "hpppppppppppppppppppppppppppppppppppp",
+      "pageMin": 26,
+      "pageMax": 50,
+      "openPages": [
+        26,
+        26,
+        26,
+        26,
+        27,
+        27,
+        28,
+        28
+      ],
+      "open": [
+        "II",
+        "regor first woke up from his heavy swoon-like sleep G in the",
+        "Gregor it was dark. He pushed himself slowly toward the door",
+        "By the door he first noticed what had really lured him there",
+        "In the living room, as Gregor saw through the crack in the d",
+        "Once during the long evening one side door and then the othe"
+      ],
+      "closePages": [
+        48,
+        49,
+        50
+      ],
+      "close": [
+        "It was clear to Gregor that his father had badly mis - under",
+        "He really didn’t know what he had in mind, but he raised his",
+        "From the fruit bowl on the sideboard his father had filled h"
+      ],
+      "textHash": "384817f4fd20",
+      "pageHash": "130b1b6dcba4"
+    },
+    {
+      "title": "III",
+      "blockCount": 38,
+      "types": "hppppppppppppppppppppppppppppppppppppp",
+      "pageMin": 52,
+      "pageMax": 75,
+      "openPages": [
+        52,
+        52,
+        52,
+        53,
+        54,
+        55,
+        55,
+        57
+      ],
+      "open": [
+        "III",
+        "regor’s serious wound, from which he suffered for over G a m",
+        "Of course, it was no longer the animated social inter - acti",
+        "Sometimes the father woke up and, as if he was quite ig - no",
+        "In this overworked and exhausted family who had time to worr",
+        "What the world demands of poor people they now car - ried ou"
+      ],
+      "closePages": [
+        73,
+        74,
+        75
+      ],
+      "close": [
+        "Samsa stepped with the two women out onto the landing, leane",
+        "They decided to pass that day resting and going for a stroll",
+        "‘This evening she’ll be let go,’ said Mr. Samsa, but he got "
+      ],
+      "textHash": "9ce83a0e11bf",
+      "pageHash": "f6e9d2e7852d"
+    }
+  ]
 }

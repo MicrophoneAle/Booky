@@ -1,5 +1,5 @@
 {
-  "parserVersion": 134,
+  "parserVersion": 135,
   "totalBlocks": 760,
   "totalWords": 26853,
   "chapterCount": 1,
@@ -10,5 +10,45 @@
   "lastBlockText": "",
   "headingCount": 5,
   "avgBlockLength": 175,
-  "proseBlockCount": 755
+  "proseBlockCount": 755,
+  "frontMatter": null,
+  "chapterOrder": [
+    {
+      "title": "The Old Man and the Sea",
+      "blockCount": 760,
+      "types": "ihhhhhpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 0,
+      "pageMax": 50,
+      "openPages": [
+        null,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "open": [
+        "[image]",
+        "The Old Man and the Sea",
+        "By Ernest Hemingway",
+        "By Ernest Hemingway",
+        "To Charlie Shribner",
+        "To Max Perkins"
+      ],
+      "closePages": [
+        50,
+        50,
+        null
+      ],
+      "close": [
+        "• (1976) The Complete Short Stories of Ernest Hemingway",
+        "• (1995) Collected Stories",
+        "[image]"
+      ],
+      "textHash": "e6fab0fd828d",
+      "pageHash": "2d2e9acd9713"
+    }
+  ]
 }
