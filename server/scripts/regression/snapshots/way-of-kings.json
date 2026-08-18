@@ -1,6 +1,6 @@
 {
-  "parserVersion": 135,
-  "totalBlocks": 16070,
+  "parserVersion": 136,
+  "totalBlocks": 16072,
   "totalWords": 380633,
   "chapterCount": 90,
   "chapterTitles": [
@@ -99,7 +99,7 @@
   "lastBlockText": "REVERSE LASHING: GIVING AN OBJECT A GRAVITATIONAL I believe this may actually be",
   "headingCount": 8,
   "avgBlockLength": 135,
-  "proseBlockCount": 16062,
+  "proseBlockCount": 16064,
   "frontMatter": {
     "blockCount": 26,
     "types": "ihhpppppppphppppppppppppii",
@@ -704,15 +704,15 @@
       "close": [
         "“We have a problem.”",
         "“How large a problem?”",
-        "“Pretty big, I’d say. Come on.” Szeth-son-son-Vallano, Truth"
+        "“Pretty big, I’d say. Come on.”"
       ],
-      "textHash": "bcf08ebae470",
+      "textHash": "ef1c690ff29f",
       "pageHash": "72a5a5dae00b"
     },
     {
       "title": "Interlude I-3: The Glory Of Ignorance",
-      "blockCount": 87,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppiip",
+      "blockCount": 88,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppiip",
       "pageMin": 200,
       "pageMax": 207,
       "openPages": [
@@ -727,11 +727,11 @@
       ],
       "open": [
         "[banner] The Glory Of Ignorance",
+        "Szeth-son-son-Vallano, Truthless of Shinovar, sat on the woo",
         "Grimy, worn, and fraying, his clothing was far different fro",
         "Head bowed, hands in his lap, he carried no weapons. He hadn",
         "“So he’ll do whatever you say?” asked one of the mine worker",
-        "Took—Szeth’s current master—set his cup down on the table’s ",
-        "“Yeah, he sure will. Hey, kurp, look at me.”"
+        "Took—Szeth’s current master—set his cup down on the table’s "
       ],
       "closePages": [
         null,
@@ -743,8 +743,8 @@
         "[image]",
         "Glyphpairs and plateau numbers have been removed to preserve"
       ],
-      "textHash": "aafd747a1cbc",
-      "pageHash": "2229519f9925"
+      "textHash": "0b93682f097b",
+      "pageHash": "4e03716b6d48"
     },
     {
       "title": "PART Two",
@@ -3180,15 +3180,15 @@
       "close": [
         "“What is this?” Shallan asked.",
         "“You wanted to be part of what I’m doing? Well, you’ll need ",
-        "“It’s about the Voidbringers.” Szeth-son-son-Vallano, Truthl"
+        "“It’s about the Voidbringers.”"
       ],
-      "textHash": "751188009f9e",
+      "textHash": "3fdbc7929bcc",
       "pageHash": "8d54469b2fb2"
     },
     {
       "title": "Chapter 71: Recorded In Blood",
-      "blockCount": 117,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 118,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1080,
       "pageMax": 1086,
       "openPages": [
@@ -3203,11 +3203,11 @@
       ],
       "open": [
         "[banner] Recorded In Blood",
+        "Szeth-son-son-Vallano, Truthless of Shinovar, walked with bo",
         "Szeth joined the other porters, carrying his sack through th",
         "Szeth kept his eyes down. Partially to imitate the look of a",
         "He felt his every step should leave a bloody footprint. The ",
-        "So many dead. So very many dead.",
-        "Was he losing his mind? Each time he went on an assassinatio"
+        "So many dead. So very many dead."
       ],
       "closePages": [
         1086,
@@ -3219,8 +3219,8 @@
         "“I have rarely had the luxury of working otherwise,” Szeth s",
         "The screams greeted him."
       ],
-      "textHash": "6bec7eb87e1f",
-      "pageHash": "848581048061"
+      "textHash": "2f409428c72b",
+      "pageHash": "1af53913f343"
     },
     {
       "title": "Chapter 72: Veristitalian",

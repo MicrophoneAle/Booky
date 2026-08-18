@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 135
+const PARSER_VERSION = 136
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -11601,6 +11601,23 @@ function shouldStartNewProseBlock(line, previousBlock, entry = null, previousEnt
     ) {
       return true
     }
+  }
+
+  // Cross-page Szeth POV opening (prologue, later Szeth interludes, and Szeth
+  // chapters that reuse the same formula). The v135 quote gate does not see
+  // these: the new unit is a name, not a quote. isProseLineContinuation is
+  // false, and /[.!?]$/ misses a previous line ending ." so the default would
+  // merge and inherit the prior page. Reuses STORMLIGHT_PROLOGUE_OPENING_REGEX
+  // rather than a new pattern; printed-TOC interlude titles ("The Glory Of
+  // Ignorance") do not appear on the opening line. Cross-page only.
+  if (
+    previousBlock &&
+    entry &&
+    previousEntry &&
+    entry.pageIndex !== previousEntry.pageIndex &&
+    STORMLIGHT_PROLOGUE_OPENING_REGEX.test(text)
+  ) {
+    return true
   }
 
   if (previousBlock && isProseLineContinuation(text, previousBlock)) {
