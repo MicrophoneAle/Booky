@@ -269,9 +269,11 @@ Relevant `documents` columns (via migrations):
 | `parser_version` | Invalidates stale parses |
 | `parse_status` / `parse_progress` | Upload/parse lifecycle UI |
 | `word_count` | Library metadata |
-| `parsed_cache` | Reserved cache field (currently written null) |
+| `user_id` | Clerk owner (NOT NULL; tenant isolation) |
 
 Never edit existing migration files in place — add new migrations under `supabase/migrations/`.
+
+Parsed output lives in `content` and `chapters` jsonb columns only. There is no separate parse cache column.
 
 ---
 
@@ -381,7 +383,7 @@ npm run test:assets             # lightweight parse of every PDF under client/sr
 
 **Default harness (13):** `oldman`, `orwell1984`, `monte-cristo`, `pride-prejudice`, `moby-dick`, `treasure-island`, `frankenstein`, `oliver-twist`, `jungle-book`, `aesop`, `metamorphosis`, `narnia`, `maya-angelou`.
 
-**Opt-in:** `way-of-kings` via `regression:full` or `--book=way-of-kings` (OCR-heavy; minutes, not seconds).
+**Opt-in:** `way-of-kings` via `regression:full` or `--book=way-of-kings` (~33s parse since v135 OCR skip).
 
 There are **12** general checks in `checks.mjs` (blocking vs advisory). Blocking checks include mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, and word count vs raw PDF (`pdftotext` required; the suite exits if it is missing). Snapshots under `server/scripts/regression/snapshots/` are **committed** and diffed on every run.
 
@@ -406,6 +408,18 @@ When changing the parser:
 
 - **Client:** Deploy `client/` to Vercel. Set `VITE_CLERK_PUBLISHABLE_KEY` and `VITE_API_URL` (your Render API URL).
 - **Server:** Deploy `server/` to Render (or similar). Set Clerk, Supabase, and `CLIENT_URL` / `ALLOWED_ORIGINS` to your Vercel origin (e.g. `https://booky-lemon.vercel.app`).
+
+### Supabase migrations (existing production)
+
+The baseline migration `20260520000000_documents_baseline.sql` predates migrations production has already applied. Its timestamp is for **empty-database replay only** - the table already exists in production.
+
+**Do not run the baseline against live production.** Mark it applied without executing:
+
+```bash
+supabase migration repair --status applied 20260520000000
+```
+
+Only `20260611120000_drop_parsed_cache_columns.sql` should actually run on production (drops dead cache columns, sets `user_id NOT NULL`). Fresh databases replay the full chain in timestamp order.
 
 The API is sized for a small Render instance. `resolvePdfExtractionConcurrency` in `server/index.js` deliberately caps parallel pdfjs work for large illustrated PDFs because the free-tier **512MB** RAM profile OOMs or hangs under high concurrency. That constraint should shape optimization choices more than raw local CPU throughput.
 

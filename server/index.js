@@ -1003,7 +1003,7 @@ app.get("/documents/:id", requireAuth, async (req, res) => {
     const { data, error } = await supabase
       .from("documents")
       .select(
-        "id, name, total_pages, chapters, content, parser_version, parse_status, parsed_cache, parsed_cache_version, storage_path"
+        "id, name, total_pages, chapters, content, parser_version, parse_status, storage_path"
       )
       .eq("id", id)
       .eq("user_id", req.userId)
@@ -12827,35 +12827,17 @@ function toPublicDocument(documentRow, wordCount) {
 }
 
 function readStoredDocumentContent(documentRow) {
-  if (Array.isArray(documentRow?.content) && documentRow.content.length > 0) {
-    return {
-      parsedText: {
-        numpages: documentRow.total_pages ?? documentRow.content.length,
-      },
-      chapters: documentRow.chapters ?? [],
-      contentWithChapters: documentRow.content,
-      wordCount: documentRow.word_count ?? 0,
-    }
-  }
-
-  try {
-    const cached =
-      typeof documentRow?.parsed_cache === "string"
-        ? JSON.parse(documentRow.parsed_cache)
-        : documentRow.parsed_cache
-    if (!cached || !Array.isArray(cached.contentWithChapters)) {
-      return null
-    }
-    return cached
-  } catch {
+  if (!Array.isArray(documentRow?.content) || documentRow.content.length === 0) {
     return null
   }
-}
 
-function buildParsedCacheFields() {
   return {
-    parsed_cache: null,
-    parsed_cache_version: PARSER_VERSION,
+    parsedText: {
+      numpages: documentRow.total_pages ?? documentRow.content.length,
+    },
+    chapters: documentRow.chapters ?? [],
+    contentWithChapters: documentRow.content,
+    wordCount: documentRow.word_count ?? 0,
   }
 }
 
@@ -13089,7 +13071,6 @@ async function parseDocumentInBackground(documentId, userId, storagePath, fileNa
           parser_version: PARSER_VERSION,
           parse_status: PARSE_STATUS.READY,
           parse_progress: null,
-          ...buildParsedCacheFields(),
         })
 
         await saveParsedDocumentWithRetry(documentId, userId, documentUpdate)
@@ -13757,7 +13738,6 @@ async function reparseDocumentIfOutdatedCore(documentRow) {
           word_count: wordCount,
           parser_version: PARSER_VERSION,
           parse_status: PARSE_STATUS.READY,
-          ...buildParsedCacheFields(),
         })
       )
       .eq("id", documentRow.id)

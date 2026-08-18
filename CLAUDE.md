@@ -44,7 +44,7 @@ Booky/
 │       ├── regression/                 # `npm run regression` (13) / `regression:full` (14); 12 general checks
 │       ├── debug-*.mjs                 # Ad-hoc book-specific diagnostics (~40 scripts)
 │       └── test-*.mjs, verify-*.mjs    # More ad-hoc diagnostics (not debug-* prefixed)
-├── supabase/migrations/                # parser_version, parse_status, parse_progress, parsed_cache
+├── supabase/migrations/                # documents baseline, parser_version, parse_status, parse_progress
 └── README.md
 ```
 
@@ -124,9 +124,9 @@ Bump `PARSER_VERSION` in **both** files together. A bump invalidates parsed docu
 
 - **`withPdfDocumentAccessLock`** serializes all pdfjs page access per document - env concurrency vars do not parallelize PDF I/O.
 - **Two-pass image extraction** - metadata pass then sequential `resolvePageImageCandidateBuffers`.
-- **Sequential OCR** in `finalizeIllustrationBlocks` with a single Tesseract worker - dominant cost for illustrated books (~90-150s for WoK).
+- **Sequential OCR** in `finalizeIllustrationBlocks` with a single Tesseract worker - illustrated books still pay OCR cost, but WoK parses in ~33s since the v135 OCR skip.
 - WoK hits size tier: text/image concurrency forced to **1/1**.
-- `parsed_cache` DB column is always written `null` - no server parse cache benefit today.
+- Parsed output is stored in `content` / `chapters` jsonb columns only (no separate parse cache column).
 - **Render free-tier RAM (~512MB)** shapes `resolvePdfExtractionConcurrency` - high parallel pdfjs work OOMs or hangs on large illustrated books. Prefer memory-safe designs over local-CPU max throughput.
 
 ### Parser correctness (other books)
