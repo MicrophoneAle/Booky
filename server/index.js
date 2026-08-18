@@ -594,11 +594,18 @@ const supabase = createClient(
 
 const app = express()
 
-const ALLOWED_ORIGINS = [
+const LOCAL_DEV_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:4173",
-  "https://booky-lemon.vercel.app",
 ]
+
+// Verified from Vercel project "booky" (team michael-liu-s-projects, Aug 2026):
+// - Production alias: https://booky-lemon.vercel.app
+// - Team production: https://booky-michael-liu-s-projects.vercel.app
+// - Branch alias: https://booky-git-{branch}-michael-liu-s-projects.vercel.app
+// - Deployment URL: https://booky-{id}-michael-liu-s-projects.vercel.app
+const DEFAULT_VERCEL_PREVIEW_ORIGIN_PATTERN =
+  /^https:\/\/booky(-git-[a-z0-9-]+|-[a-z0-9]+)?-michael-liu-s-projects\.vercel\.app$/i
 
 function normalizeOrigin(origin) {
   if (!origin || typeof origin !== "string") {
@@ -607,13 +614,28 @@ function normalizeOrigin(origin) {
   return origin.replace(/\/$/, "")
 }
 
+function parseAllowedOriginsEnv() {
+  return (process.env.ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((entry) => normalizeOrigin(entry.trim()))
+    .filter(Boolean)
+}
+
+function getVercelPreviewOriginPattern() {
+  const customPattern = process.env.VERCEL_PREVIEW_ORIGIN_PATTERN
+  if (customPattern) {
+    return new RegExp(customPattern, "i")
+  }
+  return DEFAULT_VERCEL_PREVIEW_ORIGIN_PATTERN
+}
+
 function isAllowedOrigin(origin) {
   const normalized = normalizeOrigin(origin)
   if (!normalized) {
     return false
   }
 
-  if (ALLOWED_ORIGINS.includes(normalized)) {
+  if (LOCAL_DEV_ORIGINS.includes(normalized)) {
     return true
   }
 
@@ -622,21 +644,23 @@ function isAllowedOrigin(origin) {
     return true
   }
 
-  for (const entry of (process.env.ALLOWED_ORIGINS ?? "").split(",")) {
-    if (normalizeOrigin(entry.trim()) === normalized) {
-      return true
-    }
+  if (parseAllowedOriginsEnv().includes(normalized)) {
+    return true
   }
 
-  return /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(normalized)
+  return getVercelPreviewOriginPattern().test(normalized)
 }
 
 function applyCorsHeaders(req, res) {
   const origin = req.headers.origin
-  if (origin && isAllowedOrigin(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin)
-    res.setHeader("Access-Control-Allow-Credentials", "true")
-    res.setHeader("Vary", "Origin")
+  if (origin) {
+    if (isAllowedOrigin(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin)
+      res.setHeader("Access-Control-Allow-Credentials", "true")
+      res.setHeader("Vary", "Origin")
+    } else {
+      console.warn(`[cors] Rejected origin: ${origin}`)
+    }
   }
 
   res.setHeader(
