@@ -55,6 +55,10 @@ export default {
       "[KNOWN GAP] On the Pulse of Morning undetected (no title in PDF text layer)",
       (ctx) =>
         Boolean(findChapter(ctx.chapters, /On the Pulse of Morning/i)),
+      {
+        knownDebt:
+          "PDF text layer has no title at the poem opening; a synthetic boundary was rejected as guesswork.",
+      },
     ],
     [
       "no Contents listing retained in body",

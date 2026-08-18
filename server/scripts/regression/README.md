@@ -17,11 +17,13 @@ node scripts/regression/run.mjs --update-snapshots --full
 
 `--update-snapshots` without `--book=` refreshes all 14 books, including Way of Kings. `npm run regression:update` passes `--full` for the same reason.
 
-Exit code `0` when every selected book passes **blocking** checks, book-specific assertions, and snapshot diff.
+Exit code `0` when every selected book passes **blocking** checks, real (non-debt) book-specific assertions, and snapshot diff. Known-debt assertions are counted separately and do not fail the run.
 
-**Blocking general checks** (must pass): mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, word count vs raw. `pdftotext` (Poppler) is required; the suite exits immediately if it is missing.
+**Blocking general checks** (must pass): mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, word count vs raw body. `pdftotext` (Poppler) is required; the suite exits immediately if it is missing.
 
 **Advisory general checks** (reported as `[WARN]`, do not fail the run): scanner watermarks, dialogue attribution centering, orphaned fragments, paragraph continuity, indentation sampling. These surface parser debt on large books without blocking legacy parity tests.
+
+**Known-debt assertions** (reported as `[KNOWN-DEBT]`, do not fail the run): a book-specific assertion may pass a third `{ knownDebt: "reason" }` argument. The reason must be a sentence of at least 24 characters. The summary line prints `N pass, N fail, N known-debt` so the annotation stays visible. This lane is only for debt already investigated and consciously accepted. It cannot mark a general check, and it is not a way to hide dialogue-split or snapshot failures.
 
 ### Suite tiers
 
@@ -45,6 +47,7 @@ Way of Kings is opt-in via `--full` because a full illustrated parse dominates l
 scripts/regression/
   run.mjs           # Entry point
   checks.mjs        # General checks (exported functions)
+  wordCountBody.mjs # Narrative-body needles + slicer for wordCountVsRaw
   helpers.mjs       # Shared assertion helpers (contiguity, roman/arabic)
   snapshots/        # Committed JSON baselines (diffed on every run)
   books/
@@ -84,7 +87,7 @@ npm run test:assets
 ### Current baseline
 
 - Snapshots for all 14 books are **committed** under `snapshots/` and were refreshed at `PARSER_VERSION` 134 (`75610b9`). Normal runs fail on snapshot drift without needing a prior `--update-snapshots` on a fresh clone.
-- Book-specific assertions follow the ground-truth convention below. Maya Angelou intentionally fails `[KNOWN GAP] On the Pulse of Morning` (no title in the PDF text layer); see `maya-angelou.mjs`.
+- Book-specific assertions follow the ground-truth convention below. Maya Angelou's `[KNOWN GAP] On the Pulse of Morning` is a known-debt assertion (no title in the PDF text layer); it stays visible in the summary count and does not fail the run.
 - Moby Dick skips `indentationConsistency` and `headingDensitySane` via `skipGeneralChecks`.
 - Advisory general checks (watermarks, dialogue attribution centering, orphaned fragments, paragraph continuity, indentation) report as `[WARN]` and do not fail the run - they surface ongoing prose-reflow / dialogue-split debt without blocking structural parity.
 - Only refresh snapshots with `npm run regression:update` when parser output **intentionally** changed, then commit the JSON with the code change. That command includes Way of Kings. A plain `--update-snapshots` without `--book=` does the same.
@@ -134,7 +137,7 @@ Each book exports:
 | `id` | CLI name for `--book=` and snapshot filename |
 | `name` | Display name in reports |
 | `file` | PDF filename under `client/src/assets/` |
-| `assertions` | `[label, (ctx) => boolean]` pairs |
+| `assertions` | `[label, (ctx) => boolean]` pairs, or `[label, fn, { knownDebt: "reason" }]` for accepted gaps |
 
 `ctx` includes: `blocks`, `chapters`, `contentWithChapters`, `parseResult`, `pdfPath`, `pageCount`, `wordCount`, `joined`.
 
@@ -146,8 +149,8 @@ Each book exports:
 4. **No orphaned fragments** — short non-terminal prose, lowercase continuations
 5. **Paragraph continuity** — split mid-sentence / mid-clause across prose blocks
 6. **Heading density sane** — global ratio and 20-block windows
-7. **Word count vs raw** — parsed vs `pdftotext` (≥ 85%)
-8. **Chapter structure sane** — count, title length, duplicates, prose-like titles
+7. **Word count vs raw** — parsed vs `pdftotext` inside a narrative-body window (first-chapter opening through last-chapter opening, cut at a raw-text apparatus marker when one exists). Floor is 90%. Bounds come from unique pdftotext needles per book, never from parser chapter boundaries.
+8. **Chapter structure sane** — count, title length, duplicates, period-terminated prose-like titles. Accepts spelled chapter numbers, bare roman parts, abbreviation endings, and `!`/`?` titles. Chapter-shaped Dickens subtitles may exceed 150 characters (hard cap 400).
 9. **No TOC leakage** — heading runs in first 5% of blocks
 10. **Indentation consistent** — sampled middle prose blocks (`isIndented` rate)
 11. **No empty blocks** — skips `type: "image"` blocks, which legitimately have no text

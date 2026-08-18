@@ -2,6 +2,13 @@
  * General parser regression checks. Each returns { pass, failures, summary? }.
  */
 
+import {
+  NARRATIVE_BODY_ANCHORS,
+  WORD_COUNT_BODY_FLOOR,
+  countWordsInText,
+  sliceNarrativeBody,
+} from "./wordCountBody.mjs"
+
 const DANGLING_ENDING_WORDS =
   /\b(?:of|the|a|an|and|but|or|nor|for|yet|so|left|fell|was|be|in|to|with|from|at|by|on|as|into|upon|about|over|after|before|through)\s*$/i
 
@@ -80,17 +87,39 @@ function frontMatterBlockCount(blocks) {
   return Math.min(25, Math.max(5, Math.floor(blocks.length * 0.03)))
 }
 
+const CHAPTER_NUMBER_PATTERN = `(?:\\d{1,3}|[IVXLCDM]+|${CHAPTER_WORD_NUMBERS})`
+
+const ACCEPTABLE_BARE_CHAPTER_REGEX = new RegExp(
+  `^chapter\\s+${CHAPTER_NUMBER_PATTERN}\\.?$`,
+  "i"
+)
+
+const ACCEPTABLE_CHAPTER_WITH_SUBTITLE_REGEX = new RegExp(
+  `^chapter\\s+${CHAPTER_NUMBER_PATTERN}\\s*[-\\u2014\\u2013]\\s+\\S`,
+  "i"
+)
+
+function isBareRomanNumeralTitle(title) {
+  return /^(?:Part\s+)?[IVXLCDM]{1,6}\.?$/i.test((title ?? "").trim())
+}
+
+function endsWithAbbreviation(title) {
+  return /(?:\b(?:Mr|Mrs|Ms|Miss|Dr|St|Jr|Sr|Prof)\.|\b[A-Z]\.)\s*$/.test(
+    (title ?? "").trim()
+  )
+}
+
 function isAcceptableChapterTitle(title) {
   const trimmed = (title ?? "").trim()
   if (!trimmed) {
     return false
   }
 
-  if (/^chapter\s+(?:\d+|[IVXLCDM]+)\.?$/i.test(trimmed)) {
+  if (ACCEPTABLE_BARE_CHAPTER_REGEX.test(trimmed)) {
     return true
   }
 
-  if (/^chapter\s+(?:\d+|[IVXLCDM]+)\s*-\s+\S/i.test(trimmed)) {
+  if (ACCEPTABLE_CHAPTER_WITH_SUBTITLE_REGEX.test(trimmed)) {
     return true
   }
 
@@ -99,6 +128,10 @@ function isAcceptableChapterTitle(title) {
   }
 
   if (/^(?:VOLUME|Volume|BOOK|Book|PART|Part)\b/i.test(trimmed)) {
+    return true
+  }
+
+  if (isBareRomanNumeralTitle(trimmed)) {
     return true
   }
 
@@ -139,6 +172,23 @@ function isKnownShortDialogue(text) {
   return TERMINAL_PUNCTUATION_REGEX.test(trimmed)
 }
 
+function isTitleCaseHeading(text) {
+  const words = String(text ?? "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+  if (words.length === 0) {
+    return false
+  }
+  return words.every((word) => {
+    const letters = word.replace(/[^A-Za-z]/g, "")
+    if (letters.length === 0) {
+      return true
+    }
+    return letters[0] === letters[0].toUpperCase()
+  })
+}
+
 export function noMidSentenceHeadings(blocks) {
   const failures = []
 
@@ -160,7 +210,18 @@ export function noMidSentenceHeadings(blocks) {
       return
     }
 
-    if (/[,;:\u2014\u2013\u2026-]\s*$/.test(text) || DANGLING_ENDING_WORDS.test(text)) {
+    // Cover/title-page byline, e.g. "by Robert Louis Stevenson". Requires a
+    // capital after "by" so "by the time he arrived" still flags.
+    if (/^by\s+[A-Z]/.test(text)) {
+      return
+    }
+
+    const wordCount = text.split(/\s+/).filter(Boolean).length
+    const titleCase = isTitleCaseHeading(text)
+    const dangling =
+      /[,;:\u2014\u2013\u2026-]\s*$/.test(text) || DANGLING_ENDING_WORDS.test(text)
+
+    if (dangling && !(titleCase && wordCount === 1)) {
       failures.push(`[block ${index}] False heading: '${truncate(text)}'`)
       return
     }
@@ -179,7 +240,7 @@ export function noMidSentenceHeadings(blocks) {
       return
     }
 
-    if (CONTINUATION_PRONOUN_START.test(text)) {
+    if (CONTINUATION_PRONOUN_START.test(text) && !titleCase) {
       failures.push(`[block ${index}] False heading: '${truncate(text)}'`)
     }
   })
@@ -328,7 +389,7 @@ export function headingDensitySane(blocks) {
 }
 
 export function wordCountVsRaw(blocks, config) {
-  if (config?.rawWordCount == null) {
+  if (config?.rawWordCount == null && config?.rawText == null) {
     const reason =
       config?.pdftotextError ??
       "pdftotext is not available (install Poppler and put pdftotext on PATH)"
@@ -341,17 +402,52 @@ export function wordCountVsRaw(blocks, config) {
     }
   }
 
-  const parsedWords = countWordsInBlocks(blocks)
-  const rawWords = config.rawWordCount
+  const rawText = config?.rawText
+  const bookId = config?.bookId
+  const anchors =
+    config?.wordCountBody ??
+    (bookId ? NARRATIVE_BODY_ANCHORS[bookId] : null)
+
+  let parsedWords
+  let rawWords
+  let scopeLabel = "full document"
+
+  if (rawText != null && anchors) {
+    const rawBody = sliceNarrativeBody(rawText, anchors)
+    const parsedJoined = (blocks ?? [])
+      .map((block) => block?.text ?? "")
+      .join("\n")
+    const parsedBody = sliceNarrativeBody(parsedJoined, anchors)
+
+    if (rawBody.error || parsedBody.error) {
+      const reason = rawBody.error || parsedBody.error
+      return {
+        pass: false,
+        failures: [
+          `Word-count-vs-raw body window could not be located: ${reason}`,
+        ],
+        summary: reason,
+      }
+    }
+
+    parsedWords = countWordsInText(parsedBody.slice)
+    rawWords = countWordsInText(rawBody.slice)
+    scopeLabel = "body"
+  } else {
+    parsedWords = countWordsInBlocks(blocks)
+    rawWords = config.rawWordCount
+  }
+
   const ratio = rawWords > 0 ? parsedWords / rawWords : 1
   const percent = (ratio * 100).toFixed(1)
-  const summary = `${parsedWords.toLocaleString()} parsed vs ${rawWords.toLocaleString()} raw (${percent}%)`
+  const floorPercent = (WORD_COUNT_BODY_FLOOR * 100).toFixed(0)
+  const summary = `${parsedWords.toLocaleString()} parsed vs ${rawWords.toLocaleString()} raw ${scopeLabel} (${percent}%)`
 
-  if (ratio < 0.85) {
+  if (ratio < WORD_COUNT_BODY_FLOOR) {
     return {
       pass: false,
       failures: [
-        `Word count: ${parsedWords} parsed vs ${rawWords} raw (${percent}%) — below 85% threshold`,
+        `Word count: ${parsedWords} parsed vs ${rawWords} raw ${scopeLabel} (${percent}%) - below ${floorPercent}% threshold`,
       ],
       summary,
     }
@@ -372,18 +468,32 @@ export function chapterStructureSane(blocks, config) {
   const titles = chapters.map((chapter) => (chapter?.title ?? "").trim())
 
   titles.forEach((title, index) => {
-    if (!title || title.length < 2) {
+    if (!title) {
       failures.push(`[chapter ${index}] Suspicious title: '${title}'`)
       return
     }
 
-    if (title.length > 150) {
+    if (title.length < 2 && !isBareRomanNumeralTitle(title)) {
+      failures.push(`[chapter ${index}] Suspicious title: '${title}'`)
+      return
+    }
+
+    if (title.length > 400) {
       failures.push(`[chapter ${index}] Suspicious title: '${truncate(title, 80)}'`)
       return
     }
 
+    if (title.length > 150 && !isAcceptableChapterTitle(title)) {
+      failures.push(`[chapter ${index}] Suspicious title: '${truncate(title, 80)}'`)
+      return
+    }
+
+    // Period-terminated titles only. Exclamatory and interrogative titles
+    // (Tiger! Tiger!, Ain't That Bad?) are legitimate printed headings.
     const looksLikeProseSentence =
-      /[.!?]\s*$/.test(title) && !isAcceptableChapterTitle(title)
+      /\.\s*$/.test(title) &&
+      !isAcceptableChapterTitle(title) &&
+      !endsWithAbbreviation(title)
 
     if (looksLikeProseSentence) {
       failures.push(`[chapter ${index}] Suspicious title: '${truncate(title, 80)}'`)

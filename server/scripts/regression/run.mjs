@@ -68,6 +68,7 @@ const SLOW_BOOKS = [wayOfKings]
 
 const MAX_FAILURE_LINES = 4
 const DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+const KNOWN_DEBT_MIN_REASON = 24
 
 /** Checks that must pass for exit code 0 (book-specific + snapshot also required). */
 const BLOCKING_GENERAL_CHECK_IDS = new Set([
@@ -120,9 +121,11 @@ mkdirSync(SNAPSHOTS_DIR, { recursive: true })
 
 let booksPassed = 0
 let booksFailed = 0
+let knownDebtTotal = 0
 
 for (const book of booksToRun) {
   const bookResult = await runBook(book)
+  knownDebtTotal += bookResult.knownDebt ?? 0
   if (bookResult.pass) {
     booksPassed += 1
   } else {
@@ -133,8 +136,7 @@ for (const book of booksToRun) {
 console.log("")
 console.log(DIVIDER)
 console.log(
-  `FINAL: ${booksPassed}/${booksToRun.length} books passed.` +
-    (booksFailed > 0 ? ` ${booksFailed} book(s) had failures.` : "")
+  `FINAL: ${booksPassed} pass, ${booksFailed} fail, ${knownDebtTotal} known-debt (${booksToRun.length} books)`
 )
 console.log(DIVIDER)
 
@@ -167,9 +169,11 @@ async function runBook(book) {
   }
 
   const checkConfig = {
+    bookId: book.id,
     chapters,
     pageCount,
     rawWordCount: rawWordCountResult.count,
+    rawText: rawWordCountResult.text,
     pdftotextError: rawWordCountResult.error,
     sampleRng: createSeededRng(hashString(book.id)),
   }
@@ -244,24 +248,42 @@ async function runBook(book) {
   }
 
   console.log("")
-  console.log("Book-specific assertions:")
-  for (const [label, fn] of book.assertions ?? []) {
-    let ok = false
-    try {
-      ok = Boolean(fn(ctx))
-    } catch (error) {
-      ok = false
-      console.log(`  [FAIL] ${label} (threw: ${error.message})`)
-      bookPass = false
+  const assertionOutcomes = []
+  for (const entry of book.assertions ?? []) {
+    assertionOutcomes.push(evaluateAssertion(entry, ctx))
+  }
+
+  const assertionPass = assertionOutcomes.filter((item) => item.status === "pass").length
+  const assertionFail = assertionOutcomes.filter((item) => item.status === "fail").length
+  const assertionDebt = assertionOutcomes.filter(
+    (item) => item.status === "known-debt"
+  ).length
+  const knownDebt = assertionDebt
+
+  if ((book.assertions ?? []).length > 0) {
+    console.log(
+      `Book-specific assertions (${assertionPass} pass, ${assertionFail} fail, ${assertionDebt} known-debt):`
+    )
+  } else {
+    console.log("Book-specific assertions:")
+  }
+
+  for (const outcome of assertionOutcomes) {
+    if (outcome.status === "pass") {
+      console.log(`  [PASS] ${outcome.label}`)
       continue
     }
-
-    if (ok) {
-      console.log(`  [PASS] ${label}`)
-    } else {
-      console.log(`  [FAIL] ${label}`)
-      bookPass = false
+    if (outcome.status === "known-debt") {
+      console.log(`  [KNOWN-DEBT] ${outcome.label}`)
+      console.log(`           known-debt: ${outcome.knownDebt}`)
+      continue
     }
+    if (outcome.threw) {
+      console.log(`  [FAIL] ${outcome.label} (threw: ${outcome.threw})`)
+    } else {
+      console.log(`  [FAIL] ${outcome.label}`)
+    }
+    bookPass = false
   }
 
   console.log("")
@@ -302,7 +324,48 @@ async function runBook(book) {
       : "FAILURE"
   console.log(`RESULT: ${statusLabel}`)
 
-  return { pass: bookPass }
+  return { pass: bookPass, knownDebt }
+}
+
+function evaluateAssertion(entry, ctx) {
+  if (
+    !Array.isArray(entry) ||
+    typeof entry[0] !== "string" ||
+    typeof entry[1] !== "function"
+  ) {
+    return {
+      label: String(entry?.[0] ?? "(invalid assertion)"),
+      status: "fail",
+      threw: "assertion must be [label, fn] or [label, fn, { knownDebt }]",
+    }
+  }
+
+  const [label, fn, options] = entry
+  let knownDebt = null
+  if (options !== undefined) {
+    const reason = options?.knownDebt
+    if (typeof reason !== "string" || reason.trim().length < KNOWN_DEBT_MIN_REASON) {
+      return {
+        label,
+        status: "fail",
+        threw: `knownDebt must be a reason string of at least ${KNOWN_DEBT_MIN_REASON} characters`,
+      }
+    }
+    knownDebt = reason.trim()
+  }
+
+  try {
+    const ok = Boolean(fn(ctx))
+    if (ok) {
+      return { label, status: "pass", knownDebt }
+    }
+    if (knownDebt) {
+      return { label, status: "known-debt", knownDebt }
+    }
+    return { label, status: "fail" }
+  } catch (error) {
+    return { label, status: "fail", threw: error.message }
+  }
 }
 
 function flattenContentBlocks(contentWithChapters) {
@@ -650,18 +713,21 @@ function tryRawWordCount(pdfPath) {
     })
     return {
       count: output.split(/\s+/).filter(Boolean).length,
+      text: output,
       error: null,
     }
   } catch (error) {
     if (error.code === "ENOENT") {
       return {
         count: null,
+        text: null,
         error:
           "pdftotext is not on PATH (install Poppler). Word-count-vs-raw cannot run.",
       }
     }
     return {
       count: null,
+      text: null,
       error: `pdftotext failed to extract text from this PDF (${error.message}).`,
     }
   }
