@@ -16,7 +16,7 @@ node scripts/regression/run.mjs --update-snapshots
 
 Exit code `0` when every selected book passes **blocking** checks, book-specific assertions, and snapshot diff.
 
-**Blocking general checks** (must pass): mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, word count vs raw (when `pdftotext` is available).
+**Blocking general checks** (must pass): mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, word count vs raw. `pdftotext` (Poppler) is required; the suite exits immediately if it is missing.
 
 **Advisory general checks** (reported as `[WARN]`, do not fail the run): scanner watermarks, dialogue attribution centering, orphaned fragments, paragraph continuity, indentation sampling. These surface parser debt on large books without blocking legacy parity tests.
 
@@ -33,7 +33,7 @@ Way of Kings is opt-in via `--full` because a full illustrated parse dominates l
 ### Prerequisites
 
 - Dummy Supabase env vars are set automatically in `run.mjs`.
-- **Optional:** `pdftotext` on your PATH (Poppler). If missing, the word-count-vs-raw check is skipped with a warning.
+- **Required:** `pdftotext` on your PATH (Poppler). The word-count-vs-raw truncation check is blocking; a missing binary fails the suite immediately rather than skipping.
 
 ## Layout
 

@@ -301,7 +301,7 @@ Never edit existing migration files in place — add new migrations under `supab
 - Node.js 20+
 - Clerk application (publishable + secret keys)
 - Supabase project with `documents` table and `pdfs` / `book-assets` storage buckets
-- Optional: [Poppler](https://poppler.freedesktop.org/) (`pdftotext` on PATH) for regression word-count checks
+- [Poppler](https://poppler.freedesktop.org/) (`pdftotext` on PATH) - required for `npm run regression` (the word-count-vs-raw truncation check fails the suite if it is missing)
 
 ### Server
 
@@ -383,7 +383,7 @@ npm run test:assets             # lightweight parse of every PDF under client/sr
 
 **Opt-in:** `way-of-kings` via `regression:full` or `--book=way-of-kings` (OCR-heavy; minutes, not seconds).
 
-There are **12** general checks in `checks.mjs` (blocking vs advisory). Blocking checks include mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, and word count vs raw PDF (when `pdftotext` is available). Snapshots under `server/scripts/regression/snapshots/` are **committed** and diffed on every run.
+There are **12** general checks in `checks.mjs` (blocking vs advisory). Blocking checks include mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, and word count vs raw PDF (`pdftotext` required; the suite exits if it is missing). Snapshots under `server/scripts/regression/snapshots/` are **committed** and diffed on every run.
 
 **Diff a single PDF:**
 

@@ -87,6 +87,8 @@ const ALL_KNOWN_BOOKS = [...CORE_BOOKS, ...EXTENDED_BOOKS, ...SLOW_BOOKS]
 
 const { parsePdfBuffer, PARSER_VERSION } = await import("../../index.js")
 
+requirePdftotext()
+
 let booksToRun = BOOKS
 if (bookFilter) {
   booksToRun = ALL_KNOWN_BOOKS.filter((book) => book.id === bookFilter)
@@ -144,17 +146,16 @@ async function runBook(book) {
   const wordCount = parseResult.wordCount ?? countWordsInBlocks(blocks)
   const joined = blocks.map((block) => block.text ?? "").join(" ")
 
-  const rawWordCount = tryRawWordCount(pdfPath)
-  if (rawWordCount == null) {
-    console.warn(
-      `[${book.id}] pdftotext not available — skipping word count vs raw check`
-    )
+  const rawWordCountResult = tryRawWordCount(pdfPath)
+  if (rawWordCountResult.error) {
+    console.error(`[${book.id}] ${rawWordCountResult.error}`)
   }
 
   const checkConfig = {
     chapters,
     pageCount,
-    rawWordCount,
+    rawWordCount: rawWordCountResult.count,
+    pdftotextError: rawWordCountResult.error,
     sampleRng: createSeededRng(hashString(book.id)),
   }
 
@@ -380,6 +381,31 @@ function compareSnapshot(baseline, current) {
   }
 }
 
+function requirePdftotext() {
+  try {
+    execSync("pdftotext -v", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    })
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      console.error("")
+      console.error(DIVIDER)
+      console.error(
+        "ERROR: pdftotext is required for regression (word-count-vs-raw truncation check)."
+      )
+      console.error(
+        "Install Poppler and ensure pdftotext is on PATH. The suite will not run without it."
+      )
+      console.error(
+        "A missing truncation check is a failure, not a skip."
+      )
+      console.error(DIVIDER)
+      process.exit(1)
+    }
+  }
+}
+
 function tryRawWordCount(pdfPath) {
   try {
     const quoted = process.platform === "win32" ? `"${pdfPath}"` : `'${pdfPath}'`
@@ -388,9 +414,22 @@ function tryRawWordCount(pdfPath) {
       maxBuffer: 64 * 1024 * 1024,
       stdio: ["ignore", "pipe", "ignore"],
     })
-    return output.split(/\s+/).filter(Boolean).length
-  } catch {
-    return null
+    return {
+      count: output.split(/\s+/).filter(Boolean).length,
+      error: null,
+    }
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return {
+        count: null,
+        error:
+          "pdftotext is not on PATH (install Poppler). Word-count-vs-raw cannot run.",
+      }
+    }
+    return {
+      count: null,
+      error: `pdftotext failed to extract text from this PDF (${error.message}).`,
+    }
   }
 }
 

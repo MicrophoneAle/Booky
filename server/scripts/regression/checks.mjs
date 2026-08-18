@@ -328,12 +328,16 @@ export function headingDensitySane(blocks) {
 }
 
 export function wordCountVsRaw(blocks, config) {
-  if (!config?.rawWordCount) {
+  if (config?.rawWordCount == null) {
+    const reason =
+      config?.pdftotextError ??
+      "pdftotext is not available (install Poppler and put pdftotext on PATH)"
     return {
-      pass: true,
-      failures: [],
-      skipped: true,
-      summary: "skipped (pdftotext unavailable)",
+      pass: false,
+      failures: [
+        `Word-count-vs-raw truncation check could not run: ${reason}. This check is required and is not skippable.`,
+      ],
+      summary: reason,
     }
   }
 
