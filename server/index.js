@@ -50,7 +50,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 137
+const PARSER_VERSION = 138
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -1267,6 +1267,19 @@ const PART_ORDINAL_TOKEN_VALUES = {
   viii: 8,
   ix: 9,
   x: 10,
+}
+
+const PART_ORDINAL_VALUE_TO_WORD = {
+  1: "One",
+  2: "Two",
+  3: "Three",
+  4: "Four",
+  5: "Five",
+  6: "Six",
+  7: "Seven",
+  8: "Eight",
+  9: "Nine",
+  10: "Ten",
 }
 
 // Normalizes a part ordinal token ("One", "iii", "4") to its numeric value so
@@ -10461,19 +10474,72 @@ function supplementBannerlessPrintedChapters(blocks, printedToc) {
   })
 }
 
+function firstFiniteSourcePdfPageIndex(blocks, startIndex) {
+  if (!Array.isArray(blocks)) {
+    return null
+  }
+
+  for (let index = Math.max(0, startIndex); index < blocks.length; index += 1) {
+    const pageIndex = blocks[index]?.sourcePdfPageIndex
+    if (Number.isFinite(pageIndex)) {
+      return pageIndex
+    }
+  }
+
+  return null
+}
+
+function findPrintedTocPartChapterBannerIndex(blocks, chapterKey) {
+  return blocks.findIndex(
+    (block) =>
+      (block?.type === "image" || block?.type === "image_candidate") &&
+      block?.isChapterBoundary &&
+      block?.chapterMetadata?.boundaryKind === "chapter" &&
+      extractChapterKeyFromOcrNumber(block.chapterMetadata?.number) === chapterKey
+  )
+}
+
+function findPrintedTocPartHeadingIndex(blocks, partValue) {
+  return blocks.findIndex((block) => {
+    if (
+      !block?.isHeading ||
+      !block?.isChapterStart ||
+      block?.type === "image" ||
+      block?.type === "image_candidate"
+    ) {
+      return false
+    }
+    const match = (block.text ?? "").trim().match(/^part\s+([a-z0-9]+)\.?$/i)
+    return match ? resolvePartOrdinalValue(match[1]) === partValue : false
+  })
+}
+
+function makeSyntheticPartHeadingBlock(partValue, sourcePdfPageIndex) {
+  const word = PART_ORDINAL_VALUE_TO_WORD[partValue] ?? String(partValue)
+  const text = `PART ${word}`
+  return {
+    text,
+    isHeading: true,
+    fontSize: CHAPTER_DISPLAY_FONT_SIZE,
+    isChapterStart: true,
+    chapterId: null,
+    chapterTitle: text,
+    sourcePdfPageIndex,
+    sourcePdfPageProvenance: [],
+  }
+}
+
 // The Way of Kings prints each "Part <N>" text label on the interlude-divider
 // spread at the END of that part (source pages 189/485/788 carry only the text
 // "Part One"/"Part Two"/"Part Three"), while the real part-opener plates before
-// chapters 1/12/29 are pure art with no text layer. Anchoring the label where
-// the text physically sits therefore places every part marker one full section
-// late - right before the interludes that follow its own chapters. Re-anchor
-// each late part heading block to sit immediately before its part's first
-// chapter banner, using the printed-TOC structure (a part slot is immediately
-// followed by its first chapter slot) as the source of truth for where the
-// part begins. The move only fires when the heading sits AFTER its target
-// banner, so books whose part headings already precede their first chapter
-// are untouched, and parts with no text heading at all (WoK Parts Four/Five)
-// have nothing to move and stay absent.
+// chapters 1/12/29/52/70 are pure art with no text layer. Printed-TOC order is
+// the source of truth: each part slot is followed by that part's first chapter.
+// Re-anchor existing late headings to sit immediately before that chapter
+// banner, copy the chapter's sourcePdfPageIndex onto the heading, and inject
+// a synthetic heading for parts that have no text label at all (WoK Four/Five).
+// Image-banner cursor helpers still skip part slots - consuming them would
+// relabel chapter arches as parts. appendImageBoundaryChapters still excludes
+// boundaryKind === "part" so plate OCR cannot create duplicate TOC entries.
 function reanchorLatePartHeadingBlocks(blocks, printedToc) {
   const ordered = printedToc?.ordered
   if (
@@ -10512,35 +10578,65 @@ function reanchorLatePartHeadingBlocks(blocks, printedToc) {
   const result = [...blocks]
 
   for (const [partValue, chapterKey] of firstChapterKeyByPartValue) {
-    const headingIndex = result.findIndex((block) => {
-      if (
-        !block?.isHeading ||
-        !block?.isChapterStart ||
-        block?.type === "image" ||
-        block?.type === "image_candidate"
-      ) {
-        return false
+    const bannerIndex = findPrintedTocPartChapterBannerIndex(result, chapterKey)
+    if (bannerIndex < 0) {
+      continue
+    }
+
+    const anchorPage = firstFiniteSourcePdfPageIndex(result, bannerIndex)
+    const headingIndex = findPrintedTocPartHeadingIndex(result, partValue)
+
+    if (headingIndex >= 0) {
+      const headingBlock = Number.isFinite(anchorPage)
+        ? { ...result[headingIndex], sourcePdfPageIndex: anchorPage }
+        : result[headingIndex]
+
+      if (headingIndex <= bannerIndex) {
+        result[headingIndex] = headingBlock
+        if (BOOKY_TOC_ORDER_DEBUG) {
+          console.log(
+            "[partReanchor]",
+            JSON.stringify({
+              part: partValue,
+              firstChapter: chapterKey,
+              action: "page-only",
+              headingIndex,
+              bannerIndex,
+              sourcePdfPageIndex: headingBlock.sourcePdfPageIndex,
+            })
+          )
+        }
+        continue
       }
-      const match = (block.text ?? "").trim().match(/^part\s+([a-z0-9]+)\.?$/i)
-      return match ? resolvePartOrdinalValue(match[1]) === partValue : false
-    })
-    if (headingIndex < 0) {
+
+      result.splice(headingIndex, 1)
+      result.splice(bannerIndex, 0, headingBlock)
+
+      if (BOOKY_TOC_ORDER_DEBUG) {
+        console.log(
+          "[partReanchor]",
+          JSON.stringify({
+            part: partValue,
+            firstChapter: chapterKey,
+            action: "move+page",
+            fromBlockIndex: headingIndex,
+            toBlockIndex: bannerIndex,
+            sourcePdfPageIndex: headingBlock.sourcePdfPageIndex,
+          })
+        )
+      }
       continue
     }
 
-    const bannerIndex = result.findIndex(
-      (block) =>
-        (block?.type === "image" || block?.type === "image_candidate") &&
-        block?.isChapterBoundary &&
-        block?.chapterMetadata?.boundaryKind === "chapter" &&
-        extractChapterKeyFromOcrNumber(block.chapterMetadata?.number) === chapterKey
+    if (!Number.isFinite(anchorPage)) {
+      continue
+    }
+
+    result.splice(
+      bannerIndex,
+      0,
+      makeSyntheticPartHeadingBlock(partValue, anchorPage)
     )
-    if (bannerIndex < 0 || headingIndex <= bannerIndex) {
-      continue
-    }
-
-    const [headingBlock] = result.splice(headingIndex, 1)
-    result.splice(bannerIndex, 0, headingBlock)
 
     if (BOOKY_TOC_ORDER_DEBUG) {
       console.log(
@@ -10548,8 +10644,9 @@ function reanchorLatePartHeadingBlocks(blocks, printedToc) {
         JSON.stringify({
           part: partValue,
           firstChapter: chapterKey,
-          fromBlockIndex: headingIndex,
+          action: "inject",
           toBlockIndex: bannerIndex,
+          sourcePdfPageIndex: anchorPage,
         })
       )
     }

@@ -4,11 +4,11 @@ import { findChapter, hasContiguousNumbers } from "../helpers.mjs"
 // Parts One-Five, chapters 1-75 (including 69 JUSTICE and 70 SEA OF GLASS),
 // interludes, Epilogue. Confirmed by raw pdfjs scan of those pages.
 //
-// Reader TOC deliberately omits Parts Four/Five (no text headings; filtered
-// from image boundaries) - see CLAUDE.md. Expected reader entries:
-//   Prelude + Prologue + Parts One-Three + 75 chapters + 9 interludes + Epilogue
-//   = 90.
-const WOK_EXPECTED_READER_CHAPTERS = 90
+// Reader TOC includes all five printed-Contents parts, each anchored to its
+// first following chapter. Expected reader entries:
+//   Prelude + Prologue + Parts One-Five + 75 chapters + 9 interludes + Epilogue
+//   = 92.
+const WOK_EXPECTED_READER_CHAPTERS = 92
 const WOK_NUMBERED_CHAPTERS = 75
 const WOK_EXPECTED_INTERLUDES = 9
 
@@ -56,7 +56,7 @@ export default {
       (ctx) => Boolean(findChapter(ctx.chapters, /Prologue/i)),
     ],
     [
-      "Parts One-Three present; Four/Five absent from reader TOC",
+      "Parts One-Five present in reader TOC",
       (ctx) => {
         const titles = ctx.chapters.map((chapter) => chapter.title ?? "")
         const hasOne = titles.some((title) => /Part\s+One\b/i.test(title))
@@ -64,7 +64,7 @@ export default {
         const hasThree = titles.some((title) => /Part\s+Three\b/i.test(title))
         const hasFour = titles.some((title) => /Part\s+Four\b/i.test(title))
         const hasFive = titles.some((title) => /Part\s+Five\b/i.test(title))
-        return hasOne && hasTwo && hasThree && !hasFour && !hasFive
+        return hasOne && hasTwo && hasThree && hasFour && hasFive
       },
     ],
     [

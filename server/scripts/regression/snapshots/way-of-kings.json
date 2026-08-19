@@ -1,8 +1,8 @@
 {
-  "parserVersion": 137,
-  "totalBlocks": 16072,
-  "totalWords": 380633,
-  "chapterCount": 90,
+  "parserVersion": 138,
+  "totalBlocks": 16074,
+  "totalWords": 380637,
+  "chapterCount": 92,
   "chapterTitles": [
     "Prelude to the Stormlight Archive",
     "Prologue: To Kill",
@@ -69,6 +69,7 @@
     "Interlude I-7: Baxil",
     "Interlude I-8: Geranid",
     "Interlude I-9: Death Wears White",
+    "PART Four",
     "Chapter 52: A Highway To The Sun",
     "Chapter 53: Dunny",
     "Chapter 54: Gibletish",
@@ -87,6 +88,7 @@
     "Chapter 67: Words",
     "Chapter 68: Eshonai",
     "Chapter 69: Justice",
+    "PART Five",
     "Chapter 70: Sea Of Glass",
     "Chapter 71: Recorded In Blood",
     "Chapter 72: Veristitalian",
@@ -97,7 +99,7 @@
   ],
   "firstBlockText": "",
   "lastBlockText": "REVERSE LASHING: GIVING AN OBJECT A GRAVITATIONAL I believe this may actually be",
-  "headingCount": 8,
+  "headingCount": 10,
   "avgBlockLength": 135,
   "proseBlockCount": 16064,
   "frontMatter": {
@@ -215,10 +217,10 @@
       "title": "PART One",
       "blockCount": 1,
       "types": "h",
-      "pageMin": 188,
-      "pageMax": 188,
+      "pageMin": 43,
+      "pageMax": 43,
       "openPages": [
-        188
+        43
       ],
       "open": [
         "PART One"
@@ -226,7 +228,7 @@
       "closePages": [],
       "close": [],
       "textHash": "46fa6bd6dfd5",
-      "pageHash": "d6061bbee6cf"
+      "pageHash": "44cb730c4204"
     },
     {
       "title": "Chapter 1: Stormblessed",
@@ -750,10 +752,10 @@
       "title": "PART Two",
       "blockCount": 1,
       "types": "h",
-      "pageMin": 484,
-      "pageMax": 484,
+      "pageMin": 208,
+      "pageMax": 208,
       "openPages": [
-        484
+        208
       ],
       "open": [
         "PART Two"
@@ -761,7 +763,7 @@
       "closePages": [],
       "close": [],
       "textHash": "c82a6d524039",
-      "pageHash": "a42e815c58f3"
+      "pageHash": "8df66f64b574"
     },
     {
       "title": "Chapter 12: Unity",
@@ -1507,10 +1509,10 @@
       "title": "PART Three",
       "blockCount": 1,
       "types": "h",
-      "pageMin": 787,
-      "pageMax": 787,
+      "pageMin": 511,
+      "pageMax": 511,
       "openPages": [
-        787
+        511
       ],
       "open": [
         "PART Three"
@@ -1518,7 +1520,7 @@
       "closePages": [],
       "close": [],
       "textHash": "9747f0a40494",
-      "pageHash": "fc091d39524c"
+      "pageHash": "2c69bc9b34fb"
     },
     {
       "title": "Chapter 29: Errorgance",
@@ -2483,6 +2485,23 @@
       "pageHash": "85c2efbd83d2"
     },
     {
+      "title": "PART Four",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 807,
+      "pageMax": 807,
+      "openPages": [
+        807
+      ],
+      "open": [
+        "PART Four"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "35b7f9af92a2",
+      "pageHash": "fce86e339dc3"
+    },
+    {
       "title": "Chapter 52: A Highway To The Sun",
       "blockCount": 322,
       "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
@@ -3147,6 +3166,23 @@
       ],
       "textHash": "0e7d509322c8",
       "pageHash": "6f3e5ddc3227"
+    },
+    {
+      "title": "PART Five",
+      "blockCount": 1,
+      "types": "h",
+      "pageMin": 1073,
+      "pageMax": 1073,
+      "openPages": [
+        1073
+      ],
+      "open": [
+        "PART Five"
+      ],
+      "closePages": [],
+      "close": [],
+      "textHash": "ca3b5818207a",
+      "pageHash": "be1722b1d104"
     },
     {
       "title": "Chapter 70: Sea Of Glass",
