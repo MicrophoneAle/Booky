@@ -13,13 +13,14 @@ node scripts/regression/run.mjs --book=way-of-kings
 node scripts/regression/run.mjs --full
 node scripts/regression/run.mjs --update-snapshots
 node scripts/regression/run.mjs --update-snapshots --full
+node scripts/regression/run.mjs --full --update-wrap-tail-baseline
 ```
 
 `--update-snapshots` without `--book=` refreshes all 14 books, including Way of Kings. `npm run regression:update` passes `--full` for the same reason.
 
 Exit code `0` when every selected book passes **blocking** checks, real (non-debt) book-specific assertions, and snapshot diff. Known-debt assertions are counted separately and do not fail the run.
 
-**Blocking general checks** (must pass): mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, word count vs raw body, TOC page-range monotonicity. `pdftotext` (Poppler) is required; the suite exits immediately if it is missing.
+**Blocking general checks** (must pass): mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, word count vs raw body, TOC page-range monotonicity, wrap-tail extract drops (increase vs known-bad baseline). `pdftotext` (Poppler) is required; the suite exits immediately if it is missing.
 
 **Advisory general checks** (reported as `[WARN]`, do not fail the run): scanner watermarks, dialogue attribution centering, orphaned fragments, paragraph continuity, indentation sampling, sourcePdfPageIndex-in-provenance. These surface parser debt on large books without blocking legacy parity tests.
 
@@ -49,6 +50,9 @@ scripts/regression/
   checks.mjs        # General checks (exported functions)
   wordCountBody.mjs # Narrative-body needles + slicer for wordCountVsRaw
   helpers.mjs       # Shared assertion helpers (contiguity, roman/arabic)
+  wrapTail.mjs      # looksLikeWrapTail classifier for extract-drop traces
+  wrapTailCheck.mjs # Known-bad wrap-tail scoreboard (blocking on increase)
+  wrapTailBaseline.mjs # Remaining wrap-tail counts to drive down
   snapshots/        # Committed JSON baselines (diffed on every run)
   books/
     oldman.mjs
@@ -157,6 +161,7 @@ Each book exports:
 12. **Dialogue split check** — quoted short lines after mid-sentence prose
 13. **Block sourcePdfPageIndex in provenance set** — advisory. `sourcePdfPageIndex` must be a member of `sourcePdfPageProvenance`. Cross-page wraps pass. Synthetic empty provenance is exempt.
 14. **TOC page ranges monotonic** — blocking. Each `chapterOrder` entry's `sourcePdfPageIndex` pageMin must be >= the previous entry's. Equal pageMin is allowed. Front matter is not in the sequence. Missing ranges fail rather than skip.
+15. **Wrap-tail extract drops (known-bad)** — blocking on increase only. The runner traces the existing `parsePdfBuffer` call with `onExtractDrop` (no second parse) and classifies drops with `looksLikeWrapTail` in `wrapTail.mjs`. Per-book counts in `wrapTailBaseline.mjs` are remaining extract deletions to drive **down**, not a target to hold. A book going above its recorded count fails. A book going below reports the improvement and still passes; record the new floor with `--update-wrap-tail-baseline` (refuses to write if any selected book increased). Mechanism split (displaced-left / recurring-header / substring-of-longer-line / displaced-right) is printed per book and again as a corpus footer so a later fix can be attributed. `test:assets` does not pass `onExtractDrop`, so this check skips there.
 
 ## Snapshots
 

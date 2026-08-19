@@ -8,6 +8,7 @@ import {
   countWordsInText,
   sliceNarrativeBody,
 } from "./wordCountBody.mjs"
+import { wrapTailExtractCheck } from "./wrapTailCheck.mjs"
 
 const DANGLING_ENDING_WORDS =
   /\b(?:of|the|a|an|and|but|or|nor|for|yet|so|left|fell|was|be|in|to|with|from|at|by|on|as|into|upon|about|over|after|before|through)\s*$/i
@@ -981,6 +982,11 @@ export const GENERAL_CHECKS = [
     id: "chapterOrderPagesMonotonic",
     label: "TOC page ranges monotonic",
     run: chapterOrderPagesMonotonic,
+  },
+  {
+    id: "wrapTailExtract",
+    label: "Wrap-tail extract drops (known-bad)",
+    run: wrapTailExtractCheck,
   },
 ]
 

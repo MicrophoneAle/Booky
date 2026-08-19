@@ -6,9 +6,12 @@
  *   node scripts/regression/run.mjs --full
  *   node scripts/regression/run.mjs --update-snapshots
  *   node scripts/regression/run.mjs --update-snapshots --full
+ *   node scripts/regression/run.mjs --full --update-wrap-tail-baseline
  *
  * --update-snapshots without --book refreshes all 14 books (includes Way of
  * Kings). Pairing it with --book= still updates a single title.
+ * --update-wrap-tail-baseline rewrites wrapTailBaseline.mjs only when no
+ * selected book increased its known-bad wrap-tail count.
  */
 
 import { execSync } from "node:child_process"
@@ -27,6 +30,16 @@ import {
   MAX_FAILURES_PER_CHECK,
   countWordsInBlocks,
 } from "./checks.mjs"
+import {
+  WRAP_TAIL_BOOK_BASELINE,
+  WRAP_TAIL_CORPUS_BASELINE,
+  WRAP_TAIL_MECHANISM_BASELINE,
+} from "./wrapTailBaseline.mjs"
+import {
+  WRAP_TAIL_MECHANISM_LABELS,
+  WRAP_TAIL_MECHANISM_ORDER,
+  formatMechanismBreakdown,
+} from "./wrapTail.mjs"
 import oldman from "./books/oldman.mjs"
 import orwell1984 from "./books/orwell1984.mjs"
 import monteCristo from "./books/monte-cristo.mjs"
@@ -80,11 +93,13 @@ const BLOCKING_GENERAL_CHECK_IDS = new Set([
   "dialogueSplitCheck",
   "wordCountVsRaw",
   "chapterOrderPagesMonotonic",
+  "wrapTailExtract",
 ])
 
 const args = process.argv.slice(2)
 const bookFilter = parseArgValue("--book")
 const updateSnapshots = args.includes("--update-snapshots")
+const updateWrapTailBaseline = args.includes("--update-wrap-tail-baseline")
 const includeFull = args.includes("--full")
 
 // Snapshot refresh must include Way of Kings. The default parse suite still
@@ -123,10 +138,14 @@ mkdirSync(SNAPSHOTS_DIR, { recursive: true })
 let booksPassed = 0
 let booksFailed = 0
 let knownDebtTotal = 0
+const wrapTailScores = []
 
 for (const book of booksToRun) {
   const bookResult = await runBook(book)
   knownDebtTotal += bookResult.knownDebt ?? 0
+  if (bookResult.wrapTail) {
+    wrapTailScores.push(bookResult.wrapTail)
+  }
   if (bookResult.pass) {
     booksPassed += 1
   } else {
@@ -141,6 +160,12 @@ console.log(
 )
 console.log(DIVIDER)
 
+reportWrapTailCorpus(wrapTailScores, booksToRun)
+
+if (updateWrapTailBaseline) {
+  applyWrapTailBaselineUpdate(wrapTailScores)
+}
+
 process.exit(booksFailed > 0 ? 1 : 0)
 
 async function runBook(book) {
@@ -153,7 +178,12 @@ async function runBook(book) {
 
   const started = performance.now()
   const buffer = readFileSync(pdfPath)
-  const parseResult = await parsePdfBuffer(buffer, book.file)
+  const extractDrops = []
+  const parseResult = await parsePdfBuffer(buffer, book.file, {
+    onExtractDrop(entry) {
+      extractDrops.push(entry)
+    },
+  })
   const elapsedSec = ((performance.now() - started) / 1000).toFixed(1)
 
   const contentWithChapters = parseResult.contentWithChapters ?? []
@@ -178,6 +208,7 @@ async function runBook(book) {
     rawText: rawWordCountResult.text,
     pdftotextError: rawWordCountResult.error,
     sampleRng: createSeededRng(hashString(book.id)),
+    extractDrops,
   }
 
   const ctx = {
@@ -203,6 +234,7 @@ async function runBook(book) {
   const generalResults = []
 
   const skipChecks = new Set(book.skipGeneralChecks ?? [])
+  let wrapTailScore = null
 
   for (const check of GENERAL_CHECKS) {
     if (skipChecks.has(check.id)) {
@@ -212,6 +244,9 @@ async function runBook(book) {
 
     const outcome = check.run(blocks, checkConfig)
     generalResults.push({ check, outcome })
+    if (check.id === "wrapTailExtract" && outcome.wrapTail) {
+      wrapTailScore = outcome.wrapTail
+    }
     const blocking = BLOCKING_GENERAL_CHECK_IDS.has(check.id)
 
     if (outcome.skipped) {
@@ -326,7 +361,7 @@ async function runBook(book) {
       : "FAILURE"
   console.log(`RESULT: ${statusLabel}`)
 
-  return { pass: bookPass, knownDebt }
+  return { pass: bookPass, knownDebt, wrapTail: wrapTailScore }
 }
 
 function evaluateAssertion(entry, ctx) {
@@ -762,5 +797,144 @@ function createSeededRng(seed) {
   return () => {
     state = (state * 1664525 + 1013904223) >>> 0
     return state / 0x100000000
+  }
+}
+
+function mergeWrapTailMechanisms(scores) {
+  const byMechanism = {}
+  for (const score of scores) {
+    for (const [key, count] of Object.entries(score.byMechanism ?? {})) {
+      byMechanism[key] = (byMechanism[key] || 0) + count
+    }
+  }
+  return byMechanism
+}
+
+function reportWrapTailCorpus(scores, books) {
+  if (scores.length === 0) {
+    return
+  }
+
+  const liveTotal = scores.reduce((sum, score) => sum + score.count, 0)
+  const byMechanism = mergeWrapTailMechanisms(scores)
+  const fullIds = Object.keys(WRAP_TAIL_BOOK_BASELINE)
+  const ranFullCorpus =
+    books.length === fullIds.length &&
+    fullIds.every((id) => scores.some((score) => score.bookId === id))
+
+  console.log("")
+  console.log("Wrap-tail extract drops (known-bad, not a target):")
+  if (ranFullCorpus) {
+    const delta = liveTotal - WRAP_TAIL_CORPUS_BASELINE
+    const deltaNote =
+      delta === 0
+        ? `matches recorded ${WRAP_TAIL_CORPUS_BASELINE}`
+        : delta < 0
+          ? `${liveTotal} vs recorded ${WRAP_TAIL_CORPUS_BASELINE} (${delta})`
+          : `${liveTotal} vs recorded ${WRAP_TAIL_CORPUS_BASELINE} (+${delta})`
+    console.log(`  corpus ${liveTotal} (${deltaNote})`)
+  } else {
+    console.log(
+      `  corpus ${liveTotal} across ${scores.length} books (full-suite recorded total is ${WRAP_TAIL_CORPUS_BASELINE})`
+    )
+  }
+
+  for (const score of scores) {
+    const bookDelta = score.count - score.baseline
+    const deltaLabel =
+      bookDelta === 0 ? "" : bookDelta < 0 ? ` (${bookDelta})` : ` (+${bookDelta})`
+    console.log(`  ${score.bookId}: ${score.count}${deltaLabel}`)
+  }
+
+  console.log(`  mechanisms: ${formatMechanismBreakdown(byMechanism)}`)
+  if (ranFullCorpus) {
+    const expectedParts = WRAP_TAIL_MECHANISM_ORDER.map((key) => {
+      const live = byMechanism[key] || 0
+      const recorded = WRAP_TAIL_MECHANISM_BASELINE[key] || 0
+      const label = WRAP_TAIL_MECHANISM_LABELS[key] ?? key
+      return live === recorded
+        ? `${label} ${live}`
+        : `${label} ${live} (recorded ${recorded})`
+    })
+    console.log(`  recorded mechanisms: ${expectedParts.join(", ")}`)
+  }
+}
+
+function applyWrapTailBaselineUpdate(scores) {
+  const increased = scores.filter((score) => score.count > score.baseline)
+  if (increased.length > 0) {
+    console.error("")
+    console.error(
+      "Refusing --update-wrap-tail-baseline: known-bad count went up (do not raise the floor):"
+    )
+    for (const score of increased) {
+      console.error(`  ${score.bookId}: ${score.baseline} -> ${score.count}`)
+    }
+    process.exitCode = 1
+    return
+  }
+
+  const nextBooks = { ...WRAP_TAIL_BOOK_BASELINE }
+  for (const score of scores) {
+    nextBooks[score.bookId] = score.count
+  }
+
+  const fullIds = Object.keys(WRAP_TAIL_BOOK_BASELINE)
+  const ranFullCorpus =
+    scores.length === fullIds.length &&
+    fullIds.every((id) => scores.some((score) => score.bookId === id))
+  const nextMechanisms = ranFullCorpus
+    ? mergeWrapTailMechanisms(scores)
+    : { ...WRAP_TAIL_MECHANISM_BASELINE }
+  const nextCorpus = Object.values(nextBooks).reduce((sum, count) => sum + count, 0)
+
+  const bookLines = Object.entries(nextBooks)
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .map(([id, count]) => `  ${JSON.stringify(id)}: ${count},`)
+    .join("\n")
+
+  const mechanismLines = [
+    ...WRAP_TAIL_MECHANISM_ORDER.filter((key) => nextMechanisms[key] != null),
+    ...Object.keys(nextMechanisms).filter(
+      (key) => !WRAP_TAIL_MECHANISM_ORDER.includes(key)
+    ),
+  ]
+    .map((key) => `  ${JSON.stringify(key)}: ${nextMechanisms[key]},`)
+    .join("\n")
+
+  const contents = `/**
+ * Known-bad wrap-tail counts. These are defects to drive DOWN, not targets
+ * to maintain. Do not raise a number to make the check pass. A higher count
+ * means more leftover wrap lines were deleted at extract and never reached
+ * the reader.
+ *
+ * Recorded from parsePdfBuffer({ onExtractDrop }) + looksLikeWrapTail.
+ * Refresh with --update-wrap-tail-baseline after a real reduction. That
+ * flag refuses to write if any selected book went up.
+ */
+
+export const WRAP_TAIL_BASELINE_NOTE =
+  "known-bad extract wrap-tails; drive down, never treat as a target"
+
+export const WRAP_TAIL_BOOK_BASELINE = {
+${bookLines}
+}
+
+export const WRAP_TAIL_MECHANISM_BASELINE = {
+${mechanismLines}
+}
+
+export const WRAP_TAIL_CORPUS_BASELINE = ${nextCorpus}
+`
+
+  const baselinePath = path.join(__dirname, "wrapTailBaseline.mjs")
+  writeFileSync(baselinePath, contents, "utf8")
+  console.log("")
+  if (!ranFullCorpus) {
+    console.log(
+      `Updated ${baselinePath} for ${scores.length} book(s); mechanism totals left unchanged (run --full to refresh them).`
+    )
+  } else {
+    console.log(`Updated ${baselinePath} (corpus ${nextCorpus}).`)
   }
 }
