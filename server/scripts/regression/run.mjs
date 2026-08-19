@@ -79,6 +79,7 @@ const BLOCKING_GENERAL_CHECK_IDS = new Set([
   "noEmptyBlocks",
   "dialogueSplitCheck",
   "wordCountVsRaw",
+  "chapterOrderPagesMonotonic",
 ])
 
 const args = process.argv.slice(2)
@@ -171,6 +172,7 @@ async function runBook(book) {
   const checkConfig = {
     bookId: book.id,
     chapters,
+    contentWithChapters,
     pageCount,
     rawWordCount: rawWordCountResult.count,
     rawText: rawWordCountResult.text,

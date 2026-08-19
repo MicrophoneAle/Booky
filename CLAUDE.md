@@ -41,7 +41,7 @@ Booky/
 │   ├── pdfImageRoleUtils.js            # Image geometry constants and helpers
 │   ├── reformattedExportService.js     # HTML/PDF export path (separate from reader parse)
 │   └── scripts/
-│       ├── regression/                 # `npm run regression` (13) / `regression:full` (14); 12 general checks
+│       ├── regression/                 # `npm run regression` (13) / `regression:full` (14); 14 general checks
 │       ├── debug-*.mjs                 # Ad-hoc book-specific diagnostics (~40 scripts)
 │       └── test-*.mjs, verify-*.mjs    # More ad-hoc diagnostics (not debug-* prefixed)
 ├── supabase/migrations/                # documents baseline, parser_version, parse_status, parse_progress
@@ -116,6 +116,7 @@ Bump `PARSER_VERSION` in **both** files together. A bump invalidates parsed docu
 - **Ch69 "Justice" / Ch70 "Sea Of Glass"** - corrected in v116. The v115 "bannerless ch69" model was WRONG: ch69 has a real arch banner (p1052, followed by the Tanatanev death-rattle epigraph + Navani warcamp prose) and ch70 has one too (p1074, followed by Shallan's hospital-room prose and the Shadesmar beads scene). Through v115 the p1074 arch was silently suppressed because unanchored `/sketchbook/i` in `isMapOrGalleryIllustration`'s +-1-page scan matched ordinary narration on p1075 ("...a blank page in her sketchbook"), and `bannerlessReconcile` then papered over the missing slot by skipping ch69 + Part Five at the cursor, mislabeling p1052 as ch70 (both TOC entries navigated to Justice; Sea Of Glass was unreachable). v116 removed `bannerlessReconcile`/`bannerlessChapterAfter` entirely, start-anchored all caption patterns, and added a caption line-length gate. Both plates (p1051, p1073) stay plain illustrations. Verify this region with content evidence (Navani/Shallan/Jasnah name counts between arches), never with title greps - contiguous numbering does NOT prove correct anchoring.
 - **False part-divider match on p1051** historically skipped printed-TOC slots and shifted the tail; the portrait-band carve-out in `isLikelyStructuralPartDividerPlate` prevents this - do not remove it.
 - **Parts Four/Five** are injected as text headings anchored to the first chapter of each part (ch52 / ch70). Do not restore the old "absent from reader TOC" behavior, and do not reintroduce plate/opener detection for part anchors.
+- **WoK PART One/Two/Three** are expected `REORDER` hits in the advisory `sourcePdfPageIndexConsistentWithProvenance` check: `sourcePdfPageIndex` is the reading-position page (first chapter of the part), while provenance stays the extraction page of the late printed label. Do not "fix" them by copying provenance onto the reading page or by restoring extraction-page attribution.
 - **WoK is opt-in** via `npm run regression:full` / `--book=way-of-kings` (not in the default 13-book `npm run regression`). Ad-hoc scripts remain useful (`verify-wok-ch68-72.mjs`, `verify-wok-ch9-12.mjs`, `verify-wok-part5.mjs`, `debug-parse-wok.mjs`, `test-wok-graphic-fixes.mjs`, `server/scripts/_toc-verify.mjs`). Easy to regress if you only run the default suite.
 - Do not re-commit WoK debug dumps under `server/` or `server/scripts/` - they encode pre-v116 cursor behavior.
 - The TEMPORARY ch69 diagnostics (`[tocOrderedDump]`, `[regionDump]`, `[cursorTrace]`, `[tocReanchor]`, `[portraitBandScan]`, Step-A dumps) were removed in the cleanup pass; `[bannerlessReconcile]` went with the mechanism in v116. The load-bearing operational logs (`[partCursor]`, `[boundarySummary]`, `[chapterAssign]`, and `printed_toc_banner_slot_rejected` which names the sub-gate on every rejected banner slot) remain behind their debug flags.
@@ -184,5 +185,5 @@ Bump `PARSER_VERSION` in **both** files together. A bump invalidates parsed docu
   ```
 - **Default regression (13):** `oldman`, `orwell1984`, `monte-cristo`, `pride-prejudice`, `moby-dick`, `treasure-island`, `frankenstein`, `oliver-twist`, `jungle-book`, `aesop`, `metamorphosis`, `narnia`, `maya-angelou`.
 - **Opt-in (`regression:full`):** also `way-of-kings`.
-- **General checks:** 12 in `server/scripts/regression/checks.mjs` (see regression README for blocking vs advisory).
+- **General checks:** 14 in `server/scripts/regression/checks.mjs` (see regression README for blocking vs advisory).
 - **Snapshots:** committed under `server/scripts/regression/snapshots/` (refreshed with `npm run regression:update` when output intentionally changes).

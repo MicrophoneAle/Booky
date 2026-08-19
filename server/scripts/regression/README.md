@@ -19,9 +19,9 @@ node scripts/regression/run.mjs --update-snapshots --full
 
 Exit code `0` when every selected book passes **blocking** checks, real (non-debt) book-specific assertions, and snapshot diff. Known-debt assertions are counted separately and do not fail the run.
 
-**Blocking general checks** (must pass): mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, word count vs raw body. `pdftotext` (Poppler) is required; the suite exits immediately if it is missing.
+**Blocking general checks** (must pass): mid-sentence headings, heading density, chapter structure, TOC leakage, empty blocks, dialogue split, word count vs raw body, TOC page-range monotonicity. `pdftotext` (Poppler) is required; the suite exits immediately if it is missing.
 
-**Advisory general checks** (reported as `[WARN]`, do not fail the run): scanner watermarks, dialogue attribution centering, orphaned fragments, paragraph continuity, indentation sampling. These surface parser debt on large books without blocking legacy parity tests.
+**Advisory general checks** (reported as `[WARN]`, do not fail the run): scanner watermarks, dialogue attribution centering, orphaned fragments, paragraph continuity, indentation sampling, sourcePdfPageIndex-in-provenance. These surface parser debt on large books without blocking legacy parity tests.
 
 **Known-debt assertions** (reported as `[KNOWN-DEBT]`, do not fail the run): a book-specific assertion may pass a third `{ knownDebt: "reason" }` argument. The reason must be a sentence of at least 24 characters. The summary line prints `N pass, N fail, N known-debt` so the annotation stays visible. This lane is only for debt already investigated and consciously accepted. It cannot mark a general check, and it is not a way to hide dialogue-split or snapshot failures.
 
@@ -155,6 +155,8 @@ Each book exports:
 10. **Indentation consistent** — sampled middle prose blocks (`isIndented` rate)
 11. **No empty blocks** — skips `type: "image"` blocks, which legitimately have no text
 12. **Dialogue split check** — quoted short lines after mid-sentence prose
+13. **Block sourcePdfPageIndex in provenance set** — advisory. `sourcePdfPageIndex` must be a member of `sourcePdfPageProvenance`. Cross-page wraps pass. Synthetic empty provenance is exempt.
+14. **TOC page ranges monotonic** — blocking. Each `chapterOrder` entry's `sourcePdfPageIndex` pageMin must be >= the previous entry's. Equal pageMin is allowed. Front matter is not in the sequence. Missing ranges fail rather than skip.
 
 ## Snapshots
 

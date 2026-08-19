@@ -540,6 +540,157 @@ export function sourcePdfPageIndexConsistentWithProvenance(blocks) {
   return result(failures, failures.length ? summary : "no violations found")
 }
 
+function flattenContentBlocksForPageRanges(contentWithChapters) {
+  const items = []
+  for (const page of contentWithChapters ?? []) {
+    const pageBlocks = page.blocks ?? []
+    for (let blockIndex = 0; blockIndex < pageBlocks.length; blockIndex += 1) {
+      items.push({
+        pageIndex: page.pageIndex,
+        blockIndex,
+        block: pageBlocks[blockIndex],
+      })
+    }
+  }
+  return items
+}
+
+function sourcePdfPageRange(blocks) {
+  const pages = (blocks ?? [])
+    .map((block) => block?.sourcePdfPageIndex)
+    .filter((page) => Number.isFinite(page))
+  if (pages.length === 0) {
+    return { pageMin: null, pageMax: null }
+  }
+  return {
+    pageMin: Math.min(...pages),
+    pageMax: Math.max(...pages),
+  }
+}
+
+/**
+ * Same chapterOrder slicing the snapshots use: reading-order spans from each
+ * TOC entry's content-stream start to the next entry. Front matter is the
+ * prefix before the first entry and is not part of this sequence.
+ */
+function chapterOrderPageRanges(contentWithChapters, chapters) {
+  const flat = flattenContentBlocksForPageRanges(contentWithChapters)
+  const starts = (chapters ?? []).map((chapter) => {
+    const index = flat.findIndex(
+      (item) =>
+        item.pageIndex === chapter.pageIndex &&
+        item.blockIndex === chapter.blockIndex
+    )
+    return { chapter, index }
+  })
+
+  return starts.map((start, orderIndex) => {
+    const title = (start.chapter?.title ?? "").trim() || `(untitled ${orderIndex})`
+    if (start.index < 0) {
+      return {
+        orderIndex,
+        title,
+        pageMin: null,
+        pageMax: null,
+        missingStart: true,
+      }
+    }
+
+    let end = flat.length
+    for (const other of starts) {
+      if (other.index > start.index && other.index < end) {
+        end = other.index
+      }
+    }
+
+    const range = sourcePdfPageRange(
+      flat.slice(start.index, end).map((item) => item.block)
+    )
+    return {
+      orderIndex,
+      title,
+      pageMin: range.pageMin,
+      pageMax: range.pageMax,
+      missingStart: false,
+    }
+  })
+}
+
+/**
+ * TOC entries must not step backwards in sourcePdfPageIndex order.
+ *
+ * Front matter is not in this sequence (it sits before the first chapter by
+ * construction). Equal pageMin is allowed - a part heading and its first
+ * chapter often share a page. Entries with no finite sourcePdfPageIndex are
+ * failures, not skips: an unanchored TOC slot cannot be shown to be in order.
+ * Cover-title and scene-break blocks are not TOC entries, so they never
+ * appear here.
+ */
+export function chapterOrderPagesMonotonic(blocks, config) {
+  const failures = []
+  const entries = chapterOrderPageRanges(
+    config?.contentWithChapters,
+    config?.chapters
+  )
+
+  if (entries.length <= 1) {
+    return result(failures, "fewer than 2 TOC entries")
+  }
+
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index]
+    if (entry.missingStart) {
+      failures.push(
+        `[${index}] '${truncate(entry.title, 80)}' has no content-stream start`
+      )
+      continue
+    }
+    if (!Number.isFinite(entry.pageMin) || !Number.isFinite(entry.pageMax)) {
+      failures.push(
+        `[${index}] '${truncate(entry.title, 80)}' has no sourcePdfPageIndex range`
+      )
+      continue
+    }
+    if (entry.pageMax < entry.pageMin) {
+      failures.push(
+        `[${index}] '${truncate(entry.title, 80)}' inverted range ${entry.pageMin}-${entry.pageMax}`
+      )
+    }
+  }
+
+  for (let index = 1; index < entries.length; index += 1) {
+    const previous = entries[index - 1]
+    const current = entries[index]
+    if (!Number.isFinite(previous.pageMin) || !Number.isFinite(current.pageMin)) {
+      continue
+    }
+
+    if (current.pageMin < previous.pageMin) {
+      failures.push(
+        `[${index}] '${truncate(current.title, 80)}' pageMin ${current.pageMin} sits behind [${index - 1}] '${truncate(previous.title, 80)}' ${previous.pageMin}-${previous.pageMax}`
+      )
+      continue
+    }
+
+    if (
+      Number.isFinite(current.pageMax) &&
+      Number.isFinite(previous.pageMin) &&
+      current.pageMax < previous.pageMin
+    ) {
+      failures.push(
+        `[${index}] '${truncate(current.title, 80)}' range ${current.pageMin}-${current.pageMax} sits entirely behind [${index - 1}] '${truncate(previous.title, 80)}' ${previous.pageMin}-${previous.pageMax}`
+      )
+    }
+  }
+
+  return result(
+    failures,
+    failures.length
+      ? `${failures.length} TOC page-order step(s)`
+      : `${entries.length} TOC entries monotonic`
+  )
+}
+
 export function chapterStructureSane(blocks, config) {
   const failures = []
   const chapters = config?.chapters ?? []
@@ -825,6 +976,11 @@ export const GENERAL_CHECKS = [
     id: "sourcePdfPageIndexConsistentWithProvenance",
     label: "Block sourcePdfPageIndex in provenance set",
     run: (blocks) => sourcePdfPageIndexConsistentWithProvenance(blocks),
+  },
+  {
+    id: "chapterOrderPagesMonotonic",
+    label: "TOC page ranges monotonic",
+    run: chapterOrderPagesMonotonic,
   },
 ]
 

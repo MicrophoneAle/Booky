@@ -26,6 +26,7 @@ const BLOCKING_CHECK_IDS = new Set([
   "noTocLeakage",
   "noEmptyBlocks",
   "dialogueSplitCheck",
+  "chapterOrderPagesMonotonic",
 ])
 
 const { parsePdfBuffer, PARSER_VERSION } = await import("../index.js")
@@ -53,7 +54,12 @@ for (const file of pdfs) {
       parseResult.parsedText?.numpages ?? parseResult.contentWithChapters?.length ?? 0
     const wordCount = parseResult.wordCount ?? countWordsInBlocks(blocks)
 
-    const checkConfig = { chapters, pageCount, rawWordCount: null }
+    const checkConfig = {
+      chapters,
+      pageCount,
+      rawWordCount: null,
+      contentWithChapters: parseResult.contentWithChapters,
+    }
     const failures = []
     const warnings = []
 
