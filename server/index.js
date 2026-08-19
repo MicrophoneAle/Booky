@@ -51,7 +51,7 @@ import {
   takeNextSequentialTocEntryForImageBanner,
 } from "./stormlightEpigraphService.js"
 
-const PARSER_VERSION = 138
+const PARSER_VERSION = 139
 
 // Opt-in extract-drop observer. Default off (store unset). When parsePdfBuffer
 // is called with onExtractDrop, extractPdfStructure runs inside this ALS so
@@ -5232,6 +5232,51 @@ const MARGIN_CALLOUT_LONG_LINE_CHARS = 65
 const MARGIN_CALLOUT_SUBSTRING_PARENT_GAP = 12
 const MARGIN_CALLOUT_LEFT_DISPLACE_PX = 16
 const MARGIN_CALLOUT_RIGHT_DISPLACE_PX = 48
+const MARGIN_CALLOUT_FLUSH_CLUSTER_TOL_PX = 2
+const MARGIN_CALLOUT_FLUSH_WINDOW_PX = 60
+const MARGIN_CALLOUT_FLUSH_MIN_CLUSTER = 2
+
+// Flush left edge of the body column: the leftmost x-cluster (2px tolerance)
+// holding at least 2 non-centered lines, searched within [median - 60, median].
+// Indented paragraph starts dominate the median on dialogue-heavy pages, so a
+// flush-left paragraph ending sits one indent-depth left of the median and the
+// left-displacement test must measure from the flush edge instead. Returns a
+// value clamped at or below the median; null when the page has no qualifying
+// cluster (callers must then fall back to the median, preserving old behavior).
+function computeFlushLeftEdge(xs, median) {
+  const sorted = [...xs].sort((a, b) => a - b)
+  let cluster = null
+  for (const x of sorted) {
+    if (cluster && x - cluster.max <= MARGIN_CALLOUT_FLUSH_CLUSTER_TOL_PX) {
+      cluster.sum += x
+      cluster.count += 1
+      cluster.max = x
+    } else {
+      if (cluster) {
+        const center = cluster.sum / cluster.count
+        if (
+          cluster.count >= MARGIN_CALLOUT_FLUSH_MIN_CLUSTER &&
+          center >= median - MARGIN_CALLOUT_FLUSH_WINDOW_PX &&
+          center <= median + MARGIN_CALLOUT_FLUSH_CLUSTER_TOL_PX
+        ) {
+          return Math.min(center, median)
+        }
+      }
+      cluster = { sum: x, count: 1, max: x }
+    }
+  }
+  if (cluster) {
+    const center = cluster.sum / cluster.count
+    if (
+      cluster.count >= MARGIN_CALLOUT_FLUSH_MIN_CLUSTER &&
+      center >= median - MARGIN_CALLOUT_FLUSH_WINDOW_PX &&
+      center <= median + MARGIN_CALLOUT_FLUSH_CLUSTER_TOL_PX
+    ) {
+      return Math.min(center, median)
+    }
+  }
+  return null
+}
 
 const PROSE_BLOCKLIST_WORD_REGEX = /^(and|or|but|the|a|an)$/i
 
@@ -6618,6 +6663,11 @@ function dropMarginCalloutLines(lines, pageIndex = -1) {
     return lines
   }
   const bodyLeftX = medianValue(bodyXs)
+  // Left displacement measures from the flush edge (clamped <= bodyLeftX), so
+  // the displaced-left set can only shrink relative to the median baseline.
+  // Right displacement keeps the median - a lower left baseline must not widen
+  // right-side drops.
+  const flushLeftX = computeFlushLeftEdge(bodyXs, bodyLeftX) ?? bodyLeftX
 
   // Page-level measured bounds and body font for the prominent-title-word
   // carve-out (optical centering needs the full line extents on this page).
@@ -6713,7 +6763,7 @@ function dropMarginCalloutLines(lines, pageIndex = -1) {
           }
         } else {
           const x = Number.isFinite(line.x) ? line.x : bodyLeftX
-          const displacedLeft = x < bodyLeftX - MARGIN_CALLOUT_LEFT_DISPLACE_PX
+          const displacedLeft = x < flushLeftX - MARGIN_CALLOUT_LEFT_DISPLACE_PX
           const displacedRight = x > bodyLeftX + MARGIN_CALLOUT_RIGHT_DISPLACE_PX
 
           if (!displacedLeft && !displacedRight) {
