@@ -8,6 +8,7 @@ import multer from "multer"
 import { clerkMiddleware, getAuth } from "@clerk/express"
 import { createClient } from "@supabase/supabase-js"
 import crypto from "node:crypto"
+import { AsyncLocalStorage } from "node:async_hooks"
 import { getDocument, OPS, ImageKind } from "pdfjs-dist/legacy/build/pdf.mjs"
 import { createCanvas, loadImage } from "@napi-rs/canvas/node-canvas.js"
 import {
@@ -51,6 +52,17 @@ import {
 } from "./stormlightEpigraphService.js"
 
 const PARSER_VERSION = 138
+
+// Opt-in extract-drop observer. Default off (store unset). When parsePdfBuffer
+// is called with onExtractDrop, extractPdfStructure runs inside this ALS so
+// dropMarginCalloutLines and the document-level filter can report without
+// changing which lines are kept. Must stay a no-op on the keep path.
+const extractDropTrace = new AsyncLocalStorage()
+
+function recordExtractDrop(entry) {
+  extractDropTrace.getStore()?.(entry)
+}
+
 const BOOKY_BB_DEBUG = process.env.BOOKY_BB_DEBUG === "1"
 const BOOKY_TOC_MISS_DEBUG = process.env.BOOKY_TOC_MISS_DEBUG === "1"
 const BOOKY_TOC_ORDER_DEBUG = process.env.BOOKY_TOC_ORDER_DEBUG === "1"
@@ -6722,6 +6734,17 @@ function dropMarginCalloutLines(lines, pageIndex = -1) {
         }
       }
 
+      if (!keep && extractDropTrace.getStore()) {
+        recordExtractDrop({
+          stage: "dropMarginCalloutLines",
+          reason,
+          pageIndex,
+          text,
+          prev: previousText,
+          next: entries[entryIndex + 1]?.text ?? "",
+        })
+      }
+
       if (bbMatchesPhrase(text)) {
         bbLog("dropMarginCalloutLines", {
           pageIndex,
@@ -7152,6 +7175,58 @@ function shouldDropExtractedLine(
     lineFirstPageIndex,
     fontSize
   ).drop
+}
+
+function reasonForShouldDropExtractedLine(
+  line,
+  normalizedForDropCheck,
+  preserveSaddlebackLayoutLine,
+  distinctPageCount,
+  occurrencesOnThisPage,
+  pageIndex,
+  lineFirstPageIndex
+) {
+  if (
+    isStandalonePageNumberText(normalizedForDropCheck) &&
+    !preserveSaddlebackLayoutLine &&
+    !isRomanPartOpenerLine(normalizedForDropCheck, {
+      distinctPageCount,
+      fontSize: line.fontSize ?? 0,
+      centered: Boolean(line.centered),
+    })
+  ) {
+    return "standalone-page-number-normalized"
+  }
+
+  const primary = explainShouldDropExtractedLine(
+    line.text,
+    distinctPageCount,
+    occurrencesOnThisPage,
+    Boolean(line.centered),
+    pageIndex,
+    lineFirstPageIndex,
+    line.fontSize ?? 0
+  )
+  if (primary.drop) {
+    return primary.reason
+  }
+
+  if (normalizedForDropCheck && normalizedForDropCheck !== line.text.trim()) {
+    const pua = explainShouldDropExtractedLine(
+      normalizedForDropCheck,
+      distinctPageCount,
+      occurrencesOnThisPage,
+      Boolean(line.centered),
+      pageIndex,
+      lineFirstPageIndex,
+      line.fontSize ?? 0
+    )
+    if (pua.drop) {
+      return pua.reason
+    }
+  }
+
+  return "should-drop"
 }
 
 function groupTextItemsIntoLines(items, pageIndex = -1) {
@@ -9539,8 +9614,29 @@ async function extractPdfPageContent(pdf, pageNumber, headingStrings) {
 
 async function extractPdfStructure(
   buffer,
-  { onPageProcessed, onExtractReady, puaReplacementMap, pdf: pdfInput = null } = {}
+  {
+    onPageProcessed,
+    onExtractReady,
+    puaReplacementMap,
+    pdf: pdfInput = null,
+    onExtractDrop,
+  } = {}
 ) {
+  if (
+    typeof onExtractDrop === "function" &&
+    extractDropTrace.getStore() !== onExtractDrop
+  ) {
+    return extractDropTrace.run(onExtractDrop, () =>
+      extractPdfStructure(buffer, {
+        onPageProcessed,
+        onExtractReady,
+        puaReplacementMap,
+        pdf: pdfInput,
+        onExtractDrop,
+      })
+    )
+  }
+
   const pdf = pdfInput ?? (await loadPdfDocument(buffer))
   const puaMap = puaReplacementMap ?? buildDefaultPuaReplacementMap(buffer)
   const headingStrings = new Set()
@@ -9689,6 +9785,25 @@ async function extractPdfStructure(
             centered: Boolean(line.centered),
           })))
       ) {
+        if (extractDropTrace.getStore()) {
+          const lineIndex = page.lines.indexOf(line)
+          recordExtractDrop({
+            stage: "shouldDropExtractedLine",
+            reason: reasonForShouldDropExtractedLine(
+              line,
+              normalizedForDropCheck,
+              preserveSaddlebackLayoutLine,
+              distinctPageCount,
+              occurrencesOnThisPage,
+              pageIndex,
+              lineFirstPageIndex
+            ),
+            pageIndex,
+            text: line.text,
+            prev: page.lines[lineIndex - 1]?.text ?? "",
+            next: page.lines[lineIndex + 1]?.text ?? "",
+          })
+        }
         if (bbMatchesPhrase(line.text)) {
           bbLog("extractPdfStructure-filter", {
             pageIndex,
@@ -9702,6 +9817,17 @@ async function extractPdfStructure(
       }
 
       if (isAdjacentPageProseEcho(line.text, pageIndex, pagesBeforeFilter, line)) {
+        if (extractDropTrace.getStore()) {
+          const lineIndex = page.lines.indexOf(line)
+          recordExtractDrop({
+            stage: "isAdjacentPageProseEcho",
+            reason: "adjacent-page-prose-echo",
+            pageIndex,
+            text: line.text,
+            prev: page.lines[lineIndex - 1]?.text ?? "",
+            next: page.lines[lineIndex + 1]?.text ?? "",
+          })
+        }
         if (bbMatchesPhrase(line.text)) {
           bbLog("extractPdfStructure-filter", {
             pageIndex,
@@ -9715,6 +9841,17 @@ async function extractPdfStructure(
       }
 
       if (isSceneBreakOrnamentLine(line.text) && !line.centered) {
+        if (extractDropTrace.getStore()) {
+          const lineIndex = page.lines.indexOf(line)
+          recordExtractDrop({
+            stage: "sceneBreakNotCentered",
+            reason: "scene-break-not-centered",
+            pageIndex,
+            text: line.text,
+            prev: page.lines[lineIndex - 1]?.text ?? "",
+            next: page.lines[lineIndex + 1]?.text ?? "",
+          })
+        }
         if (bbMatchesPhrase(line.text)) {
           bbLog("extractPdfStructure-filter", {
             pageIndex,
@@ -13503,7 +13640,7 @@ function blocksToContent(blocks, blocksPerPage = 40) {
 async function parsePdfBuffer(
   buffer,
   fileName = "",
-  { onPageProcessed, onProgress, documentId } = {}
+  { onPageProcessed, onProgress, documentId, onExtractDrop } = {}
 ) {
   let progressSnapshot = null
   const reportProgress = (patch) => {
@@ -13549,6 +13686,7 @@ async function parsePdfBuffer(
     } = await extractPdfStructure(buffer, {
       pdf,
       puaReplacementMap,
+      onExtractDrop,
       onPageProcessed(pageNumber, totalPages, { extractSubphase = "text" } = {}) {
         onPageProcessed?.(pageNumber, totalPages)
 
