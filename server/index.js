@@ -13998,7 +13998,15 @@ async function parsePdfBuffer(
   await terminateOcrWorker()
 
   const imageBlockCount = blocks.filter((block) => block?.type === "image").length
-  if (documentId && imageBlockCount > 0) {
+  // Only persist illustrations for real documents. Debug/regression parses that
+  // pass a made-up documentId (e.g. "debug-wok-boundaries") used to dump every
+  // extracted image into the production book-assets bucket.
+  const isPersistedDocumentId =
+    typeof documentId === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      documentId
+    )
+  if (isPersistedDocumentId && imageBlockCount > 0) {
     reportProgress({
       phase: "uploading_assets",
       label: "Uploading book illustrations",
