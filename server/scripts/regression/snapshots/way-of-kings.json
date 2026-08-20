@@ -1,8 +1,8 @@
 {
-  "parserVersion": 138,
-  "totalBlocks": 16074,
-  "totalWords": 380637,
-  "chapterCount": 92,
+  "parserVersion": 139,
+  "totalBlocks": 16382,
+  "totalWords": 382751,
+  "chapterCount": 93,
   "chapterTitles": [
     "Prelude to the Stormlight Archive",
     "Prologue: To Kill",
@@ -95,18 +95,19 @@
     "Chapter 73: Trust",
     "Chapter 74: Ghostblood",
     "Chapter 75: In The Top Room",
-    "Epilogue: Of Most Worth"
+    "Epilogue: Of Most Worth",
+    "Endnote"
   ],
   "firstBlockText": "",
   "lastBlockText": "REVERSE LASHING: GIVING AN OBJECT A GRAVITATIONAL I believe this may actually be",
-  "headingCount": 10,
-  "avgBlockLength": 135,
-  "proseBlockCount": 16064,
+  "headingCount": 11,
+  "avgBlockLength": 133,
+  "proseBlockCount": 16371,
   "frontMatter": {
-    "blockCount": 26,
-    "types": "ihhpppppppphppppppppppppii",
+    "blockCount": 27,
+    "types": "ihhpppppppphpppppppppppppii",
     "pageMin": 0,
-    "pageMax": 8,
+    "pageMax": 14,
     "openPages": [
       null,
       0,
@@ -126,17 +127,17 @@
       "Elantris"
     ],
     "closePages": [
-      8,
+      14,
       null,
       null
     ],
     "close": [
-      "To finally have it happen—and on the novel of my heart that ",
+      "Endnote",
       "[image]",
       "[image]"
     ],
-    "textHash": "f23251e225e5",
-    "pageHash": "d26e2d67087b"
+    "textHash": "76d0eeb8f3b1",
+    "pageHash": "b53fb745c9ba"
   },
   "chapterOrder": [
     {
@@ -264,13 +265,13 @@
         "Either way, he couldn’t fight. You didn’t fight something li",
         "Cenn closed his eyes."
       ],
-      "textHash": "755adc97979b",
+      "textHash": "28d12efad086",
       "pageHash": "8bf8ef9bf253"
     },
     {
       "title": "Chapter 2: Honor Is Dead",
-      "blockCount": 181,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "blockCount": 184,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
       "pageMin": 56,
       "pageMax": 68,
       "openPages": [
@@ -301,8 +302,8 @@
         "He sank down, his back to the bars, and bowed his head. Defe",
         "[image]"
       ],
-      "textHash": "238e44e1ee7c",
-      "pageHash": "4084f63d2047"
+      "textHash": "296dee45edf3",
+      "pageHash": "4a4fc0c19f1f"
     },
     {
       "title": "Chapter 3: City Of Bells",
@@ -380,8 +381,8 @@
     },
     {
       "title": "Chapter 5: Heretic",
-      "blockCount": 165,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppip",
+      "blockCount": 174,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppip",
       "pageMin": 95,
       "pageMax": 107,
       "openPages": [
@@ -412,13 +413,13 @@
         "[image]",
         "Charcoal rubbing of a map of Sadeas’s warcamp as used by a c"
       ],
-      "textHash": "24ff5cf8313d",
-      "pageHash": "757a2c7bfa58"
+      "textHash": "487d710b56d6",
+      "pageHash": "98707e2ec39b"
     },
     {
       "title": "Chapter 6: Bridge Four",
-      "blockCount": 261,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 268,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 108,
       "pageMax": 126,
       "openPages": [
@@ -449,13 +450,13 @@
         "Kaladin walked, feeling numb. He’d thought that there was no",
         "It appeared that he’d been wrong. There had been something m"
       ],
-      "textHash": "ecfdb1125c59",
-      "pageHash": "a912b9dc9253"
+      "textHash": "a32e6708c317",
+      "pageHash": "7f6618f6d191"
     },
     {
       "title": "Chapter 7: Anything Reasonable",
-      "blockCount": 214,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 225,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 128,
       "pageMax": 144,
       "openPages": [
@@ -486,13 +487,13 @@
         "Shallan hurriedly gathered her things, leaving the letter on",
         "She did not look pleased."
       ],
-      "textHash": "53b6a70ab577",
-      "pageHash": "86fa4ed6e669"
+      "textHash": "7716ad7e7862",
+      "pageHash": "8ae4ec61de7a"
     },
     {
       "title": "Chapter 8: Nearer The Flame",
-      "blockCount": 316,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "blockCount": 319,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
       "pageMin": 145,
       "pageMax": 163,
       "openPages": [
@@ -523,8 +524,8 @@
         "Now her real task began.",
         "[image]"
       ],
-      "textHash": "5848a9d53689",
-      "pageHash": "5c2735e0b3c0"
+      "textHash": "435f2c0c2f14",
+      "pageHash": "36f8a7d91ec3"
     },
     {
       "title": "Chapter 9: Damnation",
@@ -565,8 +566,8 @@
     },
     {
       "title": "Chapter 10: Stories Of Surgeons",
-      "blockCount": 91,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 95,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 172,
       "pageMax": 178,
       "openPages": [
@@ -597,8 +598,8 @@
         "“You could be ten times the surgeon I am. Don’t dream the sm",
         "Kal hesitated, but soon found himself nodding."
       ],
-      "textHash": "803543167e01",
-      "pageHash": "91da69ddd1cd"
+      "textHash": "306ee92c3299",
+      "pageHash": "08121aa9f79a"
     },
     {
       "title": "Chapter 11: Droplets",
@@ -713,8 +714,8 @@
     },
     {
       "title": "Interlude I-3: The Glory Of Ignorance",
-      "blockCount": 88,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppiip",
+      "blockCount": 95,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppiip",
       "pageMin": 200,
       "pageMax": 207,
       "openPages": [
@@ -745,8 +746,8 @@
         "[image]",
         "Glyphpairs and plateau numbers have been removed to preserve"
       ],
-      "textHash": "0b93682f097b",
-      "pageHash": "4e03716b6d48"
+      "textHash": "95c2707146be",
+      "pageHash": "8d95a84ba826"
     },
     {
       "title": "PART Two",
@@ -767,8 +768,8 @@
     },
     {
       "title": "Chapter 12: Unity",
-      "blockCount": 296,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 303,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 208,
       "pageMax": 228,
       "openPages": [
@@ -799,13 +800,13 @@
         "Something dark—something mind-numbingly enormous—rose out of",
         "“Aw, Damnation,” Bashin said."
       ],
-      "textHash": "39300cb7ce3d",
-      "pageHash": "78d2d1dad94a"
+      "textHash": "eac9b5f691a4",
+      "pageHash": "f8869129a371"
     },
     {
       "title": "Chapter 13: Ten Heartbeats",
-      "blockCount": 112,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 111,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 229,
       "pageMax": 238,
       "openPages": [
@@ -813,7 +814,7 @@
         229,
         229,
         229,
-        229,
+        230,
         230,
         230,
         230
@@ -821,10 +822,10 @@
       "open": [
         "[banner] Ten Heartbeats",
         "I realize that you are probably still angry. That is pleasan",
-        "One. That was how long it took to summon a Shardblade. If Da",
-        "The chasmfiend towered like a mountain of interlocking carap",
-        "Chitin made a grinding noise against stone as the creature f",
-        "Six."
+        "On the battlefield, the passing of those beats could stretch",
+        "Five. Chitin made a grinding noise against stone as the crea",
+        "Six.",
+        "“To arms, to arms!” Elhokar bellowed ahead of Dalinar."
       ],
       "closePages": [
         238,
@@ -836,13 +837,13 @@
         "He ripped free the beast’s gemheart—the enormous gemstone th",
         "Elhokar held aloft the grisly prize, golden gloryspren appea"
       ],
-      "textHash": "5e6ac13d6b9a",
-      "pageHash": "31ddbc1b4e6a"
+      "textHash": "9405340b412e",
+      "pageHash": "4b7166d59f80"
     },
     {
       "title": "Chapter 14: Payday",
-      "blockCount": 184,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 187,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 239,
       "pageMax": 249,
       "openPages": [
@@ -869,17 +870,17 @@
         249
       ],
       "close": [
-        "“Scared to go onward,” Kaladin said, “but terrified to go ba",
+        "She nodded.",
         "“I know how you feel,” he said.",
-        "“Come on. I need to eat, and there are You do not agree with"
+        "“Come on. I need to eat, and there are some things I want to"
       ],
-      "textHash": "5fb79053bdb3",
-      "pageHash": "5ea52f98470d"
+      "textHash": "25277525a9e1",
+      "pageHash": "c4a1f6c48d99"
     },
     {
       "title": "Chapter 15: The Decoy",
-      "blockCount": 397,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppipp",
+      "blockCount": 401,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppipp",
       "pageMin": 250,
       "pageMax": 274,
       "openPages": [
@@ -894,7 +895,7 @@
       ],
       "open": [
         "[banner] The Decoy",
-        "Four hours after the chasmfiend attack, Adolin was still ove",
+        "You do not agree with my quest. I understand that, so much a",
         "Adolin walked amid the soldiers, gathering reports as the la",
         "He continued on his way, still wearing his Shardplate. The t",
         "Adolin glanced toward the pavilion, which tinkled with laugh",
@@ -910,8 +911,8 @@
         "Yes, best to keep this quiet. Dalinar had spoken truly when ",
         "He turned his mount and clopped up onto the bridge, then nod"
       ],
-      "textHash": "0ed83708d606",
-      "pageHash": "de4023c37cc8"
+      "textHash": "051ff5c23b4f",
+      "pageHash": "37a2a044d973"
     },
     {
       "title": "Chapter 16: Cocoons",
@@ -989,8 +990,8 @@
     },
     {
       "title": "Chapter 18: Highprince Of War",
-      "blockCount": 399,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 398,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 310,
       "pageMax": 332,
       "openPages": [
@@ -1021,8 +1022,8 @@
         "The occupants seemed shocked to see their highprince and his",
         "It began."
       ],
-      "textHash": "5aafd1632ceb",
-      "pageHash": "25f588184421"
+      "textHash": "c74a5060e008",
+      "pageHash": "746e23885702"
     },
     {
       "title": "Chapter 19: Starfalls",
@@ -1095,13 +1096,13 @@
         "“And when to let go. You’ll see. I had similar problems when",
         "In the distance, Harl continued to wail."
       ],
-      "textHash": "2da6088dfb95",
+      "textHash": "5f327a232151",
       "pageHash": "43d02a01f249"
     },
     {
       "title": "Chapter 21: Why Men Lie",
-      "blockCount": 218,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 236,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 352,
       "pageMax": 363,
       "openPages": [
@@ -1128,17 +1129,17 @@
         363
       ],
       "close": [
-        "Rock laughed, settling down.",
+        "“Well, I guess in that case, Rock will do just fine.” Rock l",
         "“Our bridgeleader has a plan. Something glorious and daring.",
         "“We need to gather a certain kind of plant. A reed that grow"
       ],
-      "textHash": "cdb5521e2b77",
-      "pageHash": "b25fecfb3bbe"
+      "textHash": "393a12c0e731",
+      "pageHash": "92c432ff98ce"
     },
     {
       "title": "Chapter 22: Eyes, Hands, Or Spheres",
-      "blockCount": 263,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 266,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 365,
       "pageMax": 380,
       "openPages": [
@@ -1153,11 +1154,11 @@
       ],
       "open": [
         "[banner] Eyes, Hands, Or Spheres",
-        "Presumably to prevent anyone from rising up to challenge Ray",
+        "In case you have turned a blind eye to that disaster, know t",
+        "“I’ve been to three more leatherworkers,” Adolin said softly",
         "“They have different opinions. It seems that even before the",
         "Dalinar nodded.",
-        "“That’s the only evidence that even hints there might “So we",
-        "“I’ll talk to Elhokar,” Dalinar decided."
+        "“That’s the only evidence that even hints there might be som"
       ],
       "closePages": [
         380,
@@ -1169,13 +1170,13 @@
         "“I had no idea you’d want the position, and Sadeas just seem",
         "“Vindicated?” Dalinar asked softly, still watching Sadeas. S"
       ],
-      "textHash": "90754fc21772",
-      "pageHash": "20fd80666feb"
+      "textHash": "d43435c13673",
+      "pageHash": "96c71912034d"
     },
     {
       "title": "Chapter 23: Many Uses",
-      "blockCount": 260,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "blockCount": 284,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
       "pageMin": 381,
       "pageMax": 395,
       "openPages": [
@@ -1197,7 +1198,7 @@
         "Those tufts were extremely important, for hidden among them "
       ],
       "closePages": [
-        394,
+        395,
         395,
         null
       ],
@@ -1206,13 +1207,13 @@
         "Either the others sensed his mood, or they felt what he’d sa",
         "[image]"
       ],
-      "textHash": "777e0ea109dc",
-      "pageHash": "34b80d462fa4"
+      "textHash": "812618431d2e",
+      "pageHash": "f447873732c3"
     },
     {
       "title": "Chapter 24: The Gallery Of Maps",
-      "blockCount": 167,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 168,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 397,
       "pageMax": 406,
       "openPages": [
@@ -1243,8 +1244,8 @@
         "“All right. Fine. But I want you to think about this. I want",
         "“Adolin. Go. ” Adolin gritted his teeth, but turned and stal"
       ],
-      "textHash": "877bd05a1653",
-      "pageHash": "7189518aa0a9"
+      "textHash": "b1a51b530858",
+      "pageHash": "94cfef1c456c"
     },
     {
       "title": "Chapter 25: The Butcher",
@@ -1322,8 +1323,8 @@
     },
     {
       "title": "Chapter 27: Chasm Duty",
-      "blockCount": 411,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 415,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 434,
       "pageMax": 457,
       "openPages": [
@@ -1354,13 +1355,13 @@
         "He had a feeling that Moash and the others would give in bef",
         "Now he had to keep them alive long enough for that to mean s"
       ],
-      "textHash": "b3a03c3a320f",
-      "pageHash": "6c50cd9d7c3a"
+      "textHash": "57fd8bcfa67a",
+      "pageHash": "7b78346df3f9"
     },
     {
       "title": "Chapter 28: Decision",
-      "blockCount": 426,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "blockCount": 425,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
       "pageMin": 458,
       "pageMax": 483,
       "openPages": [
@@ -1391,8 +1392,8 @@
         "It was over.",
         "[image]"
       ],
-      "textHash": "6ee4cadf0aba",
-      "pageHash": "93509174881a"
+      "textHash": "88958853c94f",
+      "pageHash": "bf3a3a5989e2"
     },
     {
       "title": "Interlude I-4: Rysn",
@@ -1470,8 +1471,8 @@
     },
     {
       "title": "Interlude I-6: A Work Of Art",
-      "blockCount": 89,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppii",
+      "blockCount": 94,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppii",
       "pageMin": 500,
       "pageMax": 508,
       "openPages": [
@@ -1502,8 +1503,8 @@
         "[image]",
         "[image]"
       ],
-      "textHash": "14ed8562374f",
-      "pageHash": "f2d19dfbe787"
+      "textHash": "5b920da7abaf",
+      "pageHash": "036a177a5eeb"
     },
     {
       "title": "PART Three",
@@ -1524,8 +1525,8 @@
     },
     {
       "title": "Chapter 29: Errorgance",
-      "blockCount": 319,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 323,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 511,
       "pageMax": 529,
       "openPages": [
@@ -1556,13 +1557,13 @@
         "“You still have a great deal of real work to do once you are",
         "“Yes, Brightness,” Shallan said. For once, however, she foun"
       ],
-      "textHash": "54d28eb1d6da",
-      "pageHash": "499b89c986f9"
+      "textHash": "5fb28bd4c1bd",
+      "pageHash": "d9843f05abef"
     },
     {
       "title": "Chapter 30: Darkness Unseen",
-      "blockCount": 147,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 149,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 530,
       "pageMax": 539,
       "openPages": [
@@ -1572,16 +1573,16 @@
         530,
         530,
         530,
-        531,
+        530,
         531
       ],
       "open": [
         "[banner] Darkness Unseen",
+        "“They were suddenly dangerous. Like a calm day that became a",
         "—This fragment is the origin of a Thaylen proverb that was e",
         "A group of twenty-nine men followed him. Slaves. Thieves. De",
         "They didn’t understand. Nobody survived a hundred bridge run",
-        "Bridge Four followed him. The last of the holdouts—a thin ma",
-        "Kaladin turned a blind eye to those. He’d eventually need th"
+        "Bridge Four followed him. The last of the holdouts—a thin ma"
       ],
       "closePages": [
         539,
@@ -1593,8 +1594,8 @@
         "“Well then. Perhaps we will.”",
         "Gaz smiled, watching Kaladin retreat. A disaster was exactly"
       ],
-      "textHash": "cdf836f165ee",
-      "pageHash": "a9fe423ea19e"
+      "textHash": "ca3cdb103be9",
+      "pageHash": "ccbf10b5f28d"
     },
     {
       "title": "Chapter 31: Beneath The Skin",
@@ -1672,8 +1673,8 @@
     },
     {
       "title": "Chapter 33: Cymatics",
-      "blockCount": 259,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 273,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 560,
       "pageMax": 575,
       "openPages": [
@@ -1704,8 +1705,8 @@
         "“Only if I’m wrong, child,” Jasnah said, turning back to her",
         "“And I rarely am.”"
       ],
-      "textHash": "7bbfb07cd010",
-      "pageHash": "0e5dd3a444d0"
+      "textHash": "79c1f7960c90",
+      "pageHash": "00578f84e098"
     },
     {
       "title": "Chapter 34: Stormwall",
@@ -1820,8 +1821,8 @@
     },
     {
       "title": "Chapter 37: Sides",
-      "blockCount": 277,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 292,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 604,
       "pageMax": 619,
       "openPages": [
@@ -1852,8 +1853,8 @@
         "“Very well,” Lirin said.",
         "“Kaladin.”"
       ],
-      "textHash": "0d4af21a5fd2",
-      "pageHash": "b59dd233a27a"
+      "textHash": "bb239bb7a7fc",
+      "pageHash": "575878e9b1be"
     },
     {
       "title": "Chapter 38: Envisager",
@@ -1889,13 +1890,13 @@
         "He’d have to be careful. A few spheres each day, but not too",
         "Best to keep it quiet, at least until he could figure out wh"
       ],
-      "textHash": "5e6f869af041",
+      "textHash": "8b4e948fb8a8",
       "pageHash": "47785db7be44"
     },
     {
       "title": "Chapter 39: Burned Into Her",
-      "blockCount": 85,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 86,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 626,
       "pageMax": 635,
       "openPages": [
@@ -1905,16 +1906,16 @@
         626,
         626,
         626,
-        627,
+        626,
         627
       ],
       "open": [
         "[banner] Burned Into Her",
+        "“Within a heartbeat, Alezarv was there, crossing a distance ",
         "—Another folktale, this one recorded in Among the Darkeyed, ",
         "She sat in her closetlike stone chamber in the Conclave. No ",
         "A single ruby broam cast a bloody light on her sketch. Usual",
-        "Despite that, she could see each of those scenes in her mind",
-        "She sat back from her drawing board, hand shaking, the pictu"
+        "Despite that, she could see each of those scenes in her mind"
       ],
       "closePages": [
         635,
@@ -1926,13 +1927,13 @@
         "For some reason, that made her feel even worse. Stealing the",
         "Yet another difficult decision. Well then, she thought, it’s"
       ],
-      "textHash": "3fe4f709eed5",
-      "pageHash": "54e5c303d049"
+      "textHash": "2a7db5d49177",
+      "pageHash": "9d8054689da0"
     },
     {
       "title": "Chapter 40: Eyes Of Red And Blue",
-      "blockCount": 225,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "blockCount": 227,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
       "pageMin": 636,
       "pageMax": 649,
       "openPages": [
@@ -1963,8 +1964,8 @@
         "He just wasn’t strong enough.",
         "[image]"
       ],
-      "textHash": "24e9bc9e9ce7",
-      "pageHash": "af26457154e7"
+      "textHash": "9be5ea84a0dd",
+      "pageHash": "09c0d542b174"
     },
     {
       "title": "Chapter 41: Of Alds And Milp",
@@ -2005,8 +2006,8 @@
     },
     {
       "title": "Chapter 42: Beggars And Barmaids",
-      "blockCount": 246,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 262,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 657,
       "pageMax": 672,
       "openPages": [
@@ -2024,8 +2025,8 @@
         "“Like a highstorm, regular in their coming, yet always unexp",
         "—The word Desolation is used twice in reference to their app",
         "“I’ve made my decision,” Shallan declared. Jasnah looked up ",
-        "“But it was not moral, and it certainly wasn’t ethical.”",
-        "“So morality and legality are distinct?”"
+        "“Very well.”",
+        "“What you did was both legal and right, in the strict sense "
       ],
       "closePages": [
         671,
@@ -2037,13 +2038,13 @@
         "Shallan sat, offering the bread and jam to Jasnah, who shook",
         "In one week, she’d have to leave. But in the meantime, she w"
       ],
-      "textHash": "e0fc678b2344",
-      "pageHash": "8169ace70c29"
+      "textHash": "b61142ca7144",
+      "pageHash": "03862daad38d"
     },
     {
       "title": "Chapter 43: The Wretch",
-      "blockCount": 232,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "blockCount": 234,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
       "pageMin": 673,
       "pageMax": 685,
       "openPages": [
@@ -2074,13 +2075,13 @@
         "Others began to chime in, each man standing, several grabbin",
         "[image]"
       ],
-      "textHash": "47ddec7c5778",
-      "pageHash": "2546abc073a8"
+      "textHash": "e4cb8123c203",
+      "pageHash": "159de17628d3"
     },
     {
       "title": "Chapter 44: The Weeping",
-      "blockCount": 221,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 232,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 687,
       "pageMax": 699,
       "openPages": [
@@ -2111,13 +2112,13 @@
         "“I promise it by the storms and the Almighty’s tenth name it",
         "I promise…."
       ],
-      "textHash": "fe87f5bd86cf",
-      "pageHash": "65849738e5c4"
+      "textHash": "d42588be1bdb",
+      "pageHash": "e7a98028e716"
     },
     {
       "title": "Chapter 45: Shadesmar",
-      "blockCount": 328,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 335,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 700,
       "pageMax": 721,
       "openPages": [
@@ -2148,13 +2149,13 @@
         "Jasnah gasped, immediately calling for help. She rushed to S",
         "This, Shallan thought, will not end well."
       ],
-      "textHash": "31bc7c9fae88",
-      "pageHash": "b41eb906729f"
+      "textHash": "72c2dfbd0503",
+      "pageHash": "d3641b564179"
     },
     {
       "title": "Chapter 46: Child Of Tanavast",
-      "blockCount": 333,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 342,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 722,
       "pageMax": 740,
       "openPages": [
@@ -2185,8 +2186,8 @@
         "“This darkness about you when you talk of them frightens me,",
         "He didn’t respond, just continuing on his way. He owed that "
       ],
-      "textHash": "e971eed67f07",
-      "pageHash": "fdb07464c58b"
+      "textHash": "d91773c12eb5",
+      "pageHash": "574b05a2e224"
     },
     {
       "title": "Chapter 47: Stormblessings",
@@ -2227,8 +2228,8 @@
     },
     {
       "title": "Chapter 48: Strawberry",
-      "blockCount": 157,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "blockCount": 167,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
       "pageMin": 756,
       "pageMax": 765,
       "openPages": [
@@ -2259,8 +2260,8 @@
         "Stormfather! Why was the room spinning so much? Jasnah gaspe",
         "[image]"
       ],
-      "textHash": "b8eb52aeda0b",
-      "pageHash": "3262829bc6de"
+      "textHash": "0d22bf6f1173",
+      "pageHash": "764f7e0ce9f3"
     },
     {
       "title": "Chapter 49: To Care",
@@ -2338,8 +2339,8 @@
     },
     {
       "title": "Chapter 51: Sas Nahn",
-      "blockCount": 73,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "blockCount": 75,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
       "pageMin": 781,
       "pageMax": 786,
       "openPages": [
@@ -2367,11 +2368,11 @@
       ],
       "close": [
         "Amaram hesitated by the door, resting the blunt edge of the ",
-        "“You are being discharged as a deserter and branded as a He ",
+        "“You are being discharged as a deserter and branded as a sla",
         "[image]"
       ],
-      "textHash": "9223ee34aaed",
-      "pageHash": "69e7f462b677"
+      "textHash": "a77c16e682f3",
+      "pageHash": "8f055b7f34ac"
     },
     {
       "title": "Interlude I-7: Baxil",
@@ -2403,17 +2404,17 @@
         792
       ],
       "close": [
+        "“Rather attached.”",
         "“Well, if you ever want that changed, start asking the mistr",
-        "Baxil said nothing further. The Old Magic, he thought. It co",
-        "Knowing his luck, though, he wouldn’t beable to find it. He "
+        "Baxil said nothing further. The Old Magic, he thought. It co"
       ],
-      "textHash": "82eef05c3f09",
+      "textHash": "f9407bc88cd3",
       "pageHash": "1441642a959a"
     },
     {
       "title": "Interlude I-8: Geranid",
-      "blockCount": 78,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 84,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 793,
       "pageMax": 797,
       "openPages": [
@@ -2428,11 +2429,11 @@
       ],
       "open": [
         "[banner] Geranid",
+        "“I’m thinking of changing my Calling,” Ashir said from behin",
         "Geranid nodded absently as she worked on her equations. The ",
         "“I’m tired of cooking,” Ashir continued. He had a soft, kind",
         "“I don’t have passion for it as I once did,” he continued.",
-        "“Besides, what good will a cook be in the Spiritual Realm?”",
-        "“Heralds need food,” she said absently, scratching out a lin"
+        "“Besides, what good will a cook be in the Spiritual Realm?”"
       ],
       "closePages": [
         796,
@@ -2444,8 +2445,8 @@
         "“I don’t know what it means yet, but it might very well chan",
         "She smiled, turning back to her equations. And for once, she"
       ],
-      "textHash": "3094b256cb3d",
-      "pageHash": "87d20ee6daeb"
+      "textHash": "77fc11d4e195",
+      "pageHash": "4996e87afb58"
     },
     {
       "title": "Interlude I-9: Death Wears White",
@@ -2503,8 +2504,8 @@
     },
     {
       "title": "Chapter 52: A Highway To The Sun",
-      "blockCount": 322,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 326,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 807,
       "pageMax": 825,
       "openPages": [
@@ -2531,12 +2532,12 @@
         825
       ],
       "close": [
+        "“Please,” he said, tense with emotion.",
         "“Just go. Do not taunt me today.” She hesitated, then walked",
-        "She would never know how much he wished her to have made one",
-        "Almighty above, he thought. Please. Just let me know what I "
+        "She would never know how much he wished her to have made one"
       ],
-      "textHash": "f769b81cedab",
-      "pageHash": "806349d93c1a"
+      "textHash": "468fd6a74787",
+      "pageHash": "79b1ac1be7eb"
     },
     {
       "title": "Chapter 53: Dunny",
@@ -2614,8 +2615,8 @@
     },
     {
       "title": "Chapter 55: An Emerald Broam",
-      "blockCount": 294,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 295,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 850,
       "pageMax": 865,
       "openPages": [
@@ -2646,13 +2647,13 @@
         "“Well, we need that rope,” Kaladin said, the plan beginning ",
         "“Do it, Lopen. I’ll make change from those spheres above to "
       ],
-      "textHash": "163e19542d69",
-      "pageHash": "4313213b2f59"
+      "textHash": "2c2ac269b1df",
+      "pageHash": "32bac2c95038"
     },
     {
       "title": "Chapter 56: That Storming Book",
-      "blockCount": 133,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "blockCount": 134,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
       "pageMin": 866,
       "pageMax": 878,
       "openPages": [
@@ -2662,16 +2663,16 @@
         866,
         866,
         866,
-        867,
+        866,
         867
       ],
       "open": [
         "[banner] That Storming Book",
+        "“Light grows so distant. The storm never stops. I am broken,",
         "—Dated Palahakev, 1173, 16 seconds pre-death. Subject: a Tha",
         "They came at him in pairs, each team trying to hit him from ",
         "Dalinar kept Gallant moving, dancing from side to side, swin",
-        "The Thrill excited him, strengthened him. He hadn’t experien",
-        "He turned Gallant just in time to confront two pairs of Pars"
+        "The Thrill excited him, strengthened him. He hadn’t experien"
       ],
       "closePages": [
         878,
@@ -2683,13 +2684,13 @@
         "You will need luck trying to understand me, Sadeas, he thoug",
         "[image]"
       ],
-      "textHash": "bba3df43f693",
-      "pageHash": "61a7492191f3"
+      "textHash": "7dedbbeb5520",
+      "pageHash": "a4da07dd577e"
     },
     {
       "title": "Chapter 57: Wandersail",
-      "blockCount": 379,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 403,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 880,
       "pageMax": 903,
       "openPages": [
@@ -2720,13 +2721,13 @@
         "Kaladin met his eyes, then smiled.",
         "“Well, we’re going to find out.”"
       ],
-      "textHash": "96591a4aff12",
-      "pageHash": "7b32efdab680"
+      "textHash": "c51255eb3098",
+      "pageHash": "7bc9d1fd57f6"
     },
     {
       "title": "Chapter 58: The Journey",
-      "blockCount": 318,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 325,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 904,
       "pageMax": 923,
       "openPages": [
@@ -2757,13 +2758,13 @@
         "Dalinar smiled.",
         "“I will do so, Sadeas.”"
       ],
-      "textHash": "fdf4a9919d8e",
-      "pageHash": "baf935691f5a"
+      "textHash": "3c1fc5e8ea62",
+      "pageHash": "496a9eccdb89"
     },
     {
       "title": "Chapter 59: An Honor",
-      "blockCount": 289,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 295,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 924,
       "pageMax": 941,
       "openPages": [
@@ -2780,9 +2781,9 @@
         "[banner] An Honor",
         "“Above the final void I hang, friends behind, friends before",
         "—Dated Betabanan, 1173, 45 seconds pre-death. Subject: a lig",
-        "He tried harder, staring into their depths. Nothing happened",
-        "“Maybe you don’t want it badly enough,” Teft said.",
-        "“I want it as badly as I know how. It won’t budge, Teft.”"
+        "The three little spheres—only chips—lit the stone ground aro",
+        "Nothing happened. He groaned, lying back on the rock, starin",
+        "“Maybe you don’t want it badly enough,” Teft said."
       ],
       "closePages": [
         941,
@@ -2794,13 +2795,13 @@
         "“We’ll see,” Kaladin said.",
         "“Just do it.”"
       ],
-      "textHash": "e748d2eae842",
-      "pageHash": "2ba3afed4fe7"
+      "textHash": "4d4f9074903b",
+      "pageHash": "6815001eb190"
     },
     {
       "title": "Chapter 60: That Which We Cannot Have",
-      "blockCount": 209,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppipp",
+      "blockCount": 217,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppipp",
       "pageMin": 942,
       "pageMax": 953,
       "openPages": [
@@ -2818,8 +2819,8 @@
         "“The death is my life, the strength becomes my weakness, the",
         "—Dated Betabanes, 1173, 95 seconds pre-death. Subject: a sch",
         "“That is why, Father,” Adolin said, “you absolutely cannot a",
-        "“Very well, you’ve convinced me.” Adolin stopped dead in the",
-        "“Really?” Adolin asked."
+        "“Is that so?” Dalinar asked, smiling to himself.",
+        "“Very well, you’ve convinced me.” Adolin stopped dead in the"
       ],
       "closePages": [
         null,
@@ -2831,13 +2832,13 @@
         "The room fell silent. Navani herself looked stunned by what ",
         "“Now, Dalinar,” she said, “I want you to describe this visio"
       ],
-      "textHash": "fd0e98f6b259",
-      "pageHash": "53991cd5f8f7"
+      "textHash": "446edf77ca15",
+      "pageHash": "6c425edc0bc1"
     },
     {
       "title": "Chapter 61: Right For Wrong",
-      "blockCount": 156,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 170,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 954,
       "pageMax": 962,
       "openPages": [
@@ -2856,7 +2857,7 @@
         "—Dated Kakanev, 1173, 13 seconds pre-death. Subject was a ci",
         "“How can you be so sure it was him, Dalinar?” Navani asked s",
         "“I just am. That was Nohadon.” It had been several hours sin",
-        "“It was him, Navani.” Dalinar stared toward the wall over Re"
+        "“But the man you saw never spoke his name,” Navani said."
       ],
       "closePages": [
         962,
@@ -2864,12 +2865,12 @@
         962
       ],
       "close": [
-        "“What? Seduced?” She glanced back at him.",
-        "“Dalinar, I’ve never been “I know,” Dalinar said, smiling.",
-        "“That was the seductive part.” He Blood of my fathers, he th"
+        "“I know,” Dalinar said, smiling.",
+        "“That was the seductive part.” He closed the door softly, th",
+        "Blood of my fathers, he thought, why can’t these things ever"
       ],
-      "textHash": "87daed388816",
-      "pageHash": "9bfb678a7022"
+      "textHash": "93aeb8173674",
+      "pageHash": "6dcfc4fa48c8"
     },
     {
       "title": "Chapter 62: Three Glyphs",
@@ -2910,8 +2911,8 @@
     },
     {
       "title": "Chapter 63: Fear",
-      "blockCount": 104,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
+      "blockCount": 106,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
       "pageMin": 977,
       "pageMax": 982,
       "openPages": [
@@ -2938,17 +2939,17 @@
         null
       ],
       "close": [
-        "“When the time comes, I hope you’re",
-        "Kaladin nodded and Teft hurried back to the others, giving s",
+        "“Well.” Teft rubbed his chin.",
+        "“When the time comes, I hope you’re ready. Because this lot ",
         "[image]"
       ],
-      "textHash": "89fb30d16fa1",
-      "pageHash": "f213e9afb8e2"
+      "textHash": "b10021aa65ba",
+      "pageHash": "c68abdb2f859"
     },
     {
       "title": "Chapter 64: A Man Of Extremes",
-      "blockCount": 149,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 155,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 984,
       "pageMax": 992,
       "openPages": [
@@ -2979,8 +2980,8 @@
         "“Very well,” Dalinar said.",
         "“Adolin, send messengers to mobilize the Fourth through Eigh"
       ],
-      "textHash": "3ca539bbd2e7",
-      "pageHash": "06ffca51a24d"
+      "textHash": "7f46187299c9",
+      "pageHash": "bf71de464761"
     },
     {
       "title": "Chapter 65: The Tower",
@@ -3058,8 +3059,8 @@
     },
     {
       "title": "Chapter 67: Words",
-      "blockCount": 301,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 305,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1011,
       "pageMax": 1031,
       "openPages": [
@@ -3090,8 +3091,8 @@
         "Kaladin raised his spear. The powerful light began to subsid",
         "Nearby, some of the Parshendi fled, though others stepped up"
       ],
-      "textHash": "0be17c6c7cf7",
-      "pageHash": "a4030655afdd"
+      "textHash": "51511672803d",
+      "pageHash": "b521c290b80c"
     },
     {
       "title": "Chapter 68: Eshonai",
@@ -3186,8 +3187,8 @@
     },
     {
       "title": "Chapter 70: Sea Of Glass",
-      "blockCount": 104,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 105,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1073,
       "pageMax": 1079,
       "openPages": [
@@ -3218,8 +3219,8 @@
         "“You wanted to be part of what I’m doing? Well, you’ll need ",
         "“It’s about the Voidbringers.”"
       ],
-      "textHash": "3fdbc7929bcc",
-      "pageHash": "8d54469b2fb2"
+      "textHash": "d85482d7c276",
+      "pageHash": "6f1de329bce3"
     },
     {
       "title": "Chapter 71: Recorded In Blood",
@@ -3260,8 +3261,8 @@
     },
     {
       "title": "Chapter 72: Veristitalian",
-      "blockCount": 58,
-      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 60,
+      "types": "bppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1087,
       "pageMax": 1089,
       "openPages": [
@@ -3288,17 +3289,17 @@
         1089
       ],
       "close": [
-        "Ash and fire.",
         "“Stormfather…” Shallan whispered, horrified.",
-        "“We didn’t destroy the Voidbringers,” Jasnah said from behin"
+        "“We didn’t destroy the Voidbringers,” Jasnah said from behin",
+        "“We enslaved them.” The chill spring weather might finally h"
       ],
-      "textHash": "41d2205d1b68",
-      "pageHash": "e9a881de794b"
+      "textHash": "d50619aa9749",
+      "pageHash": "68fdaa0b2c34"
     },
     {
       "title": "Chapter 73: Trust",
-      "blockCount": 197,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 211,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1090,
       "pageMax": 1099,
       "openPages": [
@@ -3329,8 +3330,8 @@
         "Twenty-seven men lived. He’d finally managed to save someone",
         "For now, that was enough."
       ],
-      "textHash": "cd3e01ffed08",
-      "pageHash": "6817097150c3"
+      "textHash": "13da3f988741",
+      "pageHash": "00cb46724e9c"
     },
     {
       "title": "Chapter 74: Ghostblood",
@@ -3408,10 +3409,10 @@
     },
     {
       "title": "Epilogue: Of Most Worth",
-      "blockCount": 88,
-      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppippppppppppppppppppp",
+      "blockCount": 63,
+      "types": "bpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1109,
-      "pageMax": 1118,
+      "pageMax": 1113,
       "openPages": [
         null,
         1109,
@@ -3431,6 +3432,43 @@
         "And, of course, there was a reason the people did what they "
       ],
       "closePages": [
+        1112,
+        1112,
+        1113
+      ],
+      "close": [
+        "“What is it we value?” Wit whispered.",
+        "“Innovation. Originality. Novelty. But most importantly… tim",
+        "THE END OF"
+      ],
+      "textHash": "b2dc58051d72",
+      "pageHash": "f4845fd4624c"
+    },
+    {
+      "title": "Endnote",
+      "blockCount": 27,
+      "types": "hppppppippppppppppppppppppp",
+      "pageMin": 1114,
+      "pageMax": 1118,
+      "openPages": [
+        1114,
+        1114,
+        1114,
+        1114,
+        1114,
+        1114,
+        1114,
+        null
+      ],
+      "open": [
+        "ENDNOTE",
+        "“Above silence, the illuminating storms—dying storms— illumi",
+        "The above sample is noteworthy as it is a ketek, a complex f",
+        "The complete poem must form a sentence that is grammatically",
+        "The fact that this one was uttered by an illiterate, dying H",
+        "We leave it to His Majesty’s mind, on a strong day, to puzzl"
+      ],
+      "closePages": [
         1118,
         1118,
         1118
@@ -3440,8 +3478,8 @@
         "To create a Full Lashing, a Windrunner would infuse an objec",
         "REVERSE LASHING: GIVING AN OBJECT A GRAVITATIONAL I believe "
       ],
-      "textHash": "e1dd05204ad8",
-      "pageHash": "7230fbbb48ca"
+      "textHash": "fdda7acac9f3",
+      "pageHash": "d8fb927d9f12"
     }
   ]
 }

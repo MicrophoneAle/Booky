@@ -1,7 +1,7 @@
 {
-  "parserVersion": 138,
-  "totalBlocks": 13287,
-  "totalWords": 454772,
+  "parserVersion": 139,
+  "totalBlocks": 13997,
+  "totalWords": 458248,
   "chapterCount": 122,
   "chapterTitles": [
     "VOLUME ONE",
@@ -130,8 +130,8 @@
   "firstBlockText": "The Count of Monte Cristo",
   "lastBlockText": "“Darling,” replied Valentine, “has not the count just told us that all human wis",
   "headingCount": 124,
-  "avgBlockLength": 192,
-  "proseBlockCount": 13163,
+  "avgBlockLength": 184,
+  "proseBlockCount": 13873,
   "frontMatter": {
     "blockCount": 3,
     "types": "hhp",
@@ -172,8 +172,8 @@
     },
     {
       "title": "VOLUME ONE — Chapter 1 - Marseilles—The Arrival",
-      "blockCount": 118,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 130,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1,
       "pageMax": 8,
       "openPages": [
@@ -204,13 +204,13 @@
         "The young sailor jumped into the skiff, and sat down in the ",
         "The shipowner, smiling, followed him with his eyes until he "
       ],
-      "textHash": "7ee2148876d6",
-      "pageHash": "2e7f533d011b"
+      "textHash": "f67de3f8ba5a",
+      "pageHash": "55551eec2eb2"
     },
     {
       "title": "VOLUME ONE — Chapter 2 - Father and Son",
-      "blockCount": 109,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 130,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 9,
       "pageMax": 15,
       "openPages": [
@@ -237,12 +237,12 @@
         15
       ],
       "close": [
-        "“Let us go the same way; we will stop at La Réserve, and we ",
+        "“Come along,” said Caderousse; “but you pay the score.”",
         "“Of course,” replied Danglars; and going quickly to the desi",
         "Père Pamphile had seen Dantès pass not ten minutes before; a"
       ],
-      "textHash": "1ba7200435f0",
-      "pageHash": "336b830219e7"
+      "textHash": "e4077ebe43d2",
+      "pageHash": "d2a49f26b90c"
     },
     {
       "title": "VOLUME ONE — Chapter 3 - The Catalans",
@@ -278,13 +278,13 @@
         "“Yes, yes, I understand,” said Danglars, and then in a low t",
         "“Thank you,” said Edmond with a friendly nod, and the two lo"
       ],
-      "textHash": "ac43438e041f",
+      "textHash": "f665ff121bb4",
       "pageHash": "c27778660fe9"
     },
     {
       "title": "VOLUME ONE — Chapter 4 - Conspiracy",
-      "blockCount": 88,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 98,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 25,
       "pageMax": 30,
       "openPages": [
@@ -301,9 +301,9 @@
         "Chapter 4 - Conspiracy",
         "Danglars followed Edmond and Mercédès with his eyes until th",
         "“Well, my dear sir,” said Danglars to Fernand, “here is a ma",
+        "“It drives me to despair,” said Fernand.",
         "“Do you, then, love Mercédès?”",
-        "“I adore her!”",
-        "“For long?”"
+        "“I adore her!”"
       ],
       "closePages": [
         30,
@@ -311,23 +311,23 @@
         30
       ],
       "close": [
-        "“Oh, you don’t see straight,” said Danglars; “he’s gone righ",
         "“Well,” said Caderousse, “I should have said not—how treache",
+        "is!”",
         "“Come, come,” said Danglars to himself, “now the thing is at"
       ],
-      "textHash": "adeb930e231a",
-      "pageHash": "817fa862f26a"
+      "textHash": "1df17c257539",
+      "pageHash": "0e416f165391"
     },
     {
       "title": "VOLUME ONE — Chapter 5 - The Marriage Feast",
-      "blockCount": 160,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 161,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 30,
       "pageMax": 43,
       "openPages": [
         30,
         30,
-        31,
+        30,
         31,
         31,
         31,
@@ -337,10 +337,10 @@
       "open": [
         "Chapter 5 - The Marriage Feast",
         "The morning’s sun rose clear and resplendent, touching the f",
+        "The feast had been made ready on the second floor at La Rése",
         "Various rumors were afloat to the effect that the owners of ",
         "Danglars, however, who now made his appearance, accompanied ",
-        "In fact, a moment later M. Morrel appeared and was saluted w",
-        "With the entrance of M. Morrel, Danglars and Caderousse were"
+        "In fact, a moment later M. Morrel appeared and was saluted w"
       ],
       "closePages": [
         42,
@@ -352,8 +352,8 @@
         "“So far, then,” said Danglars, mentally, “all has gone as I ",
         "So saying, he leaped into a boat, desiring to be rowed on bo"
       ],
-      "textHash": "a81ac06cddc7",
-      "pageHash": "66f88802760a"
+      "textHash": "e108fa2b4ab0",
+      "pageHash": "e6725e8a1035"
     },
     {
       "title": "VOLUME ONE — Chapter 6 - The Deputy Procureur du Roi",
@@ -394,8 +394,8 @@
     },
     {
       "title": "VOLUME ONE — Chapter 7 - The Examination",
-      "blockCount": 94,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 101,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 53,
       "pageMax": 61,
       "openPages": [
@@ -426,13 +426,13 @@
         "“This will do,” said he, “and from this letter, which might ",
         "I will make my fortune. Now to the work I have in hand.” And"
       ],
-      "textHash": "848cca69aea2",
-      "pageHash": "806e9b19e832"
+      "textHash": "633463988da8",
+      "pageHash": "080b9b6e21cb"
     },
     {
       "title": "VOLUME ONE — Chapter 8 - The Château d’If",
-      "blockCount": 104,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 109,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 61,
       "pageMax": 69,
       "openPages": [
@@ -463,32 +463,32 @@
         "“Yes; we must put the madman with the madmen.” The soldiers ",
         "He descended fifteen steps, and the door of a dungeon was op"
       ],
-      "textHash": "328cd8200a3c",
-      "pageHash": "7efb4b83d9da"
+      "textHash": "9af1f59ae8d4",
+      "pageHash": "4612bb07b806"
     },
     {
       "title": "VOLUME ONE — Chapter 9 - The Evening of the Betrothal",
-      "blockCount": 43,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 56,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 69,
       "pageMax": 74,
       "openPages": [
         69,
         69,
         69,
-        70,
-        70,
-        70,
+        69,
+        69,
+        69,
         70,
         70
       ],
       "open": [
         "Chapter 9 - The Evening of the Betrothal",
         "Villefort had, as we have said, hastened back to Madame de S",
-        "“Has the Corsican ogre broken loose?” cried a third.",
-        "“Marquise,” said Villefort, approaching his future mother-in",
-        "request your pardon for thus leaving you. Will the marquis h",
-        "“You are going to leave us?” cried Renée, unable to hide her"
+        "“Well, Decapitator, Guardian of the State, Royalist, Brutus,",
+        "“Speak out.”",
+        "“Are we threatened with a fresh Reign of Terror?” asked anot",
+        "“Has the Corsican ogre broken loose?” cried a third."
       ],
       "closePages": [
         74,
@@ -500,13 +500,13 @@
         "Villefort, after having received M. de Salvieux’s letter, em",
         "Old Dantès was dying with anxiety to know what had become of"
       ],
-      "textHash": "78aa0348ceea",
-      "pageHash": "508b1f586d40"
+      "textHash": "010ccc4d1ca9",
+      "pageHash": "236f500e5f4b"
     },
     {
       "title": "VOLUME ONE — Chapter 10 - The King’s Closet at the Tuileries",
-      "blockCount": 107,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 111,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 74,
       "pageMax": 80,
       "openPages": [
@@ -537,13 +537,13 @@
         "“A conspiracy in these times,” said Louis XVIII., smiling, “",
         "“Ah, here is M. Dandré!” cried de Blacas. At this instant th"
       ],
-      "textHash": "bf661459bce4",
-      "pageHash": "f0615f3c6c3f"
+      "textHash": "e11d1e4e4d62",
+      "pageHash": "0c149a34429c"
     },
     {
       "title": "VOLUME ONE — Chapter 11 - The Corsican Ogre",
-      "blockCount": 112,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 113,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 81,
       "pageMax": 89,
       "openPages": [
@@ -574,13 +574,13 @@
         "a corner and his hat on a chair, “allow me to say, my dear G",
         "“Leave us, Germain,” said Villefort. The servant quitted the"
       ],
-      "textHash": "e3667e2acdd4",
-      "pageHash": "980aeb1d10fc"
+      "textHash": "ba6cdf4e1668",
+      "pageHash": "bf9c4a8eadd7"
     },
     {
       "title": "VOLUME ONE — Chapter 12 - Father and Son",
-      "blockCount": 83,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 89,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 89,
       "pageMax": 95,
       "openPages": [
@@ -611,13 +611,13 @@
         "Villefort stood watching, breathless, until his father had d",
         "Marseilles, a prey to all the hopes and fears which enter in"
       ],
-      "textHash": "79d435be10b4",
-      "pageHash": "7830ed86d692"
+      "textHash": "cd7466ced7d0",
+      "pageHash": "ae44d7558d7c"
     },
     {
       "title": "VOLUME ONE — Chapter 13 - The Hundred Days",
-      "blockCount": 72,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 75,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 95,
       "pageMax": 101,
       "openPages": [
@@ -648,13 +648,13 @@
         "Caderousse was, like Fernand, enrolled in the army, but, bei",
         "There was more than benevolence in this action; there was co"
       ],
-      "textHash": "fe08fe53a464",
-      "pageHash": "6c50906a01d3"
+      "textHash": "2ed11fc0210e",
+      "pageHash": "e2bf89c13ea5"
     },
     {
       "title": "VOLUME ONE — Chapter 14 - The Two Prisoners",
-      "blockCount": 126,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 136,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 101,
       "pageMax": 109,
       "openPages": [
@@ -671,9 +671,9 @@
         "Chapter 14 - The Two Prisoners",
         "A year after Louis XVIII.‘s restoration, a visit was made by",
         "The inspector visited, one after another, the cells and dung",
-        "“Let us visit them,” said the inspector with an air of fatig",
-        "“We must play the farce to the end. Let us see the dungeons.",
-        "“Let us first send for two soldiers,” said the governor."
+        "The inspector asked if they had anything else to ask for. Th",
+        "“I do not know what reason government can assign for these u",
+        "“Yes; the dangerous and mad prisoners are in the dungeons.”"
       ],
       "closePages": [
         109,
@@ -685,13 +685,13 @@
         "This visit had infused new vigor into Dantès; he had, till t",
         "At the expiration of a year the governor was transferred; he"
       ],
-      "textHash": "308aa4e8c65c",
-      "pageHash": "efe769c96e5a"
+      "textHash": "9b8c5d41933a",
+      "pageHash": "7743d203c3bd"
     },
     {
       "title": "VOLUME ONE — Chapter 15 - Number 34 and Number 27",
-      "blockCount": 125,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 134,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 109,
       "pageMax": 121,
       "openPages": [
@@ -722,8 +722,8 @@
         "“Oh, yes, yes; this instant, I entreat you.”",
         "In a moment that part of the floor on which Dantès was resti"
       ],
-      "textHash": "948ccd7f033d",
-      "pageHash": "ea36d844ca7e"
+      "textHash": "f8497c53deef",
+      "pageHash": "76d80ebe978f"
     },
     {
       "title": "VOLUME ONE — Chapter 16 - A Learned Italian",
@@ -764,8 +764,8 @@
     },
     {
       "title": "VOLUME ONE — Chapter 17 - The Abbé’s Chamber",
-      "blockCount": 255,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 278,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 131,
       "pageMax": 150,
       "openPages": [
@@ -796,13 +796,13 @@
         "“I accept. You may one of these days reap the reward of your",
         "Dantès took the hand of the abbé in his, and affectionately "
       ],
-      "textHash": "bd5d154547c9",
-      "pageHash": "072dc3d1a686"
+      "textHash": "a65094090b8d",
+      "pageHash": "c537581d92a5"
     },
     {
       "title": "VOLUME ONE — Chapter 18 - The Treasure",
-      "blockCount": 96,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 101,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 150,
       "pageMax": 160,
       "openPages": [
@@ -833,8 +833,8 @@
         "“You are my son, Dantès,” exclaimed the old man.",
         "“You are the child of my captivity. My profession condemns m"
       ],
-      "textHash": "78284bc4b88b",
-      "pageHash": "afa8bdd6aa85"
+      "textHash": "c91537f49275",
+      "pageHash": "728a296dc59e"
     },
     {
       "title": "VOLUME ONE — Chapter 19 - The Third Attack",
@@ -912,8 +912,8 @@
     },
     {
       "title": "VOLUME ONE — Chapter 21 - The Island of Tiboulen",
-      "blockCount": 81,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 87,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 173,
       "pageMax": 181,
       "openPages": [
@@ -944,8 +944,8 @@
         "“The year 1829,” returned Jacopo. It was fourteen years, day",
         "This oath was no longer a vain menace; for the fastest sailo"
       ],
-      "textHash": "42044bcedb0c",
-      "pageHash": "79894241b573"
+      "textHash": "fc79fca8cfdc",
+      "pageHash": "64dcd6a65ba1"
     },
     {
       "title": "VOLUME ONE — Chapter 22 - The Smugglers",
@@ -1154,8 +1154,8 @@
     },
     {
       "title": "VOLUME ONE — Chapter 27 - The Story",
-      "blockCount": 152,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 157,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 218,
       "pageMax": 229,
       "openPages": [
@@ -1186,8 +1186,8 @@
         "“Fifty thousand francs!” muttered La Carconte when left alon",
         "****"
       ],
-      "textHash": "e444fbaa384c",
-      "pageHash": "e13d225111c3"
+      "textHash": "5353b180382d",
+      "pageHash": "308a13e48cf2"
     },
     {
       "title": "VOLUME TWO",
@@ -1208,8 +1208,8 @@
     },
     {
       "title": "VOLUME TWO — Chapter 28 - The Prison Register",
-      "blockCount": 75,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 89,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 229,
       "pageMax": 235,
       "openPages": [
@@ -1240,8 +1240,8 @@
         "Réserve, and which had the postmark, “Marseilles, 27th Febru",
         "“Thanks,” said the latter, closing the register with a slam,"
       ],
-      "textHash": "8446dd4b4e3a",
-      "pageHash": "a2fa18650904"
+      "textHash": "ffa2da3923ec",
+      "pageHash": "2b0b1584dcbe"
     },
     {
       "title": "VOLUME TWO — Chapter 29",
@@ -1319,8 +1319,8 @@
     },
     {
       "title": "VOLUME TWO — Chapter 31 - Italy: Sinbad the Sailor",
-      "blockCount": 210,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 227,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 257,
       "pageMax": 276,
       "openPages": [
@@ -1351,8 +1351,8 @@
         "They were the same statues, rich in form, in attraction, and",
         "It seemed to Franz that he closed his eyes, and in a last lo"
       ],
-      "textHash": "908453bc3883",
-      "pageHash": "a7e055b6aa9d"
+      "textHash": "757fcd045bf1",
+      "pageHash": "e8bb11813400"
     },
     {
       "title": "VOLUME TWO — Chapter 32 - The Waking",
@@ -1393,8 +1393,8 @@
     },
     {
       "title": "VOLUME TWO — Chapter 33 - Roman Bandits",
-      "blockCount": 218,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 235,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 282,
       "pageMax": 306,
       "openPages": [
@@ -1411,9 +1411,9 @@
         "Chapter 33 - Roman Bandits",
         "The next morning Franz woke first, and instantly rang the be",
         "“Well, excellency,” said the landlord triumphantly, and with",
+        "“Yes,” returned Franz, “for the very three days it is most n",
         "“What is the matter?” said Albert, entering; “no carriage to",
-        "“Just so,” returned Franz, “you have guessed it.”",
-        "“Well, your Eternal City is a nice sort of place.”"
+        "“Just so,” returned Franz, “you have guessed it.”"
       ],
       "closePages": [
         306,
@@ -1425,13 +1425,13 @@
         "“By the streets, morbleu! by the streets!” cried Franz.",
         "“Ah, my dear fellow,” said Albert, rising, and lighting his "
       ],
-      "textHash": "5b1abca2ef8c",
-      "pageHash": "12ccde065623"
+      "textHash": "bb615075d6fe",
+      "pageHash": "33411e376171"
     },
     {
       "title": "VOLUME TWO — Chapter 34 - The Colosseum",
-      "blockCount": 255,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 262,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 306,
       "pageMax": 330,
       "openPages": [
@@ -1462,8 +1462,8 @@
         "“Hush, hush!” replied Franz; “we shall ascertain who and wha",
         "comes!” As Franz spoke, he heard the sound of a door turning"
       ],
-      "textHash": "f8649ff21d02",
-      "pageHash": "d6e6ac88308f"
+      "textHash": "e02e067b740b",
+      "pageHash": "60de1414e4e1"
     },
     {
       "title": "VOLUME TWO — Chapter 35 - La Mazzolata",
@@ -1504,8 +1504,8 @@
     },
     {
       "title": "VOLUME TWO — Chapter 36 - The Carnival at Rome",
-      "blockCount": 153,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 160,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 342,
       "pageMax": 356,
       "openPages": [
@@ -1536,13 +1536,13 @@
         "The steps were crowded with masks, who strove to snatch each",
         "Franz found himself in utter darkness. No sound was audible "
       ],
-      "textHash": "f84f978287c6",
-      "pageHash": "5fa2870727a7"
+      "textHash": "14be1912fc2c",
+      "pageHash": "1973fbbc8e49"
     },
     {
       "title": "VOLUME TWO — Chapter 37 - The Catacombs of Saint Sebastian",
-      "blockCount": 221,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 241,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 356,
       "pageMax": 371,
       "openPages": [
@@ -1573,8 +1573,8 @@
         "“Now, my dear count,” he said, “let us on with all the speed",
         "“Madame,” said the Viscount of Morcerf, advancing towards th"
       ],
-      "textHash": "be38b14568d1",
-      "pageHash": "1f6552f6db39"
+      "textHash": "94c8049753b4",
+      "pageHash": "484ecb6b2496"
     },
     {
       "title": "VOLUME TWO — Chapter 38 - The Compact",
@@ -1615,8 +1615,8 @@
     },
     {
       "title": "VOLUME TWO — Chapter 39 - The Guests",
-      "blockCount": 74,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 88,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 379,
       "pageMax": 385,
       "openPages": [
@@ -1643,17 +1643,17 @@
         385
       ],
       "close": [
-        "“In the entire political world, of which you are one of the ",
-        "“They say that it is quite fair, and that sowing so much red",
-        "“Why do you not join our party, my dear Beauchamp? With your"
+        "“Why do you not join our party, my dear Beauchamp? With your",
+        "“I only await one thing before following your advice; that i",
+        "“You only breakfast; I await two persons, and the instant th"
       ],
-      "textHash": "16fffa0f88bf",
-      "pageHash": "03242a9dae5c"
+      "textHash": "380e63a2d51c",
+      "pageHash": "83f65634ac5f"
     },
     {
       "title": "VOLUME TWO — Chapter 40 - The Breakfast",
-      "blockCount": 335,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 337,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 386,
       "pageMax": 406,
       "openPages": [
@@ -1684,8 +1684,8 @@
         "“Directly I have given my card to the count, who has promise",
         "“Be sure I shall not fail to do so,” returned the count, bow"
       ],
-      "textHash": "db81654f4efb",
-      "pageHash": "6fb65898fc70"
+      "textHash": "eb405ba446d8",
+      "pageHash": "ea333f399b28"
     },
     {
       "title": "VOLUME TWO — Chapter 41 - The Presentation",
@@ -1795,13 +1795,13 @@
         "“Yes; but by careful search it might be recovered.”",
         "“Really,” returned the count, “relate it to me, for it begin"
       ],
-      "textHash": "281ccdc0e254",
+      "textHash": "36b168f70da9",
       "pageHash": "007d2bba5192"
     },
     {
       "title": "VOLUME TWO — Chapter 44 - The Vendetta",
-      "blockCount": 118,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 119,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 426,
       "pageMax": 442,
       "openPages": [
@@ -1819,8 +1819,8 @@
         "At what point shall I begin my story, your excellency?” aske",
         "“Where you please,” returned Monte Cristo, “since I know not",
         "“Some particulars, doubtless, but that is seven or eight yea",
-        "“Go on, M. Bertuccio; you will supply the want of the evenin",
-        "“The story begins in 1815.”"
+        "“Then I can speak without fear of tiring your excellency.”",
+        "“Go on, M. Bertuccio; you will supply the want of the evenin"
       ],
       "closePages": [
         442,
@@ -1832,8 +1832,8 @@
         "“At the same moment, and in the midst of the terrifying sile",
         "Caderousse and his wife started and looked aghast at each ot"
       ],
-      "textHash": "a07207826e58",
-      "pageHash": "9cf2e0f666ad"
+      "textHash": "0afb0f716d7e",
+      "pageHash": "717c62d62442"
     },
     {
       "title": "VOLUME TWO — Chapter 45 - The Rain of Blood",
@@ -1874,8 +1874,8 @@
     },
     {
       "title": "VOLUME TWO — Chapter 46 - Unlimited Credit",
-      "blockCount": 157,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 161,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 453,
       "pageMax": 464,
       "openPages": [
@@ -1906,13 +1906,13 @@
         "“With your permission,” said Danglars, bowing, “I will prece",
         "“By all means,” replied Monte Cristo; “I follow you.”"
       ],
-      "textHash": "bcbbeb0db86f",
-      "pageHash": "14483e698366"
+      "textHash": "1f1ae87c3a7f",
+      "pageHash": "411b7f0cf25c"
     },
     {
       "title": "VOLUME TWO — Chapter 47 - The Dappled Grays",
-      "blockCount": 98,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 97,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 464,
       "pageMax": 475,
       "openPages": [
@@ -1943,8 +1943,8 @@
         "—donned his dress suit, drew on a pair of white gloves, orde",
         "****"
       ],
-      "textHash": "f9cf132d9520",
-      "pageHash": "3fd9988a4438"
+      "textHash": "ec2bb90173a9",
+      "pageHash": "aee86a916c07"
     },
     {
       "title": "VOLUME THREE",
@@ -2113,8 +2113,8 @@
     },
     {
       "title": "VOLUME THREE — Chapter 52 - Toxicology",
-      "blockCount": 146,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 145,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 506,
       "pageMax": 519,
       "openPages": [
@@ -2145,13 +2145,13 @@
         "“He is a very strange man,” she said, “and in my opinion is ",
         "“Good,” said he, as he went away; “this is a fruitful soil, "
       ],
-      "textHash": "ca41b8a39b58",
-      "pageHash": "cd93818386b2"
+      "textHash": "e8b5ce2df46d",
+      "pageHash": "671da8dc1097"
     },
     {
       "title": "VOLUME THREE — Chapter 53 - Robert le Diable",
-      "blockCount": 214,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 238,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 520,
       "pageMax": 535,
       "openPages": [
@@ -2182,13 +2182,13 @@
         "“Do you observe,” said the Countess G—— to Albert, who had r",
         "her side, “that man does nothing like other people; he liste"
       ],
-      "textHash": "eba77d629b8a",
-      "pageHash": "8caaf0b2e3eb"
+      "textHash": "df255a299af0",
+      "pageHash": "46699dc52ad3"
     },
     {
       "title": "VOLUME THREE — Chapter 54 - A Flurry in Stocks",
-      "blockCount": 145,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 144,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 535,
       "pageMax": 545,
       "openPages": [
@@ -2219,13 +2219,13 @@
         "“I do not yet know myself, neither is it necessary that you ",
         "‘Lucullus dines with Lucullus,’ that is quite sufficient.” B"
       ],
-      "textHash": "0b5edb4dbb22",
-      "pageHash": "032590b41913"
+      "textHash": "840744cfc47f",
+      "pageHash": "f4d37eaf38e8"
     },
     {
       "title": "VOLUME THREE — Chapter 55 - Major Cavalcanti",
-      "blockCount": 176,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 220,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 546,
       "pageMax": 557,
       "openPages": [
@@ -2252,17 +2252,17 @@
         557
       ],
       "close": [
-        "“Then, in these trunks——”",
         "“I presume you have given orders to your valet de chambre to",
-        "Andrea.” Saying which Monte Cristo bowed, and disappeared be"
+        "“Very well, very well,” said the major, who was in ecstasy a",
+        "“Now,” said Monte Cristo, “that you have fortified yourself "
       ],
-      "textHash": "0dae7834b117",
-      "pageHash": "1b42e5b043a4"
+      "textHash": "feed2ee17952",
+      "pageHash": "f0f1b0af30db"
     },
     {
       "title": "VOLUME THREE — Chapter 56 - Andrea Cavalcanti",
-      "blockCount": 160,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 169,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 557,
       "pageMax": 568,
       "openPages": [
@@ -2293,8 +2293,8 @@
         "“it is a pity they are not really related!”—then, after an i",
         "reflection, “Come, I will go to see the Morrels,” said he; “"
       ],
-      "textHash": "583d409e0bc9",
-      "pageHash": "7ccb7e2f569b"
+      "textHash": "81b279a4c8c9",
+      "pageHash": "40f69adac2e4"
     },
     {
       "title": "VOLUME THREE — Chapter 57 - In the Lucern Patch",
@@ -2372,8 +2372,8 @@
     },
     {
       "title": "VOLUME THREE — Chapter 59 - The Will",
-      "blockCount": 102,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 106,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 586,
       "pageMax": 592,
       "openPages": [
@@ -2404,13 +2404,13 @@
         "“What do you decide on, sir?” asked the notary of Villefort.",
         "“Nothing, sir; it is a resolution which my father has taken "
       ],
-      "textHash": "81d3ce159431",
-      "pageHash": "b2e0122648de"
+      "textHash": "45961e372ddf",
+      "pageHash": "eab2c75d2601"
     },
     {
       "title": "VOLUME THREE — Chapter 60 - The Telegraph",
-      "blockCount": 121,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 128,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 593,
       "pageMax": 602,
       "openPages": [
@@ -2441,13 +2441,13 @@
         "“Thank you. Good-bye. On Saturday I will tell you my impress",
         "concerning the telegraph.” At the door the count was met by "
       ],
-      "textHash": "0729582a084d",
-      "pageHash": "b94036427e97"
+      "textHash": "446a7bdacfac",
+      "pageHash": "c760bfda753b"
     },
     {
       "title": "VOLUME THREE — Chapter 61 - How a Gardener May Get Rid of the Dormice that Eat His Peaches",
-      "blockCount": 150,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 160,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 602,
       "pageMax": 611,
       "openPages": [
@@ -2478,13 +2478,13 @@
         "“What have you discovered?” asked Morrel.",
         "“I have just discovered how a gardener may get rid of the do"
       ],
-      "textHash": "711b9615e4b1",
-      "pageHash": "d879f8b1208e"
+      "textHash": "00017d19fdb1",
+      "pageHash": "6689249658a9"
     },
     {
       "title": "VOLUME THREE — Chapter 62 - Ghosts",
-      "blockCount": 93,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 106,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 611,
       "pageMax": 618,
       "openPages": [
@@ -2515,13 +2515,13 @@
         "“M. de Villefort,” he said, “will you conduct the Baroness D",
         "Villefort complied, and they passed on to the dining-room."
       ],
-      "textHash": "81458637d3de",
-      "pageHash": "3bf33226e5ca"
+      "textHash": "61beb5d8aa67",
+      "pageHash": "f0a405ba0c67"
     },
     {
       "title": "VOLUME THREE — Chapter 63 - The Dinner",
-      "blockCount": 124,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 129,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 618,
       "pageMax": 626,
       "openPages": [
@@ -2552,13 +2552,13 @@
         "At this moment Madame de Villefort approached.",
         "“Thanks, my dear friend,” said Madame Danglars, trying to sm"
       ],
-      "textHash": "0fcd1e2071d1",
-      "pageHash": "de516d92ad00"
+      "textHash": "5d8f9ff557ea",
+      "pageHash": "a68815829f08"
     },
     {
       "title": "VOLUME THREE — Chapter 64 - The Beggar",
-      "blockCount": 100,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 115,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 626,
       "pageMax": 634,
       "openPages": [
@@ -2589,8 +2589,8 @@
         "“You? Oh, you are young while I am beginning to get old. Au ",
         "“Alas,” said Andrea, sighing, “one cannot be completely happ"
       ],
-      "textHash": "bd0260ad0fac",
-      "pageHash": "5505f385cbd3"
+      "textHash": "6127b9536204",
+      "pageHash": "f13abeb2506e"
     },
     {
       "title": "VOLUME THREE — Chapter 65 - A Conjugal Scene",
@@ -2631,8 +2631,8 @@
     },
     {
       "title": "VOLUME THREE — Chapter 66 - Matrimonial Projects",
-      "blockCount": 130,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 149,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 642,
       "pageMax": 651,
       "openPages": [
@@ -2663,13 +2663,13 @@
         "“I will communicate it to you.”",
         "“You will oblige me.” Danglars rushed out of the room, and m"
       ],
-      "textHash": "0eff2b53f622",
-      "pageHash": "006aa45036e2"
+      "textHash": "7853b282b2e0",
+      "pageHash": "ab797841544a"
     },
     {
       "title": "VOLUME THREE — Chapter 67 - The Office of the King’s Attorney",
-      "blockCount": 99,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 105,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 651,
       "pageMax": 660,
       "openPages": [
@@ -2700,13 +2700,13 @@
         "“Well, I understand what I now have to do,” replied Villefor",
         "“In less than one week from this time I will ascertain who t"
       ],
-      "textHash": "ccea6b0c7faf",
-      "pageHash": "62fa0bacca16"
+      "textHash": "3b684b0dc34c",
+      "pageHash": "0aaaf0ed1680"
     },
     {
       "title": "VOLUME THREE — Chapter 68 - A Summer Ball",
-      "blockCount": 115,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 132,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 661,
       "pageMax": 668,
       "openPages": [
@@ -2737,13 +2737,13 @@
         "“Directly.”",
         "“Well, my dear Bertuccio,” said the count, “I now advise you"
       ],
-      "textHash": "a2201c39f27c",
-      "pageHash": "3e377a8c4d3e"
+      "textHash": "4366b4392363",
+      "pageHash": "4cd19786de44"
     },
     {
       "title": "VOLUME THREE — Chapter 69 - The Inquiry",
-      "blockCount": 126,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 138,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 668,
       "pageMax": 676,
       "openPages": [
@@ -2774,13 +2774,13 @@
         "“Aw?” said the Englishman, “I practice shooting every day, a",
         "This was all the visitor wished to ascertain, or, rather, al"
       ],
-      "textHash": "7961ff285f31",
-      "pageHash": "9ca180307685"
+      "textHash": "0c7eef5406b9",
+      "pageHash": "3e200d2cb3ed"
     },
     {
       "title": "VOLUME THREE — Chapter 70 - The Ball",
-      "blockCount": 123,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 133,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 676,
       "pageMax": 684,
       "openPages": [
@@ -2811,13 +2811,13 @@
         "“Then,” said Mercédès, “I will lead the way.” Turning toward",
         "Cristo, she added, “count, will you oblige me with your arm?"
       ],
-      "textHash": "e4697791299c",
-      "pageHash": "d3b479e4d8f8"
+      "textHash": "93ddfd3bdc19",
+      "pageHash": "17ad41466fc9"
     },
     {
       "title": "VOLUME THREE — Chapter 71 - Bread and Salt",
-      "blockCount": 66,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 68,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 685,
       "pageMax": 688,
       "openPages": [
@@ -2848,13 +2848,13 @@
         "“Do not my mother and you agree?” asked Albert, astonished.",
         "“On the contrary,” replied the count, “did you not hear her "
       ],
-      "textHash": "9716eafe9bd4",
-      "pageHash": "7d017c3c79d9"
+      "textHash": "3ada0d83610f",
+      "pageHash": "a3757b6740e2"
     },
     {
       "title": "VOLUME THREE — Chapter 72 - Madame de Saint-Méran",
-      "blockCount": 137,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 140,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 688,
       "pageMax": 698,
       "openPages": [
@@ -2885,8 +2885,8 @@
         "myself agitated, feverish and out of sorts. I will go and ta",
         "She stopped astonished, then the voice reached her ear more "
       ],
-      "textHash": "2e5861dc93df",
-      "pageHash": "c7d6ba9d1cec"
+      "textHash": "ff866f3e793c",
+      "pageHash": "027a952348a9"
     },
     {
       "title": "VOLUME THREE — Chapter 73 - The Promise",
@@ -2981,8 +2981,8 @@
     },
     {
       "title": "VOLUME FOUR — Chapter 75 - A Signed Statement",
-      "blockCount": 102,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 110,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 727,
       "pageMax": 736,
       "openPages": [
@@ -3013,13 +3013,13 @@
         "killed my father?”",
         "“Yes!” replied Noirtier, fixing a majestic look on the young"
       ],
-      "textHash": "7a83e01b1cc5",
-      "pageHash": "47f1459d7476"
+      "textHash": "948446aa7837",
+      "pageHash": "d6b3ca88c276"
     },
     {
       "title": "VOLUME FOUR — Chapter 76 - Progress of Cavalcanti the Younger",
-      "blockCount": 123,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 128,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 736,
       "pageMax": 744,
       "openPages": [
@@ -3050,13 +3050,13 @@
         "“Very well.” The count made a sign to Albert and they bowed ",
         "Cavalcanti remained master of the field."
       ],
-      "textHash": "509227b6f818",
-      "pageHash": "9cb61c55a21a"
+      "textHash": "add04c935026",
+      "pageHash": "d69c7007d382"
     },
     {
       "title": "VOLUME FOUR — Chapter 77 - Haydée",
-      "blockCount": 204,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 214,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 744,
       "pageMax": 762,
       "openPages": [
@@ -3087,13 +3087,13 @@
         "“Oh, you are good, you are great, my lord!” said Haydée, kis",
         "“Come, finish your cup of coffee,” said Monte Cristo; “the h"
       ],
-      "textHash": "0869e6e1b4fd",
-      "pageHash": "5f26a95d13d6"
+      "textHash": "647333956c3b",
+      "pageHash": "2b0b0c73b63b"
     },
     {
       "title": "VOLUME FOUR — Chapter 78",
-      "blockCount": 252,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 270,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 763,
       "pageMax": 780,
       "openPages": [
@@ -3124,13 +3124,13 @@
         "Albert vented his anger on a pile of newspapers, which he se",
         "“Ah,” said Morcerf, “there goes a happy man!” And it so happ"
       ],
-      "textHash": "c76372b5d4b3",
-      "pageHash": "8061339f6931"
+      "textHash": "4c4d98cb4d5f",
+      "pageHash": "dde3f0dc8475"
     },
     {
       "title": "VOLUME FOUR — Chapter 79",
-      "blockCount": 164,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 177,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 780,
       "pageMax": 790,
       "openPages": [
@@ -3161,13 +3161,13 @@
         "The doctor then slowly poured some drops of the lemonade fro",
         "“The unfortunate Barrois has been poisoned,” said d’Avrigny,"
       ],
-      "textHash": "a2e0c8d4451b",
-      "pageHash": "f4d93eefe689"
+      "textHash": "c2a329d250ee",
+      "pageHash": "abe54193475b"
     },
     {
       "title": "VOLUME FOUR — Chapter 80 - The Accusation",
-      "blockCount": 61,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 60,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 791,
       "pageMax": 795,
       "openPages": [
@@ -3198,13 +3198,13 @@
         "The doctor, without shaking hands with Villefort, without ad",
         "Mademoiselle Valentine, so good, so kind, and so gentle. Vil"
       ],
-      "textHash": "b2ac65145316",
-      "pageHash": "0a5a5adadc7f"
+      "textHash": "79b32a295dde",
+      "pageHash": "021aa493e564"
     },
     {
       "title": "VOLUME FOUR — Chapter 81 - The Room of the Retired Baker",
-      "blockCount": 277,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 312,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 795,
       "pageMax": 811,
       "openPages": [
@@ -3235,13 +3235,13 @@
         "“Thank you,” said Andrea; “I will let you know a week before",
         "“Dear Benedetto,” said he, “I think he will not be sorry to "
       ],
-      "textHash": "e520002e5b19",
-      "pageHash": "300829a3eff8"
+      "textHash": "381f5c726152",
+      "pageHash": "71731ed922ba"
     },
     {
       "title": "VOLUME FOUR — Chapter 82 - The Burglary",
-      "blockCount": 167,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 180,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 812,
       "pageMax": 823,
       "openPages": [
@@ -3272,13 +3272,13 @@
         "Caderousse sat astride the coping, and drawing up his ladder",
         "This mournful appeal pierced the darkness. The door of the b"
       ],
-      "textHash": "f61d3171448c",
-      "pageHash": "576789888617"
+      "textHash": "e1d17c17f70b",
+      "pageHash": "eae5c4e32cce"
     },
     {
       "title": "VOLUME FOUR — Chapter 83 - The Hand of God",
-      "blockCount": 86,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 89,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 823,
       "pageMax": 828,
       "openPages": [
@@ -3309,13 +3309,13 @@
         "Pardon me, my God; receive me, O my Lord!” Caderousse sighed",
         "“One!” said the count mysteriously, his eyes fixed on the co"
       ],
-      "textHash": "ee5b6a82c3f8",
-      "pageHash": "95b2f786c1c4"
+      "textHash": "6b431743dbe2",
+      "pageHash": "510cfbd5888f"
     },
     {
       "title": "VOLUME FOUR — Chapter 84 - Beauchamp",
-      "blockCount": 67,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 69,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 829,
       "pageMax": 834,
       "openPages": [
@@ -3346,13 +3346,13 @@
         "“Willingly,” said Albert; “but let us walk. I think a little",
         "“Gladly,” said Albert; “I love him—let us call.”"
       ],
-      "textHash": "daa78edc0e7f",
-      "pageHash": "782129bcc0cd"
+      "textHash": "af167e9432bc",
+      "pageHash": "50fb43c47fc4"
     },
     {
       "title": "VOLUME FOUR — Chapter 85 - The Journey",
-      "blockCount": 128,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 142,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 834,
       "pageMax": 843,
       "openPages": [
@@ -3370,8 +3370,8 @@
         "Monte Cristo uttered a joyful exclamation on seeing the youn",
         "“Ah, ha!” said he, “I hope all is over, explained and settle",
         "“Yes,” said Beauchamp; “the absurd reports have died away, a",
-        "“I am finishing the most execrable morning’s work.”",
-        "“What is it?” said Albert; “arranging your papers, apparentl"
+        "“Albert will tell you,” replied the count “that I gave him t",
+        "“I am finishing the most execrable morning’s work.”"
       ],
       "closePages": [
         842,
@@ -3383,8 +3383,8 @@
         "While the count picked up the paper he put spurs to his hors",
         "Thus the terrible secret, which Beauchamp had so generously "
       ],
-      "textHash": "61406b07e1f7",
-      "pageHash": "a4640f0330a6"
+      "textHash": "904cd781d686",
+      "pageHash": "2ae7b8459b2d"
     },
     {
       "title": "VOLUME FOUR — Chapter 86 - The Trial",
@@ -3425,8 +3425,8 @@
     },
     {
       "title": "VOLUME FOUR — Chapter 87 - The Challenge",
-      "blockCount": 58,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 66,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 852,
       "pageMax": 857,
       "openPages": [
@@ -3457,13 +3457,13 @@
         "“Sir,” said he to Danglars, “understand that I do not take a",
         "Danglars accompanied him to the door, where he again assured"
       ],
-      "textHash": "bd311d9eb50b",
-      "pageHash": "02ade4120ffe"
+      "textHash": "d6d9870db3ab",
+      "pageHash": "06d221f511f0"
     },
     {
       "title": "VOLUME FOUR — Chapter 88 - The Insult",
-      "blockCount": 105,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 116,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 858,
       "pageMax": 865,
       "openPages": [
@@ -3480,9 +3480,9 @@
         "Chapter 88 - The Insult",
         "At the banker’s door Beauchamp stopped Morcerf.",
         "“Listen,” said he; “just now I told you it was of M. de Mont",
+        "“Yes; and we are going to his house.”",
         "“Reflect, Morcerf, one moment before you go.”",
-        "“On what shall I reflect?”",
-        "“On the importance of the step you are taking.”"
+        "“On what shall I reflect?”"
       ],
       "closePages": [
         865,
@@ -3494,8 +3494,8 @@
         "“We will.”",
         "“Hush, the curtain is rising. Listen! I never lose a note of"
       ],
-      "textHash": "e4d2b3e61c02",
-      "pageHash": "2bf2b2a6719b"
+      "textHash": "a8ad9d74509c",
+      "pageHash": "892ff91af8da"
     },
     {
       "title": "VOLUME FOUR — Chapter 89 - The Night",
@@ -3536,8 +3536,8 @@
     },
     {
       "title": "VOLUME FOUR — Chapter 90 - The Meeting",
-      "blockCount": 150,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 159,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 872,
       "pageMax": 881,
       "openPages": [
@@ -3568,8 +3568,8 @@
         "“The Count of Monte Cristo acts dishonorably to M. de Morcer",
         "“Providence still,” murmured he; “now only am I fully convin"
       ],
-      "textHash": "74a3d8eaff78",
-      "pageHash": "488729f232ae"
+      "textHash": "96d2b6b79ca3",
+      "pageHash": "b46386ca74ad"
     },
     {
       "title": "VOLUME FOUR — Chapter 91 - Mother and Son",
@@ -3610,8 +3610,8 @@
     },
     {
       "title": "VOLUME FOUR — Chapter 92 - The Suicide",
-      "blockCount": 93,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 104,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 887,
       "pageMax": 894,
       "openPages": [
@@ -3642,8 +3642,8 @@
         "Then, with sighs which were unlike any human sound, he dragg",
         "The door was wide open, a hackney-coach was standing in the "
       ],
-      "textHash": "5f54c906ab06",
-      "pageHash": "a10fd28c313c"
+      "textHash": "fd7a86c4a0cd",
+      "pageHash": "800d291daf99"
     },
     {
       "title": "VOLUME FOUR — Chapter 93 - Valentine",
@@ -3684,8 +3684,8 @@
     },
     {
       "title": "VOLUME FOUR — Chapter 94 - Maximilian’s Avowal",
-      "blockCount": 137,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 144,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 900,
       "pageMax": 909,
       "openPages": [
@@ -3716,13 +3716,13 @@
         "At the moment when d’Avrigny was returning to Valentine’s ro",
         "This new tenant, who, as we have said, was an Italian, was c"
       ],
-      "textHash": "ce61241e1f10",
-      "pageHash": "c66b07cf1ffd"
+      "textHash": "2773b995182f",
+      "pageHash": "09b95b5e4667"
     },
     {
       "title": "VOLUME FOUR — Chapter 95 - Father and Daughter",
-      "blockCount": 71,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 74,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 909,
       "pageMax": 916,
       "openPages": [
@@ -3753,8 +3753,8 @@
         "Danglars motioned that he had nothing more to say. Five minu",
         "****"
       ],
-      "textHash": "09a4dfd81d6b",
-      "pageHash": "9effa562919b"
+      "textHash": "6962a075738b",
+      "pageHash": "6dd87fba6767"
     },
     {
       "title": "VOLUME FIVE",
@@ -3775,8 +3775,8 @@
     },
     {
       "title": "VOLUME FIVE — Chapter 96 - The Contract",
-      "blockCount": 120,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 128,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 916,
       "pageMax": 925,
       "openPages": [
@@ -3807,13 +3807,13 @@
         "“And what crime has he committed?”",
         "“He is accused,” said the commissary with his inflexible voi"
       ],
-      "textHash": "9f1f9dd06653",
-      "pageHash": "4a74506d112e"
+      "textHash": "5cdd60fe19f0",
+      "pageHash": "7654879629ab"
     },
     {
       "title": "VOLUME FIVE — Chapter 97 - The Departure for Belgium",
-      "blockCount": 78,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 82,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 926,
       "pageMax": 931,
       "openPages": [
@@ -3844,8 +3844,8 @@
         "“I shall bring that forward as an extenuating circumstance,”",
         "Eugénie. These words were lost in the noise which the carria"
       ],
-      "textHash": "bf8988330e23",
-      "pageHash": "8b9ce564b5ba"
+      "textHash": "575e8cd15bcb",
+      "pageHash": "bbfc45282931"
     },
     {
       "title": "VOLUME FIVE — Chapter 98 - The Bell and Bottle Tavern",
@@ -3886,8 +3886,8 @@
     },
     {
       "title": "VOLUME FIVE — Chapter 99 - The Law",
-      "blockCount": 94,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 104,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 940,
       "pageMax": 948,
       "openPages": [
@@ -3918,8 +3918,8 @@
         "“Adieu, sir,” she said.",
         "“Adieu, madame,” replied the king’s attorney, as in an almos"
       ],
-      "textHash": "712f33b4c574",
-      "pageHash": "1743063d4494"
+      "textHash": "6c1a2055cf48",
+      "pageHash": "fb95781db2cc"
     },
     {
       "title": "VOLUME FIVE — Chapter 100 - The Apparition",
@@ -3960,8 +3960,8 @@
     },
     {
       "title": "VOLUME FIVE — Chapter 101 - Locusta",
-      "blockCount": 52,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 59,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 954,
       "pageMax": 958,
       "openPages": [
@@ -3992,8 +3992,8 @@
         "“Go,” said Valentine, “whatever happens, I promise you not t",
         "Monte Cristo for some time kept his eyes fixed on the young "
       ],
-      "textHash": "b5baed48730c",
-      "pageHash": "b51de71553c0"
+      "textHash": "2eef1ad86674",
+      "pageHash": "f5d167642bdd"
     },
     {
       "title": "VOLUME FIVE — Chapter 102 - Valentine",
@@ -4034,8 +4034,8 @@
     },
     {
       "title": "VOLUME FIVE — Chapter 103 - Maximilian",
-      "blockCount": 85,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 88,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 963,
       "pageMax": 969,
       "openPages": [
@@ -4066,13 +4066,13 @@
         "“I am going, sir; and I do not hesitate to say that no praye",
         "Villefort, who was engaged in his study, they reached Valent"
       ],
-      "textHash": "ce768aff5e83",
-      "pageHash": "5d5b68edecd3"
+      "textHash": "72d31e02cc16",
+      "pageHash": "f4e391c09bf1"
     },
     {
       "title": "VOLUME FIVE — Chapter 104 - Danglars’ Signature",
-      "blockCount": 151,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 163,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 969,
       "pageMax": 979,
       "openPages": [
@@ -4103,8 +4103,8 @@
         "Danglars, with an energy of action those can alone understan",
         "“I will place it on her table myself tonight,” he murmured. "
       ],
-      "textHash": "61dd8bc7b157",
-      "pageHash": "1d2ee7825d9a"
+      "textHash": "aa593198406c",
+      "pageHash": "632a192a961f"
     },
     {
       "title": "VOLUME FIVE — Chapter 105 - The Cemetery of Père-Lachaise",
@@ -4145,8 +4145,8 @@
     },
     {
       "title": "VOLUME FIVE — Chapter 106 - Dividing the Proceeds",
-      "blockCount": 136,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 140,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 989,
       "pageMax": 1001,
       "openPages": [
@@ -4177,13 +4177,13 @@
         "Paris, and when our journey is paid, we shall have 5,000 fra",
         "“Alas,” he exclaimed, “how can I restore the happiness I hav"
       ],
-      "textHash": "b4ffdbb161a7",
-      "pageHash": "0403475b9dfb"
+      "textHash": "5a306da3cffc",
+      "pageHash": "41f4bdff33b3"
     },
     {
       "title": "VOLUME FIVE — Chapter 107 - The Lions’ Den",
-      "blockCount": 74,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 85,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1001,
       "pageMax": 1007,
       "openPages": [
@@ -4214,13 +4214,13 @@
         "“Never mind, we shall see! Tomorrow, then!” he added, turnin",
         "“Tomorrow!” replied the steward."
       ],
-      "textHash": "f1b5e9c0ae7e",
-      "pageHash": "ba0605608266"
+      "textHash": "593df6516e96",
+      "pageHash": "a68e40f1287e"
     },
     {
       "title": "VOLUME FIVE — Chapter 108 - The Judge",
-      "blockCount": 92,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 94,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1007,
       "pageMax": 1015,
       "openPages": [
@@ -4251,13 +4251,13 @@
         "“Do you understand me?” he said.",
         "“I am going down there to pronounce the sentence of death ag"
       ],
-      "textHash": "31a41d97f230",
-      "pageHash": "58e62c068289"
+      "textHash": "8fbad393a7d6",
+      "pageHash": "648a14d771e7"
     },
     {
       "title": "VOLUME FIVE — Chapter 109 - The Assizes",
-      "blockCount": 81,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 94,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1015,
       "pageMax": 1021,
       "openPages": [
@@ -4288,8 +4288,8 @@
         "“hem!” and the door-keeper appearing, called out with that s",
         "peculiar to his order, ever since the days of Beaumarchais, "
       ],
-      "textHash": "c10272a48db9",
-      "pageHash": "686b7d08eb04"
+      "textHash": "c0e89160acce",
+      "pageHash": "73f143d9131b"
     },
     {
       "title": "VOLUME FIVE — Chapter 110 - The Indictment",
@@ -4367,8 +4367,8 @@
     },
     {
       "title": "VOLUME FIVE — Chapter 112 - The Departure",
-      "blockCount": 124,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 131,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1033,
       "pageMax": 1045,
       "openPages": [
@@ -4399,13 +4399,13 @@
         "“On the contrary, we shall meet again,” said Mercédès, point",
         "“I tell you so to prove to you that I still hope.” And after"
       ],
-      "textHash": "328f341c81d6",
-      "pageHash": "d9a0a919e5dd"
+      "textHash": "efdfa89148fe",
+      "pageHash": "42d59ac40652"
     },
     {
       "title": "VOLUME FIVE — Chapter 113 - The Past",
-      "blockCount": 119,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 130,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1045,
       "pageMax": 1055,
       "openPages": [
@@ -4436,13 +4436,13 @@
         "Will you accompany me to the harbor, Maximilian?”",
         "“I am entirely yours, count.” Morrel accompanied the count t"
       ],
-      "textHash": "01b294dbcd9d",
-      "pageHash": "2ab207cb0806"
+      "textHash": "0096e17e1de9",
+      "pageHash": "e841d700250b"
     },
     {
       "title": "VOLUME FIVE — Chapter 114 - Peppino",
-      "blockCount": 92,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 94,
+      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1055,
       "pageMax": 1063,
       "openPages": [
@@ -4473,8 +4473,8 @@
         "“Ecco!” said the guide, and pushing Danglars into the cell, ",
         "Danglars, too, had recognized the bandit, whose existence he"
       ],
-      "textHash": "14e026ff763a",
-      "pageHash": "1904c11d0bce"
+      "textHash": "578048c6604b",
+      "pageHash": "6d462bad09bf"
     },
     {
       "title": "VOLUME FIVE — Chapter 115 - Luigi Vampa’s Bill of Fare",
@@ -4515,8 +4515,8 @@
     },
     {
       "title": "VOLUME FIVE — Chapter 116 - The Pardon",
-      "blockCount": 79,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 85,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 1068,
       "pageMax": 1073,
       "openPages": [
@@ -4547,8 +4547,8 @@
         "Danglars remained prostrate while the count withdrew; when h",
         "According to the count’s directions, Danglars was waited on "
       ],
-      "textHash": "9537b46f39e7",
-      "pageHash": "122d56517f58"
+      "textHash": "c6bf856b5daf",
+      "pageHash": "9b734cda2d8d"
     },
     {
       "title": "VOLUME FIVE — Chapter 117 - The Fifth of October",

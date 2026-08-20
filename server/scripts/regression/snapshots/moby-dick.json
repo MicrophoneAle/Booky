@@ -1,7 +1,7 @@
 {
-  "parserVersion": 138,
-  "totalBlocks": 2591,
-  "totalWords": 189074,
+  "parserVersion": 139,
+  "totalBlocks": 2626,
+  "totalWords": 189304,
   "chapterCount": 125,
   "chapterTitles": [
     "Chapter I - Loomings",
@@ -133,8 +133,8 @@
   "firstBlockText": "Herman Melville, Moby Dick",
   "lastBlockText": "The unharming sharks, they glided by as if with padlocks on their mouths; the sa",
   "headingCount": 126,
-  "avgBlockLength": 414,
-  "proseBlockCount": 2465,
+  "avgBlockLength": 409,
+  "proseBlockCount": 2500,
   "frontMatter": {
     "blockCount": 1,
     "types": "h",
@@ -413,7 +413,7 @@
       ],
       "closePages": [],
       "close": [],
-      "textHash": "889c5683675a",
+      "textHash": "3fc6154a7afe",
       "pageHash": "2276a13313d3"
     },
     {
@@ -449,8 +449,8 @@
     },
     {
       "title": "Chapter VIII - The Sermon",
-      "blockCount": 43,
-      "types": "hpppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 42,
+      "types": "hppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 38,
       "pageMax": 44,
       "openPages": [
@@ -459,17 +459,17 @@
         38,
         38,
         38,
-        38,
+        39,
         39,
         39
       ],
       "open": [
         "Chapter VIII - The Sermon",
         "Father Mapple rose, and in a mild voice of unassuming author",
-        "“Starboard gangway, there! side away to larboard—larboard",
-        "There was a low rumbling of heavy sea-boots among the benche",
+        "“Starboard gangway, there! side away to larboard—larboard ga",
         "This ended, in prolonged solemn tones, like the continual to",
-        "In black distress, I called my God, When I could scarce beli"
+        "I saw the opening maw of hell, With endless pains and sorrow",
+        "Awful, yet bright, as lightning shone The face of my Deliver"
       ],
       "closePages": [
         44,
@@ -481,8 +481,8 @@
         "He drooped and fell away from himself for a moment; then lif",
         "He said no more, but slowly waving a benediction, covered hi"
       ],
-      "textHash": "deb948759920",
-      "pageHash": "df626b27abfe"
+      "textHash": "1be92897125f",
+      "pageHash": "1955e91a9d2d"
     },
     {
       "title": "Chapter IX - A Bosom Friend",
@@ -816,8 +816,8 @@
     },
     {
       "title": "Chapter XVII - The Prophet",
-      "blockCount": 41,
-      "types": "hpppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 43,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 76,
       "pageMax": 78,
       "openPages": [
@@ -848,8 +848,8 @@
         "Elijah! thought I, and we walked away, both commenting, afte",
         "I was resolved to satisfy myself whether this ragged Elijah "
       ],
-      "textHash": "4b6b2db514e5",
-      "pageHash": "b86417a22f32"
+      "textHash": "94f313ade919",
+      "pageHash": "8a05bc578832"
     },
     {
       "title": "Chapter XVIII - All Astir",
@@ -886,8 +886,8 @@
     },
     {
       "title": "Chapter XIX - Going Aboard",
-      "blockCount": 40,
-      "types": "hppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 43,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 81,
       "pageMax": 83,
       "openPages": [
@@ -903,10 +903,10 @@
       "open": [
         "Chapter XIX - Going Aboard",
         "It was nearly six o’clock, but only grey imperfect misty daw",
+        "“There are some sailors running ahead there, if I see right,",
         "“Avast!” cried a voice, whose owner at the same time coming ",
-        "“Lookee here,” said Queequeg, shaking himself,“go ’way!”",
-        "“Aint going aboard, then?”",
-        "“Yes, we are,” said I, “but what business is that of yours? "
+        "“Going aboard? Hands off, will you,” said I.",
+        "“Lookee here,” said Queequeg, shaking himself,“go ’way!”"
       ],
       "closePages": [
         83,
@@ -918,8 +918,8 @@
         "“He’s a lively chief mate, that; good man, and a pious; but ",
         "It was now clear sunrise. Soon the crew came on board in two"
       ],
-      "textHash": "00520b7c738c",
-      "pageHash": "382aa6713622"
+      "textHash": "58d0d45cde95",
+      "pageHash": "ffdb94fcdf02"
     },
     {
       "title": "Chapter XX - Merry Christmas",
@@ -1583,8 +1583,8 @@
     },
     {
       "title": "Chapter XXXVIII - Midnight, Forecastle",
-      "blockCount": 48,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 71,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 145,
       "pageMax": 151,
       "openPages": [
@@ -1593,17 +1593,17 @@
         145,
         145,
         145,
-        146,
-        146,
-        146
+        145,
+        145,
+        145
       ],
       "open": [
         "Chapter XXXVIII - Midnight, Forecastle",
-        "Foresail rises and discovers the watch standing, lounging, l",
+        "Harpooners and sailors Foresail rises and discovers the watc",
+        "1st Nantucket Sailor",
         "Oh, boys, don’t be sentimental; it’s bad for the digestion! ",
-        "Our captain stood upon the deck, A spy-glass in his hand, A ",
-        "Eight bells there, forward!",
-        "Avast the chorus! Eight bells there! d’ye hear, bell-boy? St"
+        "Sings, and all follow",
+        "Our captain stood upon the deck, A spy-glass in his hand, A "
       ],
       "closePages": [
         150,
@@ -1611,12 +1611,12 @@
         151
       ],
       "close": [
-        "Hands by the halyards! in top-gallant sails! Stand by to ree",
-        "The squall! the squall! jump, my jollies! (They scatter.) Jo",
+        "All The squall! the squall! jump, my jollies! (They scatter.",
+        "Pip Shrinking under the windlass Jollies? Lord help such jol",
         "’em in to hunt him! Oh, thou big white God aloft there somew"
       ],
-      "textHash": "b1b7b67f3847",
-      "pageHash": "df25822ced0e"
+      "textHash": "3a02c20ef33e",
+      "pageHash": "3c954b120e5b"
     },
     {
       "title": "Chapter XXXIX - Moby Dick",
@@ -1694,11 +1694,13 @@
     },
     {
       "title": "Chapter XLI - Hark!",
-      "blockCount": 14,
-      "types": "hppppppppppppp",
+      "blockCount": 16,
+      "types": "hppppppppppppppp",
       "pageMin": 167,
       "pageMax": 167,
       "openPages": [
+        167,
+        167,
         167,
         167,
         167,
@@ -1721,8 +1723,10 @@
         "“Hist! did you hear that noise, Cabaco?”",
         "“Take the bucket, will ye, Archy? what noise d’ye mean?”",
         "“There it is again—under the hatches—don’t you hear it—a cou",
+        "ded like a cough.”",
         "“Cough be damned! Pass along that return bucket.”",
         "“There again—there it is!—it sounds like two or three sleepe",
+        "now!”",
         "“Caramba! have done, shipmate, will ye? It’s the three soake",
         "“Say what ye will, shipmate; I’ve sharp ears.”",
         "“Aye, you are the chap, ain’t ye, that heard the hum of the ",
@@ -1732,8 +1736,8 @@
       ],
       "closePages": [],
       "close": [],
-      "textHash": "f81e7f2cb2a0",
-      "pageHash": "1ee192c1bd1f"
+      "textHash": "58f75ce1f55e",
+      "pageHash": "f1a101e372ee"
     },
     {
       "title": "Chapter XLII - The Chart",
@@ -2432,8 +2436,8 @@
     },
     {
       "title": "Chapter LXI - Stubb’s Supper",
-      "blockCount": 68,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "blockCount": 73,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
       "pageMin": 243,
       "pageMax": 248,
       "openPages": [
@@ -2464,8 +2468,8 @@
         "“Wish, by gor! whale eat him, ’stead of him eat whale. I’m b",
         "A little item may as well be related here. The strongest and"
       ],
-      "textHash": "c187be44f3a0",
-      "pageHash": "99fef0c09e8a"
+      "textHash": "b459a7ba7598",
+      "pageHash": "945fff8f579a"
     },
     {
       "title": "Chapter LXII - The Whale as a Dish",
@@ -4468,7 +4472,7 @@
       ],
       "closePages": [],
       "close": [],
-      "textHash": "ef5c4dd87a0d",
+      "textHash": "977fb9c1eba9",
       "pageHash": "8a27a5e591de"
     },
     {
@@ -4642,8 +4646,8 @@
     },
     {
       "title": "Chapter CXVII - The Deck",
-      "blockCount": 28,
-      "types": "hppppppppppppppppppppppppppp",
+      "blockCount": 29,
+      "types": "hpppppppppppppppppppppppppppp",
       "pageMin": 432,
       "pageMax": 433,
       "openPages": [
@@ -4660,9 +4664,9 @@
         "Chapter CXVII - The Deck",
         "The coffin laid upon two line-tubs, between the vice-bench a",
         "“Back, lad; I will be with ye again presently. He goes! Not ",
+        "“Life buoy, Sir. Mr. Starbuck’s orders. Oh, look, Sir! Bewar",
         "“Thank ye, man. Thy coffin lies handy to the vault.”",
-        "“Sir? The hatchway? oh! So it does, Sir, so it does.”",
-        "“Art not thou the leg-maker? Look, did not this stump come f"
+        "“Sir? The hatchway? oh! So it does, Sir, so it does.”"
       ],
       "closePages": [
         433,
@@ -4674,8 +4678,8 @@
         "A life-buoy of a coffin! Does it go further? Can it be that ",
         "Now, then, Pip, we’ll talk this over; I do suck most wondrou"
       ],
-      "textHash": "11f5c80afcac",
-      "pageHash": "d5abe2832fda"
+      "textHash": "2f96d0036270",
+      "pageHash": "7eff0e7401b7"
     },
     {
       "title": "Chapter CXVIII - The Pequod Meets the Rachel",

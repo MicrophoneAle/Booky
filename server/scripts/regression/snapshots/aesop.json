@@ -1,7 +1,7 @@
 {
-  "parserVersion": 138,
-  "totalBlocks": 1019,
-  "totalWords": 27599,
+  "parserVersion": 139,
+  "totalBlocks": 1039,
+  "totalWords": 27737,
   "chapterCount": 177,
   "chapterTitles": [
     "THE WOLF AND THE LAMB",
@@ -185,8 +185,8 @@
   "firstBlockText": "",
   "lastBlockText": "",
   "headingCount": 180,
-  "avgBlockLength": 138,
-  "proseBlockCount": 839,
+  "avgBlockLength": 136,
+  "proseBlockCount": 859,
   "frontMatter": {
     "blockCount": 24,
     "types": "ihhhpppppiippppppppppipp",
@@ -529,8 +529,8 @@
     },
     {
       "title": "THE MICE IN COUNCIL",
-      "blockCount": 24,
-      "types": "hppppppppppppppppppppppp",
+      "blockCount": 25,
+      "types": "hpppppppppppppppppppppppp",
       "pageMin": 31,
       "pageMax": 32,
       "openPages": [
@@ -541,23 +541,7 @@
         31,
         31,
         31,
-        31,
-        31,
-        31,
-        31,
-        31,
-        31,
-        31,
-        31,
-        31,
-        31,
-        31,
-        31,
-        31,
-        32,
-        32,
-        32,
-        32
+        31
       ],
       "open": [
         "THE MICE IN COUNCIL",
@@ -565,30 +549,20 @@
         "“There is no comfort in the house,” said Brown-back.",
         "“If I but step",
         "into the pantry to pick up a few crumbs, down comes the Cat,",
-        "“What can we do?” asked Gray-ear.",
-        "“Shall we all run at her at",
-        "once and bite her, and frighten her away?”",
-        "“No,” said White-whisker; “she is so bold we could not frigh",
-        "her. I have thought of something better than that. Let us ha",
-        "“O yes! yes!” cried all the Mice.",
-        "“That is a capital idea. We will bell the Cat! Hurrah! hurra",
-        "When their glee had subsided a little, Brown-back asked, “Bu",
-        "No one answered.",
-        "“Will you?” he asked of White-whisker.",
-        "“I don’t think I can,” replied White-whisker; “I am lame, yo",
-        "It needs some one who can move quickly.”",
-        "“Will you, Gray-ear?” said Brown-back.",
-        "“Excuse me,” answered Gray-ear; “I have not been well since ",
-        "time when I was almost caught in the trap.”",
-        "“Who will bell the Cat, then?” said Brown-back.",
-        "“If it is to be done,",
+        "“What can we do?” asked Gray-ear."
+      ],
+      "closePages": [
+        32,
+        32,
+        32
+      ],
+      "close": [
+        "some one must do it.”",
         "Not a sound was heard, and one by one the little Mice stole ",
         "When there is trouble there is need of some one to act, as w"
       ],
-      "closePages": [],
-      "close": [],
-      "textHash": "e575a323f746",
-      "pageHash": "cc0360d0f409"
+      "textHash": "88a55f75a518",
+      "pageHash": "c6d76cc3a754"
     },
     {
       "title": "THE KID AND THE WOLF",
@@ -673,11 +647,14 @@
     },
     {
       "title": "THE ANT AND THE DOVE",
-      "blockCount": 13,
-      "types": "hpppppppppppp",
+      "blockCount": 16,
+      "types": "hppppppppppppppp",
       "pageMin": 36,
       "pageMax": 36,
       "openPages": [
+        36,
+        36,
+        36,
         36,
         36,
         36,
@@ -695,8 +672,10 @@
       "open": [
         "THE ANT AND THE DOVE",
         "AN Ant, walking by the river one day, said to himself, “How ",
+        "“Oh, somebody please help me, or I shall drown!” cried he.",
         "A Dove, sitting in a tree that overhung the river, heard him",
-        "“Climb up on that leaf,” said she, “and you will float The A",
+        "“Climb up on that leaf,” said she, “and you will float ashor",
+        "The Ant climbed up onto the leaf, which the wind blew to the",
         "“Good-by, kind Dove,” said he, as he ran home.",
         "“You have saved",
         "my life, and I wish I could do something for you.”",
@@ -704,21 +683,25 @@
         "A few days after this, when the Dove was busy building her n",
         "He ran quickly, and bit the man’s leg so hard that he cried ",
         "This startled the Dove, and she flew away. The man picked up",
+        "When he was gone, the Dove came back to her nest.",
         "“Thank you, my little friend,” she said.",
         "“You have saved my life.” And the little Ant was overjoyed t"
       ],
       "closePages": [],
       "close": [],
-      "textHash": "84e823da3619",
-      "pageHash": "ba4d23e5cf6b"
+      "textHash": "a503d288ef92",
+      "pageHash": "409104040314"
     },
     {
       "title": "THE OX AND THE FROG",
-      "blockCount": 14,
-      "types": "hppppppppppppi",
+      "blockCount": 17,
+      "types": "hpppppppppppppppi",
       "pageMin": 37,
       "pageMax": 37,
       "openPages": [
+        37,
+        37,
+        37,
         37,
         37,
         37,
@@ -740,11 +723,14 @@
         "His brothers and sisters, who were playing near, ran at once",
         "“Oh, Mother,” they cried, “a very huge beast, with four grea",
         "The old Frog was very vain. She was rather large, as Frogs g",
-        "“Was the cruel beast so very “Oh!” said the young Frogs.",
+        "“Was the cruel beast so very large?” she said.",
+        "“How big?”",
+        "“Oh!” said the young Frogs.",
         "“It was a terrible monster!”",
         "“Was it as big as this?” she said, blowing and puffing herse",
         "“Oh, much bigger,” replied the young Frogs.",
         "“As big as this, then?” she added, puffing and blowing with ",
+        "“A great deal bigger,” they answered.",
         "“Well, was it so big?”",
         "“Oh, Mother!” cried the Frogs; “pray do not try to be so big",
         "It is useless to attempt what is impossible.",
@@ -752,13 +738,13 @@
       ],
       "closePages": [],
       "close": [],
-      "textHash": "8d8e734b787d",
-      "pageHash": "e2e5ee120337"
+      "textHash": "59b51f497ec6",
+      "pageHash": "87fb021e5565"
     },
     {
       "title": "THE BAT AND THE WEASELS",
-      "blockCount": 10,
-      "types": "hppppppppp",
+      "blockCount": 11,
+      "types": "hpppppppppp",
       "pageMin": 38,
       "pageMax": 39,
       "openPages": [
@@ -766,6 +752,7 @@
         38,
         38,
         38,
+        39,
         39,
         39,
         39,
@@ -782,13 +769,14 @@
         "Some time after, the Bat took another flight, and again fell",
         "“Pray don’t kill me,” said the Bat.",
         "“Certainly I shall,” said the Weasel; “I kill mice wherever ",
+        "“But stop a moment,” said the Bat, spreading his wings; “I a",
         "“I beg your pardon,” said the Weasel; “I did not know that y",
         "So the cunning Bat escaped a second time, but it is not ofte"
       ],
       "closePages": [],
       "close": [],
-      "textHash": "e0b443d3ad71",
-      "pageHash": "9abeac1739ae"
+      "textHash": "c2530259807a",
+      "pageHash": "966d756f668f"
     },
     {
       "title": "THE FOX AND THE GOAT",
@@ -862,11 +850,15 @@
     },
     {
       "title": "THE DOG IN THE MANGER",
-      "blockCount": 7,
-      "types": "hpppppp",
+      "blockCount": 11,
+      "types": "hpppppppppp",
       "pageMin": 43,
       "pageMax": 43,
       "openPages": [
+        43,
+        43,
+        43,
+        43,
         43,
         43,
         43,
@@ -878,24 +870,29 @@
       "open": [
         "THE DOG IN THE MANGER",
         "A SLEEPY Dog went to the barn, and jumped into a manger full",
+        "When he had been sleeping comfortably for some time, the Oxe",
+        "The Dog awoke in a great rage at being disturbed, and began ",
         "“Stop a moment,” said one of the Oxen.",
-        "“Do you want to eat this “No,” said the Dog; “I shouldn’t th",
+        "“Do you want to eat this hay?”",
+        "“No,” said the Dog; “I shouldn’t think of such a thing.”",
         "“Very well, then,” said the Ox, “we do want to eat it, for w",
+        "“Oh, go away,” growled the Dog, “and let me sleep.”",
         "“What an ugly, snappish fellow!” said the Ox.",
-        "“He will neither eat"
+        "“He will neither eat the hay himself nor let us eat it!”"
       ],
       "closePages": [],
       "close": [],
-      "textHash": "16c631c5faf4",
-      "pageHash": "8f8b93476be4"
+      "textHash": "7a93ce855f7b",
+      "pageHash": "6da1c04440cb"
     },
     {
       "title": "THE MOUSE, THE FROG, AND THE HAWK",
-      "blockCount": 14,
-      "types": "hpppippppppppp",
+      "blockCount": 16,
+      "types": "hppppipppppppppp",
       "pageMin": 44,
       "pageMax": 46,
       "openPages": [
+        44,
         44,
         44,
         44,
@@ -909,12 +906,14 @@
         46,
         46,
         46,
+        46,
         46
       ],
       "open": [
         "THE MOUSE, THE FROG, AND THE HAWK",
         "A MOUSE, who had always lived on the land, and a Frog, who p",
         "The Mouse showed the Frog his nest and everything he could t",
+        "“Can you swim?” asked the Frog.",
         "“Not much,” said the Mouse.",
         "[image]",
         "“No matter,” said the Frog; “I will tie your foot to my foot",
@@ -923,14 +922,15 @@
         "“Please let me go,” said he, “or I shall die.”",
         "“Oh, never mind,” said the unkind Frog; “you will get used t",
         "Just then a Hawk saw the Mouse, and pounced upon it. As he f",
+        "“Stop, stop!” cried the Frog.",
         "“Let me go. It is the Mouse you want.”",
         "“Come along,” said the Hawk; “I want you both. I will eat yo",
         "In a few moments the Hawk had made a good supper, and there "
       ],
       "closePages": [],
       "close": [],
-      "textHash": "42bc6f74ce17",
-      "pageHash": "23ba812d8278"
+      "textHash": "d6f70eb9a101",
+      "pageHash": "443d875e36fa"
     },
     {
       "title": "THE SHEPHERD’S BOY AND THE WOLF",
@@ -1463,11 +1463,12 @@
     },
     {
       "title": "THE MULE AND THE GRASSHOPPERS",
-      "blockCount": 4,
-      "types": "hppp",
+      "blockCount": 5,
+      "types": "hpppp",
       "pageMin": 71,
       "pageMax": 71,
       "openPages": [
+        71,
         71,
         71,
         71,
@@ -1477,12 +1478,13 @@
         "THE MULE AND THE GRASSHOPPERS",
         "A MULE, hearing some Grasshoppers chirping, was much pleased",
         "“What sort of food do you eat,” said he to the Grasshoppers,",
+        "The Grasshoppers replied, “We live upon dew.”",
         "The Mule then decided that he too would live upon dew. And i"
       ],
       "closePages": [],
       "close": [],
-      "textHash": "04c072eb6bb8",
-      "pageHash": "e6f2af1d9cf3"
+      "textHash": "c7308a8151c1",
+      "pageHash": "9db55e13cfe1"
     },
     {
       "title": "THE GNAT AND THE BULL",
@@ -2744,7 +2746,7 @@
       ],
       "closePages": [],
       "close": [],
-      "textHash": "e72b285dd878",
+      "textHash": "1622317d4c71",
       "pageHash": "9ab4fbde383e"
     },
     {
@@ -4256,11 +4258,16 @@
     },
     {
       "title": "THE WOLF AND THE CAT",
-      "blockCount": 12,
-      "types": "hppppppipppp",
+      "blockCount": 17,
+      "types": "hpppppppppppipppp",
       "pageMin": 199,
       "pageMax": 201,
       "openPages": [
+        199,
+        199,
+        199,
+        199,
+        199,
         199,
         199,
         199,
@@ -4277,11 +4284,16 @@
       "open": [
         "THE WOLF AND THE CAT",
         "A WOLF ran out of the forest into a village—not to pay a vis",
+        "The huntsman and a pack of hounds were after it.",
         "It would fain have rushed in through the first gateway, but ",
+        "The Wolf saw a Cat on a partition fence and said pleadingly:",
+        "“Go quickly and ask Stefan,” said Vaska, the Cat; “he is a v",
+        "“Quite true; only I have torn the skin off one of his sheep.",
         "“Well, then, try Demian.”",
         "“I’m afraid he’s angry with me, too; I carried off one of hi",
         "“Run over there, then; Trofim lives there.”",
         "“Trofim! I should be afraid of even meeting him. Ever since ",
+        "“Dear me, that’s bad! But perhaps Klim will protect you.”",
         "[image]",
         "“Oh, Vaska, I have killed one of his calves!”",
         "“What do I hear, friend? You’ve quarreled with all the villa",
@@ -4290,8 +4302,8 @@
       ],
       "closePages": [],
       "close": [],
-      "textHash": "e704ac3dcfd6",
-      "pageHash": "a8f91639940c"
+      "textHash": "9fa5de1b0f19",
+      "pageHash": "bf1414c67cdb"
     },
     {
       "title": "THE WOLF AND THE LAMB",

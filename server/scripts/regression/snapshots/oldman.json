@@ -1,41 +1,76 @@
 {
-  "parserVersion": 138,
-  "totalBlocks": 760,
-  "totalWords": 26853,
+  "parserVersion": 139,
+  "totalBlocks": 790,
+  "totalWords": 26986,
   "chapterCount": 1,
   "chapterTitles": [
-    "The Old Man and the Sea"
+    "Ernest Hemingway, Writer"
   ],
   "firstBlockText": "",
   "lastBlockText": "",
   "headingCount": 5,
-  "avgBlockLength": 175,
-  "proseBlockCount": 755,
-  "frontMatter": null,
+  "avgBlockLength": 170,
+  "proseBlockCount": 785,
+  "frontMatter": {
+    "blockCount": 752,
+    "types": "ihhhhhpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+    "pageMin": 0,
+    "pageMax": 48,
+    "openPages": [
+      null,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "open": [
+      "[image]",
+      "The Old Man and the Sea",
+      "By Ernest Hemingway",
+      "By Ernest Hemingway",
+      "To Charlie Shribner",
+      "To Max Perkins"
+    ],
+    "closePages": [
+      48,
+      48,
+      48
+    ],
+    "close": [
+      "“I didn’t know sharks had such handsome, beautifully formed ",
+      "“I didn’t either,” her male companion said.",
+      "Up the road, in his shack, the old man was sleeping again. H"
+    ],
+    "textHash": "891a7109561e",
+    "pageHash": "c3560da6e371"
+  },
   "chapterOrder": [
     {
-      "title": "The Old Man and the Sea",
-      "blockCount": 760,
-      "types": "ihhhhhpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppi",
-      "pageMin": 0,
+      "title": "Ernest Hemingway, Writer",
+      "blockCount": 38,
+      "types": "pppppppppppppppppppppppppppppppppppppi",
+      "pageMin": 49,
       "pageMax": 50,
       "openPages": [
-        null,
-        0,
-        0,
-        1,
-        1,
-        1,
-        1,
-        1
+        49,
+        49,
+        49,
+        49,
+        49,
+        49,
+        49,
+        49
       ],
       "open": [
-        "[image]",
-        "The Old Man and the Sea",
-        "By Ernest Hemingway",
-        "By Ernest Hemingway",
-        "To Charlie Shribner",
-        "To Max Perkins"
+        "Ernest Hemingway, Writer",
+        "• Born: 21 July 1899",
+        "• Birthplace: Oak Park, Illinois",
+        "• Died: 2 July 1961 (suicide)",
+        "• Best Known As: Famously manly author of For Whom the Bell",
+        "Tolls"
       ],
       "closePages": [
         50,
@@ -47,8 +82,8 @@
         "• (1995) Collected Stories",
         "[image]"
       ],
-      "textHash": "e6fab0fd828d",
-      "pageHash": "2d2e9acd9713"
+      "textHash": "7bf0c647be4e",
+      "pageHash": "a637ed3bdc4d"
     }
   ]
 }

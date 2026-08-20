@@ -3448,7 +3448,18 @@ function mergeMultilineFableTitleBlocks(blocks) {
     const fragments = [text]
     let cursor = index + 1
 
-    while (cursor < blocks.length && isFableTitleTailFragment(blocks[cursor])) {
+    // A wrapped title's fragments sit on one printed page; a candidate tail
+    // from a different extraction page is a separate heading, not a wrap
+    // continuation. Without this gate WoK's "THE END OF" colophon (p1113)
+    // fused with the real ENDNOTE heading (p1114) into one garbled title.
+    const leadSourcePage = block?.sourcePdfPageIndex
+    while (
+      cursor < blocks.length &&
+      isFableTitleTailFragment(blocks[cursor]) &&
+      (!Number.isFinite(leadSourcePage) ||
+        !Number.isFinite(blocks[cursor]?.sourcePdfPageIndex) ||
+        blocks[cursor].sourcePdfPageIndex === leadSourcePage)
+    ) {
       fragments.push((blocks[cursor].text ?? "").trim())
       cursor += 1
       const lastFragment = fragments[fragments.length - 1]
@@ -6848,6 +6859,17 @@ function isTocPageReferenceLine(text) {
   )
 }
 
+// Printed-contents part entry whose leader/page number arrived as a separate
+// extraction line, leaving a single glued token ("partii:thesea-cook"). Real
+// part divider pages extract the label ("partii:") and subtitle ("The Sea
+// Cook") as separate lines, so requiring a non-empty space-free tail after the
+// colon leaves them untouched. Without this, a recovered contents entry gets
+// promoted by splitEmbeddedPartHeadings into a phantom part divider.
+function isGluedPartContentsListingLine(text) {
+  const trimmed = (text ?? "").trim()
+  return /^part(i{1,3}|iv|v|vi{0,3}|ix|x):\S+$/i.test(trimmed)
+}
+
 function isRunningHeaderMergedLine(text) {
   const trimmed = (text ?? "").trim()
   if (!trimmed) {
@@ -7150,7 +7172,11 @@ function explainShouldDropExtractedLine(
   if (isHeaderPageMarkerLine(trimmed)) {
     return { drop: true, reason: "header-page-marker" }
   }
-  if (isTocDenseListingLine(trimmed) || isTocPageReferenceLine(trimmed)) {
+  if (
+    isTocDenseListingLine(trimmed) ||
+    isTocPageReferenceLine(trimmed) ||
+    isGluedPartContentsListingLine(trimmed)
+  ) {
     return { drop: true, reason: "toc-listing" }
   }
   if (isRunningHeaderMergedLine(trimmed)) {
@@ -11513,6 +11539,14 @@ function detectChapters(content, bookTitle = "") {
         }
         let id = slugify(canonicalTitle)
         let chapterTitle = block.chapterTitle ?? rawTitle
+        // A standalone section label extracted as an all-caps display line
+        // ("ENDNOTE") reads as a shouty TOC entry; canonicalize the casing.
+        // Exact-uppercase single labels only - numbered and multi-word headings
+        // keep their extracted casing (all-caps fable titles are house style).
+        if (/^(?:PREFACE|INTRODUCTION|FOREWORD|PROLOGUE|EPILOGUE|CONCLUSION|AFTERWORD|APPENDIX|ENDNOTE|GLOSSARY)$/.test(chapterTitle)) {
+          chapterTitle =
+            chapterTitle.charAt(0) + chapterTitle.slice(1).toLowerCase()
+        }
         const isFableTitle = isFableStoryTitleBlock(block)
         const isSaddlebackStoryTitle =
           block.storyChapterNumber != null && block.isChapterStart

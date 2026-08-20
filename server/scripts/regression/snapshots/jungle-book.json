@@ -1,7 +1,7 @@
 {
-  "parserVersion": 138,
-  "totalBlocks": 663,
-  "totalWords": 13266,
+  "parserVersion": 139,
+  "totalBlocks": 666,
+  "totalWords": 13299,
   "chapterCount": 9,
   "chapterTitles": [
     "Mowgli’s Brothers",
@@ -18,7 +18,7 @@
   "lastBlockText": "“How is it he speaks our language with a man’s lips?”",
   "headingCount": 10,
   "avgBlockLength": 105,
-  "proseBlockCount": 653,
+  "proseBlockCount": 656,
   "frontMatter": {
     "blockCount": 5,
     "types": "ihppp",
@@ -342,8 +342,8 @@
     },
     {
       "title": "The Spring Running",
-      "blockCount": 81,
-      "types": "hppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppippp",
+      "blockCount": 84,
+      "types": "hpppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppippp",
       "pageMin": 69,
       "pageMax": 78,
       "openPages": [
@@ -374,8 +374,8 @@
         "“Who is this man who is not afraid?” the cobra asked.",
         "“How is it he speaks our language with a man’s lips?”"
       ],
-      "textHash": "85ffcb2c91f5",
-      "pageHash": "8fe92aca1f5a"
+      "textHash": "54758a510fef",
+      "pageHash": "06f720868c29"
     }
   ]
 }

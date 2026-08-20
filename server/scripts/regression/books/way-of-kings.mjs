@@ -7,8 +7,12 @@ import { findChapter, hasContiguousNumbers } from "../helpers.mjs"
 // Reader TOC includes all five printed-Contents parts, each anchored to its
 // first following chapter. Expected reader entries:
 //   Prelude + Prologue + Parts One-Five + 75 chapters + 9 interludes + Epilogue
-//   = 92.
-const WOK_EXPECTED_READER_CHAPTERS = 92
+//   + Endnote = 93.
+// Endnote is a real titled section (the ketek discussion on source PDF page
+// 1114, between the Epilogue and ARS ARCANUM). It became visible in v139 when
+// the flush-edge recovery changed the surrounding back-matter lines; the entry
+// anchors on the centered ENDNOTE heading itself. Not drift.
+const WOK_EXPECTED_READER_CHAPTERS = 93
 const WOK_NUMBERED_CHAPTERS = 75
 const WOK_EXPECTED_INTERLUDES = 9
 
